@@ -1,0 +1,5 @@
+[
+  { "date": "2026-06-01", "status": "SAFE", "market_health": 45, "opportunity": 72, "risk": 42 },
+  { "date": "2026-06-05", "status": "WARNING", "market_health": 42, "opportunity": 68, "risk": 48 },
+  { "date": "2026-06-11", "status": "SAFE", "market_health": 48, "opportunity": 74, "risk": 40 }
+]

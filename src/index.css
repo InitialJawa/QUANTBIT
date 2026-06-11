@@ -1,0 +1,394 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..850;1,100..850&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, Cambria, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Custom scrollbars and styling optimizations for the dark theme */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   LIGHT MODE STYLING OVERRIDES (Institutional Financial Software Style)
+   ========================================================================== */
+
+/* Root element transitions & basic properties */
+.light {
+  color-scheme: light !important;
+  background-color: #f1f5f9 !important; /* Premium clean slate-100 canvas */
+  color: #0f172a !important; /* Clear slate-950 text */
+}
+
+/* Base scrollbars in light mode */
+.light .scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.02) !important;
+}
+.light .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12) !important;
+  border-radius: 4px;
+}
+.light .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.22) !important;
+}
+
+/* ==========================================
+   A. WILDCARD & CLASS BACKGROUND OVERRIDES
+   ========================================== */
+
+/* Main canvas base color fallback (covers lower and uppercase tailwind classes) */
+.light #applet-main-canvas,
+.light.bg-\[\#050505\],
+.light [class*="bg-[#050505]"],
+.light [class*="bg-[#050505]/95"],
+.light .bg-black {
+  background-color: #f1f5f9 !important; /* Soft slate backdrop */
+}
+
+/* Standard cards, sidebar containers, headers and main workspace panels */
+.light header,
+.light #main-sidebar,
+.light [class*="bg-[#0A0A0A]"],
+.light [class*="bg-[#0a0a0a]"],
+.light .bg-\[\#0A0A0A\] {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Header background fallback */
+.light header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Secondary panel backgrounds (e.g. watchlist container, layout blocks, report cards) */
+.light #config-panel,
+.light #sidebar-news-panel,
+.light #historical-chart-container,
+.light #ai-assistant-card,
+.light #summary-report-panel,
+.light [class*="bg-[#121212]"],
+.light [class*="bg-[#121212]/95"],
+.light [class*="bg-[#070707]"],
+.light [class*="bg-[#080808]"],
+.light [class*="bg-[#0f0f0f]"] {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Navigation pill containers & search bars */
+.light nav.bg-\[\#121212\],
+.light nav[class*="bg-[#121212]"] {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Custom dark active tabs selection */
+.light [class*="bg-[#2A2A2A]"],
+.light .bg-\[\#2A2A2A\] {
+  background-color: #0f172a !important; /* High contrast active deep slate background */
+  color: #10b981 !important; /* Beautiful green active text */
+}
+
+/* Safe/unselected button selections inside pill lists */
+.light nav button:not(.bg-\[\#2A2A2A\]) {
+  background-color: transparent !important;
+  color: #475569 !important; /* Muted gray-600 */
+}
+.light nav button:not(.bg-\[\#2A2A2A\]):hover {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+/* White-opacity subtle backgrounds overridden with slate-opacities for light mode */
+.light .bg-white\/5,
+.light .bg-white\/10,
+.light .bg-white\/20,
+.light [class*="bg-white/"],
+.light [class*="bg-white\\["] {
+  background-color: rgba(15, 23, 42, 0.045) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.light [class*="hover:bg-white/"]:hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Semi-transparent black overlays */
+.light [class*="bg-black/"],
+.light .bg-black\/30,
+.light .bg-black\/40,
+.light .bg-black\/50 {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+}
+
+/* AI assistant message box fallbacks (ensuring perfect chat contrast) */
+.light #messages-viewport [class*="bg-white/"] {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+.light #messages-viewport [class*="bg-white/"] * {
+  color: #0f172a !important;
+}
+
+.light #messages-viewport [class*="bg-emerald-950/"] {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.light #messages-viewport [class*="bg-emerald-950/"] * {
+  color: #047857 !important;
+}
+
+/* ==========================================
+   B. TYPOGRAPHY & CONTRAST OVERRIDES
+   ========================================== */
+
+/* Main headers and pristine default text color (overriding light text) */
+.light .text-white,
+.light .text-white\/95,
+.light .text-white\/90,
+.light .text-white\/85,
+.light .text-zinc-100,
+.light .text-zinc-200,
+.light [class*="text-white"],
+.light [class*="text-[#E0E0E0]"],
+.light .text-\[\#E0E0E0\] {
+  color: #0f172a !important; /* Ultimate Slate-950 visibility */
+}
+
+/* Medium opacity, descriptions and metadata text values */
+.light .text-white\/70,
+.light .text-white\/65,
+.light .text-white\/60,
+.light .text-white\/55,
+.light .text-white\/50,
+.light [class*="text-white/7"],
+.light [class*="text-white/6"],
+.light [class*="text-white/5"],
+.light [class*="text-[#E0E0E0]/50"],
+.light [class*="text-[#E0E0E0]/60"] {
+  color: #334155 !important; /* Slate-700 readability for descriptions */
+}
+
+/* Lowest opacity system/log lines, auxiliary dates and labels */
+.light .text-white\/45,
+.light .text-white\/40,
+.light .text-white\/35,
+.light .text-white\/30,
+.light .text-white\/20,
+.light .text-white\/15,
+.light [class*="text-white/4"],
+.light [class*="text-white/3"],
+.light [class*="text-white/2"],
+.light [class*="text-[#E0E0E0]/30"],
+.light [class*="text-[#E0E0E0]/40"] {
+  color: #475569 !important; /* Slate-600 crisp details */
+}
+
+/* Specific helper colors */
+.light .text-zinc-400,
+.light .text-gray-400,
+.light .text-slate-400,
+.light [class*="text-[#A0A0A0]"] {
+  color: #334155 !important;
+}
+.light .text-zinc-500,
+.light .text-gray-500,
+.light .text-slate-500 {
+  color: #475569 !important;
+}
+
+/* State highlights to guarantee maximum readable contrast */
+.light .text-emerald-400,
+.light .text-emerald-300,
+.light [class*="text-emerald-4"] {
+  color: #15803d !important; /* High contrast green */
+}
+.light .text-rose-400,
+.light .text-rose-455,
+.light [class*="text-rose-4"] {
+  color: #b91c1c !important; /* High contrast red */
+}
+.light .text-amber-400,
+.light [class*="text-amber-4"] {
+  color: #b45309 !important; /* High contrast dark amber */
+}
+
+/* Solid states white details security exceptions */
+.light .bg-emerald-500,
+.light .bg-emerald-600,
+.light .bg-rose-500,
+.light .bg-red-500,
+.light .bg-indigo-500,
+.light .bg-indigo-600,
+.light .bg-blue-600 {
+  color: #ffffff !important;
+}
+.light .bg-emerald-500 *,
+.light .bg-emerald-600 *,
+.light .bg-rose-500 *,
+.light .bg-red-500 *,
+.light .bg-indigo-500 *,
+.light .bg-indigo-600 *,
+.light .bg-blue-600 * {
+  color: #ffffff !important;
+}
+
+/* Active buttons & tabs text overrides inside selected views */
+.light button.bg-\[\#2A2A2A\] {
+  color: #10b981 !important; /* Emerald active text label */
+}
+
+/* Custom header branding fallback */
+.light h1.text-white span[class*="bg-gradient-to-r"] {
+  color: inherit !important;
+  background-image: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  color: #0f172a !important;
+}
+
+/* ==========================================
+   C. BORDERS, DIVIDES & INPUTS OVERRIDES
+   ========================================== */
+
+.light [class*="border-white/"],
+.light .border-white\/5,
+.light .border-white\/10,
+.light .border-white\/15,
+.light .border-white\/20,
+.light .border-white\/30 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.light .divide-white\/5 > *,
+.light .divide-white\/10 > * {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* General form elements: inputs, select dropdowns & modal controls */
+.light input,
+.light textarea,
+.light select,
+.light button[class*="border-white/10"] {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+  color: #0f172a !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Dropdown native lists (absolutely critical for browser standard option blocks!) */
+.light option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Dialog table grids custom structures */
+.light table th {
+  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+  color: #475569 !important;
+}
+
+.light table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Ensure Lucide icons inherit the new crisp light mode colors beautifully */
+.light svg {
+  stroke-opacity: 0.95 !important;
+}
+
+/* Recharts Tooltip Custom styling fallback for lighter canvases */
+.light .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Sidebar directory lists click fallbacks */
+.light #applet-main-canvas aside div[onClick] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+.light #applet-main-canvas aside div[onClick]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Extra crispness for badges, status indicators, and tables in light mode */
+.light [class*="bg-emerald-500/10"],
+.light .bg-emerald-500\/10,
+.light .bg-\[\#34A853\]\/10 {
+  background-color: #d1fae5 !important; /* Perfect soft green background */
+  color: #065f46 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.light [class*="bg-emerald-500/15"] {
+  background-color: #d1fae5 !important;
+}
+
+.light [class*="bg-amber-500/10"],
+.light [class*="bg-amber-500/15"] {
+  background-color: #fef3c7 !important; /* Solid warm gold */
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.light [class*="bg-rose-500/10"],
+.light [class*="bg-rose-500/15"],
+.light [class*="bg-rose-500/20"] {
+  background-color: #ffe4e6 !important; /* Warm light rose */
+  color: #9f1239 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+/* Highlight search inputs, configuration tabs and simulation table cells */
+.light #config-panel button {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.light #config-panel button:not(.bg-white\/10) {
+  color: #475569 !important;
+}
+
+.light #config-panel button:not(.bg-white\/10):hover {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+  color: #0f172a !important;
+}
+
+.light table {
+  background-color: #ffffff !important;
+}
+
+.light tr, .light td {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.light h1.text-white span[class*="bg-gradient-to-r"],
+.light h1 span.bg-gradient-to-tr {
+  background-image: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
