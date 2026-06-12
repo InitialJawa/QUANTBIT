@@ -70,18 +70,18 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           <div className="w-12 h-12 bg-white/5 text-emerald-400 rounded-xl flex items-center justify-center mx-auto mb-4 border border-white/10">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-serif italic text-white mb-2">No Reports Generated Yet</h3>
+          <h3 className="text-lg font-serif italic text-white mb-2">Belum Ada Analisis</h3>
           <p className="text-sm text-white/50 mb-6 max-w-md mx-auto">
-            Analyze the complete financial reports (Balance Sheets, Income, and Cash Flows) of {stock.name} using server-side Gemini intelligence.
+            Analisis kondisi lengkap dari {stock.name} menggunakan kecerdasan buatan Gemini.
           </p>
 
           <div className="space-y-3 mb-6 text-left max-w-md mx-auto">
             <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest">
-              Add Custom Analyst Focus (Optional)
+              Tambahkan Fokus Analisis (Opsional)
             </label>
             <input
               type="text"
-              placeholder="e.g. core dividend sustainability, cash position..."
+              placeholder="cth. keberlanjutan dividen, arus kas..."
               value={customFocus}
               onChange={(e) => setCustomFocus(e.target.value)}
               className="w-full text-sm px-4 py-3.5 rounded-xl border border-white/10 outline-none focus:ring-1 focus:ring-emerald-500 transition-all bg-white/5 text-white"
@@ -93,7 +93,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-black px-6 py-3 rounded-xl font-semibold shadow-sm transition-all text-sm cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
-            Generate Gemini Stock Analysis
+            Buat Analisis Saham Gemini AI
           </button>
           
           {error && (
@@ -112,9 +112,9 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <Sparkles className="w-6 h-6 text-emerald-400 absolute top-3 left-3 animate-pulse" />
           </div>
           <div>
-            <h4 className="font-bold text-white">Conducting Financial Audit</h4>
+            <h4 className="font-bold text-white">Memproses Data Finansial</h4>
             <p className="text-xs text-white/40 mt-1 animate-pulse">
-              Gemini is assessing 3-year balance sheets, cash ratios, market position, and sector valuations...
+              Gemini sedang meninjau fundamental, sentimen pasar, margin, dan valuasi potensial saham ini...
             </p>
           </div>
         </div>
@@ -135,9 +135,9 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
                 <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
-                  Auditor Decision
+                  Keputusan Analisis
                 </span>
-                <h4 className="text-sm font-semibold text-white/80 mt-1">Equity Rating</h4>
+                <h4 className="text-sm font-semibold text-white/80 mt-1">Rekomendasi</h4>
               </div>
               <div className="my-4">
                 <span className={`inline-flex px-4 py-2 rounded-xl text-base font-bold uppercase ${getRecBadgeColor(report.recommendation)}`}>
@@ -146,7 +146,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
               </div>
               <div className="text-xs text-[#E0E0E0]/60 flex items-center gap-1.5 pt-3 border-t border-white/5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                Double audit of BEI indices verified
+                Prediksi data terkalkulasi
               </div>
             </div>
 
@@ -154,27 +154,27 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
                 <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
-                  Intrinsic Valuation
+                  Valuasi Harga
                 </span>
-                <h4 className="text-sm font-semibold text-white/80 mt-1">Fair Value vs Current</h4>
+                <h4 className="text-sm font-semibold text-white/80 mt-1">Harga Wajar Saham</h4>
               </div>
               <div className="my-2">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-white/40">Intrinsic Fair:</span>
+                  <span className="text-xs text-white/40">Harga Wajar:</span>
                   <span className="text-lg font-bold text-emerald-400 font-mono">
-                    IDR {report.fairValue.estimatedValue?.toLocaleString("id-ID") || "N/A"}
+                    Rp {report.fairValue.estimatedValue?.toLocaleString("id-ID") || "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between items-baseline mt-1.5">
-                  <span className="text-xs text-white/40">Current Price:</span>
+                  <span className="text-xs text-white/40">Harga Saat Ini:</span>
                   <span className="text-xs font-semibold text-white/80 font-mono">
-                    IDR {stock.currentPrice.toLocaleString("id-ID")}
+                    Rp {stock.currentPrice.toLocaleString("id-ID")}
                   </span>
                 </div>
               </div>
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                 <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
-                  Valuation Status:
+                  Status Valuasi:
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                   report.fairValue.recommendation === "UNDERVALUED" 
@@ -192,9 +192,9 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
                 <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
-                  Risk Premium
+                  Margin Valuasi
                 </span>
-                <h4 className="text-sm font-semibold text-white/80 mt-1">Margin of Safety</h4>
+                <h4 className="text-sm font-semibold text-white/80 mt-1">Batas Aman Harga</h4>
               </div>
               <div className="my-2">
                 {(() => {
@@ -209,8 +209,8 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
                       </div>
                       <p className="text-xs text-white/40 mt-1">
                         {isUnder 
-                          ? "Intrinsic price exceeds current market price" 
-                          : "Trading at premium compared to core assets value"}
+                          ? "Harga wajar lebih tinggi dari harga saat ini" 
+                          : "Harga lebih mahal dari perhitungan fundamental nilai perusahaan"}
                       </p>
                     </div>
                   );
@@ -218,7 +218,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
               </div>
               <div className="text-xs text-[#E0E0E0]/65 flex items-center gap-1.5 pt-2 border-t border-white/5">
                 <Target className="w-4 h-4 text-emerald-500" />
-                Target precision calculation
+                Sinyal probabilitas ketepatan AI
               </div>
             </div>
 
@@ -227,7 +227,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           {/* Core Analysis Paragraph */}
           <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
             <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2.5">
-              Equity Audit Summary
+              Rangkuman Laporan Singkat
             </h4>
             <div className="text-sm leading-relaxed text-[#E0E0E0]/80 whitespace-pre-line font-serif">
               {report.summary}
@@ -238,13 +238,13 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           <div>
             <h4 className="text-sm font-bold text-white/70 uppercase tracking-widest mb-4 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-500" />
-              Strategic SWOT Matrix (IDX Framework)
+              Matriks Strategi dan Kondisi (SWOT)
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
               <div className="bg-emerald-500/5 rounded-xl border border-emerald-500/20 p-5 space-y-2">
                 <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
-                  Strengths (S)
+                  Kekuatan (S)
                 </span>
                 <ul className="text-xs text-[#E0E0E0]/85 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.strengths?.map((item, idx) => (
@@ -255,7 +255,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
               <div className="bg-rose-500/5 rounded-xl border border-rose-500/20 p-5 space-y-2">
                 <span className="text-xs font-bold text-rose-400 uppercase tracking-wide">
-                  Weaknesses (W)
+                  Kelemahan (W)
                 </span>
                 <ul className="text-xs text-[#E0E0E0]/85 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.weaknesses?.map((item, idx) => (
@@ -266,7 +266,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
               <div className="bg-blue-500/5 rounded-xl border border-blue-500/20 p-5 space-y-2">
                 <span className="text-xs font-bold text-blue-400 uppercase tracking-wide">
-                  Opportunities (O)
+                  Peluang (O)
                 </span>
                 <ul className="text-xs text-[#E0E0E0]/85 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.opportunities?.map((item, idx) => (
@@ -277,7 +277,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
               <div className="bg-purple-500/5 rounded-xl border border-purple-500/20 p-5 space-y-2">
                 <span className="text-xs font-bold text-purple-400 uppercase tracking-wide">
-                  Threats (T)
+                  Ancaman (T)
                 </span>
                 <ul className="text-xs text-[#E0E0E0]/85 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.threats?.map((item, idx) => (
@@ -292,15 +292,15 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           {/* Key ratio Audit Table */}
           <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm overflow-hidden">
             <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-4">
-              Fundamental Valuation Ratios Audit
+              Rincian Rasio Valuasi Indikator
             </h4>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-white/10 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                    <th className="pb-3 pr-4">Ratios / Indicator Checked</th>
-                    <th className="pb-3 px-4">Indicated Value (Audit)</th>
-                    <th className="pb-3 pl-4">Auditor Assessment</th>
+                    <th className="pb-3 pr-4">Nama Rasio/Indikator</th>
+                    <th className="pb-3 px-4">Nilai Indikator (Hasil AI)</th>
+                    <th className="pb-3 pl-4">Keputusan Analis AI</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
@@ -328,9 +328,9 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="relative z-10 space-y-2">
               <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-widest">
                 <Target className="w-3.5 h-3.5" />
-                Strategic Growth Outlook
+                Pandangan AI Kedepan
               </span>
-              <h4 className="text-lg font-serif italic text-white pt-1">Future Valuation & Catalysts Statement</h4>
+              <h4 className="text-lg font-serif italic text-white pt-1">Pertumbuhan & Potensi Saham</h4>
               <p className="text-sm text-white/70 leading-relaxed font-sans">
                 {report.growthOutlook}
               </p>
@@ -340,14 +340,14 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           {/* Generate again button */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-950/10">
             <p className="text-xs text-[#E0E0E0]/60">
-              Analysis generated via server key on <strong>{new Date(report.timestamp).toLocaleString()}</strong>.
+              Analisis di-generate AI pada: <strong>{new Date(report.timestamp).toLocaleString("id-ID")}</strong>.
             </p>
             <button
               onClick={() => onGenerateReport(customFocus || undefined)}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-4" />
-              Re-Calculate Intelligence Report
+              Periksa Ulang Laporan Ini
             </button>
           </div>
 

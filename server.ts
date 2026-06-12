@@ -118,7 +118,130 @@ Key indicators passed in:
   }
 });
 
-// Gemini Chat API
+// Gemini Market Summary API
+app.post("/api/gemini/market-summary", async (req, res) => {
+  const { mkt, rs, stocks } = req.body;
+
+  try {
+    const ai = getGeminiClient();
+    const systemPrompt = `You are a premier senior macroeconomic strategist and stock market analyst specializing in the Indonesia Stock Exchange (IDX / BEI).
+Your task is to conduct an in-depth review of the daily market conditions in Indonesia based on the latest indicators.
+Based on JCI (IHSG) performance, USD/IDR exchange rate stability, system regime metrics, and key blue-chip stock movements, formulate a highly professional Daily Market Summary (Ringkasan Harian Pasar Saham Indonesia).
+
+You MUST return your response as a strict JSON object adhering exactly to this TypeScript schema:
+{
+  "rationale": string, // A deep, concise narrative (2-3 sentences) evaluating the market dynamics. Write in elegant financial Indonesian.
+  "bullishFactors": string[], // 3 key positive catalysts or supportive indicators in Indonesian.
+  "bearishFactors": string[], // 3 notable risk factors, headwinds, or pressure points in Indonesian.
+  "strategyAdvice": string // A clear recommendation (1-2 sentences) on capital deployment, risk mitigation, or accumulation strategies in Indonesian.
+}
+
+Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, professional, and analytical.`;
+
+    const stockSummary = stocks && Array.isArray(stocks) 
+      ? stocks.map((s: any) => `${s.ticker}: IDR ${s.currentPrice} (${s.change >= 0 ? '+' : ''}${s.change}%)`).join(", ")
+      : "No stock data";
+
+    const userPrompt = `Real-Time Market Indicators:
+- IHSG (JCI Index): ${mkt?.ihsg?.value || 'N/A'} (Daily Change: ${mkt?.ihsg?.daily_pct || mkt?.ihsg?.daily || 0}%, Monthly Trend: ${mkt?.ihsg?.monthly || 0}%)
+- USD/IDR Exchange: Rp ${mkt?.usdidr?.value || 'N/A'} (Daily Change: ${mkt?.usdidr?.daily || 0}%)
+- Gold Price: USD ${mkt?.gold?.value || 'N/A'}/oz
+- System Status: ${rs?.status || 'N/A'} (Market Health: ${rs?.market_health || 50}/100, Opportunity: ${rs?.opportunity || 50}/100, Risk: ${rs?.risk || 40}/100)
+- Capital Allocation Stance: ${rs?.capital_deployment || 40}%
+
+Current prices and daily moves of active watched stocks:
+${stockSummary}
+
+Please generate the daily market summary and rationale in Indonesian.`;
+
+    const getCachedSummary = () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      return JSON.stringify({
+        rationale: `Pasar saat ini bergerak dalam rentang konsolidasi. Volatilitas terbatas sementara pelaku pasar mengamati perkembangan makro terkini (Cached Summary ${yesterday.toLocaleDateString()}).`,
+        bullishFactors: ["Stabilitas Rupiah yang terjaga", "Arus modal asing di saham blue-chip stabil", "Valuasi indeks moderat mendukung akumulasi selektif"],
+        bearishFactors: ["Katalis domestik terbatas dalam jangka pendek", "Kekhawatiran moderasi konsumsi", "Volatilitas komoditas menahan laju emiten energi"],
+        strategyAdvice: "Pertahankan alokasi portofolio dengan fokus pada saham-saham defensif dan perbankan yang memiliki neraca kuat."
+      });
+    };
+
+    let textContent = "{}";
+
+    try {
+      // 1. Primary: Gemini 2.5 Flash
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: userPrompt,
+        config: {
+          systemInstruction: systemPrompt,
+          responseMimeType: "application/json",
+        }
+      });
+      textContent = response.text || "{}";
+    } catch (geminiError: any) {
+      console.warn("Gemini Error, falling back to Groq:", geminiError.message);
+      
+      try {
+        // 2. Fallback 1: Groq
+        const groqKey = process.env.GROQ_API_KEY;
+        if (!groqKey) throw new Error("GROQ_API_KEY not configured");
+        
+        const groqClient = new Groq({ apiKey: groqKey });
+        const response = await groqClient.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          model: "llama-3.3-70b-versatile",
+          response_format: { type: "json_object" }
+        });
+        textContent = response.choices[0]?.message?.content || "{}";
+      } catch (groqError: any) {
+        console.warn("Groq Error, falling back to OpenRouter:", groqError.message);
+        
+        try {
+          // 3. Fallback 2: OpenRouter
+          const openRouterKey = process.env.OPENROUTER_API_KEY;
+          if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
+          
+          const openaiClient = new OpenAI({ 
+            baseURL: "https://openrouter.ai/api/v1",
+            apiKey: openRouterKey 
+          });
+          const response = await openaiClient.chat.completions.create({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ],
+            model: "meta-llama/llama-3.1-8b-instruct:free",
+          });
+          let content = response.choices[0]?.message?.content || "{}";
+          // Attempt to extract JSON if it was wrapped in markdown
+          if (content.includes("```json")) {
+            content = content.split("```json")[1].split("```")[0];
+          }
+          textContent = content;
+        } catch (openRouterError: any) {
+          console.warn("OpenRouter Error, falling back to Cached Summary:", openRouterError.message);
+          
+          // 4. Fallback 3: Cached Summary
+          textContent = getCachedSummary();
+        }
+      }
+    }
+
+    res.json(JSON.parse(textContent.trim()));
+  } catch (error: any) {
+    console.error("Gemini Market Summary Full Fallback Error:", error);
+    res.status(500).json({ error: error.message || "Failed to generate daily market summary" });
+  }
+});
+
+import Groq from "groq-sdk";
+import OpenAI from "openai";
+
+// Gemini Chat API / Any provider
 app.post("/api/gemini/chat", async (req, res) => {
   const { messages, selectedStock } = req.body;
 
@@ -127,15 +250,19 @@ app.post("/api/gemini/chat", async (req, res) => {
   }
 
   try {
-    const ai = getGeminiClient();
+    let contextStockInfo = `You are discussing the Indonesian Stock Exchange (IDX) in general.`;
     
-    const contextStockInfo = selectedStock 
-      ? `You are currently focusing on PT ${selectedStock.name} (Ticker: ${selectedStock.ticker}).
+    if (selectedStock && selectedStock.ticker === "WATCHLIST") {
+      contextStockInfo = `The user is asking about their personal stock watchlist.
+Watchlist summary: ${selectedStock.description}.
+Please provide insights focused on comparing, contrasting, and evaluating these specific stocks in the context of the Indonesian market.`;
+    } else if (selectedStock) {
+      contextStockInfo = `You are currently focusing on PT ${selectedStock.name} (Ticker: ${selectedStock.ticker}).
 Sector: ${selectedStock.sector} (${selectedStock.subSector})
 Recent Price: IDR ${selectedStock.currentPrice} (${selectedStock.change > 0 ? '+' : ''}${selectedStock.change}%)
 Description: ${selectedStock.description}
-Ratios: PE ${selectedStock.peRatio}, PB ${selectedStock.pbRatio}, ROE ${selectedStock.roe}%, DER ${selectedStock.der}, Dividend Yield ${selectedStock.dividendYield}%`
-      : `You are discussing the Indonesian Stock Exchange (IDX) in general.`;
+Ratios: PE ${selectedStock.peRatio}, PB ${selectedStock.pbRatio}, ROE ${selectedStock.roe}%, DER ${selectedStock.der}, Dividend Yield ${selectedStock.dividendYield}%`;
+    }
 
     const systemInstruction = `You are a friendly, highly intelligent Indonesian stock market strategist and financial advisor.
 Provide objective, deep, and action-oriented financial reasoning. Support your answers with macroeconomic context in Indonesia, BI-Rate trends (Bank Indonesia interest rates), Rupiah exchange rate factors, or sector tailwinds.
@@ -146,27 +273,80 @@ ${contextStockInfo}
 Format your response using professional markdown with bullet points, brief tables, bold figures, and clean paragraphs.`;
 
     const lastMessage = messages[messages.length - 1].content;
-    
-    // Set up chat with history
-    const apiHistory = messages.slice(0, -1).map((msg: any) => ({
-      role: msg.role === "user" ? "user" as const : "model" as const,
-      parts: [{ text: msg.content }]
+    const commonHistory = messages.slice(0, -1).map((msg: any) => ({
+      role: msg.role === "assistant" ? "assistant" : "user",
+      content: msg.content
     }));
 
-    // Start a chat using the recommended chats.create API
-    const chat = ai.chats.create({
-      model: "gemini-3.5-flash",
-      history: apiHistory,
-      config: {
-        systemInstruction,
-      }
-    });
+    let textContent = "";
 
-    const response = await chat.sendMessage({ message: lastMessage });
-    res.json({ content: response.text });
+    try {
+      // 1. Primary: Gemini 2.5 Flash
+      const ai = getGeminiClient();
+      const apiHistory = messages.slice(0, -1).map((msg: any) => ({
+        role: msg.role === "user" ? "user" as const : "model" as const,
+        parts: [{ text: msg.content }]
+      }));
+
+      const chat = ai.chats.create({
+        model: "gemini-2.5-flash",
+        history: apiHistory,
+        config: {
+          systemInstruction,
+        }
+      });
+      const response = await chat.sendMessage({ message: lastMessage });
+      textContent = response.text || "";
+    } catch (geminiError: any) {
+      console.warn("Chat Gemini Error, falling back to Groq:", geminiError.message);
+      
+      try {
+        // 2. Fallback 1: Groq
+        const groqKey = process.env.GROQ_API_KEY;
+        if (!groqKey) throw new Error("GROQ_API_KEY not configured");
+        
+        const groqClient = new Groq({ apiKey: groqKey });
+        const response = await groqClient.chat.completions.create({
+          messages: [
+            { role: "system", content: systemInstruction },
+            ...commonHistory,
+            { role: "user", content: lastMessage }
+          ],
+          model: "llama-3.3-70b-versatile",
+        });
+        textContent = response.choices[0]?.message?.content || "";
+      } catch (groqError: any) {
+        console.warn("Chat Groq Error, falling back to OpenRouter:", groqError.message);
+        
+        try {
+          // 3. Fallback 2: OpenRouter
+          const openRouterKey = process.env.OPENROUTER_API_KEY;
+          if (!openRouterKey) throw new Error("OPENROUTER_API_KEY not configured");
+          
+          const openaiClient = new OpenAI({ 
+            baseURL: "https://openrouter.ai/api/v1",
+            apiKey: openRouterKey 
+          });
+          const response = await openaiClient.chat.completions.create({
+            messages: [
+              { role: "system", content: systemInstruction },
+              ...commonHistory,
+              { role: "user", content: lastMessage }
+            ],
+            model: "meta-llama/llama-3.1-8b-instruct:free",
+          });
+          textContent = response.choices[0]?.message?.content || "";
+        } catch (openRouterError: any) {
+          console.warn("Chat OpenRouter Error, falling back to static message:", openRouterError.message);
+          textContent = "Maaf, sistem asisten AI sedang mengalami kendala (Gemini, Groq, dan OpenRouter sedang tidak tersedia atau kuota habis). Harap pastikan API Key di konfigurasi (.env) sudah valid.";
+        }
+      }
+    }
+
+    res.json({ content: textContent });
   } catch (error: any) {
-    console.error("Gemini Chat Error:", error);
-    res.status(500).json({ error: error.message || "Failed to process chat message with Gemini AI" });
+    console.error("AI Chat Full Fallback Error:", error);
+    res.status(500).json({ error: error.message || "Failed to process chat message with AI Provider" });
   }
 });
 
@@ -338,7 +518,7 @@ app.get("/api/goapi/live-prices", async (req, res) => {
       return res.status(400).json({ success: false, error: "GOAPI_API_KEY is missing" });
     }
 
-    const response = await fetch(`https://api.goapi.id/v1/stock/idx/prices?api_key=${apiKey}`);
+    const response = await fetch(`https://api.goapi.io/stock/idx/prices?api_key=${apiKey}`);
     if (!response.ok) {
       throw new Error(`GoAPI HTTP error: ${response.status}`);
     }
@@ -361,7 +541,7 @@ app.get("/api/goapi/live-prices", async (req, res) => {
       throw new Error(apiRes.message || "Invalid GoAPI response payload structure");
     }
   } catch (error: any) {
-    console.warn("Could not retrieve real-time data from GoAPI, utilizing mock/calculated data fallback:", error.message);
+    console.log("GoAPI fallback active (non-blocking):", error.message);
     res.json({ 
       success: false, 
       error: error.message, 
@@ -376,8 +556,8 @@ let _lastYahooPrices: Record<string, { close: number; change: number; pct: numbe
 // Yahoo Finance Live Stock PC/Quote Proxy
 app.get("/api/yahoo/live-prices", async (req, res) => {
   try {
-    const tickers = ["BBCA.JK", "BBRI.JK", "BMRI.JK", "TLKM.JK", "ASII.JK", "ADRO.JK", "PTBA.JK", "ESSA.JK", "GOTO.JK"];
-    const response = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers.join(",")}`, {
+    const tickers = ["BBCA.JK", "BBRI.JK", "BMRI.JK", "TLKM.JK", "ASII.JK", "ADRO.JK", "PTBA.JK", "ESSA.JK", "GOTO.JK", "^JKSE", "IDR=X"];
+    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/spark?symbols=${tickers.join(",")}`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json"
@@ -389,16 +569,23 @@ app.get("/api/yahoo/live-prices", async (req, res) => {
     }
 
     const apiRes: any = await response.json();
-    if (apiRes.quoteResponse && Array.isArray(apiRes.quoteResponse.result)) {
+    if (apiRes && typeof apiRes === "object") {
       const prices: Record<string, { close: number; change: number; pct: number }> = {};
-      apiRes.quoteResponse.result.forEach((item: any) => {
-        // "BBCA.JK" -> "BBCA"
-        const symbol = (item.symbol || "").split(".")[0];
-        if (symbol) {
+      Object.keys(apiRes).forEach(symbolRaw => {
+        const item = apiRes[symbolRaw];
+        let symbol = symbolRaw.split(".")[0];
+        if (symbolRaw === "^JKSE") symbol = "IHSG";
+        if (symbolRaw === "IDR=X") symbol = "USDIDR";
+        
+        if (symbol && item && Array.isArray(item.close) && item.close.length > 0) {
+          const validCloses = item.close.filter((c: any) => typeof c === "number" && c !== null);
+          const lClose = validCloses[validCloses.length - 1];
+          const prvClose = item.previousClose || lClose || 1;
+          const diff = (lClose || 0) - prvClose;
           prices[symbol] = {
-            close: Number(item.regularMarketPrice || item.regularMarketPreviousClose || 0),
-            change: Number(item.regularMarketChange || 0),
-            pct: Number(item.regularMarketChangePercent || 0)
+            close: Number(lClose || 0),
+            change: Number(diff),
+            pct: Number((diff / prvClose) * 100)
           };
         }
       });
@@ -408,7 +595,7 @@ app.get("/api/yahoo/live-prices", async (req, res) => {
       throw new Error("Invalid quote payload returned from Yahoo Finance API");
     }
   } catch (error: any) {
-    console.warn("Could not retrieve real-time data from Yahoo Finance, utilizing cache/fallback:", error.message);
+    console.log("Yahoo Finance fallback active (non-blocking):", error.message);
     if (_lastYahooPrices) {
       return res.json({ success: true, prices: _lastYahooPrices, source: "Yahoo Finance (Cached Fallback)" });
     }

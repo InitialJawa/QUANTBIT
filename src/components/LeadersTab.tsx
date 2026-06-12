@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { L, CW_F, CW_B, RK, EX } from "../marketData";
+import { L, CW_F, CW_B, RK, EX, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
+import { StockData, PortfolioItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw } from "lucide-react";
+import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck } from "lucide-react";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
-export function getRotationData(ticker: string) {
+export function getRotationData(ticker: string, dynamicChange?: number) {
   const clean = ticker.replace(".JK", "");
   const data: Record<string, { topHits: number; dropHits: number; path: string; label: string; trend: "up" | "down" | "stable" }> = {
     ADRO: { topHits: 28, dropHits: 2, path: "↗▲↗", label: "Konsisten Peak", trend: "up" },
@@ -38,64 +39,43 @@ export function getRotationData(ticker: string) {
     TPIA: { topHits: 12, dropHits: 29, path: "▼↗▼", label: "Volatil", trend: "stable" },
   };
 
-  return data[clean] || { topHits: 4, dropHits: 10, path: "→▼→", label: "Sideway", trend: "stable" as const };
+  if (data[clean]) {
+    return data[clean];
+  }
+
+  // Cari dan ekstrak data fundamental jika ada
+  const stk = STOCKS_DATA.find(s => s.ticker === clean);
+  const change = dynamicChange !== undefined ? dynamicChange : (stk ? stk.change : 0);
+  
+  // Kombinasi data riil dan faktor deterministik untuk rotasi yang realistis
+  const tHash = clean.charCodeAt(0) * 11 + (clean.charCodeAt(1) || 0) * 7;
+  const isUp = change > 0 || (change === 0 && tHash % 2 === 0);
+  
+  // Top hits & drop hits disesuaikan dengan profil pertumbuhan emiten
+  const topHits = Math.max(1, Math.floor((change + 5) * 2) + (tHash % 15));
+  const dropHits = Math.max(1, Math.floor((5 - change) * 2) + ((tHash * 2) % 12));
+  
+  const path = isUp ? (change > 1 ? "↗▲↗" : "▲↗▲") : (change < -1 ? "▼▼▼" : "→▼→");
+  const label = isUp ? (change > 2 ? "Momentum" : "Akumulasi") : (change < -2 ? "Distribusi" : "Konsolidasi");
+  const trend = isUp ? "up" : (change < -1 ? "down" : "stable") as "up" | "down" | "stable";
+
+  return { topHits, dropHits, path, label, trend };
 }
 
 interface LeadersTabProps {
   activeConfig: "prod" | "res";
   onSelectTicker: (ticker: string) => void;
-  idxUniverse?: "idx30" | "idx80";
+  portfolio?: PortfolioItem[];
+  getDynamicStock: (ticker: string) => StockData | null;
 }
 
-export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80" }: LeadersTabProps) {
+export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], getDynamicStock }: LeadersTabProps) {
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [search, setSearch] = useState("");
 
+  const activeStocksList = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
+  const processedLeaders = getProcessedLeaders(activeStocksList, activeConfig);
   const weights = activeConfig === "prod" ? CW_F : CW_B;
-
-  // Dynamically generate leader stocks based on selected universe
-  const activeStocksList = idxUniverse === "idx30" ? STOCKS_DATA.slice(0, 30) : STOCKS_DATA;
-
-  const dynamicL = activeStocksList.map((s, idx) => {
-    // Check if we can find a matching hardcoded leader from L to keep original high-fidelity values
-    const existing = L.find(l => l.ticker.replace(".JK", "") === s.ticker);
-    if (existing) return existing;
-
-    // Otherwise, generate realistic high-fidelity metrics deterministically
-    const qVal = Math.round(Math.min(99, Math.max(10, s.roe * 3.5 + (100 - s.der * 40))));
-    const gVal = Math.round(Math.min(99, Math.max(10, 50 + s.change * 8)));
-    const vVal = Math.round(Math.min(99, Math.max(10, 100 - s.peRatio * 1.5 - s.pbRatio * 4.5)));
-    const mVal = Math.round(Math.min(99, Math.max(10, 50 + s.change * 11.5)));
-    
-    return {
-      rank: String(idx + 1),
-      ticker: s.ticker + ".JK",
-      quality: String(qVal),
-      growth: String(gVal),
-      value: String(vVal),
-      momentum: String(mVal),
-      final_score: "50.0"
-    };
-  });
-
-  // Compute final score dynamically based on factors and active configs weights
-  const computeScore = (stock: typeof L[0]) => {
-    const qVal = parseFloat(stock.quality) || 0;
-    const gVal = parseFloat(stock.growth) || 0;
-    const vVal = parseFloat(stock.value) || 0;
-    const mVal = parseFloat(stock.momentum) || 0;
-    return qVal * weights.quality + gVal * weights.growth + vVal * weights.value + mVal * weights.momentum;
-  };
-
-  const processedLeaders = dynamicL.map((stock) => {
-    const calculatedScore = computeScore(stock);
-    const rkVal = RK[stock.ticker] || RK[stock.ticker + ".JK"] || 0;
-    return {
-      ...stock,
-      score: parseFloat(calculatedScore.toFixed(2)),
-      rankChange: rkVal,
-    };
-  }).sort((a, b) => b.score - a.score);
 
   const filteredLeaders = processedLeaders.filter(
     (item) =>
@@ -115,14 +95,14 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
           <div>
             <h2 className="text-sm md:text-lg font-serif italic text-white tracking-tight flex items-center gap-1.5 md:gap-2">
               <Sliders className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />
-              {activeConfig === "prod" ? "Config F: Fundamental Focus Leaders" : "Config B: Backtest Optimized Leaders"}
+              {activeConfig === "prod" ? "Strategi A: Saham Fundamental Terbaik" : "Strategi B: Saham Teknis Terbaik"}
             </h2>
             <p className="text-[9.5px] sm:text-xs text-white/50 mt-1">
-              Active Weights: Qd: <span className="text-white font-semibold">{(weights.quality * 100)}%</span> • Gw: <span className="text-white font-semibold">{(weights.growth * 100)}%</span> • Vl: <span className="text-white font-semibold">{(weights.value * 100)}%</span> • Mm: <span className="text-white font-semibold">{(weights.momentum * 100)}%</span>
+              Bobot Analisis: Kualitas: <span className="text-white font-semibold">{(weights.quality * 100)}%</span> • Pertumbuhan: <span className="text-white font-semibold">{(weights.growth * 100)}%</span> • Valuasi: <span className="text-white font-semibold">{(weights.value * 100)}%</span> • Momentum: <span className="text-white font-semibold">{(weights.momentum * 100)}%</span>
             </p>
           </div>
           <div className="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
-            <span className="text-[8px] sm:text-[10px] text-white/40 uppercase block font-bold tracking-widest">Top 5 average score</span>
+            <span className="text-[8px] sm:text-[10px] text-white/40 uppercase block font-bold tracking-widest">Skor Rata-Rata 5 Teratas</span>
             <span className="text-base md:text-xl font-black font-mono text-emerald-400 block mt-0.5">{avgTop5Score.toFixed(1)}</span>
           </div>
         </div>
@@ -136,7 +116,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
           <Search className="w-3.5 h-3.5 text-white/30 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Search leaders ticker..."
+            placeholder="Cari berdasarkan kode saham..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full text-[11px] pl-8.5 pr-3.5 py-2 bg-white/5 focus:bg-white/[0.08] border border-white/10 rounded-xl font-semibold outline-none text-white focus:ring-1 focus:ring-emerald-500 transition-all font-mono"
@@ -151,7 +131,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
               viewMode === "table" ? "bg-emerald-500 text-black font-bold" : "text-white/50 hover:text-white"
             }`}
           >
-            <Table className="w-3 h-3" /> Matrix Tab
+            <Table className="w-3 h-3" /> Tabel Matriks
           </button>
           <button
             onClick={() => setViewMode("cards")}
@@ -159,7 +139,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
               viewMode === "cards" ? "bg-emerald-500 text-black font-bold" : "text-white/50 hover:text-white"
             }`}
           >
-            <LayoutGrid className="w-3 h-3" /> Cards View
+            <LayoutGrid className="w-3 h-3" /> Tampilan Kartu
           </button>
         </div>
 
@@ -180,66 +160,71 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
             <div className="overflow-x-auto text-xs">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10 text-[9px] md:text-[10px] font-bold text-[#E0E0E0]/40 uppercase tracking-widest bg-white/[0.01]">
-                    <th className="py-2.5 md:py-4 px-3 md:px-5">Rank</th>
-                    <th className="py-2.5 md:py-4 px-2">Ticker / Sinyal</th>
-                    <th className="py-2.5 md:py-4 px-3 text-center hidden md:table-cell">Quality</th>
-                    <th className="py-2.5 md:py-4 px-3 text-center hidden md:table-cell">Growth</th>
-                    <th className="py-2.5 md:py-4 px-3 text-center hidden md:table-cell">Value</th>
-                    <th className="py-2.5 md:py-4 px-3 text-center hidden md:table-cell">Momentum</th>
-                    <th className="py-2.5 md:py-4 px-3 text-left">Rotasi Pasar</th>
-                    <th className="py-2.5 md:py-4 px-3 md:px-5 text-right font-black">Score</th>
+                  <tr className="border-b border-white/10 text-[8px] md:text-[9px] font-bold text-[#E0E0E0]/40 uppercase tracking-widest bg-white/[0.01]">
+                    <th className="py-2 px-2 md:px-4">Rank</th>
+                    <th className="py-2 px-2">Ticker / Sinyal</th>
+                    <th className="py-2 px-2 text-center hidden md:table-cell">Quality</th>
+                    <th className="py-2 px-2 text-center hidden md:table-cell">Growth</th>
+                    <th className="py-2 px-2 text-center hidden md:table-cell">Value</th>
+                    <th className="py-2 px-2 text-center hidden md:table-cell">Momentum</th>
+                    <th className="py-2 px-2 text-left">Rotasi Pasar</th>
+                    <th className="py-2 px-2 md:px-4 text-right font-black">Score</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-[11px] md:text-xs font-mono font-medium">
+                <tbody className="divide-y divide-white/5 text-[10px] md:text-[11px] font-mono font-medium">
                   {filteredLeaders.map((item, idx) => {
                     const clean = item.ticker.replace(".JK", "");
-                    const rot = getRotationData(item.ticker);
+                    const liveStk = activeStocksList.find(s => s.ticker === clean);
+                    const rot = getRotationData(item.ticker, liveStk?.change);
+                    const isInPorto = portfolio.some(p => p.ticker === clean);
                     return (
                       <tr 
                         key={item.ticker} 
-                        className="hover:bg-white/[0.03] active:bg-white/[0.05] transition-all cursor-pointer"
+                        className={`transition-all cursor-pointer ${isInPorto ? "bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30" : "hover:bg-white/[0.03] active:bg-white/[0.05]"}`}
                         onClick={() => onSelectTicker(clean)}
                       >
-                        <td className="py-2 px-3 md:px-5 font-bold text-white/50">
-                          #{idx + 1}
+                        <td className="py-1.5 px-2 md:px-4 font-bold text-white/50">
+                          #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}
                         </td>
-                        <td className="py-2 px-2 font-black text-white text-xs md:text-sm tracking-wide">
-                          <div className="flex items-center min-w-[130px] md:min-w-[160px] justify-between gap-1">
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="inline-block w-9 font-black text-white">{clean}</span>
-                              <span className="inline-flex w-11 shrink-0">
+                        <td className="py-1.5 px-2 font-black text-white text-[10px] md:text-xs tracking-wide">
+                          <div className="flex items-center min-w-[120px] md:min-w-[140px] justify-between gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className={`inline-flex items-center gap-1 w-10 font-black ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                                {clean}
+                                {isInPorto && <BookmarkCheck className="w-2.5 h-2.5 shrink-0" />}
+                              </span>
+                              <span className="inline-flex w-10 shrink-0">
                                 {item.rankChange > 0 && (
-                                  <span className="text-[8px] font-bold text-emerald-450 text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                  <span className="text-[7px] font-bold text-emerald-450 text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
                                     <TrendingUp className="w-2 h-2" /> +{item.rankChange}
                                   </span>
                                 )}
                                 {item.rankChange < 0 && (
-                                  <span className="text-[8px] font-bold text-rose-500 text-rose-400 bg-rose-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                  <span className="text-[7px] font-bold text-rose-500 text-rose-400 bg-rose-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
                                     <TrendingDown className="w-2 h-2" /> {item.rankChange}
                                   </span>
                                 )}
                               </span>
                             </div>
-                            <div className="w-[60px] shrink-0 flex justify-end">
+                            <div className="w-[50px] shrink-0 flex justify-end">
                               {(() => {
                                 const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
                                 if (matchEX?.exit_state === "EXIT") {
                                   return (
-                                    <span className="text-[8px] font-black text-white bg-rose-600 px-1.5 py-0.5 rounded animate-pulse shadow-sm uppercase tracking-wider font-sans text-center block w-full leading-normal">
+                                    <span className="text-[7px] font-black text-white bg-rose-600 px-1 py-0.5 rounded animate-pulse shadow-sm uppercase tracking-wider font-sans text-center block w-full leading-normal">
                                       🔴 EXIT
                                     </span>
                                   );
                                 }
                                 if (matchEX?.exit_state === "EXIT RISK") {
                                   return (
-                                    <span className="text-[8px] font-bold text-amber-450 text-amber-400 bg-amber-500/15 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider font-sans text-center block w-full leading-normal">
+                                    <span className="text-[7px] font-bold text-amber-450 text-amber-400 bg-amber-500/15 border border-amber-500/20 px-1 py-0.5 rounded uppercase tracking-wider font-sans text-center block w-full leading-normal">
                                       ⚠️ RISK
                                     </span>
                                   );
                                 }
                                 return (
-                                  <span className="text-[8px] text-white/5 font-bold tracking-widest font-mono text-center block w-full leading-normal">
+                                  <span className="text-[7px] text-white/5 font-bold tracking-widest font-mono text-center block w-full leading-normal">
                                     —
                                   </span>
                                 );
@@ -247,15 +232,15 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
                             </div>
                           </div>
                         </td>
-                        <td className="py-2 px-3 text-center text-white/85 hidden md:table-cell">{item.quality}</td>
-                        <td className="py-2 px-3 text-center text-white/85 hidden md:table-cell">{item.growth}</td>
-                        <td className="py-2 px-3 text-center text-white/85 hidden md:table-cell">{item.value}</td>
-                        <td className="py-2 px-3 text-center text-white/85 hidden md:table-cell">{item.momentum}</td>
+                        <td className="py-1.5 px-2 text-center text-white/85 hidden md:table-cell">{item.quality}</td>
+                        <td className="py-1.5 px-2 text-center text-white/85 hidden md:table-cell">{item.growth}</td>
+                        <td className="py-1.5 px-2 text-center text-white/85 hidden md:table-cell">{item.value}</td>
+                        <td className="py-1.5 px-2 text-center text-white/85 hidden md:table-cell">{item.momentum}</td>
                         
                         {/* ROTATION STATS MATRIX COLUMN */}
-                        <td className="py-2 px-3">
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
-                            <span className={`text-[8.5px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider flex items-center gap-1 ${
+                        <td className="py-1.5 px-2">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1.5">
+                            <span className={`text-[7px] md:text-[8px] px-1 py-0.5 rounded font-black uppercase tracking-wider flex items-center gap-0.5 ${
                               rot.trend === "up" 
                                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
                                 : rot.trend === "down" 
@@ -271,7 +256,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
                           </div>
                         </td>
 
-                        <td className="py-2 px-3 md:px-5 text-right font-black text-emerald-400 font-sans text-xs md:text-sm">
+                        <td className="py-1.5 px-2 md:px-4 text-right font-black text-emerald-400 font-sans text-[10px] md:text-sm">
                           {item.score.toFixed(1)}
                         </td>
                       </tr>
@@ -293,18 +278,25 @@ export function LeadersTab({ activeConfig, onSelectTicker, idxUniverse = "idx80"
           >
             {filteredLeaders.map((item, idx) => {
               const clean = item.ticker.replace(".JK", "");
-              const rot = getRotationData(item.ticker);
+              const liveStk = activeStocksList.find(s => s.ticker === clean);
+              const rot = getRotationData(item.ticker, liveStk?.change);
+              const isInPorto = portfolio.some(p => p.ticker === clean);
               return (
                 <div
                   key={item.ticker}
                   onClick={() => onSelectTicker(clean)}
-                  className="bg-[#0A0A0A] border border-white/5 hover:border-white/20 p-3.5 rounded-xl transition-all hover:bg-white/[0.01] cursor-pointer"
+                  className={`border p-3.5 rounded-xl transition-all cursor-pointer ${
+                    isInPorto
+                      ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/20"
+                      : "bg-[#0A0A0A] border-white/5 hover:border-white/20 hover:bg-white/[0.01]"
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-2.5">
                     <div>
-                      <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Rank #{idx + 1}</span>
-                      <h4 className="text-sm font-black text-white tracking-wide mt-1 flex flex-wrap items-center gap-1.5 leading-none">
+                      <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Rank #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}</span>
+                      <h4 className={`text-sm font-black tracking-wide mt-1 flex flex-wrap items-center gap-1.5 leading-none ${isInPorto ? "text-amber-400" : "text-white"}`}>
                         <span>{clean}</span>
+                        {isInPorto && <BookmarkCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                         {item.rankChange !== 0 && (
                           <span className={`text-[8px] px-1 py-0.5 rounded font-mono ${item.rankChange > 0 ? "text-emerald-400 bg-emerald-500/10" : "text-rose-450 text-rose-400 bg-rose-500/10"}`}>
                             {item.rankChange > 0 ? "+" : ""}{item.rankChange}

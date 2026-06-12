@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { AIAssistant } from "./AIAssistant";
 import { StockData } from "../types";
+import { SearchableSelect } from "./SearchableSelect";
 import { Activity, ShieldCheck, Database, Cpu, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 
 interface DiagnosticsTabProps {
   activeStock: StockData;
+  availableStocks: StockData[];
+  onSelectStock: (ticker: string) => void;
 }
 
-export function DiagnosticsTab({ activeStock }: DiagnosticsTabProps) {
+export function DiagnosticsTab({ activeStock, availableStocks, onSelectStock }: DiagnosticsTabProps) {
   return (
     <div className="space-y-6">
       
@@ -66,11 +69,20 @@ export function DiagnosticsTab({ activeStock }: DiagnosticsTabProps) {
 
       {/* 3. GEMINI EXPERT CHAT VIEW ADVISOR */}
       <div className="space-y-3">
-        <h3 className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/40 px-1 flex items-center gap-1.5 mt-8 mb-2">
-          <MessageSquare className="w-4 h-4 text-[#E0E0E0]/50" />
-          Quantitative Consultations Chat Room
-        </h3>
-        <AIAssistant stock={activeStock} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8 mb-2 px-1">
+          <h3 className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/40 flex items-center gap-1.5">
+            <MessageSquare className="w-4 h-4 text-[#E0E0E0]/50" />
+            Quantitative Consultations Chat Room
+          </h3>
+          <div className="w-full sm:w-64">
+            <SearchableSelect
+              value={activeStock.ticker}
+              options={availableStocks.map((s) => ({ value: s.ticker, label: `${s.ticker} - ${s.name}` }))}
+              onChange={(val) => onSelectStock(val)}
+            />
+          </div>
+        </div>
+        <AIAssistant key={activeStock.ticker} stock={activeStock} />
       </div>
 
     </div>

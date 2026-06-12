@@ -12,22 +12,34 @@ interface AIAssistantProps {
 }
 
 export function AIAssistant({ stock }: AIAssistantProps) {
+  const isWatchlist = stock.ticker === "WATCHLIST";
+
+  const welcomeMessage = isWatchlist
+    ? `Selamat datang! Saya asisten AI Anda untuk analisis portofolio. Saya bisa menganalisis kumpulan saham di Daftar Pantau Anda.
+
+Apa yang ingin Anda tanyakan tentang daftar pantauan Anda hari ini?`
+    : `Selamat datang! Saya asisten AI Anda untuk analisis saham. Saya bisa membantu menganalisis laporan keuangan, tren makroekonomi, dan pergerakan pasar saham Indonesia. 
+      
+Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari ini?`;
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: `Selamat datang! I am your Indonesia Stock Intelligence analyst. I specialize in IDX company analysis, financial statements audits, and macroeconomic trends. 
-      
-How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
+      content: welcomeMessage,
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const presets = [
-    { label: "Analyze Debt Margin", query: `Analyze PT ${stock.name}'s balance sheet safety and its Debt to Equity pattern over 2023-2026.` },
-    { label: "BI Interest Rate Impact", query: `How do changes in the BI-Rate (Bank Indonesia interest rate) and inflation affect PT ${stock.name} or general ${stock.sector} sector?` },
-    { label: "Audit Profit Trend", query: `Evaluate PT ${stock.name}'s profit margins (such as Net income vs Revenue conversion) from the recent financial report metrics.` },
+  const presets = isWatchlist ? [
+    { label: "Risiko Sektoral", query: `Tolong analisis risiko sektoral dari saham-saham dalam daftar pantau saya.` },
+    { label: "Dampak Suku Bunga BI", query: `Bagaimana pengaruh tingkat suku bunga Bank Indonesia terhadap daftar saham pantauan ini?` },
+    { label: "Evaluasi Fundamental", query: `Menurut Anda, mana saham dalam daftar pantau saya yang memiliki valuasi (PE & PBV) paling menarik saat ini?` },
+  ] : [
+    { label: "Analisis Margin Hutang", query: `Tolong analisis keamanan neraca dan pola rasio Hutang terhadap Ekuitas PT ${stock.name} selama 2023-2026.` },
+    { label: "Dampak Suku Bunga BI", query: `Bagaimana pengaruh perubahan BI-Rate (suku bunga Bank Indonesia) dan inflasi terhadap PT ${stock.name} atau secara umum sektor ${stock.sector}?` },
+    { label: "Cek Tren Keuntungan", query: `Evaluasi tren rasio laba PT ${stock.name} (seperti Margin Laba Bersih vs Pendapatan) dari laporan keuangan terbarunya.` },
   ];
 
   useEffect(() => {
@@ -55,7 +67,7 @@ How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response from Gemini advisor");
+        throw new Error("Failed to get response from AI advisor");
       }
 
       const data = await response.json();
@@ -80,12 +92,12 @@ How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
         </div>
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-1.5 font-sans">
-            Gemini Securities Analyst
-            <span className="text-[10px] bg-emerald-950/40 text-emerald-450 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
-              Advising
+            Asisten AI {isWatchlist ? 'Analis Portofolio' : 'Analis Saham'}
+            <span className="text-[10px] bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
+              {isWatchlist ? 'Aktif' : 'Membantu'}
             </span>
           </h4>
-          <p className="text-xs text-white/40">Consulting on {stock.ticker} & IDX Macro trends</p>
+          <p className="text-xs text-white/40">Diskusi seputar {isWatchlist ? 'Daftar Pantau' : stock.ticker} & kondisi pasar IHSG</p>
         </div>
       </div>
 
@@ -123,7 +135,7 @@ How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
               <Bot className="w-4 h-4 text-emerald-450 animate-pulse" />
             </div>
             <div className="p-4 rounded-2xl rounded-tl-none bg-white/[0.02] text-white/50 text-xs flex items-center gap-1.5 border border-white/10 select-none">
-              <Loader2 className="w-4 h-4 text-emerald-455 animate-spin" /> Inquiring Gemini reasoning model...
+              <Loader2 className="w-4 h-4 text-emerald-455 animate-spin" /> Menganalisis melalui Gemini AI...
             </div>
           </div>
         )}
@@ -133,7 +145,7 @@ How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
       {messages.length === 1 && !isLoading && (
         <div id="ai-presets-box" className="mt-4 pt-3 border-t border-white/5">
           <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-2 flex items-center gap-1.5">
-            <HelpCircle className="w-4 h-4 text-emerald-400" /> Frequent Inquiries
+            <HelpCircle className="w-4 h-4 text-emerald-400" /> Pertanyaan Populer
           </span>
           <div className="flex flex-wrap gap-2">
             {presets.map((preset, idx) => (
@@ -154,7 +166,7 @@ How can I assist you with **PT ${stock.name} (${stock.ticker})** today?`,
       <div id="prompt-input" className="mt-4 pt-3 border-t border-white/5 flex items-center gap-2">
         <input
           type="text"
-          placeholder={`Ask about PT ${stock.ticker}'s cash flows, market outlook, valuation ratio safety...`}
+          placeholder={isWatchlist ? "Tanyakan tentang sentimen pasar, atau strategi diversifikasi..." : `Tanyakan tentang arus kas PT ${stock.ticker}, strategi valuasi harga...`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend(input)}

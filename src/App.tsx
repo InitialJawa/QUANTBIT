@@ -9,6 +9,7 @@ import { ForwardDividendsForecast } from "./components/ForwardDividendsForecast"
 
 // Import modular Perspective Tab components
 import { MarketTab } from "./components/MarketTab";
+import { PortfolioTracker } from "./components/PortfolioTracker";
 import { LeadersTab } from "./components/LeadersTab";
 import { RecoveryOpsTab } from "./components/RecoveryOpsTab";
 import { CapitalProtectionTab } from "./components/CapitalProtectionTab";
@@ -37,7 +38,13 @@ import {
   ExternalLink,
   Sun,
   Moon,
-  Coins
+  Coins,
+  Trash2,
+  Plus,
+  Minus,
+  Briefcase,
+  Menu,
+  Settings
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -45,36 +52,59 @@ export default function App() {
   // GOAPI & Yahoo Finance Live Stock prices integration
   const [goapiPrices, setGoapiPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
   const [yahooPrices, setYahooPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
-  const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">("yahoo");
+  const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">(() => {
+    const saved = localStorage.getItem("idx_datafeed");
+    return (saved === "yahoo" || saved === "goapi" || saved === "simulated") ? saved : "yahoo";
+  });
   const [isGoapiConnected, setIsGoapiConnected] = useState(false);
   const [isYahooConnected, setIsYahooConnected] = useState(false);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Dynamic pricing fluctuation state to support rolling real-time updates
   const [priceFluctuations, setPriceFluctuations] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    // Fetch GoAPI Price Feed
-    fetch("/api/goapi/live-prices")
-      .then(res => res.json())
-      .then(apiRes => {
-        if (apiRes.success && apiRes.prices) {
-          setGoapiPrices(apiRes.prices);
-          setIsGoapiConnected(true);
-        }
-      })
-      .catch(err => console.warn("GoAPI Integration error, fallback active:", err));
+    const fetchPrices = () => {
+      // Fetch GoAPI Price Feed
+      fetch("/api/goapi/live-prices")
+        .then(res => res.json())
+        .then(apiRes => {
+          if (apiRes.success && apiRes.prices) {
+            setGoapiPrices(apiRes.prices);
+            setIsGoapiConnected(true);
+          }
+        })
+        .catch(err => console.warn("GoAPI Integration error, fallback active:", err));
 
-    // Fetch Yahoo Finance Price Feed
-    fetch("/api/yahoo/live-prices")
-      .then(res => res.json())
-      .then(apiRes => {
-        if (apiRes.success && apiRes.prices) {
-          setYahooPrices(apiRes.prices);
-          setIsYahooConnected(true);
-        }
-      })
-      .catch(err => console.warn("Yahoo Finance Integration error, fallback active:", err));
+      // Fetch Yahoo Finance Price Feed
+      fetch("/api/yahoo/live-prices")
+        .then(res => res.json())
+        .then(apiRes => {
+          if (apiRes.success && apiRes.prices) {
+            setYahooPrices(apiRes.prices);
+            setIsYahooConnected(true);
+          }
+        })
+        .catch(err => console.warn("Yahoo Finance Integration error, fallback active:", err));
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 15000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Sync real-time IHSG and USDIDR to MKT object if using Yahoo data
+  useEffect(() => {
+    if (dataFeed === "yahoo" && yahooPrices["IHSG"]) {
+      MKT.ihsg.value = yahooPrices["IHSG"].close;
+      MKT.ihsg.daily_pct = Number(yahooPrices["IHSG"].pct.toFixed(2));
+    }
+    if (dataFeed === "yahoo" && yahooPrices["USDIDR"]) {
+      MKT.usdidr.value = yahooPrices["USDIDR"].close;
+      MKT.usdidr.daily = Number(yahooPrices["USDIDR"].pct.toFixed(2));
+    }
+  }, [dataFeed, yahooPrices]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -131,19 +161,20 @@ export default function App() {
   };
 
   // Main app tab state (now matching target dashboard precisely!)
-  const [activeTab, setActiveTab] = useState<"market" | "leaders" | "turnaround" | "exit" | "simulation" | "diagnostics">("market");
+  const [activeTab, setActiveTab] = useState<"market" | "leaders" | "turnaround" | "exit" | "ledger" | "simulation" | "diagnostics">("market");
   const [hideAlertBanner, setHideAlertBanner] = useState(false);
   
   // Weights Config state ('prod' = Config F, 'res' = Config B)
-  const [activeConfig, setActiveConfig] = useState<"prod" | "res">("prod");
-
-  // Stock universe limit state ('idx30' or 'idx80')
-  const [idxUniverse, setIdxUniverse] = useState<"idx30" | "idx80">("idx80");
+  const [activeConfig, setActiveConfig] = useState<"prod" | "res">(() => {
+    const saved = localStorage.getItem("idx_activeconfig");
+    return (saved === "prod" || saved === "res") ? saved : "prod";
+  });
 
   // Selected Stock detailed drawer variables
   const [selectedTicker, setSelectedTicker] = useState("BBCA");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "gemini-ai" | "forecast">("chart");
+  const [drawerLots, setDrawerLots] = useState<number | "">("");
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -172,6 +203,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const saved = localStorage.getItem("idx_theme");
     return (saved === "light" || saved === "dark") ? saved : "dark";
@@ -181,6 +213,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("idx_theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("idx_datafeed", dataFeed);
+  }, [dataFeed]);
+
+  useEffect(() => {
+    localStorage.setItem("idx_activeconfig", activeConfig);
+  }, [activeConfig]);
 
   // Sync state loops for database lists
   useEffect(() => {
@@ -199,6 +239,10 @@ export default function App() {
   const handleSelectTicker = (ticker: string) => {
     setSelectedTicker(ticker);
     setIsDrawerOpen(true);
+  };
+
+  const handleChangeActiveTicker = (ticker: string) => {
+    setSelectedTicker(ticker);
   };
 
   // Watchlist quick toggle
@@ -234,6 +278,26 @@ export default function App() {
 
   const handleRemoveTransaction = (ticker: string) => {
     setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
+  };
+
+  const handleSellTransaction = (ticker: string, sharesToSell: number) => {
+    setPortfolio(prev => {
+      const existingIdx = prev.findIndex(p => p.ticker === ticker);
+      if (existingIdx > -1) {
+        const item = prev[existingIdx];
+        if (item.shares <= sharesToSell) {
+          return prev.filter(p => p.ticker !== ticker);
+        } else {
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...item,
+            shares: item.shares - sharesToSell,
+          };
+          return updated;
+        }
+      }
+      return prev;
+    });
   };
 
   // Call Gemini deep analyzer
@@ -275,7 +339,7 @@ export default function App() {
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
 
   // Search filter listings
-  const activeUniverseStocks = idxUniverse === "idx30" ? STOCKS_DATA.slice(0, 30) : STOCKS_DATA;
+  const activeUniverseStocks = STOCKS_DATA;
   const filteredStocks = activeUniverseStocks.filter((s) => {
     const isMatched = s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -379,6 +443,18 @@ export default function App() {
             </button>
 
             <button
+              id="tab-ledger"
+              onClick={() => setActiveTab("ledger")}
+              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
+                activeTab === "ledger"
+                  ? "bg-[#2A2A2A] text-[#2563EB] font-extrabold shadow-sm border border-white/5"
+                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
+              }`}
+            >
+              <Briefcase className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500" /> Ledger
+            </button>
+
+            <button
               id="tab-simulation"
               onClick={() => setActiveTab("simulation")}
               className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
@@ -406,140 +482,145 @@ export default function App() {
         </div>
 
         {/* Brand Control Utilities & Theme Toggle panel */}
-        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center relative">
           
-          {/* Elegant theme toggle button */}
-          <button
-            onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
-            className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${
-              theme === "dark" ? "bg-white/5 hover:bg-white/10 border-white/10 text-amber-400" : "bg-black/5 hover:bg-black/10 border-black/10 text-indigo-600"
-            } border flex items-center justify-center transition-all duration-300 cursor-pointer shadow-sm active:scale-95`}
-            title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
-          >
-            {theme === "dark" ? (
-              <Sun className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin-slow" />
-            ) : (
-              <Moon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            )}
-          </button>
+          {/* Active Online badge */}
+          <div className="hidden md:flex items-center gap-1.5 bg-[#34A853]/10 border border-[#34A853]/20 px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-ping" />
+            <span className="text-[8px] md:text-[9px] font-black font-mono tracking-wider text-emerald-400 whitespace-nowrap">LIVE</span>
+          </div>
 
-          {/* Feed Status Badge */}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 ${
             dataFeed === "yahoo" && isYahooConnected ? "bg-sky-500/10 border-sky-500/20 text-sky-400" :
             dataFeed === "goapi" && isGoapiConnected ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
             "bg-amber-500/10 border-amber-500/20 text-amber-300"
-          }`} title={dataFeed === "yahoo" ? "Terkoneksi ke Yahoo Finance (Live IDX)" : dataFeed === "goapi" ? "Terkoneksi ke GoAPI.id" : "Menggunakan Simulasi Harga"}>
+          }`} title={dataFeed === "yahoo" ? "Terkoneksi ke Yahoo Finance (Live IDX)" : dataFeed === "goapi" ? "Terkoneksi ke GoAPI.io" : "Menggunakan Simulasi Harga"}>
             <span className={`w-1.5 h-1.5 rounded-full ${
               dataFeed === "yahoo" && isYahooConnected ? "bg-sky-500 animate-pulse" :
               dataFeed === "goapi" && isGoapiConnected ? "bg-emerald-500 animate-pulse" :
               "bg-amber-400"
             }`} />
             <span className="text-[8px] md:text-[9px] font-black font-mono tracking-wider uppercase">
-              {dataFeed === "yahoo" ? "Yahoo Live" : dataFeed === "goapi" ? "GoAPI Live" : "Simulasi"}
+              {dataFeed === "yahoo" ? "Yahoo" : dataFeed === "goapi" ? "GoAPI" : "Simulasi"}
             </span>
           </div>
 
-          {/* Active Online badge */}
-          <div className="flex items-center gap-1.5 bg-[#34A853]/10 border border-[#34A853]/20 px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-ping" />
-            <span className="text-[8px] md:text-[9px] font-black font-mono tracking-wider text-emerald-400 whitespace-nowrap">LIVE</span>
-          </div>
+          {/* Settings Menu Toggle */}
+          <button 
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className="w-8 h-8 rounded-full border border-white/10 hover:bg-white/10 flex items-center justify-center transition-all bg-[#121212] z-50 relative"
+          >
+            {isSettingsOpen ? <X className="w-4 h-4 text-white" /> : <Settings className="w-4 h-4 text-white/70" />}
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="lg:hidden p-2 text-white/50 hover:text-white transition-colors"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {/* Settings Dropdown */}
+          <AnimatePresence>
+            {isSettingsOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-12 right-0 w-64 bg-[#0A0A0A] border border-white/10 shadow-xl rounded-2xl p-4 z-50 flex flex-col gap-4"
+              >
+                {/* Configuration Toggle */}
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Model Konfigurasi</span>
+                  <div className="flex items-center bg-[#121212] border border-white/5 rounded-lg p-1">
+                    <button
+                      onClick={() => setActiveConfig("prod")}
+                      className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        activeConfig === "prod" ? "bg-[#2563EB]/20 text-[#2563EB] shadow-sm" : "text-white/40 hover:text-white"
+                      }`}
+                    >
+                      Config F
+                    </button>
+                    <button
+                      onClick={() => setActiveConfig("res")}
+                      className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        activeConfig === "res" ? "bg-[#2563EB]/20 text-[#2563EB] shadow-sm" : "text-white/40 hover:text-white"
+                      }`}
+                    >
+                      Config B
+                    </button>
+                  </div>
+                </div>
+
+                {/* Theme Toggle */}
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Tema Aplikasi</span>
+                  <div className="flex items-center bg-[#121212] border border-white/5 rounded-lg p-1">
+                    <button
+                      onClick={() => setTheme("dark")}
+                      className={`flex-1 flex gap-1.5 items-center justify-center py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        theme === "dark" ? "bg-[#F59E0B]/10 text-amber-400 shadow-sm" : "text-white/40 hover:text-white"
+                      }`}
+                    >
+                      <Moon className="w-3 h-3" /> Gelap
+                    </button>
+                    <button
+                      onClick={() => setTheme("light")}
+                      className={`flex-1 flex gap-1.5 items-center justify-center py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        theme === "light" ? "bg-sky-500/10 text-sky-400 shadow-sm" : "text-white/40 hover:text-white"
+                      }`}
+                    >
+                      <Sun className="w-3 h-3" /> Terang
+                    </button>
+                  </div>
+                </div>
+
+                {/* Data Feed Selector */}
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Live Market Data Feed</span>
+                  <div className="flex flex-col gap-1 bg-[#121212] border border-white/5 p-1 rounded-lg">
+                    <button
+                      onClick={() => setDataFeed("yahoo")}
+                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        dataFeed === "yahoo" ? "bg-sky-500/10 text-sky-400" : "text-[#E0E0E0]/35 hover:text-white"
+                      }`}
+                    >
+                      Yahoo Finance Feed
+                    </button>
+                    <button
+                      onClick={() => setDataFeed("goapi")}
+                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        dataFeed === "goapi" ? "bg-emerald-500/10 text-emerald-400" : "text-[#E0E0E0]/35 hover:text-white"
+                      }`}
+                    >
+                      GoAPI.io Feed
+                    </button>
+                    <button
+                      onClick={() => setDataFeed("simulated")}
+                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
+                        dataFeed === "simulated" ? "bg-white/10 text-white" : "text-[#E0E0E0]/35 hover:text-white"
+                      }`}
+                    >
+                      Simulasi Harga (Offline)
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
 
       </header>
 
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden lg:min-h-0 relative">
         
         {/* LEFT BAR NAV & QUICK ACCESS */}
-        <aside id="main-sidebar" className="w-full lg:w-80 bg-[#0A0A0A] border-r border-white/10 shrink-0 flex flex-col justify-between overflow-hidden">
-          <div className="flex flex-col flex-1 overflow-y-auto py-4 gap-4 scrollbar-thin">
+        <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex absolute inset-0 z-50 bg-[#0A0A0A]' : 'hidden'} lg:flex w-full lg:static lg:w-80 bg-[#0A0A0A] lg:border-r border-white/10 shrink-0 flex-col lg:overflow-hidden`}>
+          <div className="flex flex-col flex-1 overflow-y-auto lg:overflow-y-auto py-4 gap-4 scrollbar-thin">
             
-            {/* Universe selector */}
-            <div id="universe-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
-              <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest">Saham Universe</span>
-              <div className="grid grid-cols-2 gap-2 bg-black/30 p-1 rounded-xl">
-                <button
-                  onClick={() => setIdxUniverse("idx80")}
-                  className={`py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    idxUniverse === "idx80" ? "bg-white/10 text-emerald-400 font-extrabold" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                >
-                  IDX80 (Default)
-                </button>
-                <button
-                  onClick={() => setIdxUniverse("idx30")}
-                  className={`py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    idxUniverse === "idx30" ? "bg-white/10 text-emerald-400 font-extrabold" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                >
-                  IDX30
-                </button>
-              </div>
-            </div>
-
-            {/* Config selectors exactly as in target HTML aside footer */}
-            <div id="config-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
-              <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest">Weights Configuration</span>
-              <div className="grid grid-cols-2 gap-2 bg-black/30 p-1 rounded-xl">
-                <button
-                  onClick={() => setActiveConfig("prod")}
-                  className={`py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    activeConfig === "prod" ? "bg-white/10 text-emerald-400 font-extrabold" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                >
-                  Config F
-                </button>
-                <button
-                  onClick={() => setActiveConfig("res")}
-                  className={`py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    activeConfig === "res" ? "bg-white/10 text-emerald-400 font-extrabold" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                >
-                  Config B
-                </button>
-              </div>
-            </div>
-
-            {/* Live Price Feed Source Selector */}
-            <div id="feed-panel" className="p-4 mx-4 bg-gradient-to-br from-emerald-950/10 to-indigo-950/10 border border-white/5 rounded-2xl space-y-3">
-              <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest">Live Price Feed Source</span>
-              <div className="grid grid-cols-3 gap-1 bg-black/30 p-1 rounded-xl">
-                <button
-                  onClick={() => setDataFeed("yahoo")}
-                  className={`py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    dataFeed === "yahoo" ? "bg-sky-500/10 text-sky-400 font-black border border-sky-500/15" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                  title={isYahooConnected ? "Yahoo Finance Terhubung" : "Memuat data..."}
-                >
-                  Yahoo
-                </button>
-                <button
-                  onClick={() => setDataFeed("goapi")}
-                  className={`py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    dataFeed === "goapi" ? "bg-emerald-500/10 text-emerald-400 font-black border border-emerald-500/15" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                  title={isGoapiConnected ? "GoAPI Terhubung" : "GoAPI Belum Terhubung"}
-                >
-                  GoAPI
-                </button>
-                <button
-                  onClick={() => setDataFeed("simulated")}
-                  className={`py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all cursor-pointer ${
-                    dataFeed === "simulated" ? "bg-white/10 text-white font-black" : "text-[#E0E0E0]/35 hover:text-white"
-                  }`}
-                  title="Gunakan simulasi harga"
-                >
-                  Simulasi
-                </button>
-              </div>
-              <div className="text-[8px] font-mono text-white/40 text-center leading-normal">
-                {dataFeed === "yahoo" && "✓ Real-time Yahoo Finance (Tanpa API Key)"}
-                {dataFeed === "goapi" && "✓ Menggunakan API Key GoAPI.id Anda"}
-                {dataFeed === "simulated" && "✓ Mode Simulasi Tanpa Koneksi Server"}
-              </div>
-            </div>
-
             {/* Curated News Column for IDX info */}
             <div id="sidebar-news-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
               <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest flex items-center gap-1.5">
@@ -633,8 +714,9 @@ export default function App() {
                   <div className="p-2 bg-black/25 rounded-xl border border-white/5 flex flex-col justify-between">
                     <span className="text-[8.5px] font-medium text-white/40">USD / IDR</span>
                     <span className="text-[10px] font-mono font-extrabold text-[#E0E0E0] mt-0.5 font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
-                    <span className="text-[7.5px] font-mono font-bold text-emerald-400 flex items-center gap-0.5 mt-1">
-                      <TrendingDown className="w-2.5 h-2.5 shrink-0" /> Rupiah Menguat
+                    <span className={`text-[7.5px] font-mono font-bold flex items-center gap-0.5 mt-1 ${MKT.usdidr.daily <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-2.5 h-2.5 shrink-0" /> : <TrendingUp className="w-2.5 h-2.5 shrink-0" />}
+                      {MKT.usdidr.daily <= 0 ? "" : "+"}{MKT.usdidr.daily}% {MKT.usdidr.daily <= 0 ? "Rupiah Menguat" : "Rupiah Melemah"}
                     </span>
                   </div>
 
@@ -694,7 +776,7 @@ export default function App() {
         </aside>
 
         {/* WORKSPACE AREA */}
-        <main id="main-workspace" className="flex-1 p-6 sm:p-8 lg:p-10 overflow-y-auto">
+        <main id="main-workspace" className="flex-1 p-6 sm:p-8 lg:p-10 overflow-visible lg:overflow-y-auto pb-24 lg:pb-10">
           
           <div className="max-w-5xl mx-auto space-y-8">
             
@@ -748,10 +830,10 @@ export default function App() {
                     <button
                       id="action-btn-go-ledger"
                       onClick={() => {
-                        setActiveTab("simulation");
+                        setActiveTab("ledger");
                         // Scroll to tab block smoothly
                         setTimeout(() => {
-                          const element = document.getElementById("tab-simulation");
+                          const element = document.getElementById("tab-ledger");
                           if (element) {
                             element.scrollIntoView({ behavior: 'smooth' });
                           }
@@ -784,8 +866,9 @@ export default function App() {
                     watchlist={watchlist}
                     onAddTransaction={handleAddTransaction}
                     onRemoveTransaction={handleRemoveTransaction}
+                    onSellTransaction={handleSellTransaction}
                     onToggleWatchlist={handleToggleWatchlist}
-                    idxUniverse={idxUniverse}
+                    getDynamicStock={getDynamicStock}
                   />
                 </motion.div>
               )}
@@ -799,7 +882,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <LeadersTab activeConfig={activeConfig} onSelectTicker={handleSelectTicker} idxUniverse={idxUniverse} />
+                  <LeadersTab activeConfig={activeConfig} onSelectTicker={handleSelectTicker} portfolio={portfolio} getDynamicStock={getDynamicStock} />
                 </motion.div>
               )}
 
@@ -812,7 +895,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <RecoveryOpsTab onSelectTicker={handleSelectTicker} idxUniverse={idxUniverse} />
+                  <RecoveryOpsTab onSelectTicker={handleSelectTicker} portfolio={portfolio} getDynamicStock={getDynamicStock} />
                 </motion.div>
               )}
 
@@ -825,7 +908,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <CapitalProtectionTab onSelectTicker={handleSelectTicker} idxUniverse={idxUniverse} />
+                  <CapitalProtectionTab onSelectTicker={handleSelectTicker} portfolio={portfolio} getDynamicStock={getDynamicStock} />
                 </motion.div>
               )}
 
@@ -842,11 +925,35 @@ export default function App() {
                     portfolio={portfolio}
                     onAddTransaction={handleAddTransaction}
                     onRemoveTransaction={handleRemoveTransaction}
+                    onSellTransaction={handleSellTransaction}
                     onSelectTicker={handleSelectTicker}
                     getDynamicStock={getDynamicStock}
                     theme={theme}
                     activeConfig={activeConfig}
-                    idxUniverse={idxUniverse}
+                    defaultSubTab="past"
+                  />
+                </motion.div>
+              )}
+
+              {/* Perspective NEW: Live Ledger Isolated Tab */}
+              {activeTab === "ledger" && (
+                <motion.div
+                  key="ledger-perspective"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <PortfolioTracker
+                    portfolio={portfolio}
+                    watchlist={watchlist}
+                    onAddTransaction={handleAddTransaction}
+                    onRemoveTransaction={handleRemoveTransaction}
+                    onSellTransaction={handleSellTransaction}
+                    onSelectStock={handleSelectTicker}
+                    onToggleWatchlist={handleToggleWatchlist}
+                    getDynamicStock={getDynamicStock}
+                    activeConfig={activeConfig}
                   />
                 </motion.div>
               )}
@@ -860,7 +967,11 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <DiagnosticsTab activeStock={activeStock} />
+                  <DiagnosticsTab 
+                    activeStock={activeStock} 
+                    availableStocks={activeUniverseStocks.map(s => getDynamicStock(s.ticker) || s)} 
+                    onSelectStock={handleChangeActiveTicker} 
+                  />
                 </motion.div>
               )}
 
@@ -894,24 +1005,85 @@ export default function App() {
               {/* Drawer Content */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Header highlighting ticker */}
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl ${activeStock.logoColor || "bg-[#3b82f6]"} flex items-center justify-center font-black text-xs text-white`}>
-                      {activeStock.ticker}
+                <div className="p-6 border-b border-white/5 flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl ${activeStock.logoColor || "bg-[#3b82f6]"} flex items-center justify-center font-black text-xs text-white`}>
+                        {activeStock.ticker}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-serif italic text-white flex items-center gap-2">
+                          PT {activeStock.name} <span className="text-emerald-400">({activeStock.ticker})</span>
+                        </h3>
+                        <p className="text-[10px] text-[#E0E0E0]/50 mt-1 uppercase tracking-widest">{activeStock.sector}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-serif italic text-white flex items-center gap-2">
-                        PT {activeStock.name} <span className="text-emerald-400">({activeStock.ticker})</span>
-                      </h3>
-                      <p className="text-[10px] text-[#E0E0E0]/50 mt-1 uppercase tracking-widest">{activeStock.sector}</p>
-                    </div>
+                    <button
+                      onClick={() => setIsDrawerOpen(false)}
+                      className="p-1 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white cursor-pointer transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="p-1 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white cursor-pointer transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  
+                  {/* Quick Portfolio Actions */}
+                  <div className="pt-4 border-t border-white/5 flex items-center gap-3 flex-wrap">
+                    {(() => {
+                      const inPorto = portfolio.find(p => p.ticker === activeStock.ticker);
+                      return (
+                        <div className="flex items-center gap-2">
+                          {inPorto && (
+                            <div className="flex flex-col gap-0.5 mr-2 text-xs font-mono">
+                              <span className="text-white/50 text-[10px]">Dimiliki:</span>
+                              <span className="text-emerald-400 font-bold">{(inPorto.shares / 100).toLocaleString('id-ID')} Lot</span>
+                            </div>
+                          )}
+                          <input
+                            type="number"
+                            min="1"
+                            value={drawerLots}
+                            onChange={(e) => setDrawerLots(e.target.value ? parseInt(e.target.value) : "")}
+                            placeholder="Jml Lot"
+                            className="w-24 px-3 py-2 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white text-xs font-mono font-bold rounded-xl text-center"
+                          />
+                          <button
+                            onClick={() => {
+                              if (drawerLots && drawerLots > 0) {
+                                handleAddTransaction(activeStock.ticker, drawerLots * 100, activeStock.currentPrice);
+                                setDrawerLots("");
+                              }
+                            }}
+                            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all font-mono flex items-center gap-2 ${drawerLots && drawerLots > 0 ? "bg-emerald-500 hover:bg-emerald-600 text-black cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-white/5 text-white/30 cursor-not-allowed"}`}
+                          >
+                            <Plus className="w-4 h-4 stroke-[3px]" /> Beli
+                          </button>
+                          
+                          {inPorto && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  if (drawerLots && drawerLots > 0) {
+                                    handleSellTransaction(activeStock.ticker, drawerLots * 100);
+                                    setDrawerLots("");
+                                  }
+                                }}
+                                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all font-mono flex items-center gap-2 ${drawerLots && drawerLots > 0 ? "bg-rose-500 hover:bg-rose-600 text-white cursor-pointer shadow-[0_0_15px_rgba(244,63,94,0.3)]" : "bg-white/5 text-white/30 cursor-not-allowed"}`}
+                              >
+                                <Minus className="w-4 h-4 stroke-[3px]" /> Jual
+                              </button>
+                              <button
+                                onClick={() => handleRemoveTransaction(activeStock.ticker)}
+                                className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold rounded-xl transition-all cursor-pointer font-mono flex items-center gap-2"
+                                title="Hapus Semua dari Portofolio"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 {/* Scopes Navigation inside Drawer */}

@@ -27,11 +27,13 @@ interface SimulationTabProps {
   portfolio: PortfolioItem[];
   onAddTransaction: (ticker: string, shares: number, buyPrice: number) => void;
   onRemoveTransaction: (ticker: string) => void;
+  onSellTransaction?: (ticker: string, sharesToSell: number) => void;
   onSelectTicker: (ticker: string) => void;
   getDynamicStock: (ticker: string) => StockData;
   theme?: "dark" | "light";
   activeConfig?: "prod" | "res";
-  idxUniverse?: "idx30" | "idx80";
+  defaultSubTab?: "past" | "algo" | "ledger";
+  hideTabs?: boolean;
 }
 
 interface HistoricalPriceMap {
@@ -109,20 +111,34 @@ const TICKER_COLORS: Record<string, string> = {
   GOTO: "#22c55e", // Lime Green
 };
 
-const generateBacktestData = (configType: "prod" | "res"): BacktestDayData[] => {
-  const milestonesStr = [
-    { date: "2020-01-01", ihsg: 6300, gold: 800000, stocks: { BBCA: 6000, BBRI: 3600, BMRI: 3400, TLKM: 3800, ASII: 6200, ADRO: 1200, PTBA: 2500, ESSA: 300, GOTO: 300 } },
-    { date: "2020-03-24", ihsg: 3937, gold: 950000, stocks: { BBCA: 4400, BBRI: 2150, BMRI: 2050, TLKM: 2500, ASII: 3300, ADRO: 600, PTBA: 1400, ESSA: 110, GOTO: 300 } },
-    { date: "2020-12-31", ihsg: 5979, gold: 965000, stocks: { BBCA: 6700, BBRI: 4170, BMRI: 3250, TLKM: 3310, ASII: 6025, ADRO: 1430, PTBA: 2810, ESSA: 180, GOTO: 300 } },
-    { date: "2021-12-31", ihsg: 6581, gold: 938000, stocks: { BBCA: 7300, BBRI: 4110, BMRI: 3530, TLKM: 4040, ASII: 5725, ADRO: 2250, PTBA: 2710, ESSA: 515, GOTO: 370 } },
-    { date: "2022-09-13", ihsg: 7318, gold: 942000, stocks: { BBCA: 8500, BBRI: 4600, BMRI: 4500, TLKM: 4600, ASII: 7200, ADRO: 4000, PTBA: 4200, ESSA: 1100, GOTO: 280 } },
-    { date: "2022-12-31", ihsg: 6850, gold: 1026000, stocks: { BBCA: 8550, BBRI: 4940, BMRI: 4950, TLKM: 3750, ASII: 5700, ADRO: 3595, PTBA: 3690, ESSA: 915, GOTO: 91 } },
-    { date: "2023-12-31", ihsg: 7272, gold: 1130000, stocks: { BBCA: 9400, BBRI: 5725, BMRI: 6050, TLKM: 3950, ASII: 5650, ADRO: 2380, PTBA: 2440, ESSA: 530, GOTO: 86 } },
-    { date: "2024-12-31", ihsg: 7227, gold: 1450000, stocks: { BBCA: 10000, BBRI: 4300, BMRI: 7000, TLKM: 3750, ASII: 5000, ADRO: 2500, PTBA: 2500, ESSA: 520, GOTO: 65 } },
-    { date: "2025-06-30", ihsg: 6900, gold: 1650000, stocks: { BBCA: 9800, BBRI: 4100, BMRI: 6400, TLKM: 3100, ASII: 4400, ADRO: 2100, PTBA: 2200, ESSA: 550, GOTO: 50 } },
-    { date: "2025-12-31", ihsg: 8676, gold: 1950000, stocks: { BBCA: 11200, BBRI: 5500, BMRI: 8100, TLKM: 3900, ASII: 5400, ADRO: 3300, PTBA: 3100, ESSA: 950, GOTO: 80 } },
-    { date: "2026-06-11", ihsg: 5886.03, gold: 2310000, stocks: { BBCA: 5825, BBRI: 2850, BMRI: 4250, TLKM: 2870, ASII: 4700, ADRO: 2250, PTBA: 2630, ESSA: 605, GOTO: 50 } }
+const generateBacktestData = (configType: "prod" | "res", stocksData: StockData[]): BacktestDayData[] => {
+  const dates = [
+    "2020-01-01", "2020-03-24", "2020-12-31", "2021-12-31",
+    "2022-09-13", "2022-12-31", "2023-12-31", "2024-12-31",
+    "2025-06-30", "2025-12-31", "2026-06-11"
   ];
+  const ihsgPath = [6300, 3937, 5979, 6581, 7318, 6850, 7272, 7227, 6900, 8676, 5886.03];
+  const goldPath = [800000, 950000, 965000, 938000, 942000, 1026000, 1130000, 1450000, 1650000, 1950000, 2310000];
+
+  const milestonesStr = dates.map((date, i) => {
+    const stocks: Record<string, number> = {};
+    stocksData.forEach(stk => {
+      // Procedurally generate historical milestone price based on currentPrice, to make it realistic 
+      // without needing 80 hardcoded arrays.
+      const seed = stk.ticker.charCodeAt(0) + (stk.ticker.charCodeAt(1) || 0) + i;
+      const volatility = 0.5; // +/- 50% max historical drift
+      const pseudoRandom = ((Math.sin(seed * 1.5) + 1) / 2); // 0 to 1
+      const pathFactor = Math.pow(ihsgPath[i] / 5886.03, 1.2); // correlate somewhat with IHSG
+      const finalPrice = Math.max(50, stk.currentPrice * pathFactor * (1 + (pseudoRandom - 0.5) * volatility));
+      stocks[stk.ticker] = i === dates.length - 1 ? stk.currentPrice : finalPrice;
+    });
+    return {
+      date,
+      ihsg: ihsgPath[i],
+      gold: goldPath[i],
+      stocks
+    };
+  });
 
   const milestones = milestonesStr.map(m => ({
     time: new Date(m.date).getTime(),
@@ -201,7 +217,18 @@ const generateBacktestData = (configType: "prod" | "res"): BacktestDayData[] => 
     const tickers = Object.keys(simulatedStocks);
     
     const scoredTickers = tickers.map((ticker) => {
-      const factors = STOCK_FACTORS[ticker] || [50, 50, 50, 50];
+      let factors = STOCK_FACTORS[ticker];
+      if (!factors) {
+        // Generate pseudo-random stable factors for unknown stocks based on their ticker string
+        const tHash = ticker.charCodeAt(0) * 11 + (ticker.charCodeAt(1) || 0) * 7;
+        factors = [
+          40 + (tHash % 50),     // quality
+          30 + ((tHash * 2) % 65), // growth
+          20 + ((tHash * 3) % 75), // value
+          35 + ((tHash * 5) % 60)  // momentum
+        ];
+      }
+
       let score = factors[0] * weights.quality + 
                   factors[1] * weights.growth + 
                   factors[2] * weights.value + 
@@ -252,13 +279,15 @@ export function SimulationTab({
   portfolio,
   onAddTransaction,
   onRemoveTransaction,
+  onSellTransaction,
   onSelectTicker,
   getDynamicStock,
   theme,
   activeConfig = "prod",
-  idxUniverse = "idx80"
+  defaultSubTab = "past",
+  hideTabs = false
 }: SimulationTabProps) {
-  const visibleStocks = idxUniverse === "idx30" ? STOCKS_DATA.slice(0, 30) : STOCKS_DATA;
+  const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   // 1. Backtest state matching Stockbit UI
   const [simTicker, setSimTicker] = useState("BBCA");
   const [simTimeline, setSimTimeline] = useState("5y");
@@ -269,9 +298,14 @@ export function SimulationTab({
   const [tradeShares, setTradeShares] = useState(100);
   const [tradePrice, setTradePrice] = useState(10100);
   const [isAddingPosition, setIsAddingPosition] = useState(false);
+  const [sellLotsState, setSellLotsState] = useState<Record<string, number | "">>({});
 
   // Sub tab navigation state
-  const [activeSubTab, setActiveSubTab] = useState<"past" | "algo" | "ledger">("past");
+  const [activeSubTab, setActiveSubTab] = useState<"past" | "algo" | "ledger">(defaultSubTab);
+
+  useEffect(() => {
+    setActiveSubTab(defaultSubTab);
+  }, [defaultSubTab]);
 
   // Algorithmic Backtester state
   const [algoCapital, setAlgoCapital] = useState("100000000"); // 100 Juta IDR default
@@ -472,7 +506,7 @@ export function SimulationTab({
     
     setTimeout(async () => {
       setBacktestProgress(45);
-      
+
       let rawData: BacktestDayData[] = [];
       try {
         const res = await fetch(`/api/backtest-data?configType=${backtestConfigType}`);
@@ -480,11 +514,11 @@ export function SimulationTab({
         if (apiRes.success && Array.isArray(apiRes.data)) {
           rawData = apiRes.data;
         } else {
-          rawData = generateBacktestData(backtestConfigType);
+          rawData = generateBacktestData(backtestConfigType, visibleStocks);
         }
       } catch (err) {
         console.warn("Backtest backend error, fallback to client generation: ", err);
-        rawData = generateBacktestData(backtestConfigType);
+        rawData = generateBacktestData(backtestConfigType, visibleStocks);
       }
 
       setBacktestProgress(85);
@@ -776,7 +810,7 @@ export function SimulationTab({
       if (apiRes.success && Array.isArray(apiRes.data)) {
         rawData = apiRes.data;
       } else {
-        rawData = generateBacktestData(backtestConfigType);
+        rawData = generateBacktestData(backtestConfigType, visibleStocks);
       }
 
       const stockKeys = ["BBCA", "BBRI", "BMRI", "TLKM", "ASII", "ADRO", "PTBA", "ESSA", "GOTO"];
@@ -809,57 +843,51 @@ export function SimulationTab({
     <div className="space-y-8">
       
       {/* HEADER SECTION */}
-      <div className="border-b border-white/5 pb-5">
-        <h2 className="text-xl font-serif italic text-white tracking-tight flex items-center gap-2">
-          <Award className="w-5 h-5 text-emerald-400 animate-pulse" />
-          Interactive Trading & Backtest Laboratory
-        </h2>
-        <p className="text-xs text-white/40 mt-1">
-          Bandingkan performa investasi harian sejak 2020 dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
-        </p>
-      </div>
+      {!hideTabs && (
+        <div className="border-b border-white/5 pb-5">
+          <h2 className="text-xl font-serif italic text-white tracking-tight flex items-center gap-2">
+            <Award className="w-5 h-5 text-emerald-400 animate-pulse" />
+            Interactive Trading & Backtest Laboratory
+          </h2>
+          <p className="text-xs text-white/40 mt-1">
+            Bandingkan performa investasi harian sejak 2020 dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
+          </p>
+        </div>
+      )}
 
       {/* SUB-TABS NAVIGATION BAR */}
-      <div className="flex border border-white/10 bg-white/[0.02] p-1 rounded-xl gap-1">
-        <button
-          onClick={() => setActiveSubTab("past")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            activeSubTab === "past"
-              ? "bg-[#D97706]/20 border border-[#D97706]/35 text-[#F59E0B]"
-              : "text-white/50 hover:text-white/80 hover:bg-white/5"
-          }`}
-        >
-          <Coins className="w-4 h-4" />
-          Simulasi Saham Tunggal (Ala Stockbit)
-        </button>
-        <button
-          onClick={() => {
-            setActiveSubTab("algo");
-            if (!backtestResult) {
-              handleRunAlgoBacktest(); // auto-simulate first time they enter
-            }
-          }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            activeSubTab === "algo"
-              ? "bg-emerald-500/20 border border-emerald-500/35 text-emerald-400"
-              : "text-white/50 hover:text-white/80 hover:bg-white/5"
-          }`}
-        >
-          <Award className="w-4 h-4 animate-bounce" />
-          Backtest Algo Realtime (Sejak 2020)
-        </button>
-        <button
-          onClick={() => setActiveSubTab("ledger")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-            activeSubTab === "ledger"
-              ? "bg-[#2563EB]/25 border border-[#2563EB]/40 text-blue-400"
-              : "text-white/50 hover:text-white/80 hover:bg-white/5"
-          }`}
-        >
-          <Briefcase className="w-4 h-4" />
-          Live Ledger Hari Ini
-        </button>
-      </div>
+      {!hideTabs && (
+        <div className="flex border border-white/10 bg-white/[0.02] p-1 rounded-xl gap-1">
+          <button
+            onClick={() => setActiveSubTab("past")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeSubTab === "past"
+                ? "bg-[#D97706]/20 border border-[#D97706]/35 text-[#F59E0B]"
+                : "text-white/50 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            <Coins className="w-4 h-4" />
+            Simulasi Saham Tunggal (Ala Stockbit)
+          </button>
+          <button
+            onClick={() => {
+              setActiveSubTab("algo");
+              if (!backtestResult) {
+                handleRunAlgoBacktest(); // auto-simulate first time they enter
+              }
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeSubTab === "algo"
+                ? "bg-emerald-500/20 border border-emerald-500/35 text-emerald-400"
+                : "text-white/50 hover:text-white/80 hover:bg-white/5"
+            }`}
+          >
+            <Award className="w-4 h-4 animate-bounce" />
+            Backtest Algo Realtime (Sejak 2020)
+          </button>
+          
+        </div>
+      )}
 
       {/* RENDER ACTIVE SUBTAB CONTENT */}
       {activeSubTab === "past" && (
@@ -1384,7 +1412,8 @@ export function SimulationTab({
                     {/* Stock Multi-Toggle Pill Buttons */}
                     <div className="flex flex-wrap gap-1.5 p-3 bg-[#080808] border border-white/5 rounded-xl">
                       <span className="text-[9px] uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
-                      {Object.keys(STOCK_FACTORS).map((ticker) => {
+                      {visibleStocks.slice(0, 15).map((stk) => {
+                        const ticker = stk.ticker;
                         const isSelected = activeRankTickers.includes(ticker);
                         return (
                           <button
@@ -1406,7 +1435,7 @@ export function SimulationTab({
                           >
                             <span 
                               className="w-2 h-2 rounded-full inline-block" 
-                              style={{ backgroundColor: TICKER_COLORS[ticker] || "#ffffff" }}
+                              style={{ backgroundColor: TICKER_COLORS[ticker] || stk.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981" }}
                             />
                             {ticker}
                           </button>
@@ -1432,8 +1461,8 @@ export function SimulationTab({
                             dx={-8} 
                             tick={{ fill: "#666" }} 
                             reversed={true} 
-                            domain={[1, 9]} 
-                            tickCount={9}
+                            domain={[1, visibleStocks.length]} 
+                            tickCount={10}
                             formatter={(val) => `Rank ${val}`}
                           />
                           <Tooltip
@@ -1445,24 +1474,32 @@ export function SimulationTab({
                             }}
                             itemStyle={{ padding: "1px 0" }}
                             labelStyle={{ color: "#888", marginBottom: "4px" }}
-                            formatter={(value: any, name: any) => [
-                              `Peringkat ${value}`,
-                              <span style={{ color: TICKER_COLORS[name] || "#fff" }}>{name}</span>
-                            ]}
+                            formatter={(value: any, name: any) => {
+                              const stk = visibleStocks.find(s => s.ticker === name);
+                              const tColor = TICKER_COLORS[name] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
+                              return [
+                                `Peringkat ${value}`,
+                                <span style={{ color: tColor }}>{name}</span>
+                              ];
+                            }}
                           />
                           <Legend verticalAlign="top" height={36} iconType="circle" />
-                          {activeRankTickers.map((ticker) => (
-                            <Line
-                              key={ticker}
-                              type="monotone"
-                              dataKey={ticker}
-                              name={ticker}
-                              stroke={TICKER_COLORS[ticker] || "#ffffff"}
-                              strokeWidth={2}
-                              dot={false}
-                              activeDot={{ r: 4 }}
-                            />
-                          ))}
+                          {activeRankTickers.map((ticker) => {
+                            const stk = visibleStocks.find(s => s.ticker === ticker);
+                            const tColor = TICKER_COLORS[ticker] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
+                            return (
+                              <Line
+                                key={ticker}
+                                type="monotone"
+                                dataKey={ticker}
+                                name={ticker}
+                                stroke={tColor}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{ r: 4 }}
+                              />
+                            );
+                          })}
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -1511,329 +1548,7 @@ export function SimulationTab({
         </section>
       )}
 
-      {/* BLOCK C: LIVE RE-CALCULATING HOLDINGS LEDGER */}
-      {activeSubTab === "ledger" && (
-        <section className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 space-y-6">
-          
-          {/* Module Title with Sim Trigger */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/5">
-            <div className="flex items-center gap-2.5">
-              <Briefcase className="w-5 h-5 text-[#2563EB]" />
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                  Input Portfolio Hari Ini (Live Ledger)
-                </h3>
-                <p className="text-[11px] text-white/35 mt-0.5">
-                  Simpan input transaksi Anda hari ini dan biarkan memperbarui nilainya secara real-time terus menerus.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-[8px] tracking-widest text-emerald-400 animate-pulse font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 block animate-ping" /> LIVE FLUID UPDATES RUNNING
-              </span>
-              <button
-                onClick={() => {
-                  setIsAddingPosition(!isAddingPosition);
-                  handleLedgerTickerChange(tradeTicker);
-                }}
-                className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 font-bold text-black text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-center"
-              >
-                <Plus className="w-4 h-4 text-black stroke-[3px]" /> Catat Transaksi Hari Ini
-              </button>
-            </div>
-          </div>
-
-          {/* Live dynamic ticker inputs drawer form */}
-          <AnimatePresence>
-            {isAddingPosition && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-5 bg-white/5 border border-white/10 rounded-xl space-y-4 overflow-hidden"
-              >
-                <h4 className="text-xs uppercase font-bold tracking-wider text-white">Formulir Catat Pembelian Baru</h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  
-                  {/* Select stock */}
-                  <div>
-                    <span className="text-[10px] text-white/40 block mb-1.5 uppercase font-bold">Pilih Emiten</span>
-                    <SearchableSelect
-                      options={[
-                        ...visibleStocks.map(stk => ({ value: stk.ticker, label: `${stk.ticker} - ${stk.name}` })),
-                        { value: "ESSA", label: "ESSA - Essa Industries" },
-                        { value: "PTBA", label: "PTBA - Bukit Asam" },
-                        { value: "BBNI", label: "BBNI - Bank Negara Indo" },
-                        { value: "TPIA", label: "TPIA - Chandra Asri" }
-                      ].filter((opt, index, self) => index === self.findIndex(t => t.value === opt.value))}
-                      value={tradeTicker}
-                      onChange={(val) => handleLedgerTickerChange(val)}
-                      theme="emerald"
-                    />
-                  </div>
-
-                  {/* Amount shares */}
-                  <div>
-                    <span className="text-[10px] text-white/40 block mb-1.5 uppercase font-bold">Jumlah Lembar Saham</span>
-                    <input
-                      type="number"
-                      value={tradeShares}
-                      onChange={(e) => setTradeShares(Math.max(1, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs p-2 bg-[#050505] border border-white/10 focus:border-emerald-500 outline-none text-white font-mono font-bold rounded-xl"
-                    />
-                    <span className="text-[9px] text-[#A0A0A0] mt-1.5 block font-sans">
-                      Faksi Lot Indonesia: <span className="text-emerald-400">{(tradeShares / 100).toFixed(2)} Lot</span>
-                    </span>
-                  </div>
-
-                  {/* Buy pricing */}
-                  <div>
-                    <span className="text-[10px] text-white/40 block mb-1.5 uppercase font-bold">Harga Beli Rata-Rata (IDR)</span>
-                    <input
-                      type="number"
-                      value={tradePrice}
-                      onChange={(e) => setTradePrice(Math.max(1, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs p-2 bg-[#050505] border border-white/10 focus:border-emerald-500 outline-none text-white font-mono font-bold rounded-xl"
-                    />
-                    <span className="text-[9px] text-white/30 mt-1.5 block font-sans">
-                      Harga Marker Spot: <span className="text-white/60 font-mono">Rp {getDynamicStock(tradeTicker)?.currentPrice?.toLocaleString("id-ID")}</span>
-                    </span>
-                  </div>
-
-                </div>
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingPosition(false)}
-                    className="px-4 py-2 hover:bg-white/5 rounded-xl border border-white/10 text-xs text-white/70 cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={() => {
-                      onAddTransaction(tradeTicker, tradeShares, tradePrice);
-                      setIsAddingPosition(false);
-                    }}
-                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-black cursor-pointer"
-                  >
-                    Confirm Transaksi
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Live updating summary statistics widgets */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1 font-mono">
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block font-sans">Modal Pembelian Ledger</span>
-              <span className="text-sm font-bold text-white mt-1 block">
-                {formatRupiah(portfolioSummary.totalCost)}
-              </span>
-            </div>
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block font-sans">Nilai Evaluasi Pembaruan</span>
-              <span className="text-sm font-bold text-white mt-1 block animate-pulse">
-                {formatRupiah(portfolioSummary.currentVal)}
-              </span>
-            </div>
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block font-sans">Volume Hasil Profit/Loss</span>
-              <span className={`text-sm font-bold mt-1 block ${portfolioSummary.returnVal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {portfolioSummary.returnVal >= 0 ? "+" : ""}{formatRupiah(portfolioSummary.returnVal)}
-              </span>
-            </div>
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block font-sans">Persentase Hasil Hasil</span>
-              <span className={`text-sm font-black mt-1 block ${portfolioSummary.returnVal >= 0 ? "text-emerald-300" : "text-rose-400"}`}>
-                {portfolioSummary.returnVal >= 0 ? "+" : ""}{portfolioSummary.returnPct.toFixed(2)}%
-              </span>
-            </div>
-          </div>
-
-          {/* RISK GUARD & REBALANCE NOTIFICATION SYSTEM */}
-          {(ledgerAlerts.isIHSGInCrisis || ledgerAlerts.stockAlerts.length > 0) ? (
-            <div className="p-5 bg-gradient-to-r from-rose-500/10 to-amber-500/10 border border-rose-500/15 rounded-2xl space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                </span>
-                <h4 className="text-xs uppercase font-extrabold tracking-wider text-rose-400 font-mono">
-                  Sinyal Proteksi Modal &amp; Rebalancing Aktif Terdeteksi!
-                </h4>
-              </div>
-
-              <div className="space-y-3">
-                {/* 1. Macro Cashout / Gold Trigger */}
-                {ledgerAlerts.isIHSGInCrisis && (
-                  <div className="bg-rose-500/5 border border-rose-500/15 p-3.5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-black bg-rose-500/15 text-rose-400 px-2.5 py-0.5 rounded uppercase tracking-wide">
-                        ⚠️ MACRO IHSG CRASH WARNING
-                      </span>
-                      <p className="text-xs text-white/90 font-sans leading-relaxed mt-1">
-                        IHSG ambruk <span className="text-rose-400 font-bold font-mono">{ledgerAlerts.ihsgMonthlyPct.toFixed(2)}%</span> dalam sebulan terakhir (Indeks: <span className="font-mono text-white">{ledgerAlerts.ihsgCurrentValue.toLocaleString("id-ID")}</span>). Risiko sistemik pasar saham sangat tinggi!
-                      </p>
-                      <p className="text-[10px] text-white/40 font-sans leading-normal">
-                        Sistem merekomendasikan menghentikan pembelian saham baru, segera melakukan <span className="text-amber-400">Cashout</span> ke kas rupiah, atau memindahkan dana cadangan ke <span className="text-amber-400 font-bold">Emas Fisik</span> untuk mengunci ketebalan modal.
-                      </p>
-                    </div>
-                    {portfolio.length > 0 && (
-                      <button
-                        onClick={() => {
-                          portfolio.forEach(item => onRemoveTransaction(item.ticker));
-                          alert("Aset berhasil diamankan! Seluruh portofolio telah dilikuidasi ke Kas/Emas untuk memitigasi Crash IHSG.");
-                        }}
-                        className="text-[10px] font-bold bg-[#D97706]/80 hover:bg-[#D97706] text-white px-4 py-2 rounded-xl border border-amber-500/30 shadow-lg hover:shadow-xl transition-all cursor-pointer font-sans shrink-0 uppercase tracking-widest"
-                      >
-                        ⚡ Amankan ke Emas / Kas
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. Stock Rank 7 Drop / Exit Rules triggers */}
-                {ledgerAlerts.stockAlerts.map((stk) => (
-                  <div key={stk.ticker} className="bg-amber-500/5 border border-amber-500/15 p-3.5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded uppercase tracking-wide">
-                          🔔 EMITEN {stk.exit_state} SIGNAL
-                        </span>
-                        <span className="text-[10px] font-bold text-white font-mono">#{stk.ticker}</span>
-                      </div>
-                      <p className="text-xs text-white/90 font-sans leading-relaxed mt-1">
-                        Saham <span className="text-amber-400 font-bold">{stk.ticker}</span> memicu pemicu keluar <strong className="text-rose-450 text-rose-400">Rule {stk.rules}</strong> dengan akumulasi drawdown mencapai <span className="text-rose-400 font-bold font-mono">{stk.drawdown}%</span> dari harga beli awal.
-                      </p>
-                      <p className="text-[10px] text-white/40 font-sans leading-normal">
-                        Berdasarkan kriteria Algoritma, emiten ini telah mengalami pembusukan momentum (Rank &ge;7). Direkomendasikan melakukan rebalancing/rotasi keluar segera ke emiten Rank prima.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        onRemoveTransaction(stk.ticker);
-                        alert(`Rotasi Berhasil! Posisi #${stk.ticker} dilikuidasi untuk direposisi.`);
-                      }}
-                      className="text-[10px] font-bold bg-[#2563EB]/80 hover:bg-[#2563EB] text-white px-4 py-2 rounded-xl transition-all cursor-pointer font-sans shrink-0 uppercase tracking-widest border border-blue-500/30 shadow-lg hover:shadow-xl hover:scale-[1.02]"
-                    >
-                      🔄 Rebalance (Jual)
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-2xl flex items-center gap-3">
-              <span className="text-lg">🛡️</span>
-              <div className="text-xs text-white/70 leading-relaxed font-sans">
-                <span className="text-emerald-400 font-bold">Kapital Protektif Aman (Normal):</span> Seluruh saham yang dipantau dalam ledger Anda saat ini berada dalam status sehat (<span className="text-emerald-300 font-semibold font-mono">HEALTHY</span>). IHSG juga terpantau aman dan tidak berada dalam fase crash darurat.
-              </div>
-            </div>
-          )}
-
-          {/* Holdings dynamic list table */}
-          <div className="overflow-x-auto pt-2">
-            <table className="w-full text-left text-xs font-sans">
-              <thead>
-                <tr className="border-b border-white/15 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                  <th className="pb-3 pr-4">Aset Saham</th>
-                  <th className="pb-3 px-4 font-mono text-center">Jumlah Lembar</th>
-                  <th className="pb-3 px-4 font-mono text-right">Avg Buy Price</th>
-                  <th className="pb-3 px-4 font-mono text-right">Harga Sekarang</th>
-                  <th className="pb-3 px-4 font-mono text-right">Profit / Loss (IDR)</th>
-                  <th className="pb-3 pl-4 text-right">Aksi Ledger</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 font-mono">
-                {portfolio.map((item) => {
-                  const cleanTicker = item.ticker.toUpperCase().replace(".JK", "");
-                  const liveStock = getDynamicStock(cleanTicker);
-                  const lastPrice = liveStock ? liveStock.currentPrice : item.buyPrice;
-                  const cost = item.shares * item.buyPrice;
-                  const marketValue = item.shares * lastPrice;
-                  const profitLossValue = marketValue - cost;
-                  const plPctRatio = cost > 0 ? (profitLossValue / cost) * 100 : 0;
-
-                  return (
-                    <tr key={item.ticker} className="hover:bg-white/[0.02]">
-                      {/* Ticker Name details */}
-                      <td className="py-4 pr-4 flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg ${liveStock?.logoColor || "bg-blue-600"} border border-white/10 flex items-center justify-center font-black text-[10px] shrink-0 text-white font-sans`}>
-                          {cleanTicker}
-                        </div>
-                        <div>
-                          <span 
-                            className="font-bold text-white block hover:underline cursor-pointer" 
-                            onClick={() => onSelectTicker(cleanTicker)}
-                          >
-                            {cleanTicker}
-                          </span>
-                          <span className="text-[10px] text-[#A0A0A0] font-sans block mt-0.5">{liveStock?.name || "Corporate Asset"}</span>
-                        </div>
-                      </td>
-
-                      {/* Shared and lot quantities */}
-                      <td className="py-4 px-4 font-mono text-center text-white/80">
-                        <div>{item.shares.toLocaleString("id-ID")}</div>
-                        <div className="text-[9px] text-[#A0A0A0] font-sans mt-0.5">{(item.shares / 100).toLocaleString("id-ID")} Lot</div>
-                      </td>
-
-                      {/* Entry Avg Beli list details */}
-                      <td className="py-4 px-4 font-mono text-right text-white/70">
-                        {formatRupiah(item.buyPrice)}
-                      </td>
-
-                      {/* Last prices updating live */}
-                      <td className="py-4 px-4 font-mono text-right text-emerald-400 font-bold animate-pulse">
-                        {formatRupiah(lastPrice)}
-                      </td>
-
-                      {/* Return absolute & percentage values changing on screens */}
-                      <td className="py-4 px-4 font-mono text-right">
-                        <span className={`block font-bold ${profitLossValue >= 0 ? "text-emerald-400" : "text-rose-455 text-rose-400"}`}>
-                          {profitLossValue >= 0 ? "+" : ""}{formatRupiah(profitLossValue)}
-                        </span>
-                        <span className={`text-[10px] block mt-0.5 font-sans font-medium ${profitLossValue >= 0 ? "text-emerald-300" : "text-rose-400"}`}>
-                          {profitLossValue >= 0 ? "+" : ""}{plPctRatio.toFixed(2)}%
-                        </span>
-                      </td>
-
-                      {/* Delete holding list button */}
-                      <td className="py-4 pl-4 text-right">
-                        <button
-                          onClick={() => onRemoveTransaction(item.ticker)}
-                          className="p-1.5 px-3 hover:bg-rose-500/15 text-rose-400 hover:text-white border border-rose-500/10 hover:border-rose-500/30 rounded-lg text-[10px] font-bold font-sans cursor-pointer transition-all"
-                        >
-                          Likuidasi / Hapus
-                        </button>
-                      </td>
-
-                    </tr>
-                  );
-                })}
-
-                {portfolio.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-xs text-white/45 font-sans leading-relaxed">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <AlertCircle className="w-5 h-5 text-white/25" />
-                        <p>Belum ada aset simulasi terdaftar dalam ledger aktif hari ini.</p>
-                        <p className="text-[10px] text-white/30 font-light">Klik tombol <strong className="text-emerald-400 font-bold">Catat Transaksi Hari Ini</strong> untuk merekam transaksi pembelian.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-        </section>
-      )}
+      
 
     </div>
   );

@@ -1,43 +1,51 @@
 import { useState } from "react";
 import { EX, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check } from "lucide-react";
+import { StockData, PortfolioItem } from "../types";
+import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck } from "lucide-react";
 import { motion } from "motion/react";
 
 interface CapitalProtectionTabProps {
   onSelectTicker: (ticker: string) => void;
-  idxUniverse?: "idx30" | "idx80";
+  portfolio?: PortfolioItem[];
+  getDynamicStock: (ticker: string) => StockData | null;
 }
 
-export function CapitalProtectionTab({ onSelectTicker, idxUniverse = "idx80" }: CapitalProtectionTabProps) {
+export function CapitalProtectionTab({ onSelectTicker, portfolio = [], getDynamicStock }: CapitalProtectionTabProps) {
   const [search, setSearch] = useState("");
 
-  const activeStocks = idxUniverse === "idx30" ? STOCKS_DATA.slice(0, 30) : STOCKS_DATA;
+  const activeStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
 
   const dynamicExits = activeStocks.map((s, idx) => {
     const existing = EX.find(e => e.ticker.replace(".JK", "") === s.ticker);
-    if (existing) return existing;
-
-    // Generate realistic exit metrics
+    
+    // Generate realistic dynamic metrics or fallback to existing
     const textHash = s.ticker.charCodeAt(0) + (s.ticker.charCodeAt(1) || 0);
     const close = s.currentPrice.toFixed(1);
-    const rs_20d = (s.change * 4 + (textHash % 18) - 9).toFixed(2);
-    const rs_change_20d = (s.change * 1.5 + (textHash % 8) - 4).toFixed(2);
-    const ma20 = (s.currentPrice * (1 + (textHash % 8 - 4) / 100)).toFixed(2);
-    const ma50 = (s.currentPrice * (1 + (textHash % 12 - 6) / 100)).toFixed(2);
-    const ma100 = (s.currentPrice * (1 + (textHash % 16 - 8) / 100)).toFixed(2);
     
+    // Evaluate live drop using actual live change data (e.g. from GoAPI)
     const drop = s.change;
     let exit_state = "HEALTHY";
     let triggered_rules = "NONE";
     
-    if (drop < -2.2) {
+    if (drop <= -2.2) {
       exit_state = "EXIT";
       triggered_rules = "B, C, D";
-    } else if (drop < -0.5) {
+    } else if (drop <= -0.5) {
       exit_state = "EXIT RISK";
       triggered_rules = "C";
     }
+
+    if (existing) {
+      return { ...existing, close, drawdown_from_entry: drop.toFixed(2), exit_state, triggered_rules };
+    }
+    
+    // Generate pseudo-data matched with actual stock change
+    const rs_20d = (drop * 3 + (textHash % 10) - 5).toFixed(2);
+    const rs_change_20d = (drop * 1.5 + (textHash % 5) - 2).toFixed(2);
+    const ma20 = (parseFloat(close) * (1 + (textHash % 5) * 0.01)).toFixed(1);
+    const ma50 = (parseFloat(close) * (1 + (textHash % 8) * 0.015)).toFixed(1);
+    const ma100 = (parseFloat(close) * (1 + (textHash % 12) * 0.02)).toFixed(1);
 
     return {
       Date: "2026-06-11",
@@ -84,14 +92,14 @@ export function CapitalProtectionTab({ onSelectTicker, idxUniverse = "idx80" }: 
           <div>
             <h2 className="text-lg font-serif italic text-white tracking-tight flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-rose-500" />
-              Capital Protection &amp; Risk Guard
+              Sistem Manajemen Risiko
             </h2>
             <p className="text-xs text-white/50 mt-1 max-w-xl">
-              Automatic trailing alerts, momentum exit clauses, and moving average cross triggers. Capital deployment is locked at <span className="text-emerald-400 font-bold">{RS.capital_deployment}%</span>.
+              Peringatan keluar otomatis berdasarkan momentum dan persilangan garis teknikal pelindung harga rata-rata. Modal teralokasi dalam pasar: <span className="text-emerald-400 font-bold">{RS.capital_deployment}%</span>.
             </p>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-[10px] text-[#E0E0E0]/40 uppercase font-bold tracking-widest">Active exit signals</span>
+            <span className="text-[10px] text-[#E0E0E0]/40 uppercase font-bold tracking-widest">Sinyal Peringatan Aktif</span>
             <span className="text-xl font-black font-mono text-rose-500 mt-1 block">
               {dynamicExits.filter(e => e.exit_state === "EXIT" || e.exit_state === "EXIT RISK").length} / {dynamicExits.length} Tickers
             </span>
@@ -103,19 +111,19 @@ export function CapitalProtectionTab({ onSelectTicker, idxUniverse = "idx80" }: 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
         <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-1">
           <span className="font-extrabold text-rose-400 font-mono text-[10px]">RULE A</span>
-          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Exit indicator triggers if 20D Relative Strength falls below -25% momentum index.</p>
+          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Aktif jika Kekuatan Relatif (RS) 20 Hari turun melewati level -25% momentum indeks.</p>
         </div>
         <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-1">
           <span className="font-extrabold text-[#E0E0E0]/80 font-mono text-[10px]">RULE B</span>
-          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Exit warning active if closing price breaks below the key 50D Support Average.</p>
+          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Peringatan aktif jika harga penutupan turun menembus garis rata-rata rata MA50.</p>
         </div>
         <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-1">
           <span className="font-extrabold text-[#E0E0E0]/80 font-mono text-[10px]">RULE C</span>
-          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Defensive reduction if 20D price drop exceeds -10% from active entry milestones.</p>
+          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Sinyal pertahanan jika penurunan harga rata rata 20 hari menembus -10%.</p>
         </div>
         <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-1">
           <span className="font-extrabold text-[#E0E0E0]/80 font-mono text-[10px]">RULE D</span>
-          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Strong liquidate block if closing price slips below the master 100D Bullish Rail.</p>
+          <p className="text-[11px] text-[#E0E0E0]/60 leading-normal">Sinyal rawan jual jika harga penutupan merosot di bawah jalur kuat MA100.</p>
         </div>
       </div>
 
@@ -124,7 +132,7 @@ export function CapitalProtectionTab({ onSelectTicker, idxUniverse = "idx80" }: 
         <Search className="w-4 h-4 text-white/30 absolute left-3.5 top-3" />
         <input
           type="text"
-          placeholder="Search corporate security alarms..."
+          placeholder="Cari emiten pantauan risiko..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full text-xs pl-9 pr-4 py-2.5 bg-white/5 focus:bg-white/[0.08] border border-white/10 rounded-xl font-semibold outline-none text-white focus:ring-1 focus:ring-emerald-500 transition-all font-mono"
@@ -136,17 +144,25 @@ export function CapitalProtectionTab({ onSelectTicker, idxUniverse = "idx80" }: 
         {filtered.map((item) => {
           const clean = item.ticker.replace(".JK", "");
           const isHealthy = item.exit_state === "HEALTHY";
+          const isInPorto = portfolio.some(p => p.ticker === clean);
 
           return (
             <div
               key={item.ticker}
               onClick={() => onSelectTicker(clean)}
-              className="bg-[#0A0A0A] border border-white/5 hover:border-white/20 p-5 rounded-2xl shadow-sm hover:bg-white/[0.01] transition-all cursor-pointer flex flex-col justify-between"
+              className={`border p-5 rounded-2xl shadow-sm transition-all cursor-pointer flex flex-col justify-between ${
+                isInPorto 
+                  ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/20" 
+                  : "bg-[#0A0A0A] border-white/5 hover:border-white/20 hover:bg-white/[0.01]"
+              }`}
             >
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h4 className="text-base font-black text-white tracking-widest">{clean}</h4>
+                    <h4 className={`text-base font-black tracking-widest flex items-center gap-2 ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                      {clean}
+                      {isInPorto && <BookmarkCheck className="w-4 h-4 text-amber-500 shrink-0" />}
+                    </h4>
                     <span className="text-[10px] text-white/35 block mt-1">Audit Date: {item.Date}</span>
                   </div>
                   <span className={`text-[9px] font-black px-2.5 py-1 rounded border ${getBadgeClass(item.exit_state)}`}>

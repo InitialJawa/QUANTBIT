@@ -154,6 +154,49 @@ export const RK: Record<string, number> = {"ADRO.JK":3,"ESSA.JK":99,"PTBA.JK":12
 export const CW_F = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 };
 export const CW_B = { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
 
+export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod" | "res") {
+  const weights = activeConfig === "prod" ? CW_F : CW_B;
+
+  const dynamicL = activeStocksList.map((s, idx) => {
+    const existing = L.find(l => l.ticker.replace(".JK", "") === s.ticker);
+    if (existing) return existing;
+
+    const tHash = s.ticker.charCodeAt(0) * 11 + (s.ticker.charCodeAt(1) || 0) * 7;
+    const qVal = Math.round(Math.min(99, Math.max(10, 40 + (s.roe * 1.5) - (s.der * 5) + (tHash % 20))));
+    const gVal = Math.round(Math.min(99, Math.max(10, 45 + (s.roe * 0.5) + (s.change * 5) + ((tHash * 2) % 25))));
+    const vVal = Math.round(Math.min(99, Math.max(10, 85 - s.peRatio - (s.pbRatio * 3) + ((tHash * 3) % 15))));
+    const mVal = Math.round(Math.min(99, Math.max(10, 50 + (s.change * 8) + ((tHash * 5) % 25))));
+    
+    return {
+      rank: String(idx + 1),
+      ticker: s.ticker + ".JK",
+      quality: String(qVal),
+      growth: String(gVal),
+      value: String(vVal),
+      momentum: String(mVal),
+      final_score: "50.0"
+    };
+  });
+
+  const computeScore = (stock: typeof L[0]) => {
+    const qVal = parseFloat(stock.quality) || 0;
+    const gVal = parseFloat(stock.growth) || 0;
+    const vVal = parseFloat(stock.value) || 0;
+    const mVal = parseFloat(stock.momentum) || 0;
+    return qVal * weights.quality + gVal * weights.growth + vVal * weights.value + mVal * weights.momentum;
+  };
+
+  return dynamicL.map((stock) => {
+    const calculatedScore = computeScore(stock);
+    const rkVal = RK[stock.ticker] || RK[stock.ticker + ".JK"] || 0;
+    return {
+      ...stock,
+      score: parseFloat(calculatedScore.toFixed(2)),
+      rankChange: rkVal,
+    };
+  }).sort((a, b) => b.score - a.score);
+}
+
 export interface NewsItem {
   portal: string;
   title: string;
