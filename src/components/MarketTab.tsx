@@ -4,6 +4,7 @@ import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { AIAssistant } from "./AIAssistant";
 import { SearchableSelect } from "./SearchableSelect";
+import { TickerLogo } from "./TickerLogo";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   TrendingUp, 
@@ -28,6 +29,7 @@ import {
 
 interface MarketTabProps {
   onSelectTicker: (ticker: string) => void;
+  onChangeActiveTicker?: (ticker: string) => void;
   activeStock: StockData;
   portfolio: PortfolioItem[];
   watchlist: WatchlistItem[];
@@ -40,6 +42,7 @@ interface MarketTabProps {
 
 export function MarketTab({ 
   onSelectTicker, 
+  onChangeActiveTicker,
   activeStock,
   portfolio,
   watchlist,
@@ -186,7 +189,13 @@ export function MarketTab({
         dividendYield: 0,
         description: watchlist.length > 0
           ? `Kumpulan saham dalam daftar pantau: ${watchlist.map(w => w.ticker).join(", ")}. Analisis tren, risiko, dan korelasi antar saham-saham ini.`
-          : "Daftar pantau masih kosong."
+          : "Daftar pantau masih kosong.",
+        logoColor: "bg-blue-600",
+        marketCap: 0,
+        metrics: [],
+        chartDataDaily: [],
+        chartDataWeekly: [],
+        chartDataMonthly: [],
       }
     : currentDepthStock;
 
@@ -532,22 +541,23 @@ export function MarketTab({
               
               <div className="flex items-center gap-2.5 w-full sm:w-auto">
                 <span className="text-[10px] text-white/40 font-mono shrink-0">Pilih Saham:</span>
-                <select
-                  value={depthTicker}
-                  onChange={(e) => {
-                    const nextVal = e.target.value;
-                    setDepthTicker(nextVal);
-                    onSelectTicker(nextVal); // Also sync parent highlight
-                  }}
-                  className="bg-black text-[11px] font-mono font-bold text-emerald-400 border border-white/10 px-3 py-1.5 rounded-lg outline-none cursor-pointer focus:border-emerald-500/40 w-full sm:w-40"
-                >
-                  {visibleStocks.map(stk => (
-                    <option key={stk.ticker} value={stk.ticker}>
-                      {stk.ticker} - {stk.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[10px] text-white/40 font-mono shrink-0 hidden sm:inline">
+                <div className="w-full sm:w-64">
+                  <SearchableSelect
+                    value={depthTicker}
+                    options={visibleStocks.map(stk => ({
+                      value: stk.ticker,
+                      label: `${stk.ticker} - ${stk.name}`,
+                      logoColor: stk.logoColor
+                    }))}
+                    onChange={(val) => {
+                      setDepthTicker(val);
+                      if (onChangeActiveTicker) {
+                        onChangeActiveTicker(val);
+                      }
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] text-white/40 font-mono shrink-0 hidden sm:inline text-right min-w-[70px]">
                   Rp {currentDepthStock.currentPrice.toLocaleString("id-ID")}
                 </span>
               </div>
@@ -616,11 +626,13 @@ export function MarketTab({
             </h3>
 
             <div className="space-y-4 font-mono">
-              {RS.volume_details.map((vol, idx) => {
-                const isLonjakan = vol.includes("Lonjakan") || vol.includes("Wajar");
+              {RS.volume_details
+                .filter(vol => vol.includes("Lonjakan") || vol.includes("Penurunan"))
+                .map((vol, idx) => {
+                const isHighlight = vol.includes("Lonjakan") || vol.includes("Penurunan");
                 return (
                   <div key={idx} className="flex items-start gap-3.5 pb-3 border-b border-white/5 last:border-0 last:pb-0 text-xs">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 ${isLonjakan && vol.includes("Lonjakan") ? "bg-amber-400 animate-ping" : "bg-emerald-500"}`} />
+                    <div className={`w-2 h-2 rounded-full mt-1.5 ${isHighlight ? "bg-amber-400 animate-ping" : "bg-emerald-500"}`} />
                     <div className="flex-1">
                       <div className="flex justify-between items-baseline">
                         <span className="font-semibold text-[#E0E0E0] tracking-wide font-mono">
@@ -632,12 +644,9 @@ export function MarketTab({
                         {vol.split(":")[1] || vol}
                       </p>
                     </div>
-                    <button
-                      onClick={() => onSelectTicker(vol.split(".JK")[0]?.trim() || "BBCA")}
-                      className="text-[10px] font-sans bg-white/5 hover:bg-emerald-500 hover:text-black border border-white/10 px-2 py-0.5 rounded cursor-pointer transition-all self-center text-white/70"
-                    >
+                    <div className="text-[10px] font-sans bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/30 self-center">
                       Inspect Ticker
-                    </button>
+                    </div>
                   </div>
                 );
               })}
@@ -671,7 +680,9 @@ export function MarketTab({
                  />
                </div>
             </div>
-            <AIAssistant key={aiAssistantStock.ticker} stock={aiAssistantStock} />
+            <div key={aiAssistantStock.ticker}>
+              <AIAssistant stock={aiAssistantStock} />
+            </div>
           </div>
 
         </div>
@@ -689,7 +700,7 @@ export function MarketTab({
             <div className="w-full sm:w-48">
               <SearchableSelect
                 value={watchlistTicker}
-                options={visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}` }))}
+                options={visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}`, logoColor: s.logoColor }))}
                 onChange={(val) => setWatchlistTicker(val)}
               />
             </div>
@@ -721,9 +732,7 @@ export function MarketTab({
                     className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/20 hover:shadow-xs transition-all flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-lg ${liveStock.logoColor} text-white flex items-center justify-center font-extrabold text-[10px] shrink-0 filter brightness-90`}>
-                        {liveStock.ticker}
-                      </div>
+                      <TickerLogo ticker={liveStock.ticker} size="md" fallbackColor={liveStock.logoColor} />
                       <div>
                         <button 
                           onClick={() => onSelectTicker(liveStock.ticker)}

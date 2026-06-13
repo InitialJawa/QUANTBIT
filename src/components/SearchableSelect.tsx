@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { STOCKS_DATA } from "../stocksData";
+import { TickerLogo } from "./TickerLogo";
 
 interface Option {
   value: string;
   label: string;
+  logoColor?: string; // Tailwind color fallback
 }
 
 interface SearchableSelectProps {
@@ -56,9 +58,14 @@ export function SearchableSelect({
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className={`w-full text-left text-xs p-3 bg-black border border-white/10 ${borderFocusColor} outline-none text-white font-bold rounded-xl font-mono flex items-center justify-between cursor-pointer`}
+        className={`w-full text-left text-xs p-2.5 bg-black border border-white/10 ${borderFocusColor} outline-none text-white font-bold rounded-xl font-mono flex items-center justify-between cursor-pointer`}
       >
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        <div className="flex items-center gap-2 truncate">
+          {selectedOption ? (
+            <TickerLogo ticker={selectedOption.value.replace(".JK", "")} size="sm" fallbackColor={selectedOption.logoColor} />
+          ) : null}
+          <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        </div>
         <ChevronDown className="w-4 h-4 text-white/50 shrink-0" />
       </button>
 
@@ -82,14 +89,15 @@ export function SearchableSelect({
                   key={opt.value}
                   type="button"
                   onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
+                     onChange(opt.value);
+                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2.5 text-xs font-mono transition-colors ${hoverColor} ${
+                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2 text-xs font-mono transition-colors ${hoverColor} ${
                     opt.value === value ? "bg-white/10 text-white font-bold" : "text-white/70 hover:text-white"
                   }`}
                 >
-                  {opt.label}
+                  <TickerLogo ticker={opt.value.replace(".JK", "")} size="sm" fallbackColor={opt.logoColor} />
+                  <span className="truncate">{opt.label}</span>
                 </button>
               ))
             ) : (

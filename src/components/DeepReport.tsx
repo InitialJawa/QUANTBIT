@@ -14,6 +14,7 @@ import {
   ArrowRightLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { TickerLogo } from "./TickerLogo";
 
 interface DeepReportProps {
   stock: StockData;
@@ -68,11 +69,11 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           className="bg-[#070707] rounded-2xl border border-white/5 p-6 md:p-8 text-center max-w-2xl mx-auto"
         >
           <div className="w-12 h-12 bg-white/5 text-emerald-400 rounded-xl flex items-center justify-center mx-auto mb-4 border border-white/10">
-            <Sparkles className="w-6 h-6" />
+            <TickerLogo ticker={stock.ticker.replace(".JK", "")} size="lg" fallbackColor={stock.logoColor} />
           </div>
           <h3 className="text-lg font-serif italic text-white mb-2">Belum Ada Analisis</h3>
           <p className="text-sm text-white/50 mb-6 max-w-md mx-auto">
-            Analisis kondisi lengkap dari {stock.name} menggunakan kecerdasan buatan Gemini.
+            Analisis kondisi lengkap dari {stock.ticker} menggunakan kecerdasan buatan Gemini.
           </p>
 
           <div className="space-y-3 mb-6 text-left max-w-md mx-auto">

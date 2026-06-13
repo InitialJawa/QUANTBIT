@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { StockData } from "../types";
 import { Send, Sparkles, User, HelpCircle, Bot, CornerDownLeft, Loader2 } from "lucide-react";
+import { TickerLogo } from "./TickerLogo";
 
 interface Message {
   role: "user" | "assistant";
@@ -87,9 +88,13 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
     <div id="ai-assistant-card" className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col h-[550px] shadow-sm">
       {/* Header */}
       <div id="ai-assistant-heading" className="flex items-center gap-3 pb-4 border-b border-white/5 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/10">
-          <Bot className="w-5 h-5" />
-        </div>
+        {isWatchlist ? (
+          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/10 shrink-0">
+            <Bot className="w-5 h-5" />
+          </div>
+        ) : (
+          <TickerLogo ticker={stock.ticker} size="lg" fallbackColor={stock.logoColor} />
+        )}
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-1.5 font-sans">
             Asisten AI {isWatchlist ? 'Analis Portofolio' : 'Analis Saham'}
@@ -135,7 +140,7 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
               <Bot className="w-4 h-4 text-emerald-450 animate-pulse" />
             </div>
             <div className="p-4 rounded-2xl rounded-tl-none bg-white/[0.02] text-white/50 text-xs flex items-center gap-1.5 border border-white/10 select-none">
-              <Loader2 className="w-4 h-4 text-emerald-455 animate-spin" /> Menganalisis melalui Gemini AI...
+              <Loader2 className="w-4 h-4 text-emerald-455 animate-spin" /> Sedang menganalisis pertanyaan Anda...
             </div>
           </div>
         )}

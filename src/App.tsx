@@ -15,6 +15,7 @@ import { RecoveryOpsTab } from "./components/RecoveryOpsTab";
 import { CapitalProtectionTab } from "./components/CapitalProtectionTab";
 import { SimulationTab } from "./components/SimulationTab";
 import { DiagnosticsTab } from "./components/DiagnosticsTab";
+import { TickerLogo } from "./components/TickerLogo";
 
 import { 
   Sparkles, 
@@ -46,7 +47,8 @@ import {
   Menu,
   Settings,
   Bookmark,
-  BookmarkCheck
+  BookmarkCheck,
+  Wallet
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -105,6 +107,12 @@ export default function App() {
     if (dataFeed === "yahoo" && yahooPrices["USDIDR"]) {
       MKT.usdidr.value = yahooPrices["USDIDR"].close;
       MKT.usdidr.daily = Number(yahooPrices["USDIDR"].pct.toFixed(2));
+    }
+    if (dataFeed === "yahoo" && yahooPrices["GOLD"] && yahooPrices["USDIDR"]) {
+      const goldUSDPerOz = yahooPrices["GOLD"].close;
+      const usdIDR = yahooPrices["USDIDR"].close;
+      const idrPerGram = (goldUSDPerOz * usdIDR) / 31.1035;
+      MKT.gold.value = Math.round(idrPerGram);
     }
   }, [dataFeed, yahooPrices]);
 
@@ -183,23 +191,145 @@ export default function App() {
   // Retrieve selected stock detail
   const activeStock = getDynamicStock(selectedTicker) || STOCKS_DATA[0];
 
+  const [isDbLoaded, setIsDbLoaded] = useState(false);
+
   // PERSISTENCE LOCAL STATES (Watchlist & Portfolio)
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
-    const saved = localStorage.getItem("idx_watchlist");
-    return saved ? JSON.parse(saved) : [{ ticker: "BBCA", addedAt: new Date().toISOString() }];
+    try {
+      const saved = localStorage.getItem("idx_watchlist");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn("Failed to parse watchlist from localStorage, fallback to default:", e);
+    }
+    return [{ ticker: "BBCA", addedAt: new Date().toISOString() }];
   });
 
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(() => {
-    const saved = localStorage.getItem("idx_portfolio");
-    return saved ? JSON.parse(saved) : [
+    try {
+      const saved = localStorage.getItem("idx_portfolio");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn("Failed to parse portfolio from localStorage, fallback to default:", e);
+    }
+    return [
       { ticker: "BBCA", shares: 500, buyPrice: 9900, addedAt: new Date().toISOString() },
       { ticker: "BBRI", shares: 1000, buyPrice: 4900, addedAt: new Date().toISOString() }
     ];
   });
 
+  // Persistent Cash State & Trade logs (Lifted to App level)
+  const [cash, setCash] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("idx_cash");
+      if (saved) {
+        const parsed = parseInt(saved);
+        if (!isNaN(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return 100000000; // Rp 100 Juta default capital
+  });
+
+  const [tradeLogs, setTradeLogs] = useState<{ id: string; type: string; ticker: string; shares: number; price: number; timestamp: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem("idx_trade_logs");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn("Failed to parse trade logs from localStorage:", e);
+    }
+    return [
+      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: new Date().toISOString() },
+      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1000, price: 4900, timestamp: new Date().toISOString() }
+    ];
+  });
+
+  const [walletNominalStr, setWalletNominalStr] = useState("");
+  const [walletNotification, setWalletNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  useEffect(() => {
+    if (walletNotification) {
+      const timer = setTimeout(() => {
+        setWalletNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [walletNotification]);
+
+  // Startup Database Synchronization
+  useEffect(() => {
+    fetch("/api/engine/state")
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (Array.isArray(data.portfolio)) {
+            setPortfolio(data.portfolio);
+            localStorage.setItem("idx_portfolio", JSON.stringify(data.portfolio));
+          }
+          if (Array.isArray(data.watchlist)) {
+            setWatchlist(data.watchlist);
+            localStorage.setItem("idx_watchlist", JSON.stringify(data.watchlist));
+          }
+          if (typeof data.cash === "number") {
+            setCash(data.cash);
+            localStorage.setItem("idx_cash", String(data.cash));
+          }
+          if (Array.isArray(data.tradeLogs)) {
+            setTradeLogs(data.tradeLogs);
+            localStorage.setItem("idx_trade_logs", JSON.stringify(data.tradeLogs));
+          }
+          if (data.config && data.config.activeConfig) {
+            setActiveConfig(data.config.activeConfig);
+            localStorage.setItem("idx_activeconfig", data.config.activeConfig);
+          }
+        }
+        setIsDbLoaded(true);
+      })
+      .catch(err => {
+        console.warn("Database sync fetch errored, loading defaults safely:", err);
+        setIsDbLoaded(true);
+      });
+  }, []);
+
+  const syncStateToBackend = () => {
+    let configObj = {};
+    try {
+      const savedConfig = localStorage.getItem("idx_engine_config");
+      if (savedConfig) configObj = JSON.parse(savedConfig);
+    } catch(e){}
+
+    fetch("/api/engine/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        portfolio,
+        watchlist,
+        cash,
+        config: configObj,
+        tradeLogs
+      })
+    }).catch(err => console.warn("Background auto-save failed:", err));
+  };
+
+
   const [cachedReports, setCachedReports] = useState<Record<string, AnalysisResult>>(() => {
-    const saved = localStorage.getItem("idx_cached_reports");
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem("idx_cached_reports");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch (e) {
+      console.warn("Failed to parse cached reports from localStorage, fallback to empty:", e);
+    }
+    return {};
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -227,11 +357,31 @@ export default function App() {
   // Sync state loops for database lists
   useEffect(() => {
     localStorage.setItem("idx_watchlist", JSON.stringify(watchlist));
-  }, [watchlist]);
+    if (isDbLoaded) {
+      syncStateToBackend();
+    }
+  }, [watchlist, isDbLoaded]);
 
   useEffect(() => {
     localStorage.setItem("idx_portfolio", JSON.stringify(portfolio));
-  }, [portfolio]);
+    if (isDbLoaded) {
+      syncStateToBackend();
+    }
+  }, [portfolio, isDbLoaded]);
+
+  useEffect(() => {
+    localStorage.setItem("idx_cash", String(cash));
+    if (isDbLoaded) {
+      syncStateToBackend();
+    }
+  }, [cash, isDbLoaded]);
+
+  useEffect(() => {
+    localStorage.setItem("idx_trade_logs", JSON.stringify(tradeLogs));
+    if (isDbLoaded) {
+      syncStateToBackend();
+    }
+  }, [tradeLogs, isDbLoaded]);
 
   useEffect(() => {
     localStorage.setItem("idx_cached_reports", JSON.stringify(cachedReports));
@@ -299,6 +449,193 @@ export default function App() {
         }
       }
       return prev;
+    });
+  };
+
+  const getEmasShares = (): number => {
+    if (!portfolio || !Array.isArray(portfolio)) return 0;
+    const emasItem = portfolio.find(p => p.ticker === "EMAS");
+    if (!emasItem || typeof emasItem.shares !== 'number') return 0;
+    return emasItem.shares;
+  };
+
+  const calculateTradeDetails = (type: string, ticker: string, shares: number, price: number) => {
+    if (type === "DEPOSIT" || type === "WITHDRAWAL") {
+      return { gross: shares, slippage: 0, fee: 0, tax: 0, net: shares };
+    }
+    const gross = shares * price;
+    if (ticker === "EMAS" || ticker === "GOLD") {
+      const slippage = gross * 0.02; // Standard 2% physical split
+      const fee = 0;
+      const tax = 0;
+      const net = type.startsWith("BUY") ? gross + slippage : gross - slippage;
+      return { gross, slippage, fee, tax, net };
+    }
+    
+    const SLIPPAGE_RATE = 0.0005; // 0.05% spread / slippage
+    const BUY_FEE_RATE = 0.0015; // 0.15% brokerage admin fee
+    const SELL_FEE_RATE = 0.0025; // 0.25% brokerage admin fee
+    const TAX_RATE = 0.0010; // 0.10% transaction tax (Sales tax)
+
+    if (type.startsWith("BUY")) {
+      const priceWithSlippage = price * (1 + SLIPPAGE_RATE);
+      const slippage = price * SLIPPAGE_RATE * shares;
+      const fee = priceWithSlippage * BUY_FEE_RATE * shares;
+      const tax = 0;
+      const net = (priceWithSlippage * shares) + fee;
+      return { gross, slippage, fee, tax, net };
+    } else {
+      const priceWithSlippage = price * (1 - SLIPPAGE_RATE);
+      const slippage = price * SLIPPAGE_RATE * shares;
+      const fee = priceWithSlippage * SELL_FEE_RATE * shares;
+      const tax = priceWithSlippage * TAX_RATE * shares;
+      const net = (priceWithSlippage * shares) - fee - tax;
+      return { gross, slippage, fee, tax, net };
+    }
+  };
+
+  const handleDepositCash = () => {
+    const rupiahAmount = parseInt(walletNominalStr.replace(/[^0-9]/g, ""));
+    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
+      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah deposit yang valid!", type: "error" });
+      return;
+    }
+    
+    const nextCash = cash + rupiahAmount;
+    setCash(nextCash);
+    
+    const logId = "log-" + Date.now();
+    const nextLogs = [{
+      id: logId,
+      type: "DEPOSIT",
+      ticker: "KAS",
+      shares: rupiahAmount,
+      price: 1,
+      timestamp: new Date().toISOString(),
+      message: `Deposit Nominal sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
+    }, ...tradeLogs];
+    setTradeLogs(nextLogs);
+    setWalletNominalStr("");
+    setWalletNotification({
+      message: `Berhasil menambahkan Rp ${rupiahAmount.toLocaleString("id-ID")} ke saldo kas digital!`,
+      type: "success"
+    });
+  };
+
+  const handleWithdrawCash = () => {
+    const rupiahAmount = parseInt(walletNominalStr.replace(/[^0-9]/g, ""));
+    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
+      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah penarikan yang valid!", type: "error" });
+      return;
+    }
+    if (rupiahAmount > cash) {
+      setWalletNotification({ message: "Saldo kas saat ini tidak mencukupi untuk melakukan penarikan dana!", type: "error" });
+      return;
+    }
+    
+    const nextCash = cash - rupiahAmount;
+    setCash(nextCash);
+    
+    const logId = "log-" + Date.now();
+    const nextLogs = [{
+      id: logId,
+      type: "WITHDRAWAL",
+      ticker: "KAS",
+      shares: rupiahAmount,
+      price: 1,
+      timestamp: new Date().toISOString(),
+      message: `Penarikan Dana sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
+    }, ...tradeLogs];
+    setTradeLogs(nextLogs);
+    setWalletNominalStr("");
+    setWalletNotification({
+      message: `Berhasil menarik Rp ${rupiahAmount.toLocaleString("id-ID")} dari saldo kas digital!`,
+      type: "success"
+    });
+  };
+
+  const handleMoveToGold = () => {
+    const rupiahAmount = parseFloat(walletNominalStr.replace(/[^0-9,.]/g, "").replace(",", "."));
+    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
+      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah alokasi emas yang valid!", type: "error" });
+      return;
+    }
+    if (rupiahAmount > cash) {
+      setWalletNotification({ message: "Saldo kas saat ini tidak mencukupi untuk dialokasikan ke emas!", type: "error" });
+      return;
+    }
+    
+    const goldPrice = MKT.gold.value;
+    const grams = rupiahAmount / goldPrice;
+    const details = calculateTradeDetails("BUY", "EMAS", grams, goldPrice);
+    
+    if (details.net > cash) {
+      setWalletNotification({ message: "Saldo kas tidak mencukupi setelah memperhitungkan fee/spread emas fisik!", type: "error" });
+      return;
+    }
+    
+    const nextCash = cash - details.net;
+    setCash(nextCash);
+    
+    handleAddTransaction("EMAS", grams, goldPrice);
+    
+    const logId = "log-" + Date.now();
+    const nextLogs = [{
+      id: logId,
+      type: "BUY_GOLD",
+      ticker: "EMAS",
+      shares: grams,
+      price: goldPrice,
+      timestamp: new Date().toISOString(),
+      message: `Konversi Kas ke Safe Haven Emas Fisik sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
+    }, ...tradeLogs];
+    setTradeLogs(nextLogs);
+    setWalletNominalStr("");
+    setWalletNotification({
+      message: `Berhasil memindahkan Rp ${rupiahAmount.toLocaleString("id-ID")} ke Emas (${grams.toFixed(4)} Gram @ Rp ${goldPrice.toLocaleString("id-ID")}/gr)!`,
+      type: "success"
+    });
+  };
+
+  const handleSellGoldToCashInput = () => {
+    const goldPortfolio = portfolio.find(p => p.ticker === "EMAS");
+    if (!goldPortfolio || goldPortfolio.shares <= 0) {
+      setWalletNotification({ message: "Anda tidak memiliki simpanan Emas untuk dicairkan saat ini!", type: "error" });
+      return;
+    }
+    const enteredVal = parseFloat(walletNominalStr.replace(/[^0-9,.]/g, "").replace(",", "."));
+    if (isNaN(enteredVal) || enteredVal <= 0) {
+      setWalletNotification({ message: "Masukkan jumlah Gram emas yang valid untuk dicairkan!", type: "error" });
+      return;
+    }
+    if (enteredVal > goldPortfolio.shares) {
+      setWalletNotification({ message: `Simpanan Emas Anda hanya sebesar ${goldPortfolio.shares.toFixed(4)} gram!`, type: "error" });
+      return;
+    }
+
+    const goldPrice = MKT.gold.value;
+    const details = calculateTradeDetails("SELL", "EMAS", enteredVal, goldPrice);
+
+    const nextCash = cash + details.net;
+    setCash(nextCash);
+
+    handleSellTransaction("EMAS", enteredVal);
+
+    const logId = "log-" + Date.now();
+    const nextLogs = [{
+      id: logId,
+      type: "SELL_GOLD",
+      ticker: "EMAS",
+      shares: enteredVal,
+      price: goldPrice,
+      timestamp: new Date().toISOString(),
+      message: `Mencairkan ${enteredVal} Gram Emas Fisik ke Kas Wallet`
+    }, ...tradeLogs];
+    setTradeLogs(nextLogs);
+    setWalletNominalStr("");
+    setWalletNotification({
+      message: `Berhasil mencairkan ${enteredVal} Gram Emas senilai Rp ${Math.round(details.net).toLocaleString("id-ID")} kembali ke kas wallet!`,
+      type: "success"
     });
   };
 
@@ -623,6 +960,177 @@ export default function App() {
         <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex absolute inset-0 z-50 bg-[#0A0A0A]' : 'hidden'} lg:flex w-full lg:static lg:w-80 bg-[#0A0A0A] lg:border-r border-white/10 shrink-0 flex-col lg:overflow-hidden`}>
           <div className="flex flex-col flex-1 overflow-y-auto lg:overflow-y-auto py-4 gap-4 scrollbar-thin">
             
+            {/* CARD INTERAKTIF: DOMPET DIGITAL & DEPOSIT/WITHDRAW/PINDAH EMAS */}
+            <div id="rdi-digital-wallet" className="mx-4 p-4.5 bg-gradient-to-br from-[#0C0E12] to-[#07080A] border border-amber-500/15 rounded-2xl shadow-xl space-y-4 relative overflow-hidden">
+              <div className="absolute -right-16 -top-16 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
+                    <Wallet className="w-3.5 h-3.5 font-bold" />
+                  </div>
+                  <div>
+                    <h3 className="text-[10px] font-extrabold text-white tracking-wider uppercase font-sans">
+                      Dompet Digital RDI
+                    </h3>
+                    <p className="text-[8px] text-white/45 font-semibold">
+                      Akun kas &amp; safe haven emas fisik
+                    </p>
+                  </div>
+                </div>
+                {isMobileMenuOpen && (
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-1 rounded-md bg-white/5 border border-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all cursor-pointer block lg:hidden"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* STATUS SALDO */}
+              <div className="space-y-2.5 font-mono text-xs">
+                <div>
+                  <span className="text-[8px] uppercase font-bold text-white/35 tracking-wider block">
+                    Saldo Kas Tunai (RDI)
+                  </span>
+                  <p className="text-lg font-black text-white mt-0.5">
+                    <span className="text-[10px] text-white/30 mr-1 font-semibold">IDR</span>
+                    {cash.toLocaleString("id-ID")}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-white/5">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[8px] uppercase font-bold text-amber-400 tracking-wider block">
+                      Safe Haven Emas Fisik
+                    </span>
+                    <span className="text-[7.5px] text-white/35">
+                      @Rp {MKT.gold.value.toLocaleString("id-ID")}/gr
+                    </span>
+                  </div>
+                  <p className="text-base font-black text-amber-400 mt-0.5">
+                    {getEmasShares().toFixed(4)} <span className="text-[10px] text-white/40 font-semibold">Gr</span>
+                  </p>
+                  <p className="text-[8.5px] text-white/45">
+                    Est. Nilai: <span className="text-white font-bold">Rp {Math.round(getEmasShares() * MKT.gold.value).toLocaleString("id-ID")}</span>
+                  </p>
+                </div>
+
+                <div className="pt-2.5 border-t border-white/5 bg-white/[0.01] p-2 rounded-lg border border-white/5">
+                  <span className="text-[7.5px] uppercase font-bold text-white/35 block">
+                    Total Kas + Emas
+                  </span>
+                  <p className="text-sm font-bold text-emerald-400 mt-0.5">
+                    Rp {Math.round(cash + (getEmasShares() * MKT.gold.value)).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </div>
+
+              {/* INPUT NOMINAL */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-[8.5px] font-sans">
+                  <label className="uppercase font-bold text-white/60 tracking-wider block">
+                    Nominal Rupiah (Untuk Topup/Beli)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setWalletNominalStr("")}
+                    className="text-rose-500 hover:underline cursor-pointer font-semibold"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={walletNominalStr}
+                    onChange={(e) => setWalletNominalStr(e.target.value)}
+                    placeholder="Beli (Rupiah) contoh 50000000 | Jual (Grams) contoh 12.5"
+                    className="w-full text-xs font-semibold p-2.5 pr-8 rounded-xl border border-white/10 outline-none focus:ring-2 focus:ring-amber-500/30 bg-black/60 text-white font-mono placeholder-white/20 transition-all"
+                  />
+                  <div className="absolute right-2.5 top-2.5 text-[8px] text-white/35 font-mono font-bold uppercase">
+                    IDR/GR
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap gap-1 border-t border-white/5 pt-1.5 mt-1.5">
+                  {[
+                    { label: "Max Kas", val: cash.toString(), color: "text-emerald-400" },
+                    { label: "+1 Jt", val: "1000000" },
+                    { label: "+10 Jt", val: "10000000" },
+                    { label: "+100 Jt", val: "100000000" },
+                    { label: "Max Emas", val: getEmasShares().toString(), color: "text-amber-400" },
+                    { label: "10 gr", val: "10" },
+                    { label: "100 gr", val: "100" }
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setWalletNominalStr(preset.val)}
+                      className={`text-[8px] font-semibold font-mono px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 ${preset.color || 'text-white/70'} hover:opacity-100 opacity-80 border border-white/5 transition-all cursor-pointer`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* NOTIFICATION LOG INLINE */}
+              {walletNotification && (
+                <div className={`p-2 rounded-lg text-[9px] font-semibold flex items-center gap-1.5 leading-snug ${
+                  walletNotification.type === "success" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                }`}>
+                  <span className="w-1.5 h-1.5 shrink-0 bg-current rounded-full" />
+                  <p className="flex-1">{walletNotification.message}</p>
+                </div>
+              )}
+
+              {/* ACTION BUTTON GRID */}
+              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-white/5 font-sans">
+                <button
+                  type="button"
+                  onClick={handleDepositCash}
+                  className="py-2 px-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  title="Tambahkan uang tunai baru hasil deposit ke dalam wallet RDI"
+                >
+                  <Plus className="w-3 h-3" /> Top Up
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWithdrawCash}
+                  className="py-2 px-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  title="Tarik dana dari saldo tunai wallet RDI"
+                >
+                  <Minus className="w-3 h-3" /> Tarik
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMoveToGold}
+                  className="py-2 px-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  title="Pindahkan nominal saldo Kas Rupiah ke Simpanan Emas fisik secara real-time"
+                >
+                  <Coins className="w-3 h-3" /> Pindah Emas
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSellGoldToCashInput}
+                  className="py-2 px-1.5 rounded-lg bg-amber-500/10 border border-amber-500/35 hover:bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  title="Mencairkan sejumlah Gram Emas ke Kas Rupiah wallet RDI"
+                >
+                  <Wallet className="w-3 h-3" /> Jual Emas
+                </button>
+              </div>
+
+              {/* Link metadata indicating live Connected */}
+              <div className="flex items-center gap-1.5 pt-1 text-[8px] font-mono text-white/30 justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse bg-current shrink-0" />
+                <span>DATABASE TERKONEKSI (FIRESTORE)</span>
+              </div>
+            </div>
+            
             {/* Curated News Column for IDX info */}
             <div id="sidebar-news-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
               <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest flex items-center gap-1.5">
@@ -863,6 +1371,7 @@ export default function App() {
                 >
                   <MarketTab 
                     onSelectTicker={handleSelectTicker} 
+                    onChangeActiveTicker={handleChangeActiveTicker} 
                     activeStock={activeStock} 
                     portfolio={portfolio}
                     watchlist={watchlist}
@@ -877,15 +1386,7 @@ export default function App() {
 
               {/* Perspective 2: Leaders Tab */}
               {activeTab === "leaders" && (
-                <motion.div
-                  key="leaders-perspective"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <LeadersTab activeConfig={activeConfig} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
-                </motion.div>
+                <LeadersTab activeConfig={activeConfig} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
               )}
 
               {/* Perspective 3: Recovery Ops Tab */}
@@ -897,7 +1398,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <RecoveryOpsTab onSelectTicker={handleSelectTicker} portfolio={portfolio} getDynamicStock={getDynamicStock} />
+                  <RecoveryOpsTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
                 </motion.div>
               )}
 
@@ -910,7 +1411,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <CapitalProtectionTab onSelectTicker={handleSelectTicker} portfolio={portfolio} getDynamicStock={getDynamicStock} />
+                  <CapitalProtectionTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
                 </motion.div>
               )}
 
@@ -956,6 +1457,10 @@ export default function App() {
                     onToggleWatchlist={handleToggleWatchlist}
                     getDynamicStock={getDynamicStock}
                     activeConfig={activeConfig}
+                    cash={cash}
+                    setCash={setCash}
+                    tradeLogs={tradeLogs}
+                    setTradeLogs={setTradeLogs}
                   />
                 </motion.div>
               )}
@@ -1010,9 +1515,7 @@ export default function App() {
                 <div className="p-6 border-b border-white/5 flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl ${activeStock.logoColor || "bg-[#3b82f6]"} flex items-center justify-center font-black text-xs text-white`}>
-                        {activeStock.ticker}
-                      </div>
+                      <TickerLogo ticker={activeStock.ticker} size="lg" fallbackColor={activeStock.logoColor || "bg-[#3b82f6]"} />
                       <div>
                         <h3 className="text-base font-serif italic text-white flex items-center gap-2">
                           PT {activeStock.name} <span className="text-emerald-400">({activeStock.ticker})</span>

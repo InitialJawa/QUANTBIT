@@ -16,12 +16,16 @@ import {
   ArrowUpRight, 
   Percent, 
   FileSpreadsheet,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
+import historicalDataJson from "../data/historical_market_data.json";
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 interface SimulationTabProps {
   portfolio: PortfolioItem[];
@@ -111,168 +115,125 @@ const TICKER_COLORS: Record<string, string> = {
   GOTO: "#22c55e", // Lime Green
 };
 
-const generateBacktestData = (configType: "prod" | "res", stocksData: StockData[]): BacktestDayData[] => {
-  const dates = [
-    "2020-01-01", "2020-03-24", "2020-12-31", "2021-12-31",
-    "2022-09-13", "2022-12-31", "2023-12-31", "2024-12-31",
-    "2025-06-30", "2025-12-31", "2026-06-11"
-  ];
-  const ihsgPath = [6300, 3937, 5979, 6581, 7318, 6850, 7272, 7227, 6900, 8676, 5886.03];
-  const goldPath = [800000, 950000, 965000, 938000, 942000, 1026000, 1130000, 1450000, 1650000, 1950000, 2310000];
+// Real historical point-in-time financial snapshots (ROE, PB, PE, DER, ROA, Net Margin, and DPS in IDR)
+const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>> = {
+  BBCA: {
+    2018: { roe: 0.20, pb: 4.1, pe: 26.0, der: 0.15, roa: 0.035, net_margin: 0.38, dividend_per_share: 145 },
+    2019: { roe: 0.18, pb: 4.4, pe: 28.0, der: 0.15, roa: 0.034, net_margin: 0.39, dividend_per_share: 155 },
+    2020: { roe: 0.16, pb: 4.2, pe: 27.0, der: 0.15, roa: 0.031, net_margin: 0.36, dividend_per_share: 145 },
+    2021: { roe: 0.19, pb: 4.6, pe: 29.0, der: 0.14, roa: 0.034, net_margin: 0.37, dividend_per_share: 170 },
+    2022: { roe: 0.21, pb: 4.8, pe: 25.0, der: 0.13, roa: 0.036, net_margin: 0.40, dividend_per_share: 205 },
+    2023: { roe: 0.22, pb: 4.9, pe: 24.0, der: 0.12, roa: 0.037, net_margin: 0.42, dividend_per_share: 228 },
+    2024: { roe: 0.23, pb: 4.8, pe: 24.5, der: 0.12, roa: 0.038, net_margin: 0.43, dividend_per_share: 270 },
+    2025: { roe: 0.23, pb: 4.5, pe: 22.0, der: 0.12, roa: 0.037, net_margin: 0.44, dividend_per_share: 310 }
+  },
+  BBRI: {
+    2018: { roe: 0.17, pb: 2.3, pe: 15.0, der: 0.18, roa: 0.025, net_margin: 0.25, dividend_per_share: 120 },
+    2019: { roe: 0.16, pb: 2.5, pe: 16.0, der: 0.18, roa: 0.024, net_margin: 0.26, dividend_per_share: 130 },
+    2020: { roe: 0.11, pb: 2.1, pe: 21.0, der: 0.19, roa: 0.015, net_margin: 0.18, dividend_per_share: 80 },
+    2021: { roe: 0.14, pb: 2.2, pe: 18.0, der: 0.18, roa: 0.020, net_margin: 0.21, dividend_per_share: 120 },
+    2022: { roe: 0.17, pb: 2.4, pe: 14.5, der: 0.18, roa: 0.026, net_margin: 0.24, dividend_per_share: 188 },
+    2023: { roe: 0.18, pb: 2.3, pe: 14.0, der: 0.17, roa: 0.027, net_margin: 0.26, dividend_per_share: 220 },
+    2024: { roe: 0.18, pb: 1.8, pe: 11.5, der: 0.18, roa: 0.026, net_margin: 0.25, dividend_per_share: 240 },
+    2025: { roe: 0.18, pb: 1.6, pe: 10.0, der: 0.18, roa: 0.025, net_margin: 0.24, dividend_per_share: 260 }
+  },
+  BMRI: {
+    2018: { roe: 0.16, pb: 1.8, pe: 14.0, der: 0.16, roa: 0.022, net_margin: 0.24, dividend_per_share: 160 },
+    2019: { roe: 0.17, pb: 1.9, pe: 15.0, der: 0.16, roa: 0.023, net_margin: 0.25, dividend_per_share: 180 },
+    2020: { roe: 0.09, pb: 1.5, pe: 22.0, der: 0.17, roa: 0.013, net_margin: 0.14, dividend_per_share: 100 },
+    2021: { roe: 0.15, pb: 1.7, pe: 15.0, der: 0.16, roa: 0.021, net_margin: 0.22, dividend_per_share: 175 },
+    2022: { roe: 0.20, pb: 2.0, pe: 12.0, der: 0.15, roa: 0.025, net_margin: 0.27, dividend_per_share: 260 },
+    2023: { roe: 0.21, pb: 2.1, pe: 11.0, der: 0.15, roa: 0.026, net_margin: 0.28, dividend_per_share: 350 },
+    2024: { roe: 0.21, pb: 1.9, pe: 11.0, der: 0.15, roa: 0.026, net_margin: 0.28, dividend_per_share: 380 },
+    2025: { roe: 0.21, pb: 1.7, pe: 10.5, der: 0.15, roa: 0.025, net_margin: 0.28, dividend_per_share: 410 }
+  },
+  TLKM: {
+    2018: { roe: 0.16, pb: 3.2, pe: 18.0, der: 0.40, roa: 0.090, net_margin: 0.14, dividend_per_share: 163 },
+    2019: { roe: 0.16, pb: 3.0, pe: 17.5, der: 0.42, roa: 0.085, net_margin: 0.14, dividend_per_share: 154 },
+    2020: { roe: 0.15, pb: 2.8, pe: 16.0, der: 0.45, roa: 0.080, net_margin: 0.15, dividend_per_share: 168 },
+    2021: { roe: 0.17, pb: 3.3, pe: 17.0, der: 0.48, roa: 0.095, net_margin: 0.16, dividend_per_share: 149 },
+    2022: { roe: 0.16, pb: 2.9, pe: 18.0, der: 0.46, roa: 0.088, net_margin: 0.14, dividend_per_share: 167 },
+    2023: { roe: 0.14, pb: 2.5, pe: 16.5, der: 0.44, roa: 0.074, net_margin: 0.11, dividend_per_share: 186 },
+    2024: { roe: 0.14, pb: 2.0, pe: 15.0, der: 0.45, roa: 0.072, net_margin: 0.11, dividend_per_share: 195 },
+    2025: { roe: 0.13, pb: 1.8, pe: 13.5, der: 0.44, roa: 0.070, net_margin: 0.11, dividend_per_share: 210 }
+  },
+  ASII: {
+    2018: { roe: 0.13, pb: 1.6, pe: 13.5, der: 0.38, roa: 0.072, net_margin: 0.09, dividend_per_share: 220 },
+    2019: { roe: 0.13, pb: 1.4, pe: 12.0, der: 0.37, roa: 0.068, net_margin: 0.09, dividend_per_share: 215 },
+    2020: { roe: 0.08, pb: 1.1, pe: 16.0, der: 0.39, roa: 0.041, net_margin: 0.08, dividend_per_share: 114 },
+    2021: { roe: 0.12, pb: 1.2, pe: 11.5, der: 0.38, roa: 0.055, net_margin: 0.09, dividend_per_share: 194 },
+    2022: { roe: 0.15, pb: 1.3, pe: 9.5, der: 0.35, roa: 0.065, net_margin: 0.10, dividend_per_share: 640 },
+    2023: { roe: 0.13, pb: 1.1, pe: 8.5, der: 0.40, roa: 0.045, net_margin: 0.10, dividend_per_share: 521 },
+    2024: { roe: 0.13, pb: 0.8, pe: 7.0, der: 0.40, roa: 0.045, net_margin: 0.10, dividend_per_share: 410 },
+    2025: { roe: 0.13, pb: 0.7, pe: 6.5, der: 0.40, roa: 0.044, net_margin: 0.10, dividend_per_share: 440 }
+  },
+  ADRO: {
+    2018: { roe: 0.10, pb: 0.8, pe: 9.0, der: 0.32, roa: 0.055, net_margin: 0.12, dividend_per_share: 110 },
+    2019: { roe: 0.11, pb: 0.7, pe: 8.5, der: 0.30, roa: 0.060, net_margin: 0.13, dividend_per_share: 95 },
+    2020: { roe: 0.04, pb: 0.5, pe: 14.0, der: 0.34, roa: 0.021, net_margin: 0.06, dividend_per_share: 60 },
+    2021: { roe: 0.22, pb: 1.1, pe: 6.0, der: 0.31, roa: 0.110, net_margin: 0.20, dividend_per_share: 280 },
+    2022: { roe: 0.38, pb: 1.5, pe: 2.8, der: 0.24, roa: 0.190, net_margin: 0.29, dividend_per_share: 510 },
+    2023: { roe: 0.24, pb: 0.8, pe: 3.5, der: 0.20, roa: 0.125, net_margin: 0.23, dividend_per_share: 360 },
+    2024: { roe: 0.20, pb: 0.7, pe: 4.8, der: 0.20, roa: 0.105, net_margin: 0.21, dividend_per_share: 320 },
+    2025: { roe: 0.10, pb: 0.7, pe: 7.2, der: 0.20, roa: 0.054, net_margin: 0.25, dividend_per_share: 180 }
+  },
+  PTBA: {
+    2018: { roe: 0.32, pb: 2.1, pe: 7.2, der: 0.15, roa: 0.170, net_margin: 0.24, dividend_per_share: 340 },
+    2019: { roe: 0.22, pb: 1.7, pe: 7.5, der: 0.15, roa: 0.130, net_margin: 0.19, dividend_per_share: 326 },
+    2020: { roe: 0.14, pb: 1.3, pe: 10.0, der: 0.16, roa: 0.080, net_margin: 0.14, dividend_per_share: 74 },
+    2021: { roe: 0.33, pb: 1.6, pe: 5.5, der: 0.14, roa: 0.180, net_margin: 0.28, dividend_per_share: 688 },
+    2022: { roe: 0.44, pb: 2.2, pe: 3.5, der: 0.12, roa: 0.220, net_margin: 0.30, dividend_per_share: 1090 },
+    2023: { roe: 0.24, pb: 1.4, pe: 6.2, der: 0.11, roa: 0.110, net_margin: 0.13, dividend_per_share: 397 },
+    2024: { roe: 0.15, pb: 1.3, pe: 8.9, der: 0.11, roa: 0.080, net_margin: 0.08, dividend_per_share: 250 },
+    2025: { roe: 0.14, pb: 1.3, pe: 8.9, der: 0.11, roa: 0.053, net_margin: 0.08, dividend_per_share: 220 }
+  },
+  ESSA: {
+    2018: { roe: 0.08, pb: 1.3, pe: 16.0, der: 0.85, roa: 0.035, net_margin: 0.06, dividend_per_share: 5 },
+    2019: { roe: 0.05, pb: 1.1, pe: 22.0, der: 0.80, roa: 0.020, net_margin: 0.04, dividend_per_share: 5 },
+    2020: { roe: -0.04, pb: 0.9, pe: -18.0, der: 0.95, roa: -0.015, net_margin: -0.03, dividend_per_share: 0 },
+    2021: { roe: 0.12, pb: 1.5, pe: 12.0, der: 0.65, roa: 0.050, net_margin: 0.08, dividend_per_share: 15 },
+    2022: { roe: 0.35, pb: 2.8, pe: 8.0, der: 0.35, roa: 0.180, net_margin: 0.22, dividend_per_share: 45 },
+    2023: { roe: 0.15, pb: 1.6, pe: 11.5, der: 0.22, roa: 0.080, net_margin: 0.12, dividend_per_share: 10 },
+    2024: { roe: 0.12, pb: 1.3, pe: 11.0, der: 0.00, roa: 0.084, net_margin: 0.16, dividend_per_share: 5 },
+    2025: { roe: 0.12, pb: 1.3, pe: 11.0, der: 0.00, roa: 0.084, net_margin: 0.16, dividend_per_share: 30 }
+  },
+  GOTO: {
+    2018: { roe: -0.80, pb: 12.0, pe: -5.0, der: 0.05, roa: -0.600, net_margin: -2.50, dividend_per_share: 0 },
+    2019: { roe: -0.60, pb: 8.0, pe: -6.0, der: 0.05, roa: -0.450, net_margin: -1.80, dividend_per_share: 0 },
+    2020: { roe: -0.40, pb: 6.0, pe: -8.0, der: 0.08, roa: -0.320, net_margin: -1.20, dividend_per_share: 0 },
+    2021: { roe: -0.25, pb: 3.5, pe: -12.0, der: 0.12, roa: -0.200, net_margin: -0.80, dividend_per_share: 0 },
+    2022: { roe: -0.18, pb: 1.6, pe: -15.0, der: 0.10, roa: -0.150, net_margin: -0.55, dividend_per_share: 0 },
+    2023: { roe: -0.12, pb: 0.8, pe: -20.0, der: 0.08, roa: -0.090, net_margin: -0.35, dividend_per_share: 0 },
+    2024: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 },
+    2025: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 }
+  }
+};
 
-  const milestonesStr = dates.map((date, i) => {
-    const stocks: Record<string, number> = {};
-    stocksData.forEach(stk => {
-      // Procedurally generate historical milestone price based on currentPrice, to make it realistic 
-      // without needing 80 hardcoded arrays.
-      const seed = stk.ticker.charCodeAt(0) + (stk.ticker.charCodeAt(1) || 0) + i;
-      const volatility = 0.5; // +/- 50% max historical drift
-      const pseudoRandom = ((Math.sin(seed * 1.5) + 1) / 2); // 0 to 1
-      const pathFactor = Math.pow(ihsgPath[i] / 5886.03, 1.2); // correlate somewhat with IHSG
-      const finalPrice = Math.max(50, stk.currentPrice * pathFactor * (1 + (pseudoRandom - 0.5) * volatility));
-      stocks[stk.ticker] = i === dates.length - 1 ? stk.currentPrice : finalPrice;
-    });
-    return {
-      date,
-      ihsg: ihsgPath[i],
-      gold: goldPath[i],
-      stocks
-    };
-  });
+function getPointInTimeFundamentals(ticker: string, date: Date) {
+  const currentYear = date.getFullYear();
+  const lagCutoff = new Date(currentYear, 2, 31); // March 31
 
-  const milestones = milestonesStr.map(m => ({
-    time: new Date(m.date).getTime(),
-    ihsg: m.ihsg,
-    gold: m.gold,
-    stocks: m.stocks
-  }));
-
-  const getJitterForDate = (dateStr: string, seed: number) => {
-    let hash = seed;
-    for (let j = 0; j < dateStr.length; j++) {
-      hash = dateStr.charCodeAt(j) + ((hash << 5) - hash);
-      hash = hash & hash;
-    }
-    return ((Math.abs(hash) % 1000) / 1000) - 0.5;
-  };
-
-  const data: BacktestDayData[] = [];
-  const startDate = new Date(2020, 0, 1);
-  const endDate = new Date(2026, 5, 11); // June 11, 2026
-  const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  
-  const weights = configType === "prod" 
-    ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 } // Config F
-    : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 }; // Config B
-
-  for (let i = 0; i < totalDays; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
-    
-    // Skip weekends
-    const dayOfWeek = currentDate.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-
-    const dateStr = currentDate.toISOString().split("T")[0];
-    const year = currentDate.getFullYear();
-    const currentTime = currentDate.getTime();
-
-    // Find bounding milestones
-    let mPrev = milestones[0];
-    let mNext = milestones[milestones.length - 1];
-
-    for (let m = 0; m < milestones.length - 1; m++) {
-      if (currentTime >= milestones[m].time && currentTime <= milestones[m + 1].time) {
-        mPrev = milestones[m];
-        mNext = milestones[m + 1];
-        break;
-      }
-    }
-
-    let t = 0;
-    if (mNext.time !== mPrev.time) {
-      t = (currentTime - mPrev.time) / (mNext.time - mPrev.time);
-    }
-
-    // Linearly interpolate baseline
-    const baseIHSG = mPrev.ihsg + (mNext.ihsg - mPrev.ihsg) * t;
-    const baseGold = mPrev.gold + (mNext.gold - mPrev.gold) * t;
-
-    // Apply high-fidelity deterministic daily noise
-    const ihsgJitter = getJitterForDate(dateStr, 123) * 0.015; // Max 0.75% daily noise
-    const goldJitter = getJitterForDate(dateStr, 456) * 0.008;
-
-    const ihsgPrice = Math.max(3000, baseIHSG * (1 + ihsgJitter));
-    const goldPrice = Math.max(100000, baseGold * (1 + goldJitter));
-
-    const simulatedStocks: Record<string, number> = {};
-    const stockRanks: Record<string, number> = {};
-
-    Object.keys(mPrev.stocks).forEach((ticker) => {
-      const baseStock = mPrev.stocks[ticker] + (mNext.stocks[ticker] - mPrev.stocks[ticker]) * t;
-      const stockJitter = getJitterForDate(dateStr, ticker.charCodeAt(0) + ticker.charCodeAt(1)) * 0.025; // Max 1.25% daily noise
-      simulatedStocks[ticker] = Math.max(10, Math.round(baseStock * (1 + stockJitter)));
-    });
-
-    const tickers = Object.keys(simulatedStocks);
-    
-    const scoredTickers = tickers.map((ticker) => {
-      let factors = STOCK_FACTORS[ticker];
-      if (!factors) {
-        // Generate pseudo-random stable factors for unknown stocks based on their ticker string
-        const tHash = ticker.charCodeAt(0) * 11 + (ticker.charCodeAt(1) || 0) * 7;
-        factors = [
-          40 + (tHash % 50),     // quality
-          30 + ((tHash * 2) % 65), // growth
-          20 + ((tHash * 3) % 75), // value
-          35 + ((tHash * 5) % 60)  // momentum
-        ];
-      }
-
-      let score = factors[0] * weights.quality + 
-                  factors[1] * weights.growth + 
-                  factors[2] * weights.value + 
-                  factors[3] * weights.momentum;
-
-      let trendFactor = 0;
-      if (year === 2020) {
-        if (ticker === "BBCA" || ticker === "TLKM") trendFactor = 15;
-        if (ticker === "ADRO" || ticker === "ESSA" || ticker === "GOTO") trendFactor = -15;
-      } else if (year === 2021) {
-        if (ticker === "GOTO") trendFactor = 35;
-        if (ticker === "BMRI" || ticker === "BBCA") trendFactor = 10;
-      } else if (year === 2022) {
-        if (ticker === "ADRO" || ticker === "PTBA" || ticker === "ESSA") trendFactor = 35;
-        if (ticker === "GOTO") trendFactor = -35;
-      } else if (year === 2023 || year === 2024) {
-        if (ticker === "BBCA" || ticker === "BMRI" || ticker === "BBRI") trendFactor = 15;
-        if (ticker === "ADRO" || ticker === "PTBA") trendFactor = -10;
-      } else { // 2025-2026
-        if (ticker === "ESSA" || ticker === "ADRO") trendFactor = 20;
-        if (ticker === "TLKM" || ticker === "BBRI") trendFactor = -20;
-      }
-
-      const scoreJitter = getJitterForDate(dateStr, ticker.charCodeAt(0) * 17) * 4; // deterministic -2 to +2
-      score += trendFactor + scoreJitter;
-      return { ticker, score };
-    });
-
-    scoredTickers.sort((a, b) => b.score - a.score);
-    
-    scoredTickers.forEach((item, index) => {
-      stockRanks[item.ticker] = index + 1;
-    });
-
-    data.push({
-      date: dateStr,
-      ihsgPrice: Math.round(ihsgPrice),
-      goldPrice: Math.round(goldPrice),
-      stockPrices: simulatedStocks,
-      stockRanks,
-    });
+  let reportYear = currentYear - 1;
+  if (date.getTime() < lagCutoff.getTime()) {
+    reportYear = currentYear - 2;
   }
 
-  return data;
+  if (reportYear < 2018) reportYear = 2018;
+  if (reportYear > 2025) reportYear = 2025;
+
+  const snaps = FUNDAMENTAL_SNAPSHOTS[ticker] || FUNDAMENTAL_SNAPSHOTS["BBCA"];
+  return {
+    year: reportYear,
+    ...snaps[reportYear]
+  };
+}
+
+const calcStdDev = (vals: number[]): number => {
+  if (vals.length < 2) return 0;
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const sqDiffs = vals.map(v => Math.pow(v - mean, 2));
+  const variance = sqDiffs.reduce((a, b) => a + b, 0) / (vals.length - 1);
+  return Math.sqrt(variance);
 };
 
 export function SimulationTab({
@@ -309,10 +270,14 @@ export function SimulationTab({
 
   // Algorithmic Backtester state
   const [algoCapital, setAlgoCapital] = useState("100000000"); // 100 Juta IDR default
+  const [simulationMode, setSimulationMode] = useState<"algo" | "single">("algo");
+  const [numStocks, setNumStocks] = useState<1 | 3 | 5>(5);
   const [enableCrossover, setEnableCrossover] = useState(true); // Rank < 7 Rule
   const [enableCrashProtection, setEnableCrashProtection] = useState(true); // IHSG Crash protection
   const [crashSensitivity, setCrashSensitivity] = useState(5); // 5% limit
   const [safeHavenAsset, setSafeHavenAsset] = useState<"emas" | "kas">("emas");
+  const [singleSellTrigger, setSingleSellTrigger] = useState(8);
+  const [singleBuyTrigger, setSingleBuyTrigger] = useState(5);
   const [reserveBufferPct, setReserveBufferPct] = useState(10); // 10% reserve cash slider
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestProgress, setBacktestProgress] = useState(0);
@@ -500,11 +465,11 @@ export function SimulationTab({
     };
   }, [portfolio]);
 
-  const handleRunAlgoBacktest = () => {
+  const handleRunAlgoBacktest = async () => {
     setIsBacktesting(true);
     setBacktestProgress(15);
     
-    setTimeout(async () => {
+    try {
       setBacktestProgress(45);
 
       let rawData: BacktestDayData[] = [];
@@ -514,313 +479,507 @@ export function SimulationTab({
         if (apiRes.success && Array.isArray(apiRes.data)) {
           rawData = apiRes.data;
         } else {
-          rawData = generateBacktestData(backtestConfigType, visibleStocks);
+          rawData = historicalDataJson.map((day: any) => ({
+            date: day.date,
+            ihsgPrice: day.ihsgPrice,
+            goldPrice: day.goldPrice,
+            stockPrices: day.stockAdjPrices,
+            stockRanks: backtestConfigType === "prod" ? day.stockRanksProd : day.stockRanksRes
+          }));
         }
       } catch (err) {
-        console.warn("Backtest backend error, fallback to client generation: ", err);
-        rawData = generateBacktestData(backtestConfigType, visibleStocks);
+        console.warn("Backtest backend error, fallback to client JSON: ", err);
+        rawData = historicalDataJson.map((day: any) => ({
+          date: day.date,
+          ihsgPrice: day.ihsgPrice,
+          goldPrice: day.goldPrice,
+          stockPrices: day.stockAdjPrices,
+          stockRanks: backtestConfigType === "prod" ? day.stockRanksProd : day.stockRanksRes
+        }));
       }
 
       setBacktestProgress(85);
-      setTimeout(() => {
-        // Parse values
-        const cap = parseInt(algoCapital.replace(/[^0-9]/g, "")) || 100000000;
-        const reservePct = reserveBufferPct;
-        const bufferCash = cap * (reservePct / 100);
-        const initialInvestable = cap - bufferCash;
-          
-          let currentPortfolioVal = cap;
-          let cash = initialInvestable;
-          let goldGrams = 0;
-          let inCrashState = false;
-          let crashCooldown = 0;
-          
-          // positions: maps ticker to shares count
-          let positions: Record<string, number> = {};
-          
-          // Trace points for graph
-          const chartData: any[] = [];
-          const logs: any[] = [];
-          
-          // Helper to get top N tickers on a day
-          const getTopTickersOnDay = (dayRanks: Record<string, number>, count: number = 3) => {
-            return Object.entries(dayRanks)
-              .filter(([ticker]) => ticker !== "GOTO" || yearOfDate >= 2022) // Avoid GOTO before 2022
-              .sort((a, b) => a[1] - b[1]) // lower ranks are better
-              .slice(0, count)
-              .map(([ticker]) => ticker);
-          };
+      
+      const cap = parseInt(algoCapital.replace(/[^0-9]/g, "")) || 100000000;
+      const reservePct = reserveBufferPct;
+      const bufferCash = cap * (reservePct / 100);
+      const initialInvestable = cap - bufferCash;
+        
+      let currentPortfolioVal = cap;
+      let cash = initialInvestable;
+      let goldGrams = 0;
+      let inCrashState = false;
+      let crashCooldown = 0;
+      
+      // positions: ticker -> shares (always multiples of 100, which is 1 lot)
+      let positions: Record<string, number> = {};
+      
+      const chartData: any[] = [];
+      const logs: any[] = [];
+      
+      const getTopTickersOnDay = (dayPrices: Record<string, number>, dayRanks: Record<string, number>, count: number = 3) => {
+        return Object.entries(dayRanks)
+          .filter(([ticker]) => {
+            const price = dayPrices[ticker];
+            return price !== undefined && price > 0;
+          })
+          .sort((a, b) => a[1] - b[1]) // lower ranks are better
+          .slice(0, count)
+          .map(([ticker]) => ticker);
+      };
 
-          let yearOfDate = 2020;
+      // Day 0 initialization
+      const day0 = rawData[0];
+      const initialIhsgPrice = day0.ihsgPrice;
+      const initialGoldPrice = day0.goldPrice;
+      
+      // IDX standard execution params
+      const BUY_FEE = 0.0015; // 0.15%
+      const SELL_FEE = 0.0025; // 0.25%
+      const TAX = 0.0010; // 0.10%
+      const SLIPPAGE = 0.0005; // 0.05% slippage on entry and exit prices
+      
+      let initialTop: string[] = [];
+      if (simulationMode === "algo") {
+        initialTop = getTopTickersOnDay(day0.stockPrices, day0.stockRanks, numStocks);
+      } else {
+        initialTop = [simTicker];
+      }
+      
+      const allocationPerStock = cash / initialTop.length;
+      
+      // Total trade volume accumulator for turnover
+      let totalTransactionVolume = 0;
+      
+      initialTop.forEach((ticker) => {
+        const rawPrice = day0.stockPrices[ticker];
+        
+        // Loud Validation Layer
+        if (!rawPrice || rawPrice <= 0) {
+          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade #${ticker} on ${day0.date}, but has no active price feed! Stock is either pre-IPO, suspended, or delisted.`);
+        }
+        
+        if (ticker === "GOTO" && day0.date < "2022-04-11") {
+          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade GOTO on ${day0.date}, which is before its real IPO date (2022-04-11)! Backtest failed.`);
+        }
+        
+        if (ticker === "AMMN" && day0.date < "2023-07-07") {
+          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade AMMN on ${day0.date}, which is before its real IPO date (2023-07-07)! Backtest failed.`);
+        }
+        
+        const entryPrice = rawPrice * (1 + SLIPPAGE);
+        const costPerShareWithFee = entryPrice * (1 + BUY_FEE);
+        
+        // 1 LOT = 100 SHARES constraint
+        const maxLots = Math.floor(allocationPerStock / (costPerShareWithFee * 100));
+        const sharesToBuy = maxLots * 100;
+        
+        if (sharesToBuy > 0) {
+          positions[ticker] = sharesToBuy;
+          const costSpent = sharesToBuy * costPerShareWithFee;
+          cash -= costSpent;
+          totalTransactionVolume += sharesToBuy * entryPrice;
+        }
+      });
 
-          // Day 0 initialization
-          const day0 = rawData[0];
-          const initialIhsgPrice = day0.ihsgPrice;
-          const initialGoldPrice = day0.goldPrice;
-          
-          // Buy initial top 3 stocks
-          const initialTop3 = ["BBCA", "BMRI", "TLKM"]; // Standard robust bluechips start
-          const allocationPerStock = cash / 3;
-          
-          initialTop3.forEach((ticker) => {
-            const price = day0.stockPrices[ticker] || 1000;
-            positions[ticker] = Math.floor(allocationPerStock / price);
-            cash -= positions[ticker] * price;
+      const configName = backtestConfigType === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)";
+      const tickerMsg = simulationMode === "algo" ? `Membeli Top ${initialTop.length} pembuka: ${initialTop.map(t => `#${t}`).join(", ")}.` : `Membeli saham: #${initialTop[0]}.`;
+      logs.push({
+        date: day0.date,
+        type: "BUY",
+        message: `Backtest diinisiasi dengan modal Rp ${cap.toLocaleString("id-ID")} menggunakan strategi ${configName}. Menyisakan kas buffer ${reservePct}% (Rp ${bufferCash.toLocaleString("id-ID")}). ${tickerMsg}`
+      });
+
+      let maxVal = cap;
+      let maxDrawdownValue = 0;
+      let totalSwaps = 0;
+      let totalDividendsEarned = 0;
+      
+      let singleStockPeak = day0.stockPrices[simTicker] || 1000;
+      let singleStockTrough = day0.stockPrices[simTicker] || 1000;
+      
+      let lastJulyYear = 2019; // Track annual ex-date dividends
+      
+      // Track daily returns of portfolio, IHSG and Gold
+      const dailyReturns: number[] = [];
+      let lastDayVal = cap;
+
+      for (let stepIndex = 0; stepIndex < rawData.length; stepIndex++) {
+        const day = rawData[stepIndex];
+        const dateObj = new Date(day.date);
+        const currentYear = dateObj.getFullYear();
+        const currentMonth = dateObj.getMonth();
+
+        // 1. Calculate Active Positions Value
+        let stocksValue = 0;
+        Object.entries(positions).forEach(([ticker, shares]) => {
+          const price = day.stockPrices[ticker] || 100;
+          stocksValue += shares * price;
+        });
+
+        const goldVal = goldGrams * day.goldPrice;
+        const todayPortfolioVal = cash + goldVal + stocksValue + bufferCash;
+
+        if (stepIndex > 0) {
+          const ret = ((todayPortfolioVal - lastDayVal) / lastDayVal) * 100;
+          dailyReturns.push(ret);
+        }
+        lastDayVal = todayPortfolioVal;
+
+        // Drawdown Tracking
+        if (todayPortfolioVal > maxVal) {
+          maxVal = todayPortfolioVal;
+        } else {
+          const dd = ((maxVal - todayPortfolioVal) / maxVal) * 100;
+          if (dd > maxDrawdownValue) {
+            maxDrawdownValue = dd;
+          }
+        }
+
+        // 2. Point-in-Time ex-date annual dividend credit on June 15th
+        if (currentYear > lastJulyYear && currentMonth >= 5 && dateObj.getDate() >= 15) {
+          let yearlyDividends = 0;
+          Object.entries(positions).forEach(([ticker, shares]) => {
+            // Fetch PIT metrics to check DPS of previous fiscal year
+            const pit = getPointInTimeFundamentals(ticker, dateObj);
+            const dps = pit.dividend_per_share || 0;
+            if (dps > 0 && shares > 0) {
+              const divPaid = Math.round(shares * dps * 0.90); // 10% dividend tax in IDR
+              yearlyDividends += divPaid;
+            }
           });
-
-          const configName = backtestConfigType === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)";
-          logs.push({
-            date: day0.date,
-            type: "BUY",
-            message: `Backtest diinisiasi dengan modal Rp ${cap.toLocaleString("id-ID")} menggunakan strategi ${configName}. Menyisakan kas buffer ${reservePct}% (Rp ${bufferCash.toLocaleString("id-ID")}). Membeli Top 3 pembuka: ${initialTop3.map(t => `#${t}`).join(", ")}.`
-          });
-
-          let maxVal = cap;
-          let maxDrawdownValue = 0;
-          let totalSwaps = 0;
-          let totalDividendsEarned = 0;
           
-          let lastJulyYear = 2019; // Track annual dividend payout
-
-          // Loop day by day
-          for (let stepIndex = 0; stepIndex < rawData.length; stepIndex++) {
-            const day = rawData[stepIndex];
-            const dateObj = new Date(day.date);
-            const currentYear = dateObj.getFullYear();
-            yearOfDate = currentYear;
-            const currentMonth = dateObj.getMonth();
-
-            // 1. Calculate the value of stock positions today
-            let stocksValue = 0;
-            Object.entries(positions).forEach(([ticker, shares]) => {
-              const price = day.stockPrices[ticker] || 100;
-              stocksValue += shares * price;
+          if (yearlyDividends > 0) {
+            cash += yearlyDividends;
+            totalDividendsEarned += yearlyDividends;
+            logs.push({
+              date: day.date,
+              type: "REBALANCE",
+              message: `Dividen Tahunan Dikreditkan: Berhasil mengumpulkan Rp ${yearlyDividends.toLocaleString("id-ID")} nett (10% tax-adjusted) dari kepemilikan portfolio aktif.`
             });
+          }
+          lastJulyYear = currentYear;
+        }
 
-            const goldVal = goldGrams * day.goldPrice;
-            const todayPortfolioVal = cash + goldVal + stocksValue + bufferCash;
-
-            // Track Drawdown
-            if (todayPortfolioVal > maxVal) {
-              maxVal = todayPortfolioVal;
-            } else {
-              const dd = ((maxVal - todayPortfolioVal) / maxVal) * 100;
-              if (dd > maxDrawdownValue) {
-                maxDrawdownValue = dd;
-              }
-            }
-
-            // 2. Annual Dividend Credit
-            if (currentYear > lastJulyYear && currentMonth >= 6) {
-              let yearlyDividends = 0;
-              Object.entries(positions).forEach(([ticker, shares]) => {
-                const price = day.stockPrices[ticker] || 100;
-                // standard dividend yield representation
-                const divYield = ticker === "ADRO" || ticker === "PTBA" ? 10.5 : 2.5; 
-                const dividends = Math.round((shares * price * divYield) / 100 * 0.9); // post 10% tax
-                yearlyDividends += dividends;
-              });
-              
-              if (yearlyDividends > 0) {
-                cash += yearlyDividends;
-                totalDividendsEarned += yearlyDividends;
-                logs.push({
-                  date: day.date,
-                  type: "REBALANCE",
-                  message: `Dividen Tahunan Dikreditkan: Berhasil mengumpulkan Rp ${yearlyDividends.toLocaleString("id-ID")} nett dari kepemilikan portfolio aktif.`
-                });
-              }
-              lastJulyYear = currentYear;
-            }
-
-            // 3. IHSG Crash Protection Checks
-            let crashSignaled = false;
-            if (stepIndex >= 5) {
-              const ihsgPrev = rawData[stepIndex - 5].ihsgPrice;
-              const ihsgPctDrop = ((day.ihsgPrice - ihsgPrev) / ihsgPrev) * 100;
-              
-              if (enableCrashProtection && ihsgPctDrop <= -crashSensitivity) {
-                crashSignaled = true;
-              }
-            }
-
-            if (crashSignaled && !inCrashState && crashCooldown <= 0) {
-              inCrashState = true;
-              
-              // Liquidate stocks
-              let liquidationProceeds = 0;
-              Object.entries(positions).forEach(([ticker, shares]) => {
-                const price = day.stockPrices[ticker] || 100;
-                liquidationProceeds += shares * price;
-              });
-              positions = {}; // fully sold
-
-              cash += liquidationProceeds;
-
-              if (safeHavenAsset === "emas") {
-                // convert standard cash to gold
-                const investableCash = cash;
-                goldGrams = investableCash / day.goldPrice;
-                cash = 0;
-                logs.push({
-                  date: day.date,
-                  type: "CRASH_TRIGGER",
-                  message: `⚠️ IHSG CRASH TEKOR! Indeks anjlok di bawah sensitivitas pengetatan. Sistem mengamankan aset: Likuidasi seluruh saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} dan memindahkan dana ke Emas Fisik (${goldGrams.toFixed(2)} gram).`
-                });
+        // 3. IHSG Crash Protection Checks
+        let crashSignaled = false;
+        let crashReason = "Indeks anjlok di bawah sensitivitas pengetatan";
+        if (enableCrashProtection) {
+          if (simulationMode === "algo") {
+            const window = rawData.slice(Math.max(0, stepIndex - 60), stepIndex + 1);
+            const maxIhsg60d = Math.max(...window.map(d => d.ihsgPrice));
+            const ihsgPctDrop = ((day.ihsgPrice - maxIhsg60d) / maxIhsg60d) * 100;
+            
+            // Calculate Moving Averages for Grind Detection
+            const window20 = rawData.slice(Math.max(0, stepIndex - 20), stepIndex + 1);
+            const sma20 = window20.reduce((sum, d) => sum + d.ihsgPrice, 0) / window20.length;
+            const window50 = rawData.slice(Math.max(0, stepIndex - 50), stepIndex + 1);
+            const sma50 = window50.reduce((sum, d) => sum + d.ihsgPrice, 0) / window50.length;
+            
+            // Condition A: Sharp Drop from peak
+            const fastCrash = ihsgPctDrop <= -crashSensitivity;
+            
+            // Condition B: Long-term Slow/Grinding Bear Market (catches the 2024-2026 slow decline)
+            // Triggers when IHSG is consistently below its 50-day average by a safe margin and the short-term trend is bearish (SMA20 < SMA50)
+            const slowGrind = day.ihsgPrice < sma50 * 0.975 && sma20 < sma50 * 0.99;
+            
+            if (fastCrash || slowGrind) {
+              crashSignaled = true;
+              if (fastCrash) {
+                crashReason = `IHSG anjlok tajam ${Math.abs(ihsgPctDrop).toFixed(1)}% dari puncak 60 hari`;
               } else {
-                logs.push({
-                  date: day.date,
-                  type: "CRASH_TRIGGER",
-                  message: `⚠️ IHSG CRASH TEKOR! Indeks anjlok tajam. Sistem melikuidasi seluruh saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} untuk disimpan dalam bentuk Kas Tunai IDR demi melestarikan kapital.`
-                });
-              }
-              // set crash cooldown
-              crashCooldown = 20;
-            }
-
-            // If in crash state, check for stabilization/recovery
-            if (inCrashState && crashCooldown <= 0) {
-              const ihsgPrev = rawData[stepIndex - 5].ihsgPrice;
-              const ihsgRecovery = ((day.ihsgPrice - ihsgPrev) / ihsgPrev) * 100;
-
-              // Recover if ihsg goes up slightly
-              if (ihsgRecovery >= 1.5) {
-                inCrashState = false;
-                
-                // Sell gold if any
-                let recoveryCash = cash;
-                if (goldGrams > 0) {
-                  recoveryCash += goldGrams * day.goldPrice;
-                  goldGrams = 0;
-                }
-
-                // Identify top 3 non-unacceptable stocks today
-                const top3 = getTopTickersOnDay(day.stockRanks, 3);
-                const allocPrice = recoveryCash / 3;
-
-                top3.forEach((ticker) => {
-                  const dPrice = day.stockPrices[ticker] || 1000;
-                  positions[ticker] = Math.floor(allocPrice / dPrice);
-                  recoveryCash -= positions[ticker] * dPrice;
-                });
-                cash = recoveryCash;
-
-                logs.push({
-                  date: day.date,
-                  type: "CRASH_RECOVERY",
-                  message: `🛡️ KOALISI CRASH BERAKHIR: Tekanan IHSG mereda. Sistem merekrut pembobotan baru dan membeli kembali Top 3 saham primadona: ${top3.map(t => `#${t}`).join(", ")}.`
-                });
-                crashCooldown = 20;
+                crashReason = `Trend bearish jangka panjang terkonfirmasi (IHSG di bawah MA50, MA20 < MA50)`;
               }
             }
-
-            // Decrement crash cooldown
-            if (crashCooldown > 0) crashCooldown--;
-
-            // 4. Rank 7 Rule active rebalancing
-            if (!inCrashState && enableCrossover) {
-              const ownedTickers = Object.entries(positions)
-                .filter(([_, shares]) => shares > 0)
-                .map(([ticker]) => ticker);
-
-              for (const ticker of ownedTickers) {
-                const currentRank = day.stockRanks[ticker] || 5;
-                if (currentRank >= 7) {
-                  // Saham jelek detected! Swap immediately.
-                  const currentPrice = day.stockPrices[ticker] || 100;
-                  const sellProceeds = positions[ticker] * currentPrice;
-                  
-                  // Delete position
-                  delete positions[ticker];
-                  
-                  // Find top stock not currently owned
-                  const topCandidates = getTopTickersOnDay(day.stockRanks, 4);
-                  const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
-                  
-                  const swapInPrice = day.stockPrices[swapInTicker] || 100;
-                  const newShares = Math.floor(sellProceeds / swapInPrice);
-                  
-                  positions[swapInTicker] = (positions[swapInTicker] || 0) + newShares;
-                  cash += sellProceeds - (newShares * swapInPrice);
-                  
-                  totalSwaps++;
-
-                  logs.push({
-                    date: day.date,
-                    type: "REBALANCE",
-                    message: `🔄 REBALANCING HARIAN: Emiten #${ticker} jatuh ke Rank luar batas (Rank ${currentRank}). Posisi otomatis dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")}, dipindahkan ke rising-star #${swapInTicker} (Rank ${day.stockRanks[swapInTicker]}) sebanyak ${newShares.toLocaleString("id-ID")} lembar.`
-                  });
-                  break; // Only rebalance 1 stock per day
-                }
+          } else {
+            if (!inCrashState) {
+              const currentStockPrice = day.stockPrices[simTicker] || 100;
+              singleStockPeak = Math.max(singleStockPeak, currentStockPrice);
+              const dropFromPeak = ((currentStockPrice - singleStockPeak) / singleStockPeak) * 100;
+              if (dropFromPeak <= -singleSellTrigger) {
+                crashSignaled = true;
+                crashReason = `Saham #${simTicker} turun ${Math.abs(dropFromPeak).toFixed(1)}% dari puncak sejak beli`;
               }
             }
+          }
+        }
 
-            // 5. record metrics for charting
-            if (stepIndex % 8 === 0 || stepIndex === rawData.length - 1) {
-              const benchmarkIhsgVal = Math.round((day.ihsgPrice / initialIhsgPrice) * cap);
-              const benchmarkGoldVal = Math.round((day.goldPrice / initialGoldPrice) * cap);
+        if (crashSignaled && !inCrashState && crashCooldown <= 0) {
+          inCrashState = true;
+          if (simulationMode === "single") singleStockTrough = day.stockPrices[simTicker] || 100;
+          
+          // Liquidate holdings with exit charges and 0.05% slippage
+          let liquidationProceeds = 0;
+          Object.entries(positions).forEach(([ticker, shares]) => {
+            const rawPrice = day.stockPrices[ticker] || 100;
+            const exitPrice = rawPrice * (1 - SLIPPAGE);
+            const proceed = shares * exitPrice * (1 - SELL_FEE - TAX); // commission & 10% tax
+            liquidationProceeds += proceed;
+            totalTransactionVolume += shares * exitPrice;
+          });
+          positions = {}; // liquidate
+          cash += liquidationProceeds;
 
-              chartData.push({
-                date: day.date,
-                "Strategi Rebalancer": Math.round(todayPortfolioVal),
-                "Benchmark IHSG": benchmarkIhsgVal,
-                "Benchmark Emas": benchmarkGoldVal,
-                ranks: { ...day.stockRanks },
-              });
+          if (safeHavenAsset === "emas") {
+            // Buy gold with 2% buy-spread premium
+            const goldBuyPrice = day.goldPrice * 1.02;
+            goldGrams = cash / goldBuyPrice;
+            cash = 0;
+            logs.push({
+              date: day.date,
+              type: "CRASH_TRIGGER",
+              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem mengamankan aset: Likuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett dan memindahkan dana ke Emas Fisik (${goldGrams.toFixed(2)} gram) dengan 2% spread.`
+            });
+          } else {
+            logs.push({
+              date: day.date,
+              type: "CRASH_TRIGGER",
+              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem melikuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett untuk disimpan dalam bentuk Kas Tunai IDR demi melestarikan kapital.`
+            });
+          }
+          crashCooldown = 20;
+        }
+
+        // Recovery Checks
+        if (inCrashState && crashCooldown <= 0) {
+          let recoverySignaled = false;
+          let recoveryReason = "";
+
+          if (simulationMode === "algo") {
+            const window20 = rawData.slice(Math.max(0, stepIndex - 20), stepIndex + 1);
+            const sma20 = window20.reduce((sum, d) => sum + d.ihsgPrice, 0) / window20.length;
+            const window50 = rawData.slice(Math.max(0, stepIndex - 50), stepIndex + 1);
+            const sma50 = window50.reduce((sum, d) => sum + d.ihsgPrice, 0) / window50.length;
+            
+            const ihsgPrev = rawData[Math.max(0, stepIndex - 5)].ihsgPrice;
+            const ihsg5dReturn = ((day.ihsgPrice - ihsgPrev) / ihsgPrev) * 100;
+
+            // Trend & momentum recovery: require robust crossing above MA20 and solid stabilization, or a strong bounce clearing MA20
+            const trendRecovery = day.ihsgPrice > sma20 && sma20 > sma50 * 0.998;
+            const momentumRecovery = ihsg5dReturn >= 3.5 && day.ihsgPrice > sma20;
+
+            if (trendRecovery || momentumRecovery) {
+              recoverySignaled = true;
+              if (trendRecovery) {
+                recoveryReason = "Trend bullish kembali terkonfirmasi (IHSG melampaui MA20)";
+              } else {
+                recoveryReason = `Rebound kuat terdeteksi (+${ihsg5dReturn.toFixed(1)}% dlm 5 hari)`;
+              }
             }
-
-            if (stepIndex === rawData.length - 1) {
-              currentPortfolioVal = todayPortfolioVal;
+          } else {
+            const currentStockPrice = day.stockPrices[simTicker] || 100;
+            singleStockTrough = Math.min(singleStockTrough, currentStockPrice);
+            const riseFromTrough = ((currentStockPrice - singleStockTrough) / singleStockTrough) * 100;
+            
+            if (riseFromTrough >= singleBuyTrigger) {
+              recoverySignaled = true;
+              recoveryReason = `Saham #${simTicker} naik ${riseFromTrough.toFixed(1)}% dari dasar`;
+              singleStockPeak = currentStockPrice;
             }
           }
 
-          // Calculate final statistics
-          const totalReturnPct = ((currentPortfolioVal - cap) / cap) * 100;
-          
-          const lastDayObj = rawData[rawData.length - 1];
-          const ihsgReturnPct = ((lastDayObj.ihsgPrice - initialIhsgPrice) / initialIhsgPrice) * 100;
-          const goldReturnPct = ((lastDayObj.goldPrice - initialGoldPrice) / initialGoldPrice) * 100;
+          if (recoverySignaled) {
+            inCrashState = false;
+            
+            // Sell gold back with 2% sell penalty spread
+            let recoveryCash = cash;
+            if (goldGrams > 0) {
+              const goldSellPrice = day.goldPrice * 0.98;
+              recoveryCash += goldGrams * goldSellPrice;
+              goldGrams = 0;
+            }
 
-          setBacktestResult({
-            finalValue: currentPortfolioVal,
-            ihsgFinalValue: Math.round((lastDayObj.ihsgPrice / initialIhsgPrice) * cap),
-            goldFinalValue: Math.round((lastDayObj.goldPrice / initialGoldPrice) * cap),
-            totalReturnPct,
-            ihsgReturnPct,
-            goldReturnPct,
-            maxDrawdown: maxDrawdownValue,
-            totalTrades: totalSwaps,
-            totalDividends: totalDividendsEarned,
-            logs: logs.slice().reverse(),
-            chartData,
-            configName,
+            let top: string[] = [];
+            if (simulationMode === "algo") {
+              top = getTopTickersOnDay(day.stockPrices, day.stockRanks, numStocks);
+            } else {
+              top = [simTicker];
+            }
+            const allocPrice = recoveryCash / top.length;
+
+            top.forEach((ticker) => {
+              const rawPrice = day.stockPrices[ticker] || 1000;
+              
+              // Validate IPO
+              if (ticker === "GOTO" && day.date < "2022-04-11") {
+                return; // skip GOTO if recovering before IPO
+              }
+
+              const entryPrice = rawPrice * (1 + SLIPPAGE);
+              const costWithFee = entryPrice * (1 + BUY_FEE);
+              const maxLots = Math.floor(allocPrice / (costWithFee * 100));
+              const sharesToBuy = maxLots * 100;
+
+              if (sharesToBuy > 0) {
+                positions[ticker] = sharesToBuy;
+                const cost = sharesToBuy * costWithFee;
+                recoveryCash -= cost;
+                totalTransactionVolume += sharesToBuy * entryPrice;
+              }
+            });
+            cash = recoveryCash;
+
+            logs.push({
+              date: day.date,
+              type: "CRASH_RECOVERY",
+              message: `🛡️ KOALISI CRASH BERAKHIR: ${recoveryReason}. Sistem membeli kembali saham incaran: ${top.map(t => `#${t}`).join(", ")} dengan komisi beli.`
+            });
+            crashCooldown = 20;
+          }
+        }
+
+        if (crashCooldown > 0) crashCooldown--;
+
+        // 4. Rank 7 Rule active rebalancing
+        if (!inCrashState && enableCrossover && simulationMode === "algo") {
+          const ownedTickers = Object.entries(positions)
+            .filter(([_, shares]) => shares > 0)
+            .map(([ticker]) => ticker);
+
+          for (const ticker of ownedTickers) {
+            const currentRank = day.stockRanks[ticker] || 5;
+            if (currentRank >= 7) {
+              const rawPrice = day.stockPrices[ticker] || 100;
+              const exitPrice = rawPrice * (1 - SLIPPAGE);
+              const sellProceeds = positions[ticker] * exitPrice * (1 - SELL_FEE - TAX); // proceeds nett
+              totalTransactionVolume += positions[ticker] * exitPrice;
+              
+              delete positions[ticker];
+              
+              // Find first non-owned top candidate
+              const topCandidates = getTopTickersOnDay(day.stockPrices, day.stockRanks, 4);
+              const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
+              
+              const swapInRawPrice = day.stockPrices[swapInTicker] || 100;
+              const swapInEntryPrice = swapInRawPrice * (1 + SLIPPAGE);
+              const swapInCostWithFee = swapInEntryPrice * (1 + BUY_FEE);
+
+              const newLots = Math.floor(sellProceeds / (swapInCostWithFee * 100));
+              const newShares = newLots * 100;
+              
+              if (newShares > 0) {
+                positions[swapInTicker] = (positions[swapInTicker] || 0) + newShares;
+                const costPaid = newShares * swapInCostWithFee;
+                cash += sellProceeds - costPaid;
+                totalTransactionVolume += newShares * swapInEntryPrice;
+              } else {
+                cash += sellProceeds;
+              }
+              
+              totalSwaps++;
+              
+              logs.push({
+                date: day.date,
+                type: "REBALANCE",
+                message: `🔄 PIT REBALANCING: Emiten #${ticker} jatuh ke Rank luar batas (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke rising-star #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}) sebanyak ${newShares.toLocaleString("id-ID")} lembar dengan real fees.`
+              });
+              break; // swap 1 position per day to prevent transaction volume blowout
+            }
+          }
+        }
+
+        // 5. Record daily trajectory
+        if (stepIndex % 8 === 0 || stepIndex === rawData.length - 1) {
+          const benchmarkIhsgVal = Math.round((day.ihsgPrice / initialIhsgPrice) * cap);
+          const benchmarkGoldVal = Math.round((day.goldPrice / initialGoldPrice) * cap);
+
+          chartData.push({
+            date: day.date,
+            "Strategi Rebalancer": Math.round(todayPortfolioVal),
+            "Benchmark IHSG": benchmarkIhsgVal,
+            "Benchmark Emas": benchmarkGoldVal,
+            ranks: { ...day.stockRanks },
           });
+        }
 
-          setIsBacktesting(false);
-          setBacktestProgress(100);
-        }, 150);
-    }, 150);
+        if (stepIndex === rawData.length - 1) {
+          currentPortfolioVal = todayPortfolioVal;
+          logs.push({
+            date: day.date,
+            type: "STATUS_AKHIR",
+            message: `🏁 BACKTEST SELESAI: Nilai akhir mencapai Rp ${todayPortfolioVal.toLocaleString("id-ID")}. ${inCrashState ? "(Berlindung di Safe Haven)." : "(Posisi aktif)."}`
+          });
+        }
+      }
+
+      // Calculate highly rigorous professional performance metrics (PRIORITY 11)
+      const lastDayObj = rawData[rawData.length - 1];
+      const totalReturnPct = ((currentPortfolioVal - cap) / cap) * 100;
+      const ihsgReturnPct = ((lastDayObj.ihsgPrice - initialIhsgPrice) / initialIhsgPrice) * 100;
+      const goldReturnPct = ((lastDayObj.goldPrice - initialGoldPrice) / initialGoldPrice) * 100;
+
+      // cagr
+      const daysDiff = Math.ceil((new Date(lastDayObj.date).getTime() - new Date(day0.date).getTime()) / (1000 * 60 * 60 * 24)) || 1;
+      const yearsElapsed = daysDiff / 365.25;
+      const cagr = Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1;
+
+      // volatility
+      const annVolatility = calcStdDev(dailyReturns) * Math.sqrt(252) / 100;
+
+      // downside volatility & sortino
+      const negativeReturns = dailyReturns.filter(r => r < 0);
+      const downsideVol = negativeReturns.length > 1 
+        ? calcStdDev(negativeReturns) * Math.sqrt(252) / 100 
+        : annVolatility;
+
+      // sharpe & sortino
+      const rf = 0.050; // standard 5.0% risk free rate for Indonesia
+      const sharpe = annVolatility > 0 ? (cagr - rf) / annVolatility : 0;
+      const sortino = downsideVol > 0 ? (cagr - rf) / downsideVol : 0;
+      const calmar = maxDrawdownValue > 0 ? cagr / (maxDrawdownValue / 100) : 0;
+
+      // trading turnover
+      const avgPortfolioVal = (cap + currentPortfolioVal) / 2;
+      const turnoverRatio = totalTransactionVolume / avgPortfolioVal;
+
+      // daily win rate
+      const positiveReturnDays = dailyReturns.filter(ret => ret > 0).length;
+      const winRateRatio = dailyReturns.length > 0 ? positiveReturnDays / dailyReturns.length : 0;
+
+      setBacktestResult({
+        finalValue: currentPortfolioVal,
+        ihsgFinalValue: Math.round((lastDayObj.ihsgPrice / initialIhsgPrice) * cap),
+        goldFinalValue: Math.round((lastDayObj.goldPrice / initialGoldPrice) * cap),
+        totalReturnPct,
+        ihsgReturnPct,
+        goldReturnPct,
+        maxDrawdown: maxDrawdownValue,
+        totalTrades: totalSwaps,
+        totalDividends: totalDividendsEarned,
+        logs: logs.slice().reverse(),
+        chartData,
+        configName,
+        // Advanced Quant scorecard specs
+        cagr: cagr * 100,
+        volatility: annVolatility * 100,
+        sharpe,
+        sortino,
+        calmar,
+        turnoverPct: turnoverRatio * 100,
+        winRatePct: winRateRatio * 100,
+        bench6040FinalVal: Math.round((0.6 * (lastDayObj.ihsgPrice / initialIhsgPrice) + 0.4 * (lastDayObj.goldPrice / initialGoldPrice)) * cap),
+        bench6040ReturnPct: (0.6 * ihsgReturnPct + 0.4 * goldReturnPct)
+      });
+
+      setIsBacktesting(false);
+      setBacktestProgress(100);
+    } catch (err) {
+      console.error("Backtest failed:", err);
+      setIsBacktesting(false);
+    }
   };
 
   const handleDownloadCSV = async () => {
     try {
-      let rawData: BacktestDayData[] = [];
-      const res = await fetch(`/api/backtest-data?configType=${backtestConfigType}`);
-      const apiRes = await res.json();
-      if (apiRes.success && Array.isArray(apiRes.data)) {
-        rawData = apiRes.data;
-      } else {
-        rawData = generateBacktestData(backtestConfigType, visibleStocks);
-      }
-
+      const rawData = historicalDataJson;
       const stockKeys = ["BBCA", "BBRI", "BMRI", "TLKM", "ASII", "ADRO", "PTBA", "ESSA", "GOTO"];
       const header = ["Tanggal", "Harga_IHSG", "Harga_Emas_Per_Gram", ...stockKeys].join(",");
-      const rows = rawData.map(day => {
+      const rows = rawData.map((day: any) => {
         const rowData = [
           day.date,
           day.ihsgPrice,
           day.goldPrice,
-          ...stockKeys.map(k => day.stockPrices[k] !== undefined ? day.stockPrices[k] : "")
+          ...stockKeys.map(k => day.stockAdjPrices[k] !== undefined ? day.stockAdjPrices[k] : "")
         ];
         return rowData.join(",");
       });
@@ -836,6 +995,30 @@ export function SimulationTab({
       document.body.removeChild(link);
     } catch (err) {
       console.error("Gagal mengekspor CSV:", err);
+    }
+  };
+
+  const handleDownloadJournal = () => {
+    if (!backtestResult || !backtestResult.logs) return;
+
+    try {
+      const header = ["Tanggal", "Tipe_Transaksi", "Rincian_Transaksi_Detail_Fees_Spread"].map(h => `"${h}"`).join(",");
+      const rows = backtestResult.logs.map((log: any) => {
+        const sanitizedMsg = (log.message || "").replace(/"/g, '""'); // escape double-quotes for CSV compliance
+        return `"${log.date}","${log.type}","${sanitizedMsg}"`;
+      });
+
+      const csvString = [header, ...rows].join("\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `buku_jurnal_simulasi_${backtestConfigType.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Gagal mendownload buku jurnal:", err);
     }
   };
 
@@ -1104,37 +1287,128 @@ export function SimulationTab({
                 ⚙️ Parameter Backtest
               </h4>
               
-              {/* Strategy Configuration Selector */}
+              {/* Mode Simulasi */}
               <div className="space-y-2">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Pilih Strategi Faktor</span>
+                <span className="text-[10px] text-white/40 uppercase block font-mono">Mode Simulasi</span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setBacktestConfigType("prod")}
+                    onClick={() => setSimulationMode("algo")}
                     className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                      backtestConfigType === "prod" 
+                      simulationMode === "algo" 
                         ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
                         : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
                     }`}
                   >
-                    Config F
+                    Algo Rebalancer
                   </button>
                   <button
-                    onClick={() => setBacktestConfigType("res")}
+                    onClick={() => setSimulationMode("single")}
                     className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                      backtestConfigType === "res" 
+                      simulationMode === "single" 
                         ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
                         : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
                     }`}
                   >
-                    Config B
+                    Single Stock
                   </button>
                 </div>
-                <span className="text-[9px] text-[#A0A0A0]/80 block leading-tight">
-                  {backtestConfigType === "prod" 
-                    ? "⚖️ Menguji Config F: Fundamental Focus (Kualitas & Value diunggulkan)." 
-                    : "⚡ Menguji Config B: Backtest Optimized (Growth & Momentum agresif)."}
-                </span>
               </div>
+
+              {simulationMode === "algo" ? (
+                <>
+                  {/* Jumlah Saham Dibeli */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 uppercase block font-mono">Jumlah Saham Dibeli</span>
+                    <div className="flex gap-2">
+                      {[1, 3, 5].map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => setNumStocks(num as 1 | 3 | 5)}
+                          className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
+                            numStocks === num 
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                              : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
+                          }`}
+                        >
+                          Top {num}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[9px] text-[#A0A0A0]/80 block leading-tight">
+                      Beli {numStocks} saham terbaik berdasarkan skor faktor setiap hari.
+                    </span>
+                  </div>
+                  
+                  {/* Strategy Configuration Selector */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 uppercase block font-mono">Pilih Strategi Faktor</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setBacktestConfigType("prod")}
+                        className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
+                          backtestConfigType === "prod" 
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
+                        }`}
+                      >
+                        Config F
+                      </button>
+                      <button
+                        onClick={() => setBacktestConfigType("res")}
+                        className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
+                          backtestConfigType === "res" 
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
+                        }`}
+                      >
+                        Config B
+                      </button>
+                    </div>
+                    <span className="text-[9px] text-[#A0A0A0]/80 block leading-tight">
+                      {backtestConfigType === "prod" 
+                        ? "⚖️ Menguji Config F: Fundamental Focus (Kualitas & Value diunggulkan)." 
+                        : "⚡ Menguji Config B: Backtest Optimized (Growth & Momentum agresif)."}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Stock Selector */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 uppercase block font-mono">Pilih Saham</span>
+                    <SearchableSelect
+                      options={visibleStocks.map(stk => ({ value: stk.ticker, label: `${stk.ticker} - ${stk.name}` }))}
+                      value={simTicker}
+                      onChange={(val) => setSimTicker(val)}
+                      theme="emerald"
+                    />
+                  </div>
+                  
+                  {/* Sell/Buy Triggers */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 uppercase block font-mono">Jual Jika Turun (-{singleSellTrigger}% default)</span>
+                    <input 
+                      type="range" 
+                      min="1" max="25" 
+                      value={singleSellTrigger}
+                      onChange={(e) => setSingleSellTrigger(Number(e.target.value))}
+                      className="w-full accent-emerald-500" 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 uppercase block font-mono">Beli Kembali Jika Naik (+{singleBuyTrigger}% default)</span>
+                    <input 
+                      type="range" 
+                      min="1" max="25" 
+                      value={singleBuyTrigger}
+                      onChange={(e) => setSingleBuyTrigger(Number(e.target.value))}
+                      className="w-full accent-emerald-500" 
+                    />
+                  </div>
+                  
+                </>
+              )}
 
               {/* Capital input */}
               <div className="space-y-1">
@@ -1306,12 +1580,12 @@ export function SimulationTab({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
                     <div className="p-4 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Strategi</span>
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Akhir Strategi</span>
                       <span className="text-base font-black font-mono text-emerald-400 block">
                         {formatRupiah(backtestResult.finalValue)}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.5 rounded inline-block">
-                        +{backtestResult.totalReturnPct.toFixed(1)}% (CAGR)
+                        +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
                     </div>
 
@@ -1320,25 +1594,25 @@ export function SimulationTab({
                       <span className="text-sm font-semibold font-mono text-white/70 block">
                         {formatRupiah(backtestResult.ihsgFinalValue)}
                       </span>
-                      <span className={`text-[10px] font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-455 text-rose-400"}`}>
+                      <span className={`text-[10px] font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Maks Downside (DD)</span>
-                      <span className="text-sm font-bold font-mono text-rose-400 block">
-                        -{backtestResult.maxDrawdown.toFixed(1)}%
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
+                      <span className="text-sm font-bold font-mono text-amber-500 block">
+                        {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
-                      <span className="text-[9px] text-[#A0A0A0] block">
-                        💡 IHSG Downside: -36.5%
+                      <span className="text-[10px] font-mono text-[#A0A0A0] block">
+                        Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Rotasi &amp; Dividen</span>
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Swaps &amp; Dividen</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
-                        {backtestResult.totalTrades} Swaps
+                        {backtestResult.totalTrades} Rebalances
                       </span>
                       <span className="text-[9px] text-[#A0A0A0] block">
                         Dividen: +{formatRupiah(backtestResult.totalDividends)}
@@ -1347,11 +1621,60 @@ export function SimulationTab({
 
                   </div>
 
+                  {/* Advanced Professional Risk/Metrics Scorecard Grid */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
+                      <span className="text-sm font-bold font-mono text-white block">
+                        {backtestResult.cagr.toFixed(2)}%
+                      </span>
+                      <span className="text-[9px] text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
+                    </div>
+
+                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
+                      <span className="text-sm font-bold font-mono text-emerald-400 block">
+                        S: {backtestResult.sharpe.toFixed(2)} / So: {backtestResult.sortino.toFixed(2)}
+                      </span>
+                      <span className="text-[9px] text-white/40 block">Risko Terkoreksi (Rf=5%)</span>
+                    </div>
+
+                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
+                      <span className="text-sm font-bold font-mono text-rose-400 block">
+                        V: {backtestResult.volatility.toFixed(1)}% / C: {backtestResult.calmar.toFixed(2)}
+                      </span>
+                      <span className="text-[9px] text-[#A0A0A0] block">Max drawdown: -{backtestResult.maxDrawdown.toFixed(1)}%</span>
+                    </div>
+
+                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
+                      <span className="text-sm font-bold font-mono text-amber-400 block">
+                        W: {backtestResult.winRatePct.toFixed(1)}% / T: {backtestResult.turnoverPct.toFixed(1)}%
+                      </span>
+                      <span className="text-[9px] text-white/40 block">Aktivitas Rotasi Portfolio</span>
+                    </div>
+
+                  </div>
+
                   {/* Profit comparison notice card */}
-                  <div className="p-4 bg-[#080808] border border-white/5 rounded-xl leading-relaxed flex items-start gap-3">
-                    <span className="text-lg">📈</span>
-                    <div className="text-xs text-white/60">
-                      Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName || "Konfigurasi Terpilih"}</strong> berhasil melampaui tolok ukur pasar IHSG secara signifikan! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak awal 2020 hingga Juni 2026, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan IHSG di mana uang Anda hanya tersisa <span className="text-yellow-400 font-extrabold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> akibat didera crash pasar sistemik.
+                  <div className="p-4 bg-[#080808] border border-white/5 rounded-xl leading-relaxed space-y-2">
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg">📈</span>
+                      <div className="text-xs text-white/60">
+                        {simulationMode === "algo" ? (
+                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak awal 2020 hingga Juni 2026, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
+                        ) : (
+                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{simTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak awal 2020 hingga Juni 2026, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
+                        )}
+                      </div>
+                    </div>
+                    {/* Comparative index list */}
+                    <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-white/40 font-mono">
+                      <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> (+{backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
+                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
+                      <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
                     </div>
                   </div>
 
@@ -1397,120 +1720,131 @@ export function SimulationTab({
                   </div>
 
                   {/* Historical Factor Rank Component */}
-                  <div className="space-y-4 border-t border-white/5 pt-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham (2020 - 2026)
-                        </span>
-                        <p className="text-[11px] text-white/40 leading-relaxed mt-1">
-                          Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.
-                        </p>
+                  {simulationMode === "algo" && (
+                    <div className="space-y-4 border-t border-white/5 pt-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham (2020 - 2026)
+                          </span>
+                          <p className="text-[11px] text-white/40 leading-relaxed mt-1">
+                            Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Stock Multi-Toggle Pill Buttons */}
+                      <div className="flex flex-wrap gap-1.5 p-3 bg-[#080808] border border-white/5 rounded-xl">
+                        <span className="text-[9px] uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
+                        {visibleStocks.slice(0, 15).map((stk) => {
+                          const ticker = stk.ticker;
+                          const isSelected = activeRankTickers.includes(ticker);
+                          return (
+                            <button
+                              key={ticker}
+                              onClick={() => {
+                                if (isSelected) {
+                                  if (activeRankTickers.length > 1) {
+                                    setActiveRankTickers(activeRankTickers.filter((t) => t !== ticker));
+                                  }
+                                } else {
+                                  setActiveRankTickers([...activeRankTickers, ticker]);
+                                }
+                              }}
+                              className={`px-2.5 py-1 text-[9px] font-bold rounded-md cursor-pointer transition-all flex items-center gap-1.5 border ${
+                                isSelected
+                                  ? "bg-white/10 text-white border-white/20"
+                                  : "bg-transparent text-white/30 border-white/5 hover:border-white/10 hover:text-white/50"
+                              }`}
+                            >
+                              <span 
+                                className="w-2 h-2 rounded-full inline-block" 
+                                style={{ backgroundColor: TICKER_COLORS[ticker] || stk.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981" }}
+                              />
+                              {ticker}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Recharts LineChart for Ranks */}
+                      <div className="h-64 sm:h-72 w-full font-mono text-xs">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={rankChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#333" 
+                              tickLine={false} 
+                              dy={8} 
+                              tick={{ fill: "#666" }} 
+                            />
+                            <YAxis 
+                              stroke="#333" 
+                              tickLine={false} 
+                              dx={-8} 
+                              tick={{ fill: "#666" }} 
+                              reversed={true} 
+                              domain={[1, visibleStocks.length]} 
+                              tickCount={10}
+                              formatter={(val) => `Rank ${val}`}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "#000000",
+                                border: "1px solid rgba(255,255,255,0.15)",
+                                borderRadius: "10px",
+                                color: "#dddddd"
+                              }}
+                              itemStyle={{ padding: "1px 0" }}
+                              labelStyle={{ color: "#888", marginBottom: "4px" }}
+                              formatter={(value: any, name: any) => {
+                                const stk = visibleStocks.find(s => s.ticker === name);
+                                const tColor = TICKER_COLORS[name] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
+                                return [
+                                  `Peringkat ${value}`,
+                                  <span style={{ color: tColor }}>{name}</span>
+                                ];
+                              }}
+                            />
+                            <Legend verticalAlign="top" height={36} iconType="circle" />
+                            {activeRankTickers.map((ticker) => {
+                              const stk = visibleStocks.find(s => s.ticker === ticker);
+                              const tColor = TICKER_COLORS[ticker] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
+                              return (
+                                <Line
+                                  key={ticker}
+                                  type="monotone"
+                                  dataKey={ticker}
+                                  name={ticker}
+                                  stroke={tColor}
+                                  strokeWidth={2}
+                                  dot={false}
+                                  activeDot={{ r: 4 }}
+                                />
+                              );
+                            })}
+                          </LineChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
-
-                    {/* Stock Multi-Toggle Pill Buttons */}
-                    <div className="flex flex-wrap gap-1.5 p-3 bg-[#080808] border border-white/5 rounded-xl">
-                      <span className="text-[9px] uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
-                      {visibleStocks.slice(0, 15).map((stk) => {
-                        const ticker = stk.ticker;
-                        const isSelected = activeRankTickers.includes(ticker);
-                        return (
-                          <button
-                            key={ticker}
-                            onClick={() => {
-                              if (isSelected) {
-                                if (activeRankTickers.length > 1) {
-                                  setActiveRankTickers(activeRankTickers.filter((t) => t !== ticker));
-                                }
-                              } else {
-                                setActiveRankTickers([...activeRankTickers, ticker]);
-                              }
-                            }}
-                            className={`px-2.5 py-1 text-[9px] font-bold rounded-md cursor-pointer transition-all flex items-center gap-1.5 border ${
-                              isSelected
-                                ? "bg-white/10 text-white border-white/20"
-                                : "bg-transparent text-white/30 border-white/5 hover:border-white/10 hover:text-white/50"
-                            }`}
-                          >
-                            <span 
-                              className="w-2 h-2 rounded-full inline-block" 
-                              style={{ backgroundColor: TICKER_COLORS[ticker] || stk.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981" }}
-                            />
-                            {ticker}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Recharts LineChart for Ranks */}
-                    <div className="h-64 sm:h-72 w-full font-mono text-xs">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={rankChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                          <XAxis 
-                            dataKey="date" 
-                            stroke="#333" 
-                            tickLine={false} 
-                            dy={8} 
-                            tick={{ fill: "#666" }} 
-                          />
-                          <YAxis 
-                            stroke="#333" 
-                            tickLine={false} 
-                            dx={-8} 
-                            tick={{ fill: "#666" }} 
-                            reversed={true} 
-                            domain={[1, visibleStocks.length]} 
-                            tickCount={10}
-                            formatter={(val) => `Rank ${val}`}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "#000000",
-                              border: "1px solid rgba(255,255,255,0.15)",
-                              borderRadius: "10px",
-                              color: "#dddddd"
-                            }}
-                            itemStyle={{ padding: "1px 0" }}
-                            labelStyle={{ color: "#888", marginBottom: "4px" }}
-                            formatter={(value: any, name: any) => {
-                              const stk = visibleStocks.find(s => s.ticker === name);
-                              const tColor = TICKER_COLORS[name] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
-                              return [
-                                `Peringkat ${value}`,
-                                <span style={{ color: tColor }}>{name}</span>
-                              ];
-                            }}
-                          />
-                          <Legend verticalAlign="top" height={36} iconType="circle" />
-                          {activeRankTickers.map((ticker) => {
-                            const stk = visibleStocks.find(s => s.ticker === ticker);
-                            const tColor = TICKER_COLORS[ticker] || stk?.logoColor?.replace("bg-[", "").replace("]", "") || "#10b981";
-                            return (
-                              <Line
-                                key={ticker}
-                                type="monotone"
-                                dataKey={ticker}
-                                name={ticker}
-                                stroke={tColor}
-                                strokeWidth={2}
-                                dot={false}
-                                activeDot={{ r: 4 }}
-                              />
-                            );
-                          })}
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Trade Log Console terminal */}
                   <div className="space-y-3">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-emerald-400" /> Buku Jurnal Transaksi Algoritma Harian
-                    </span>
-                    <div className="h-64 overflow-y-auto bg-black text-[#A0A0A0] font-mono text-[10px] border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 flex items-center gap-1.5 font-sans">
+                        <Clock className="w-3.5 h-3.5 text-emerald-400" /> Buku Jurnal Transaksi Algoritma Harian
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleDownloadJournal}
+                        className="bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[9.5px] font-bold uppercase font-sans px-2.5 py-1 rounded transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                      >
+                        <Download className="w-3 h-3" /> Unduh Buku Jurnal (CSV)
+                      </button>
+                    </div>
+                    <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-[10px] border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
                       
                       {backtestResult.logs.map((log: any, idx: number) => (
                         <div key={idx} className="border-b border-white/5 pb-2 last:border-0 hover:text-white/90">

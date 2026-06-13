@@ -4,6 +4,7 @@ import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark } from "lucide-react";
+import { TickerLogo } from "./TickerLogo";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
 export function getRotationData(ticker: string, dynamicChange?: number) {
@@ -189,38 +190,39 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                           #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}
                         </td>
                         <td className="py-1.5 px-2 font-black text-white text-[10px] md:text-xs tracking-wide">
-                          <div className="flex items-center min-w-[120px] md:min-w-[140px] justify-between gap-1">
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className={`inline-flex items-center gap-1 w-10 font-black ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                          <div className="flex items-center min-w-[158px] sm:min-w-[188px] justify-between gap-1">
+                            <div className="flex items-center gap-2 w-[76px] sm:w-[88px] shrink-0">
+                              <TickerLogo ticker={clean} size="sm" fallbackColor={liveStk?.logoColor} />
+                              <span className={`inline-flex items-center gap-1 font-black ${isInPorto ? "text-amber-400" : "text-white"}`}>
                                 {clean}
                                 {isInPorto ? <BookmarkCheck className="w-2.5 h-2.5 shrink-0" /> : isInWatchlist ? <Bookmark className="w-2.5 h-2.5 shrink-0 text-white/50" /> : null}
                               </span>
-                              <span className="inline-flex w-10 shrink-0">
-                                {item.rankChange > 0 && (
-                                  <span className="text-[7px] font-bold text-emerald-450 text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
-                                    <TrendingUp className="w-2 h-2" /> +{item.rankChange}
-                                  </span>
-                                )}
-                                {item.rankChange < 0 && (
-                                  <span className="text-[7px] font-bold text-rose-500 text-rose-400 bg-rose-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
-                                    <TrendingDown className="w-2 h-2" /> {item.rankChange}
-                                  </span>
-                                )}
-                              </span>
                             </div>
-                            <div className="w-[50px] shrink-0 flex justify-end">
+                            <div className="w-[36px] sm:w-[44px] shrink-0 flex items-center justify-start">
+                              {item.rankChange > 0 && (
+                                <span className="text-[7px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                  <TrendingUp className="w-2 h-2" /> +{item.rankChange}
+                                </span>
+                              )}
+                              {item.rankChange < 0 && (
+                                <span className="text-[7px] font-bold text-rose-400 bg-rose-500/10 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                  <TrendingDown className="w-2 h-2" /> {item.rankChange}
+                                </span>
+                              )}
+                            </div>
+                            <div className="w-[46px] sm:w-14 shrink-0 flex justify-end">
                               {(() => {
                                 const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
                                 if (matchEX?.exit_state === "EXIT") {
                                   return (
-                                    <span className="text-[7px] font-black text-white bg-rose-600 px-1 py-0.5 rounded animate-pulse shadow-sm uppercase tracking-wider font-sans text-center block w-full leading-normal">
+                                    <span className="text-[7px] font-black text-white bg-rose-600 px-1 py-0.5 rounded animate-pulse shadow-sm uppercase tracking-wider font-sans text-center block w-full leading-normal font-sans">
                                       🔴 EXIT
                                     </span>
                                   );
                                 }
                                 if (matchEX?.exit_state === "EXIT RISK") {
                                   return (
-                                    <span className="text-[7px] font-bold text-amber-450 text-amber-400 bg-amber-500/15 border border-amber-500/20 px-1 py-0.5 rounded uppercase tracking-wider font-sans text-center block w-full leading-normal">
+                                    <span className="text-[7px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/20 px-1 py-0.5 rounded uppercase tracking-wider font-sans text-center block w-full leading-normal">
                                       ⚠️ RISK
                                     </span>
                                   );
@@ -294,18 +296,20 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                       : "bg-[#0A0A0A] border-white/5 hover:border-white/20 hover:bg-white/[0.01]"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div>
-                      <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Rank #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}</span>
-                      <h4 className={`text-sm font-black tracking-wide mt-1 flex flex-wrap items-center gap-1.5 leading-none ${isInPorto ? "text-amber-400" : "text-white"}`}>
-                        <span>{clean}</span>
-                        {isInPorto ? <BookmarkCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : isInWatchlist ? <Bookmark className="w-3.5 h-3.5 text-white/50 shrink-0" /> : null}
-                        {item.rankChange !== 0 && (
-                          <span className={`text-[8px] px-1 py-0.5 rounded font-mono ${item.rankChange > 0 ? "text-emerald-400 bg-emerald-500/10" : "text-rose-450 text-rose-400 bg-rose-500/10"}`}>
-                            {item.rankChange > 0 ? "+" : ""}{item.rankChange}
-                          </span>
-                        )}
-                        {(() => {
+                    <div className="flex justify-between items-start mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <TickerLogo ticker={clean} size="md" fallbackColor={liveStk?.logoColor} />
+                        <div>
+                          <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Rank #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}</span>
+                          <h4 className={`text-sm font-black tracking-wide mt-1 flex flex-wrap items-center gap-1.5 leading-none ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                            <span>{clean}</span>
+                            {isInPorto ? <BookmarkCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : isInWatchlist ? <Bookmark className="w-3.5 h-3.5 text-white/50 shrink-0" /> : null}
+                            {item.rankChange !== 0 && (
+                              <span className={`text-[8px] px-1 py-0.5 rounded font-mono ${item.rankChange > 0 ? "text-emerald-400 bg-emerald-500/10" : "text-rose-450 text-rose-400 bg-rose-500/10"}`}>
+                                {item.rankChange > 0 ? "+" : ""}{item.rankChange}
+                              </span>
+                            )}
+                            {(() => {
                           const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
                           if (matchEX?.exit_state === "EXIT") {
                             return (
@@ -325,11 +329,12 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                         })()}
                       </h4>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Score</span>
-                      <span className="text-xs font-bold text-emerald-400 font-mono mt-1 block leading-none">{item.score.toFixed(1)}</span>
-                    </div>
                   </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-[#E0E0E0]/40 block leading-none font-semibold">Score</span>
+                    <span className="text-xs font-bold text-emerald-400 font-mono mt-1 block leading-none">{item.score.toFixed(1)}</span>
+                  </div>
+                </div>
 
                   {/* Visual Progress Rails */}
                   <div className="space-y-1.5 text-[9px] sm:text-[10px]">

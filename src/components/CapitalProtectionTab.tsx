@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { EX, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { StockData, PortfolioItem } from "../types";
-import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck } from "lucide-react";
+import { StockData, PortfolioItem, WatchlistItem } from "../types";
+import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck, Bookmark } from "lucide-react";
 import { motion } from "motion/react";
+import { TickerLogo } from "./TickerLogo";
 
 interface CapitalProtectionTabProps {
+  isIHSGInCrisis: boolean;
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
+  watchlist?: WatchlistItem[];
   getDynamicStock: (ticker: string) => StockData | null;
 }
 
-export function CapitalProtectionTab({ onSelectTicker, portfolio = [], getDynamicStock }: CapitalProtectionTabProps) {
+export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: CapitalProtectionTabProps) {
   const [search, setSearch] = useState("");
 
   const activeStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
@@ -143,8 +146,10 @@ export function CapitalProtectionTab({ onSelectTicker, portfolio = [], getDynami
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {filtered.map((item) => {
           const clean = item.ticker.replace(".JK", "");
+          const liveStk = activeStocks.find(s => s.ticker === clean);
           const isHealthy = item.exit_state === "HEALTHY";
           const isInPorto = portfolio.some(p => p.ticker === clean);
+          const isInWatchlist = watchlist.some(w => w.ticker === clean);
 
           return (
             <div
@@ -158,12 +163,15 @@ export function CapitalProtectionTab({ onSelectTicker, portfolio = [], getDynami
             >
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className={`text-base font-black tracking-widest flex items-center gap-2 ${isInPorto ? "text-amber-400" : "text-white"}`}>
-                      {clean}
-                      {isInPorto && <BookmarkCheck className="w-4 h-4 text-amber-500 shrink-0" />}
-                    </h4>
-                    <span className="text-[10px] text-white/35 block mt-1">Audit Date: {item.Date}</span>
+                  <div className="flex items-center gap-2.5">
+                    <TickerLogo ticker={clean} size="md" fallbackColor={liveStk?.logoColor} />
+                    <div>
+                      <h4 className={`text-base font-black tracking-widest flex items-center gap-2 ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                        {clean}
+                        {isInPorto ? <BookmarkCheck className="w-4 h-4 text-amber-500 shrink-0" /> : isInWatchlist ? <Bookmark className="w-4 h-4 text-white/50 shrink-0" /> : null}
+                      </h4>
+                      <span className="text-[10px] text-white/35 block mt-1">Audit Date: {item.Date}</span>
+                    </div>
                   </div>
                   <span className={`text-[9px] font-black px-2.5 py-1 rounded border ${getBadgeClass(item.exit_state)}`}>
                     {item.exit_state}

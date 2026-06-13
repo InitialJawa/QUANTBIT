@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { T } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { StockData, PortfolioItem } from "../types";
-import { Search, Flame, ShieldAlert, CheckCircle, HelpCircle, BookmarkCheck } from "lucide-react";
+import { StockData, PortfolioItem, WatchlistItem } from "../types";
+import { Search, Flame, ShieldAlert, CheckCircle, HelpCircle, BookmarkCheck, Bookmark } from "lucide-react";
 import { motion } from "motion/react";
+import { TickerLogo } from "./TickerLogo";
 
 interface RecoveryOpsTabProps {
+  isIHSGInCrisis: boolean;
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
+  watchlist?: WatchlistItem[];
   getDynamicStock: (ticker: string) => StockData | null;
 }
 
-export function RecoveryOpsTab({ onSelectTicker, portfolio = [], getDynamicStock }: RecoveryOpsTabProps) {
+export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: RecoveryOpsTabProps) {
   const [search, setSearch] = useState("");
 
   const activeStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
@@ -83,9 +86,11 @@ export function RecoveryOpsTab({ onSelectTicker, portfolio = [], getDynamicStock
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((item, idx) => {
           const clean = item.ticker.replace(".JK", "");
+          const liveStk = activeStocks.find(s => s.ticker === clean);
           const isContextMatched = item.context_match === "True";
           const isTransitionMatched = item.transition_match === "True";
           const isInPorto = portfolio.some(p => p.ticker === clean);
+          const isInWatchlist = watchlist.some(w => w.ticker === clean);
 
           return (
             <div
@@ -100,12 +105,15 @@ export function RecoveryOpsTab({ onSelectTicker, portfolio = [], getDynamicStock
               <div>
                 {/* Header */}
                 <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] text-white/40 block">Kandidat #{idx + 1}</span>
-                    <h4 className={`text-base font-black tracking-widest mt-1 flex items-center gap-2 ${isInPorto ? "text-amber-400" : "text-white"}`}>
-                      {clean}
-                      {isInPorto && <BookmarkCheck className="w-4 h-4 text-amber-500 shrink-0" />}
-                    </h4>
+                  <div className="flex items-center gap-3">
+                    <TickerLogo ticker={clean} size="md" fallbackColor={liveStk?.logoColor} />
+                    <div>
+                      <span className="text-[10px] text-white/40 block">Kandidat #{idx + 1}</span>
+                      <h4 className={`text-base font-black tracking-widest mt-1 flex items-center gap-2 ${isInPorto ? "text-amber-400" : "text-white"}`}>
+                        {clean}
+                        {isInPorto ? <BookmarkCheck className="w-4 h-4 text-amber-500 shrink-0" /> : isInWatchlist ? <Bookmark className="w-4 h-4 text-white/50 shrink-0" /> : null}
+                      </h4>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${

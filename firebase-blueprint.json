@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "EngineState": {
+      "title": "EngineState",
+      "description": "State konfigurasi dan portofolio pasif/aktif dari sistem kuantitatif beku",
+      "type": "object",
+      "properties": {
+        "cash": {
+          "type": "number",
+          "description": "IDR cash balance di dalam dompet digital"
+        },
+        "portfolio": {
+          "type": "array",
+          "description": "Daftar kepemilikan saham aktif saat ini"
+        },
+        "watchlist": {
+          "type": "array",
+          "description": "Daftar pantau saham pilihan"
+        },
+        "config": {
+          "type": "object",
+          "description": "Konfigurasi bobot faktor-faktor filter dan penyeimbang risiko krisis"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Terakhir disinkronkan"
+        }
+      },
+      "required": ["cash", "portfolio", "watchlist", "config"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Catatan keluar masuk kas uang tunai, pembelian/penjualan saham dan emas di dalam dompet digital",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["DEPOSIT", "WITHDRAWAL", "BUY", "SELL", "GOLD_BUY", "GOLD_SELL"]
+        },
+        "ticker": {
+          "type": "string",
+          "description": "Ticker saham (misal BBCA, EMAS, dll) atau KAS untuk top-up/penarikan"
+        },
+        "shares": {
+          "type": "number",
+          "description": "Jumlah lembar saham, gram emas, atau nominal rupiah"
+        },
+        "price": {
+          "type": "number",
+          "description": "Harga eksekusi per unit"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Total volume transaksi bersih dalam rupiah"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Deskripsi atau pesan catatan audit transaksi"
+        }
+      },
+      "required": ["id", "type", "ticker", "shares", "price", "amount", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/engine/state": {
+      "schema": "EngineState",
+      "description": "Penyimpanan state kuantitatif portofolio, kas utama, konfigurasi, dan rincian alokasi"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Ledger transaksi dompet dan riwayat aktivitas keuangan pengguna"
+    }
+  }
+}

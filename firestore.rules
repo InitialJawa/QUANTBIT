@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Global helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    // Rules for engine configurations
+    match /engine/state {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // Rules for digital wallet transaction histories
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(transactionId);
+      allow update, delete: if isSignedIn();
+    }
+  }
+}
