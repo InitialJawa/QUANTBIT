@@ -1,5 +1,6 @@
 import { StockData } from "./types";
 import { PF, FD, EX, L } from "./marketData";
+import { IDX80_TICKERS } from "../idx80";
 
 const RAW_STOCKS_DATA = [
   "ADRO|Adaro Energy Indonesia Tbk|Energy|Coal Mining|112.4|3500|2.34|4.8|1.15|23.8|0.32|11.5",
@@ -51,20 +52,9 @@ function getLogoColor(ticker: string): string {
   return LOGO_COLORS[sum % LOGO_COLORS.length];
 }
 
-export const STOCKS_DATA: StockData[] = RAW_STOCKS_DATA.map((row) => {
+const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
   const [
-    ticker,
-    name,
-    sector,
-    subSector,
-    rawMcap,
-    rawPrice,
-    rawChange,
-    rawPe,
-    rawPb,
-    rawRoe,
-    rawDer,
-    rawDiv
+    ticker, name, sector, subSector, rawMcap, rawPrice, rawChange, rawPe, rawPb, rawRoe, rawDer, rawDiv
   ] = row.split("|");
 
   const marketCap = parseFloat(rawMcap);
@@ -120,7 +110,6 @@ export const STOCKS_DATA: StockData[] = RAW_STOCKS_DATA.map((row) => {
     }
   ];
 
-  // Daily Chart
   const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
     const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
     const progress = i / 7;
@@ -132,7 +121,6 @@ export const STOCKS_DATA: StockData[] = RAW_STOCKS_DATA.map((row) => {
     };
   });
 
-  // Weekly Chart
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
@@ -143,7 +131,6 @@ export const STOCKS_DATA: StockData[] = RAW_STOCKS_DATA.map((row) => {
     };
   });
 
-  // Monthly Chart
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
@@ -155,42 +142,28 @@ export const STOCKS_DATA: StockData[] = RAW_STOCKS_DATA.map((row) => {
   });
 
   return {
-    ticker,
-    name,
-    sector,
-    subSector,
-    description,
-    logoColor,
-    marketCap,
-    currentPrice,
-    change,
-    peRatio,
-    pbRatio,
-    roe,
-    der,
-    dividendYield,
-    metrics,
-    chartDataDaily,
-    chartDataWeekly,
-    chartDataMonthly
+    ticker, name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
+    peRatio, pbRatio, roe, der, dividendYield, metrics, chartDataDaily, chartDataWeekly, chartDataMonthly
   };
 });
 
 export function getStock(ticker: string): StockData {
   const cleanTicker = ticker.toUpperCase().replace(".JK", "");
-  const found = STOCKS_DATA.find(s => s.ticker.toUpperCase() === cleanTicker || s.ticker.toUpperCase() === cleanTicker + ".JK");
-  if (found) return found;
+  
+  // 1. Check if it's already in the perfectly parsed manual list that has full textual descriptions
+  const manualFound = PARSED_KNOWN_STOCKS.find(s => s.ticker === cleanTicker);
+  if (manualFound) return manualFound;
 
-  // Synthesize fallback details if not found in our 80 list
+  // 2. Synthesize fallback details if not found in the manual 30, so any ticker from 80 works perfectly
   const profile = PF[cleanTicker];
   const fundamentals = FD[cleanTicker + ".JK"] || FD[cleanTicker];
   const exitItem = EX.find(e => e.ticker === cleanTicker + ".JK" || e.ticker === cleanTicker);
   const leaderItem = L.find(l => l.ticker === cleanTicker + ".JK" || l.ticker === cleanTicker);
 
-  const name = profile?.name || `${cleanTicker} Corporation`;
-  const sector = profile?.sector || "Financials";
-  const subSector = profile?.industry || "Investment Services";
-  const description = profile?.summary || `PT ${name} is a major publicly traded company in Indonesia, listed on the Bursa Efek Indonesia (IDX). It is analyzed as part of our core quantitative stock selection engine.`;
+  const name = profile?.name || `${cleanTicker} Tbk`;
+  const sector = profile?.sector || "General Sector";
+  const subSector = profile?.industry || "General Industry";
+  const description = profile?.summary || `PT ${name} is a major publicly traded company in Indonesia, listed on the Bursa Efek Indonesia (IDX). It is analyzed as part of our core IDX80 quantitative stock selection engine.`;
   
   const logoColor = getLogoColor(cleanTicker);
 
@@ -243,7 +216,6 @@ export function getStock(ticker: string): StockData {
     }
   ];
 
-  // Daily Chart
   const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
     const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
     const progress = i / 7;
@@ -255,7 +227,6 @@ export function getStock(ticker: string): StockData {
     };
   });
 
-  // Weekly Chart
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
@@ -266,7 +237,6 @@ export function getStock(ticker: string): StockData {
     };
   });
 
-  // Monthly Chart
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
@@ -279,22 +249,10 @@ export function getStock(ticker: string): StockData {
 
   return {
     ticker: cleanTicker,
-    name,
-    sector,
-    subSector,
-    description,
-    logoColor,
-    marketCap,
-    currentPrice,
-    change,
-    peRatio,
-    pbRatio,
-    roe,
-    der,
-    dividendYield,
-    metrics,
-    chartDataDaily,
-    chartDataWeekly,
-    chartDataMonthly
+    name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
+    peRatio, pbRatio, roe, der, dividendYield, metrics, chartDataDaily, chartDataWeekly, chartDataMonthly
   };
 }
+
+// Generate the final Universe List by running the IDX80 array through the getStock resolver!
+export const STOCKS_DATA: StockData[] = IDX80_TICKERS.map(t => getStock(t.split("|")[0]));

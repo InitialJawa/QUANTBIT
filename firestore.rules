@@ -1,31 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
+    match /{document=**} { allow read, write: if false; }
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        incoming().keys().hasAll(['uid']) &&
+        incoming().uid == userId;
+      allow update: if isOwner(userId) &&
+        incoming().uid == existing().uid;
+    }
+
+    match /users/{userId}/watchlist/{ticker} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
     
-    // Global helper functions
-    function isSignedIn() {
-      return request.auth != null;
+    match /users/{userId}/portfolio/{ticker} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
     
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    match /users/{userId}/tradeLogs/{logId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
     
-    // Rules for engine configurations
-    match /engine/state {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
-    }
-    
-    // Rules for digital wallet transaction histories
-    match /transactions/{transactionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && isValidId(transactionId);
-      allow update, delete: if isSignedIn();
+    match /users/{userId}/cachedReports/{ticker} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
   }
 }

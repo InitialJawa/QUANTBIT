@@ -113,7 +113,7 @@ export const MKT = {
   market_last_update: "2026-06-11 20:04:16 WIB",
   ihsg: { value: 5886.03, daily: -0.28, daily_pct: -0.28, weekly: 5.21, monthly: -17.96 },
   usdidr: { value: 17985.0, daily: -0.26, weekly: 0.16, monthly: 2.77 },
-  gold: { value: 4347, daily: 0.05, weekly: -3.4, monthly: -4.9 },
+  gold: { value: 1350000, daily: 0.05, weekly: -3.4, monthly: -4.9 },
   oil: { value: 88, daily: -3.68, weekly: -5.0, monthly: -10.3 }
 };
 
@@ -159,21 +159,29 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
 
   const dynamicL = activeStocksList.map((s, idx) => {
     const existing = L.find(l => l.ticker.replace(".JK", "") === s.ticker);
-    if (existing) return existing;
+    if (existing) {
+      return {
+        ...existing,
+        quality: parseFloat(existing.quality).toFixed(2),
+        growth: parseFloat(existing.growth).toFixed(2),
+        value: parseFloat(existing.value).toFixed(2),
+        momentum: parseFloat(existing.momentum).toFixed(2),
+      };
+    }
 
     const tHash = s.ticker.charCodeAt(0) * 11 + (s.ticker.charCodeAt(1) || 0) * 7;
-    const qVal = Math.round(Math.min(99, Math.max(10, 40 + (s.roe * 1.5) - (s.der * 5) + (tHash % 20))));
-    const gVal = Math.round(Math.min(99, Math.max(10, 45 + (s.roe * 0.5) + (s.change * 5) + ((tHash * 2) % 25))));
-    const vVal = Math.round(Math.min(99, Math.max(10, 85 - s.peRatio - (s.pbRatio * 3) + ((tHash * 3) % 15))));
-    const mVal = Math.round(Math.min(99, Math.max(10, 50 + (s.change * 8) + ((tHash * 5) % 25))));
+    const qVal = Math.min(99.99, Math.max(10.01, 40 + (s.roe * 1.5) - (s.der * 5) + (tHash % 20))).toFixed(2);
+    const gVal = Math.min(99.99, Math.max(10.01, 45 + (s.roe * 0.5) + (s.change * 5) + ((tHash * 2) % 25))).toFixed(2);
+    const vVal = Math.min(99.99, Math.max(10.01, 85 - s.peRatio - (s.pbRatio * 3) + ((tHash * 3) % 15))).toFixed(2);
+    const mVal = Math.min(99.99, Math.max(10.01, 50 + (s.change * 8) + ((tHash * 5) % 25))).toFixed(2);
     
     return {
       rank: String(idx + 1),
       ticker: s.ticker + ".JK",
-      quality: String(qVal),
-      growth: String(gVal),
-      value: String(vVal),
-      momentum: String(mVal),
+      quality: qVal,
+      growth: gVal,
+      value: vVal,
+      momentum: mVal,
       final_score: "50.0"
     };
   });

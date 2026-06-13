@@ -392,3 +392,61 @@
   -webkit-text-fill-color: #0f172a !important;
 }
 
+/* ==========================================================================
+   STOCKBIT TONE (GREY THEME OVERRIDES)
+   ========================================================================== */
+
+.stockbit {
+  color-scheme: dark !important;
+  background-color: #1A1D21 !important; /* Premium dark grey canvas */
+  color: #f1f5f9 !important;
+}
+
+.stockbit#applet-main-canvas,
+.stockbit.bg-\[\#050505\],
+.stockbit [class*="bg-[#050505]"],
+.stockbit [class*="bg-[#050505]/95"],
+.stockbit .bg-black {
+  background-color: #1A1D21 !important; 
+}
+
+/* Stockbit surface panels */
+.stockbit header,
+.stockbit #main-sidebar,
+.stockbit [class*="bg-[#0A0A0A]"],
+.stockbit [class*="bg-[#0a0a0a]"],
+.stockbit .bg-\[\#0A0A0A\],
+.stockbit [class*="bg-[#121212]"],
+.stockbit [class*="bg-[#121212]/95"],
+.stockbit [class*="bg-[#070707]"],
+.stockbit [class*="bg-[#080808]"],
+.stockbit [class*="bg-[#0f0f0f]"] {
+  background-color: #23272C !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.stockbit header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Base text */
+.stockbit .text-white { color: #f1f5f9 !important; }
+.stockbit .text-\[\#E0E0E0\] { color: #e2e8f0 !important; }
+.stockbit .text-zinc-500 { color: #8C99A4 !important; }
+.stockbit .border-white\/\[0\.05\] { border-color: rgba(255, 255, 255, 0.05) !important; }
+.stockbit .border-white\/\[0\.03\] { border-color: rgba(255, 255, 255, 0.03) !important; }
+.stockbit .bg-white\/\[0\.01\] { background-color: rgba(255, 255, 255, 0.02) !important; }
+
+/* Tabs bg */
+.stockbit nav.bg-\[\#121212\],
+.stockbit nav[class*="bg-[#121212]"] {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Custom dark active tabs selection */
+.stockbit [class*="bg-white/10"] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #10b981 !important; 
+}
+

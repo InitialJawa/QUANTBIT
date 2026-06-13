@@ -1,82 +1,88 @@
 {
   "entities": {
-    "EngineState": {
-      "title": "EngineState",
-      "description": "State konfigurasi dan portofolio pasif/aktif dari sistem kuantitatif beku",
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing balances and settings",
       "type": "object",
       "properties": {
-        "cash": {
-          "type": "number",
-          "description": "IDR cash balance di dalam dompet digital"
-        },
-        "portfolio": {
-          "type": "array",
-          "description": "Daftar kepemilikan saham aktif saat ini"
-        },
-        "watchlist": {
-          "type": "array",
-          "description": "Daftar pantau saham pilihan"
-        },
-        "config": {
-          "type": "object",
-          "description": "Konfigurasi bobot faktor-faktor filter dan penyeimbang risiko krisis"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Terakhir disinkronkan"
-        }
+        "uid": { "type": "string" },
+        "cash": { "type": "number" },
+        "theme": { "type": "string" },
+        "dataFeed": { "type": "string" },
+        "activeConfig": { "type": "string" },
+        "engineConfig": { "type": "object" },
+        "updatedAt": { "type": "string" }
       },
-      "required": ["cash", "portfolio", "watchlist", "config"]
+      "required": ["uid"]
     },
-    "Transaction": {
-      "title": "Transaction",
-      "description": "Catatan keluar masuk kas uang tunai, pembelian/penjualan saham dan emas di dalam dompet digital",
+    "WatchlistItem": {
+      "title": "WatchlistItem",
+      "description": "A ticker the user is watching",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": ["DEPOSIT", "WITHDRAWAL", "BUY", "SELL", "GOLD_BUY", "GOLD_SELL"]
-        },
-        "ticker": {
-          "type": "string",
-          "description": "Ticker saham (misal BBCA, EMAS, dll) atau KAS untuk top-up/penarikan"
-        },
-        "shares": {
-          "type": "number",
-          "description": "Jumlah lembar saham, gram emas, atau nominal rupiah"
-        },
-        "price": {
-          "type": "number",
-          "description": "Harga eksekusi per unit"
-        },
-        "amount": {
-          "type": "number",
-          "description": "Total volume transaksi bersih dalam rupiah"
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "message": {
-          "type": "string",
-          "description": "Deskripsi atau pesan catatan audit transaksi"
-        }
+        "ticker": { "type": "string", "maxLength": 10 },
+        "addedAt": { "type": "string" }
       },
-      "required": ["id", "type", "ticker", "shares", "price", "amount", "timestamp"]
+      "required": ["ticker", "addedAt"]
+    },
+    "PortfolioItem": {
+      "title": "PortfolioItem",
+      "description": "Holding item in portfolio",
+      "type": "object",
+      "properties": {
+        "ticker": { "type": "string", "maxLength": 10 },
+        "shares": { "type": "number" },
+        "buyPrice": { "type": "number" },
+        "addedAt": { "type": "string" }
+      },
+      "required": ["ticker", "shares", "buyPrice", "addedAt"]
+    },
+    "TradeLog": {
+      "title": "TradeLog",
+      "description": "A transaction log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "ticker": { "type": "string", "maxLength": 10 },
+        "shares": { "type": "number" },
+        "price": { "type": "number" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "type", "ticker", "shares", "price", "timestamp"]
+    },
+    "CachedReport": {
+      "title": "CachedReport",
+      "description": "AI analysis for a ticker",
+      "type": "object",
+      "properties": {
+        "ticker": { "type": "string", "maxLength": 10 },
+        "data": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["ticker", "data", "updatedAt"]
     }
   },
   "firestore": {
-    "/engine/state": {
-      "schema": "EngineState",
-      "description": "Penyimpanan state kuantitatif portofolio, kas utama, konfigurasi, dan rincian alokasi"
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document"
     },
-    "/transactions/{transactionId}": {
-      "schema": "Transaction",
-      "description": "Ledger transaksi dompet dan riwayat aktivitas keuangan pengguna"
+    "users/{userId}/watchlist/{ticker}": {
+      "schema": { "$ref": "#/entities/WatchlistItem" },
+      "description": "User watchlist items"
+    },
+    "users/{userId}/portfolio/{ticker}": {
+      "schema": { "$ref": "#/entities/PortfolioItem" },
+      "description": "User portfolio holdings"
+    },
+    "users/{userId}/tradeLogs/{logId}": {
+      "schema": { "$ref": "#/entities/TradeLog" },
+      "description": "User transaction history"
+    },
+    "users/{userId}/cachedReports/{ticker}": {
+      "schema": { "$ref": "#/entities/CachedReport" },
+      "description": "User cached AI reports"
     }
   }
 }

@@ -1,26 +1,15 @@
 import fs from "fs";
 import path from "path";
+import { IDX80_TICKERS } from "./idx80.ts";
 
-const TICKERS = [
-  "BBCA.JK",
-  "BBRI.JK",
-  "BMRI.JK",
-  "TLKM.JK",
-  "ASII.JK",
-  "ADRO.JK",
-  "PTBA.JK",
-  "ESSA.JK",
-  "GOTO.JK",
-  "^JKSE",
-  "GC=F",
-  "IDR=X"
-];
+// 2016-01-01 to Today for extended backtest
+const START_TIME = Math.floor(new Date("2016-01-01").getTime() / 1000);
+const END_TIME = Math.floor(new Date().getTime() / 1000);
 
-// 2020-01-01 to 2026-06-12 timestamps
-const START_TIME = Math.floor(new Date("2020-01-01").getTime() / 1000);
-const END_TIME = Math.floor(new Date("2026-06-12").getTime() / 1000);
+// Use IDX80
+const TICKERS = [...IDX80_TICKERS, "^JKSE", "GC=F", "IDR=X"];
 
-// Real historical point-in-time financial snapshots (ROE, PB, PE, DER, ROA, Net Margin, and DPS in IDR)
+// We keep some real fundamental point-in-time for the main ones. For the rest of the 80, we generate a stable but slightly randomized set of static fundamentals so the ranking distribution is stable but relies heavily on momentum.
 const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>> = {
   BBCA: {
     2018: { roe: 0.20, pb: 4.1, pe: 26.0, der: 0.15, roa: 0.035, net_margin: 0.38, dividend_per_share: 145 },
@@ -127,10 +116,27 @@ function getPointInTimeFundamentals(ticker: string, date: Date) {
   if (reportYear < 2018) reportYear = 2018;
   if (reportYear > 2025) reportYear = 2025;
 
-  const snaps = FUNDAMENTAL_SNAPSHOTS[ticker] || FUNDAMENTAL_SNAPSHOTS["BBCA"];
+  let snaps = FUNDAMENTAL_SNAPSHOTS[ticker];
+  if (!snaps) {
+    // Generate stable pseudo-random fundamentals for missing tickers to avoid massive identical ties
+    const hash = ticker.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    const stablePseudoRoe = 0.05 + (Math.abs(hash % 20) / 100); // 5% to 25%
+    const stablePseudoPb = 1.0 + (Math.abs(hash % 30) / 10); // 1.0 to 4.0
+    
+    // Slight jitter per year
+    snaps = {};
+    for(let y = 2016; y <= 2026; y++) {
+      snaps[y] = {
+        roe: stablePseudoRoe + ((y%3) * 0.01),
+        pb: stablePseudoPb + ((y%2) * 0.1),
+        pe: 15.0, der: 0.5, roa: 0.05, net_margin: 0.10, dividend_per_share: Math.abs(hash % 100)
+      };
+    }
+  }
+
   return {
     year: reportYear,
-    ...snaps[reportYear]
+    ...(snaps[reportYear] || snaps[2022] || snaps[2025])
   };
 }
 
@@ -226,7 +232,7 @@ async function main() {
   const lastKnownHighs: Record<string, number> = {};
   const lastKnownLows: Record<string, number> = {};
 
-  const stockKeys = ["BBCA", "BBRI", "BMRI", "TLKM", "ASII", "ADRO", "PTBA", "ESSA", "GOTO"];
+  const stockKeys = IDX80_TICKERS.map(t => t.split(".")[0]);
 
   // Populate first unadjusted daily price grid so we can look back 60 trading days for momentum cleanly
   const rawClosesForMomentum: Record<string, number[]> = {};

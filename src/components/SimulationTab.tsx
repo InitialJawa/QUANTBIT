@@ -87,6 +87,7 @@ interface BacktestDayData {
   ihsgPrice: number;
   goldPrice: number;
   stockPrices: Record<string, number>;
+  stockVolumes?: Record<string, number>;
   stockRanks: Record<string, number>;
 }
 
@@ -537,7 +538,7 @@ export function SimulationTab({
       const BUY_FEE = 0.0015; // 0.15%
       const SELL_FEE = 0.0025; // 0.25%
       const TAX = 0.0010; // 0.10%
-      const SLIPPAGE = 0.0005; // 0.05% slippage on entry and exit prices
+      const SLIPPAGE = 0.0075; // 0.75% slippage on entry and exit prices (Impact cost due to low liquidity / algos)
       
       let initialTop: string[] = [];
       if (simulationMode === "algo") {
@@ -550,6 +551,9 @@ export function SimulationTab({
       
       // Total trade volume accumulator for turnover
       let totalTransactionVolume = 0;
+      
+      // Track last rebalance month
+      let lastRebalanceMonth = -1;
       
       initialTop.forEach((ticker) => {
         const rawPrice = day0.stockPrices[ticker];
@@ -570,9 +574,16 @@ export function SimulationTab({
         const entryPrice = rawPrice * (1 + SLIPPAGE);
         const costPerShareWithFee = entryPrice * (1 + BUY_FEE);
         
-        // 1 LOT = 100 SHARES constraint
-        const maxLots = Math.floor(allocationPerStock / (costPerShareWithFee * 100));
-        const sharesToBuy = maxLots * 100;
+        // 1 LOT = 100 SHARES constraint & Liquidity constraint max 5% daily volume
+        let maxLots = Math.floor(allocationPerStock / (costPerShareWithFee * 100));
+        let sharesToBuy = maxLots * 100;
+        
+        // Capping to prevent Execution Bias (Assumes we can't buy more than 5% of trading volume without driving price radically)
+        const dailyVol = day0.stockVolumes && day0.stockVolumes[ticker] ? day0.stockVolumes[ticker] : 10000000;
+        const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
+        if (sharesToBuy > maxVolShares) {
+          sharesToBuy = maxVolShares;
+        }
         
         if (sharesToBuy > 0) {
           positions[ticker] = sharesToBuy;
@@ -807,8 +818,14 @@ export function SimulationTab({
 
               const entryPrice = rawPrice * (1 + SLIPPAGE);
               const costWithFee = entryPrice * (1 + BUY_FEE);
-              const maxLots = Math.floor(allocPrice / (costWithFee * 100));
-              const sharesToBuy = maxLots * 100;
+              let maxLots = Math.floor(allocPrice / (costWithFee * 100));
+              let sharesToBuy = maxLots * 100;
+
+              const dailyVol = day.stockVolumes && day.stockVolumes[ticker] ? day.stockVolumes[ticker] : 10000000;
+              const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
+              if (sharesToBuy > maxVolShares) {
+                sharesToBuy = maxVolShares;
+              }
 
               if (sharesToBuy > 0) {
                 positions[ticker] = sharesToBuy;
@@ -830,15 +847,22 @@ export function SimulationTab({
 
         if (crashCooldown > 0) crashCooldown--;
 
-        // 4. Rank 7 Rule active rebalancing
+        // 4. Rank 7 Rule active rebalancing (Monthly + Daily Emergency)
         if (!inCrashState && enableCrossover && simulationMode === "algo") {
           const ownedTickers = Object.entries(positions)
             .filter(([_, shares]) => shares > 0)
             .map(([ticker]) => ticker);
 
+          const isMonthChange = currentMonth !== lastRebalanceMonth;
+          let rebalancedThisMonth = false;
+
           for (const ticker of ownedTickers) {
             const currentRank = day.stockRanks[ticker] || 5;
-            if (currentRank >= 7) {
+            
+            const isEmergencyExit = currentRank >= 15;
+            const isRoutineExit = isMonthChange && currentRank >= 10;
+            
+            if (isEmergencyExit || isRoutineExit) {
               const rawPrice = day.stockPrices[ticker] || 100;
               const exitPrice = rawPrice * (1 - SLIPPAGE);
               const sellProceeds = positions[ticker] * exitPrice * (1 - SELL_FEE - TAX); // proceeds nett
@@ -854,8 +878,14 @@ export function SimulationTab({
               const swapInEntryPrice = swapInRawPrice * (1 + SLIPPAGE);
               const swapInCostWithFee = swapInEntryPrice * (1 + BUY_FEE);
 
-              const newLots = Math.floor(sellProceeds / (swapInCostWithFee * 100));
-              const newShares = newLots * 100;
+              let newLots = Math.floor(sellProceeds / (swapInCostWithFee * 100));
+              let newShares = newLots * 100;
+
+              const dailyVol = day.stockVolumes && day.stockVolumes[swapInTicker] ? day.stockVolumes[swapInTicker] : 10000000;
+              const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
+              if (newShares > maxVolShares) {
+                newShares = maxVolShares;
+              }
               
               if (newShares > 0) {
                 positions[swapInTicker] = (positions[swapInTicker] || 0) + newShares;
@@ -870,11 +900,18 @@ export function SimulationTab({
               
               logs.push({
                 date: day.date,
-                type: "REBALANCE",
-                message: `🔄 PIT REBALANCING: Emiten #${ticker} jatuh ke Rank luar batas (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke rising-star #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}) sebanyak ${newShares.toLocaleString("id-ID")} lembar dengan real fees.`
+                type: isEmergencyExit ? "EMERGENCY_EXIT" : "REBALANCE",
+                message: isEmergencyExit 
+                  ? `🚨 EMERGENCY EXIT (Mid-Month): Emiten #${ticker} jatuh drastis dari Top 15 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
+                  : `🔄 REBALANCING BULANAN: Emiten #${ticker} diganti karena keluar dari Top 10 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
               });
-              break; // swap 1 position per day to prevent transaction volume blowout
+              
+              if (isRoutineExit) rebalancedThisMonth = true;
             }
+          }
+
+          if (isMonthChange) {
+            lastRebalanceMonth = currentMonth;
           }
         }
 
@@ -1023,54 +1060,47 @@ export function SimulationTab({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
-      {/* HEADER SECTION */}
-      {!hideTabs && (
-        <div className="border-b border-white/5 pb-5">
-          <h2 className="text-xl font-serif italic text-white tracking-tight flex items-center gap-2">
-            <Award className="w-5 h-5 text-emerald-400 animate-pulse" />
-            Interactive Trading & Backtest Laboratory
+      {/* 1. Header Information Panel */}
+      <div className="p-5 md:p-6 bg-[#050505] border border-white/[0.03] rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        <div>
+          <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+             <Award className="w-4 h-4 text-indigo-400" />
+             Interactive Trading & Backtest Laboratory
           </h2>
-          <p className="text-xs text-white/40 mt-1">
+          <p className="text-[10px] text-zinc-500 mt-2 max-w-2xl leading-relaxed">
             Bandingkan performa investasi harian sejak 2020 dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
           </p>
         </div>
-      )}
-
-      {/* SUB-TABS NAVIGATION BAR */}
-      {!hideTabs && (
-        <div className="flex border border-white/10 bg-white/[0.02] p-1 rounded-xl gap-1">
-          <button
-            onClick={() => setActiveSubTab("past")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              activeSubTab === "past"
-                ? "bg-[#D97706]/20 border border-[#D97706]/35 text-[#F59E0B]"
-                : "text-white/50 hover:text-white/80 hover:bg-white/5"
-            }`}
-          >
-            <Coins className="w-4 h-4" />
-            Simulasi Saham Tunggal (Ala Stockbit)
-          </button>
-          <button
-            onClick={() => {
-              setActiveSubTab("algo");
-              if (!backtestResult) {
-                handleRunAlgoBacktest(); // auto-simulate first time they enter
-              }
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              activeSubTab === "algo"
-                ? "bg-emerald-500/20 border border-emerald-500/35 text-emerald-400"
-                : "text-white/50 hover:text-white/80 hover:bg-white/5"
-            }`}
-          >
-            <Award className="w-4 h-4 animate-bounce" />
-            Backtest Algo Realtime (Sejak 2020)
-          </button>
-          
-        </div>
-      )}
+        
+        {!hideTabs && (
+          <div className="flex bg-[#050505] p-1 border border-white/[0.05] rounded-xl self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto">
+            <button
+              onClick={() => setActiveSubTab("past")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
+                activeSubTab === "past" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
+              }`}
+            >
+              <Coins className="w-3.5 h-3.5" /> Simulasi
+            </button>
+            <button
+              onClick={() => {
+                setActiveSubTab("algo");
+                if (!backtestResult) {
+                  handleRunAlgoBacktest();
+                }
+              }}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
+                activeSubTab === "algo" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
+              }`}
+            >
+              <Briefcase className="w-3.5 h-3.5" /> Backtester
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* RENDER ACTIVE SUBTAB CONTENT */}
       {activeSubTab === "past" && (
@@ -1699,7 +1729,7 @@ export function SimulationTab({
                             </linearGradient>
                           </defs>
                           <XAxis dataKey="date" stroke="#333" tickLine={false} dy={8} tick={{ fill: "#666" }} />
-                          <YAxis stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={["auto", "auto"]} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
+                          <YAxis scale="log" stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={["auto", "auto"]} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
                           <Tooltip
                             formatter={(value: any) => [formatRupiah(Number(value)), ""]}
                             contentStyle={{

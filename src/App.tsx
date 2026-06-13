@@ -16,52 +16,69 @@ import { CapitalProtectionTab } from "./components/CapitalProtectionTab";
 import { SimulationTab } from "./components/SimulationTab";
 import { DiagnosticsTab } from "./components/DiagnosticsTab";
 import { TickerLogo } from "./components/TickerLogo";
+import { LoginScreen } from "./components/LoginScreen";
+import { auth, db } from "./firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 
+import { DigitalWalletUI } from "./components/DigitalWalletUI";
 import { 
-  Sparkles, 
-  Search,
-  Eye, 
-  Sliders, 
+  Menu, 
   X, 
-  BookOpen, 
-  LineChart, 
-  Cpu, 
+  Search, 
+  Settings, 
   TrendingUp, 
   TrendingDown, 
+  BarChart2, 
   Activity, 
-  Award, 
-  Flame, 
+  Newspaper, 
+  LogOut, 
+  Moon, 
+  Sun,
+  Wallet,
+  Sparkles,
+  Eye,
+  Sliders,
+  BookOpen,
+  LineChart,
+  Cpu,
+  Award,
+  Flame,
   ShieldAlert,
   SlidersHorizontal,
   ChevronRight,
   Maximize2,
-  Newspaper,
   ExternalLink,
-  Sun,
-  Moon,
   Coins,
   Trash2,
   Plus,
   Minus,
   Briefcase,
-  Menu,
-  Settings,
   Bookmark,
   BookmarkCheck,
-  Wallet
+  Monitor
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // GOAPI & Yahoo Finance Live Stock prices integration
   const [goapiPrices, setGoapiPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
   const [yahooPrices, setYahooPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
-  const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">(() => {
-    const saved = localStorage.getItem("idx_datafeed");
-    return (saved === "yahoo" || saved === "goapi" || saved === "simulated") ? saved : "yahoo";
-  });
+  const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">("yahoo");
   const [isGoapiConnected, setIsGoapiConnected] = useState(false);
   const [isYahooConnected, setIsYahooConnected] = useState(false);
+
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -94,7 +111,7 @@ export default function App() {
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 15000);
+    const interval = setInterval(fetchPrices, 60000); // Increased interval to 60s
     return () => clearInterval(interval);
   }, []);
 
@@ -144,7 +161,9 @@ export default function App() {
   }, [goapiPrices, yahooPrices, dataFeed]);
 
   const getDynamicStock = (ticker: string): StockData => {
-    const rawStock = getStock(ticker);
+    // 1. Fetch from cached STOCKS_DATA to avoid regenerating random chart arrays continuously
+    const cleanTicker = ticker.toUpperCase().replace(".JK", "");
+    const rawStock = STOCKS_DATA.find(s => s.ticker === cleanTicker) || getStock(ticker);
     if (!rawStock) return rawStock;
 
     let basePrice = rawStock.currentPrice;
@@ -163,10 +182,25 @@ export default function App() {
     
     // calculate dynamic change percentage from base
     const dynamicChange = parseFloat((((activePrice - basePrice) / basePrice) * 100 + baseChange).toFixed(2));
+    
+    // Update the rightmost tip of charts to match the active price
+    const updateChartLastTip = (chartData: any[]) => {
+      if (!chartData || chartData.length === 0) return chartData;
+      const newData = [...chartData];
+      newData[newData.length - 1] = {
+        ...newData[newData.length - 1],
+        price: activePrice
+      };
+      return newData;
+    };
+
     return {
       ...rawStock,
       currentPrice: activePrice,
-      change: dynamicChange
+      change: dynamicChange,
+      chartDataDaily: updateChartLastTip(rawStock.chartDataDaily),
+      chartDataWeekly: updateChartLastTip(rawStock.chartDataWeekly),
+      chartDataMonthly: updateChartLastTip(rawStock.chartDataMonthly)
     };
   };
 
@@ -194,198 +228,109 @@ export default function App() {
   const [isDbLoaded, setIsDbLoaded] = useState(false);
 
   // PERSISTENCE LOCAL STATES (Watchlist & Portfolio)
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
-    try {
-      const saved = localStorage.getItem("idx_watchlist");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn("Failed to parse watchlist from localStorage, fallback to default:", e);
-    }
-    return [{ ticker: "BBCA", addedAt: new Date().toISOString() }];
-  });
-
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>(() => {
-    try {
-      const saved = localStorage.getItem("idx_portfolio");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn("Failed to parse portfolio from localStorage, fallback to default:", e);
-    }
-    return [
-      { ticker: "BBCA", shares: 500, buyPrice: 9900, addedAt: new Date().toISOString() },
-      { ticker: "BBRI", shares: 1000, buyPrice: 4900, addedAt: new Date().toISOString() }
-    ];
-  });
-
-  // Persistent Cash State & Trade logs (Lifted to App level)
-  const [cash, setCash] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem("idx_cash");
-      if (saved) {
-        const parsed = parseInt(saved);
-        if (!isNaN(parsed)) return parsed;
-      }
-    } catch (e) {}
-    return 100000000; // Rp 100 Juta default capital
-  });
-
-  const [tradeLogs, setTradeLogs] = useState<{ id: string; type: string; ticker: string; shares: number; price: number; timestamp: string }[]>(() => {
-    try {
-      const saved = localStorage.getItem("idx_trade_logs");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn("Failed to parse trade logs from localStorage:", e);
-    }
-    return [
-      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: new Date().toISOString() },
-      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1000, price: 4900, timestamp: new Date().toISOString() }
-    ];
-  });
-
-  const [walletNominalStr, setWalletNominalStr] = useState("");
-  const [walletNotification, setWalletNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [cash, setCash] = useState<number>(100000000);
+  const [tradeLogs, setTradeLogs] = useState<{ id: string; type: string; ticker: string; shares: number; price: number; timestamp: string }[]>([]);
+  const [cachedReports, setCachedReports] = useState<Record<string, AnalysisResult>>({});
+  const [appNotification, setAppNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   useEffect(() => {
-    if (walletNotification) {
+    if (appNotification) {
       const timer = setTimeout(() => {
-        setWalletNotification(null);
+        setAppNotification(null);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [walletNotification]);
-
-  // Startup Database Synchronization
+  }, [appNotification]);
+  
+  // Startup Database Synchronization from Firebase
   useEffect(() => {
-    fetch("/api/engine/state")
-      .then(res => res.json())
-      .then(data => {
-        if (data) {
-          if (Array.isArray(data.portfolio)) {
-            setPortfolio(data.portfolio);
-            localStorage.setItem("idx_portfolio", JSON.stringify(data.portfolio));
-          }
-          if (Array.isArray(data.watchlist)) {
-            setWatchlist(data.watchlist);
-            localStorage.setItem("idx_watchlist", JSON.stringify(data.watchlist));
-          }
-          if (typeof data.cash === "number") {
-            setCash(data.cash);
-            localStorage.setItem("idx_cash", String(data.cash));
-          }
-          if (Array.isArray(data.tradeLogs)) {
-            setTradeLogs(data.tradeLogs);
-            localStorage.setItem("idx_trade_logs", JSON.stringify(data.tradeLogs));
-          }
-          if (data.config && data.config.activeConfig) {
-            setActiveConfig(data.config.activeConfig);
-            localStorage.setItem("idx_activeconfig", data.config.activeConfig);
-          }
-        }
-        setIsDbLoaded(true);
-      })
-      .catch(err => {
-        console.warn("Database sync fetch errored, loading defaults safely:", err);
-        setIsDbLoaded(true);
-      });
-  }, []);
+    if (!user) return;
+    
+    setIsDbLoaded(false);
 
-  const syncStateToBackend = () => {
-    let configObj = {};
-    try {
-      const savedConfig = localStorage.getItem("idx_engine_config");
-      if (savedConfig) configObj = JSON.parse(savedConfig);
-    } catch(e){}
-
-    fetch("/api/engine/state", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        portfolio,
-        watchlist,
-        cash,
-        config: configObj,
-        tradeLogs
-      })
-    }).catch(err => console.warn("Background auto-save failed:", err));
-  };
-
-
-  const [cachedReports, setCachedReports] = useState<Record<string, AnalysisResult>>(() => {
-    try {
-      const saved = localStorage.getItem("idx_cached_reports");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") return parsed;
+    // Profile listener
+    const unsubProfile = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (typeof data.cash === "number") setCash(data.cash);
+        if (data.theme) setTheme(data.theme);
+        if (data.dataFeed) setDataFeed(data.dataFeed);
+        if (data.activeConfig) setActiveConfig(data.activeConfig);
       }
-    } catch (e) {
-      console.warn("Failed to parse cached reports from localStorage, fallback to empty:", e);
+    });
+
+    // Watchlist listener
+    const unsubWatchlist = onSnapshot(collection(db, "users", user.uid, "watchlist"), (snapshot) => {
+      const items: WatchlistItem[] = [];
+      snapshot.forEach(doc => items.push(doc.data() as WatchlistItem));
+      setWatchlist(items);
+    });
+
+    // Portfolio listener
+    const unsubPortfolio = onSnapshot(collection(db, "users", user.uid, "portfolio"), (snapshot) => {
+      const items: PortfolioItem[] = [];
+      snapshot.forEach(doc => items.push(doc.data() as PortfolioItem));
+      setPortfolio(items);
+    });
+
+    // Logs listener
+    const unsubLogs = onSnapshot(collection(db, "users", user.uid, "tradeLogs"), (snapshot) => {
+      const items: any[] = [];
+      snapshot.forEach(doc => items.push(doc.data()));
+      items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setTradeLogs(items);
+    });
+
+    // Reports listener
+    const unsubReports = onSnapshot(collection(db, "users", user.uid, "cachedReports"), (snapshot) => {
+      const reports: Record<string, AnalysisResult> = {};
+      snapshot.forEach(doc => {
+        reports[doc.id] = doc.data().data as AnalysisResult;
+      });
+      setCachedReports(reports);
+    });
+
+    setIsDbLoaded(true);
+
+    return () => {
+      unsubProfile();
+      unsubWatchlist();
+      unsubPortfolio();
+      unsubLogs();
+      unsubReports();
+    };
+  }, [user]);
+
+  // Handle Syncs to Firebase instead of localStorage
+  const syncProfileToFirebase = async () => {
+    if (!user || !isDbLoaded) return;
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        cash,
+        theme,
+        dataFeed,
+        activeConfig,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(e) {
+      console.error(e);
     }
-    return {};
-  });
+  };
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("idx_theme");
-    return (saved === "light" || saved === "dark") ? saved : "dark";
-  });
-
-  // Sync state loops
-  useEffect(() => {
-    localStorage.setItem("idx_theme", theme);
-  }, [theme]);
+  const [theme, setTheme] = useState<"dark" | "light" | "stockbit">("dark");
 
   useEffect(() => {
-    localStorage.setItem("idx_datafeed", dataFeed);
-  }, [dataFeed]);
+    syncProfileToFirebase();
+  }, [theme, dataFeed, activeConfig, cash]);
 
-  useEffect(() => {
-    localStorage.setItem("idx_activeconfig", activeConfig);
-  }, [activeConfig]);
 
-  // Sync state loops for database lists
-  useEffect(() => {
-    localStorage.setItem("idx_watchlist", JSON.stringify(watchlist));
-    if (isDbLoaded) {
-      syncStateToBackend();
-    }
-  }, [watchlist, isDbLoaded]);
-
-  useEffect(() => {
-    localStorage.setItem("idx_portfolio", JSON.stringify(portfolio));
-    if (isDbLoaded) {
-      syncStateToBackend();
-    }
-  }, [portfolio, isDbLoaded]);
-
-  useEffect(() => {
-    localStorage.setItem("idx_cash", String(cash));
-    if (isDbLoaded) {
-      syncStateToBackend();
-    }
-  }, [cash, isDbLoaded]);
-
-  useEffect(() => {
-    localStorage.setItem("idx_trade_logs", JSON.stringify(tradeLogs));
-    if (isDbLoaded) {
-      syncStateToBackend();
-    }
-  }, [tradeLogs, isDbLoaded]);
-
-  useEffect(() => {
-    localStorage.setItem("idx_cached_reports", JSON.stringify(cachedReports));
-  }, [cachedReports]);
 
   // Handle opening stock detail drawer
   const handleSelectTicker = (ticker: string) => {
@@ -398,58 +343,128 @@ export default function App() {
   };
 
   // Watchlist quick toggle
-  const handleToggleWatchlist = (ticker: string) => {
+  const handleToggleWatchlist = async (ticker: string) => {
+    if (!user) return;
+    const docRef = doc(db, "users", user.uid, "watchlist", ticker);
     if (watchlist.some(w => w.ticker === ticker)) {
-      setWatchlist(prev => prev.filter(w => w.ticker !== ticker));
+      await import("firebase/firestore").then(m => m.deleteDoc(docRef));
     } else {
-      setWatchlist(prev => [...prev, { ticker, addedAt: new Date().toISOString() }]);
+      await setDoc(docRef, { ticker, addedAt: new Date().toISOString() });
     }
   };
 
   // Simulated portfolio additions
-  const handleAddTransaction = (ticker: string, shares: number, buyPrice: number) => {
-    setPortfolio(prev => {
-      const existingIdx = prev.findIndex(p => p.ticker === ticker);
-      if (existingIdx > -1) {
-        const item = prev[existingIdx];
-        const combinedShares = item.shares + shares;
-        const averagePrice = Math.round(((item.shares * item.buyPrice) + (shares * buyPrice)) / combinedShares);
+  const handleAddTransaction = async (ticker: string, shares: number, buyPrice: number, silent: boolean = false) => {
+    if (!user) return;
+    
+    if (!silent) {
+      const details = calculateTradeDetails("BUY", ticker, shares, buyPrice);
+      if (details.net > cash) {
+        setAppNotification({ message: `Saldo kas tidak mencukupi untuk membeli ${ticker === "EMAS" ? "Emas" : ticker}!`, type: "error" });
+        return;
+      }
+      
+      setCash(prev => {
+        const nextCash = prev - details.net;
+        import("firebase/firestore").then(m => {
+          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+        });
+        return nextCash;
+      });
+      
+      const logId = "log-" + Date.now();
+      const messageStr = ticker === "EMAS" 
+        ? `Pembelian ${shares.toFixed(4)} Gram Emas @ Rp ${buyPrice.toLocaleString("id-ID")}`
+        : `Pembelian ${shares / 100} Lot ${ticker} @ Rp ${buyPrice.toLocaleString("id-ID")}`;
         
-        const updated = [...prev];
-        updated[existingIdx] = {
-          ...item,
-          shares: combinedShares,
-          buyPrice: averagePrice,
-        };
-        return updated;
+      const nextLogs = [{
+        id: logId,
+        type: ticker === "EMAS" ? "BUY_GOLD" : "BUY",
+        ticker,
+        shares,
+        price: buyPrice,
+        timestamp: new Date().toISOString(),
+        message: messageStr
+      }, ...tradeLogs];
+      customSetTradeLogs(nextLogs);
+      
+      const successMsg = ticker === "EMAS" 
+        ? `Berhasil membeli ${shares.toFixed(4)} Gram Emas!`
+        : `Berhasil membeli ${shares / 100} Lot ${ticker}!`;
+      setAppNotification({ message: successMsg, type: "success" });
+    }
+
+    const docRef = doc(db, "users", user.uid, "portfolio", ticker);
+    const existing = portfolio.find(p => p.ticker === ticker);
+    if (existing) {
+      const combinedShares = existing.shares + shares;
+      const averagePrice = Math.round(((existing.shares * existing.buyPrice) + (shares * buyPrice)) / combinedShares);
+      await setDoc(docRef, {
+        ticker,
+        shares: combinedShares,
+        buyPrice: averagePrice,
+        addedAt: existing.addedAt || new Date().toISOString()
+      }, { merge: true });
+    } else {
+      await setDoc(docRef, { ticker, shares, buyPrice, addedAt: new Date().toISOString() });
+    }
+  };
+
+  const handleRemoveTransaction = async (ticker: string) => {
+    if (!user) return;
+    await import("firebase/firestore").then(m => m.deleteDoc(doc(db, "users", user.uid, "portfolio", ticker)));
+    setAppNotification({ message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
+  };
+
+  const handleSellTransaction = async (ticker: string, sharesToSell: number, silent: boolean = false) => {
+    if (!user) return;
+    const docRef = doc(db, "users", user.uid, "portfolio", ticker);
+    const existing = portfolio.find(p => p.ticker === ticker);
+    
+    if (existing) {
+      if (!silent) {
+        const currentPrice = ticker === "EMAS" ? MKT.gold.value : getDynamicStock(ticker).currentPrice;
+        const details = calculateTradeDetails("SELL", ticker, sharesToSell, currentPrice);
+        
+        // Update local cash and firebase explicitly
+        setCash(prev => {
+          const nextCash = prev + details.net;
+          import("firebase/firestore").then(m => {
+            m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+          });
+          return nextCash;
+        });
+
+        const logId = "log-" + Date.now();
+        const messageStr = ticker === "EMAS"
+          ? `Mencairkan ${sharesToSell.toFixed(4)} Gram Emas @ Rp ${currentPrice.toLocaleString("id-ID")}`
+          : `Penjualan ${sharesToSell / 100} Lot ${ticker} @ Rp ${currentPrice.toLocaleString("id-ID")}`;
+
+        const nextLogs = [{
+          id: logId,
+          type: "SELL",
+          ticker,
+          shares: sharesToSell,
+          price: currentPrice,
+          timestamp: new Date().toISOString(),
+          message: messageStr
+        }, ...tradeLogs];
+        customSetTradeLogs(nextLogs);
+        
+        const successMsg = ticker === "EMAS" 
+          ? `Berhasil menjual ${sharesToSell.toFixed(4)} gram Emas!`
+          : `Berhasil menjual ${sharesToSell / 100} Lot ${ticker}!`;
+        setAppNotification({ message: successMsg, type: "success" });
+      }
+
+      if (existing.shares <= sharesToSell) {
+        await import("firebase/firestore").then(m => m.deleteDoc(docRef));
       } else {
-        return [...prev, { ticker, shares, buyPrice, addedAt: new Date().toISOString() }];
+        await setDoc(docRef, {
+          shares: existing.shares - sharesToSell,
+        }, { merge: true });
       }
-    });
-  };
-
-  const handleRemoveTransaction = (ticker: string) => {
-    setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
-  };
-
-  const handleSellTransaction = (ticker: string, sharesToSell: number) => {
-    setPortfolio(prev => {
-      const existingIdx = prev.findIndex(p => p.ticker === ticker);
-      if (existingIdx > -1) {
-        const item = prev[existingIdx];
-        if (item.shares <= sharesToSell) {
-          return prev.filter(p => p.ticker !== ticker);
-        } else {
-          const updated = [...prev];
-          updated[existingIdx] = {
-            ...item,
-            shares: item.shares - sharesToSell,
-          };
-          return updated;
-        }
-      }
-      return prev;
-    });
+    }
   };
 
   const getEmasShares = (): number => {
@@ -494,15 +509,38 @@ export default function App() {
     }
   };
 
-  const handleDepositCash = () => {
-    const rupiahAmount = parseInt(walletNominalStr.replace(/[^0-9]/g, ""));
-    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
-      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah deposit yang valid!", type: "error" });
-      return;
-    }
+  const customSetTradeLogs = (value: any) => {
+    if (!user) return;
+    const nextLogs = typeof value === 'function' ? value(tradeLogs) : value;
     
-    const nextCash = cash + rupiahAmount;
-    setCash(nextCash);
+    // Determine changes
+    if (nextLogs.length === 0 && tradeLogs.length > 0) {
+      // Clear history
+      tradeLogs.forEach(log => {
+        import("firebase/firestore").then(m => m.deleteDoc(doc(db, "users", user.uid, "tradeLogs", log.id)));
+      });
+    } else if (nextLogs.length > tradeLogs.length) {
+      // Assuming prepend new logs
+      const diff = nextLogs.length - tradeLogs.length;
+      for (let i = 0; i < diff; i++) {
+        const newLog = nextLogs[i];
+        if (newLog) {
+          setDoc(doc(db, "users", user.uid, "tradeLogs", newLog.id), newLog);
+        }
+      }
+    }
+  };
+
+  const handleDepositCash = (rupiahAmount: number) => {
+    setCash(prev => {
+      const nextCash = prev + rupiahAmount;
+      if (user) {
+        import("firebase/firestore").then(m => {
+          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+        });
+      }
+      return nextCash;
+    });
     
     const logId = "log-" + Date.now();
     const nextLogs = [{
@@ -514,27 +552,19 @@ export default function App() {
       timestamp: new Date().toISOString(),
       message: `Deposit Nominal sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
     }, ...tradeLogs];
-    setTradeLogs(nextLogs);
-    setWalletNominalStr("");
-    setWalletNotification({
-      message: `Berhasil menambahkan Rp ${rupiahAmount.toLocaleString("id-ID")} ke saldo kas digital!`,
-      type: "success"
-    });
+    customSetTradeLogs(nextLogs);
   };
 
-  const handleWithdrawCash = () => {
-    const rupiahAmount = parseInt(walletNominalStr.replace(/[^0-9]/g, ""));
-    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
-      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah penarikan yang valid!", type: "error" });
-      return;
-    }
-    if (rupiahAmount > cash) {
-      setWalletNotification({ message: "Saldo kas saat ini tidak mencukupi untuk melakukan penarikan dana!", type: "error" });
-      return;
-    }
-    
-    const nextCash = cash - rupiahAmount;
-    setCash(nextCash);
+  const handleWithdrawCash = (rupiahAmount: number) => {
+    setCash(prev => {
+      const nextCash = prev - rupiahAmount;
+      if (user) {
+        import("firebase/firestore").then(m => {
+          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+        });
+      }
+      return nextCash;
+    });
     
     const logId = "log-" + Date.now();
     const nextLogs = [{
@@ -546,38 +576,30 @@ export default function App() {
       timestamp: new Date().toISOString(),
       message: `Penarikan Dana sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
     }, ...tradeLogs];
-    setTradeLogs(nextLogs);
-    setWalletNominalStr("");
-    setWalletNotification({
-      message: `Berhasil menarik Rp ${rupiahAmount.toLocaleString("id-ID")} dari saldo kas digital!`,
-      type: "success"
-    });
+    customSetTradeLogs(nextLogs);
   };
 
-  const handleMoveToGold = () => {
-    const rupiahAmount = parseFloat(walletNominalStr.replace(/[^0-9,.]/g, "").replace(",", "."));
-    if (isNaN(rupiahAmount) || rupiahAmount <= 0) {
-      setWalletNotification({ message: "Masukkan jumlah nominal Rupiah alokasi emas yang valid!", type: "error" });
-      return;
-    }
-    if (rupiahAmount > cash) {
-      setWalletNotification({ message: "Saldo kas saat ini tidak mencukupi untuk dialokasikan ke emas!", type: "error" });
-      return;
-    }
-    
+  const handleMoveToGold = (rupiahAmount: number) => {
     const goldPrice = MKT.gold.value;
     const grams = rupiahAmount / goldPrice;
     const details = calculateTradeDetails("BUY", "EMAS", grams, goldPrice);
     
     if (details.net > cash) {
-      setWalletNotification({ message: "Saldo kas tidak mencukupi setelah memperhitungkan fee/spread emas fisik!", type: "error" });
+      setAppNotification({ message: "Saldo kas tidak mencukupi untuk membeli emas!", type: "error" });
       return;
     }
+
+    setCash(prev => {
+      const nextCash = prev - details.net;
+      if (user) {
+        import("firebase/firestore").then(m => {
+          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+        });
+      }
+      return nextCash;
+    });
     
-    const nextCash = cash - details.net;
-    setCash(nextCash);
-    
-    handleAddTransaction("EMAS", grams, goldPrice);
+    handleAddTransaction("EMAS", grams, goldPrice, true); // true = silent/no double deduct
     
     const logId = "log-" + Date.now();
     const nextLogs = [{
@@ -589,37 +611,25 @@ export default function App() {
       timestamp: new Date().toISOString(),
       message: `Konversi Kas ke Safe Haven Emas Fisik sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
     }, ...tradeLogs];
-    setTradeLogs(nextLogs);
-    setWalletNominalStr("");
-    setWalletNotification({
-      message: `Berhasil memindahkan Rp ${rupiahAmount.toLocaleString("id-ID")} ke Emas (${grams.toFixed(4)} Gram @ Rp ${goldPrice.toLocaleString("id-ID")}/gr)!`,
-      type: "success"
-    });
+    customSetTradeLogs(nextLogs);
+    setAppNotification({ message: `Berhasil membeli ${grams.toFixed(4)} gram Emas!`, type: "success" });
   };
 
-  const handleSellGoldToCashInput = () => {
-    const goldPortfolio = portfolio.find(p => p.ticker === "EMAS");
-    if (!goldPortfolio || goldPortfolio.shares <= 0) {
-      setWalletNotification({ message: "Anda tidak memiliki simpanan Emas untuk dicairkan saat ini!", type: "error" });
-      return;
-    }
-    const enteredVal = parseFloat(walletNominalStr.replace(/[^0-9,.]/g, "").replace(",", "."));
-    if (isNaN(enteredVal) || enteredVal <= 0) {
-      setWalletNotification({ message: "Masukkan jumlah Gram emas yang valid untuk dicairkan!", type: "error" });
-      return;
-    }
-    if (enteredVal > goldPortfolio.shares) {
-      setWalletNotification({ message: `Simpanan Emas Anda hanya sebesar ${goldPortfolio.shares.toFixed(4)} gram!`, type: "error" });
-      return;
-    }
-
+  const handleSellGoldToCashInput = (enteredVal: number) => {
     const goldPrice = MKT.gold.value;
     const details = calculateTradeDetails("SELL", "EMAS", enteredVal, goldPrice);
 
-    const nextCash = cash + details.net;
-    setCash(nextCash);
+    setCash(prev => {
+      const nextCash = prev + details.net;
+      if (user) {
+        import("firebase/firestore").then(m => {
+          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
+        });
+      }
+      return nextCash;
+    });
 
-    handleSellTransaction("EMAS", enteredVal);
+    handleSellTransaction("EMAS", enteredVal, true); // true = silent
 
     const logId = "log-" + Date.now();
     const nextLogs = [{
@@ -631,12 +641,8 @@ export default function App() {
       timestamp: new Date().toISOString(),
       message: `Mencairkan ${enteredVal} Gram Emas Fisik ke Kas Wallet`
     }, ...tradeLogs];
-    setTradeLogs(nextLogs);
-    setWalletNominalStr("");
-    setWalletNotification({
-      message: `Berhasil mencairkan ${enteredVal} Gram Emas senilai Rp ${Math.round(details.net).toLocaleString("id-ID")} kembali ke kas wallet!`,
-      type: "success"
-    });
+    customSetTradeLogs(nextLogs);
+    setAppNotification({ message: `Berhasil mencairkan ${enteredVal} gram Emas!`, type: "success" });
   };
 
   // Call Gemini deep analyzer
@@ -660,10 +666,13 @@ export default function App() {
       }
 
       const reportData: AnalysisResult = await response.json();
-      setCachedReports((prev) => ({
-        ...prev,
-        [activeStock.ticker]: reportData,
-      }));
+      if (user) {
+        await setDoc(doc(db, "users", user.uid, "cachedReports", activeStock.ticker), {
+          ticker: activeStock.ticker,
+          data: reportData,
+          updatedAt: new Date().toISOString()
+        });
+      }
     } catch (err: any) {
       console.error(err);
       setGenerationError(err.message || "Failed in generative analysis pipeline.");
@@ -686,9 +695,41 @@ export default function App() {
     return isMatched;
   }).map(s => getDynamicStock(s.ticker));
 
+  if (authLoading) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>;
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   return (
     <div id="applet-main-canvas" className={`min-h-screen bg-[#050505] text-[#E0E0E0] ${theme} font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
       
+      {/* APP NOTIFICATION OVERLAY */}
+      <AnimatePresence>
+        {appNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: "-50%" }}
+            animate={{ opacity: 1, y: 20, x: "-50%" }}
+            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            className={`fixed top-4 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${
+              appNotification.type === "success" ? "bg-emerald-500/90 border-emerald-400 text-black" :
+              appNotification.type === "error" ? "bg-rose-500/90 border-rose-400 text-white" :
+              "bg-blue-500/90 border-blue-400 text-white"
+            }`}
+          >
+            <div className={`w-2 h-2 rounded-full animate-pulse ${
+              appNotification.type === "success" ? "bg-black" : "bg-white"
+            }`} />
+            <span className="text-sm font-black uppercase tracking-tight">{appNotification.message}</span>
+            <button onClick={() => setAppNotification(null)} className="ml-2 hover:opacity-50">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* BRAND STYLE TOP NAVIGATION BAR */}
       <header className="sticky top-0 z-40 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 px-3 py-2 md:px-6 md:py-2.5 shrink-0 flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-4">
         {/* Brand Logo & Name */}
@@ -714,19 +755,6 @@ export default function App() {
               <rect x="16" y="9" width="4" height="6" rx="0.5" fill="currentColor" className="fill-white" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-xs md:text-sm font-black uppercase tracking-[0.16em] text-white">
-                ISI
-              </h1>
-              <span className="text-[7px] md:text-[7.5px] font-mono border border-white/20 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-widest leading-none bg-white/5">
-                V7
-              </span>
-            </div>
-            <span className="text-[7px] md:text-[7.5px] font-mono uppercase tracking-[0.18em] text-white font-semibold block mt-0.5">
-              Indonesia Stock Intelligence
-            </span>
-          </div>
         </div>
 
         {/* Gemini-Style Rounded Pill Navigation (Fitted precisely & extremely responsive!) */}
@@ -736,128 +764,142 @@ export default function App() {
             <button
               id="tab-market"
               onClick={() => setActiveTab("market")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
+              title="Market"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
                 activeTab === "market"
-                  ? "bg-[#2A2A2A] text-emerald-400 font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Market
-            </button>
-
-            <button
-              id="tab-leaders"
-              onClick={() => setActiveTab("leaders")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
-                activeTab === "leaders"
-                  ? "bg-[#2A2A2A] text-emerald-400 font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
-              }`}
-            >
-              <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Leaders
-            </button>
-
-            <button
-              id="tab-turnaround"
-              onClick={() => setActiveTab("turnaround")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
-                activeTab === "turnaround"
-                  ? "bg-[#2A2A2A] text-emerald-400 font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
-              }`}
-            >
-              <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-current" /> Recovery
-            </button>
-
-            <button
-              id="tab-exit"
-              onClick={() => setActiveTab("exit")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
-                activeTab === "exit"
-                  ? "bg-[#2A2A2A] text-[#FCA5A5] font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
-              }`}
-            >
-              <ShieldAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" /> Exit Ops
+              <Activity className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Market</span>
             </button>
 
             <button
               id="tab-ledger"
               onClick={() => setActiveTab("ledger")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
+              title="Ledger"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
                 activeTab === "ledger"
-                  ? "bg-[#2A2A2A] text-[#2563EB] font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Briefcase className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500" /> Ledger
+              <Briefcase className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Portfolio</span>
+            </button>
+
+            <button
+              id="tab-leaders"
+              onClick={() => setActiveTab("leaders")}
+              title="Leaders"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
+                activeTab === "leaders"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Leaders</span>
+            </button>
+
+            <button
+              id="tab-turnaround"
+              onClick={() => setActiveTab("turnaround")}
+              title="Recovery"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
+                activeTab === "turnaround"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Flame className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Recovery</span>
+            </button>
+
+            <button
+              id="tab-exit"
+              onClick={() => setActiveTab("exit")}
+              title="Manajemen Resiko"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
+                activeTab === "exit"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <ShieldAlert className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Risiko</span>
             </button>
 
             <button
               id="tab-simulation"
               onClick={() => setActiveTab("simulation")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
+              title="Simulation"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
                 activeTab === "simulation"
-                  ? "bg-[#2A2A2A] text-emerald-400 font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-pulse" /> Simulation
+              <Award className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Simulasi</span>
             </button>
 
             <button
               id="tab-diagnostics"
               onClick={() => setActiveTab("diagnostics")}
-              className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition-all duration-300 cursor-pointer ${
+              title="AI Labs"
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
                 activeTab === "diagnostics"
-                  ? "bg-[#2A2A2A] text-emerald-400 font-extrabold shadow-sm border border-white/5"
-                  : "text-white/45 hover:text-white hover:bg-white/[0.03]"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Cpu className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Chat Labs
+              <Cpu className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Sistem</span>
             </button>
 
           </nav>
         </div>
 
         {/* Brand Control Utilities & Theme Toggle panel */}
-        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center relative">
+        <div className="flex items-center gap-3 shrink-0 self-end md:self-center relative">
           
           {/* Active Online badge */}
-          <div className="hidden md:flex items-center gap-1.5 bg-[#34A853]/10 border border-[#34A853]/20 px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-ping" />
-            <span className="text-[8px] md:text-[9px] font-black font-mono tracking-wider text-emerald-400 whitespace-nowrap">LIVE</span>
+          <div className="hidden md:flex items-center gap-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-ping" />
+            <span className="text-[9px] font-bold font-mono tracking-widest text-white/80 uppercase">LIVE</span>
           </div>
 
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 ${
-            dataFeed === "yahoo" && isYahooConnected ? "bg-sky-500/10 border-sky-500/20 text-sky-400" :
-            dataFeed === "goapi" && isGoapiConnected ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-            "bg-amber-500/10 border-amber-500/20 text-amber-300"
-          }`} title={dataFeed === "yahoo" ? "Terkoneksi ke Yahoo Finance (Live IDX)" : dataFeed === "goapi" ? "Terkoneksi ke GoAPI.io" : "Menggunakan Simulasi Harga"}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              dataFeed === "yahoo" && isYahooConnected ? "bg-sky-500 animate-pulse" :
-              dataFeed === "goapi" && isGoapiConnected ? "bg-emerald-500 animate-pulse" :
-              "bg-amber-400"
-            }`} />
-            <span className="text-[8px] md:text-[9px] font-black font-mono tracking-wider uppercase">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 bg-white/5" title="Data Feed Indicator">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
+            <span className="text-[9px] font-bold font-mono tracking-widest uppercase text-white/50">
               {dataFeed === "yahoo" ? "Yahoo" : dataFeed === "goapi" ? "GoAPI" : "Simulasi"}
             </span>
+          </div>
+
+          {/* User Account Info */}
+          <div className="hidden md:flex items-center bg-white/5 border border-white/5 rounded-xl px-3 py-1 gap-3">
+            <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center border border-white/10">
+              <span className="text-[10px] text-white font-bold uppercase">{user?.email?.charAt(0) || "U"}</span>
+            </div>
+            <span className="text-[10px] text-white/70 font-medium truncate max-w-[120px]">{user?.email}</span>
           </div>
 
           {/* Settings Menu Toggle */}
           <button 
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="w-8 h-8 rounded-full border border-white/10 hover:bg-white/10 flex items-center justify-center transition-all bg-[#121212] z-50 relative"
+            className="w-8 h-8 rounded-xl border border-white/5 hover:bg-white/10 flex items-center justify-center transition-all bg-[#0A0A0A] z-50 relative"
           >
             {isSettingsOpen ? <X className="w-4 h-4 text-white" /> : <Settings className="w-4 h-4 text-white/70" />}
           </button>
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="lg:hidden p-2 text-white/50 hover:text-white transition-colors"
+            className="lg:hidden w-8 h-8 rounded-xl border border-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
 
           {/* Settings Dropdown */}
@@ -868,24 +910,35 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-12 right-0 w-64 bg-[#0A0A0A] border border-white/10 shadow-xl rounded-2xl p-4 z-50 flex flex-col gap-4"
+                className="absolute top-12 right-0 w-64 bg-[#050505] border border-white/[0.05] shadow-2xl rounded-2xl p-5 z-50 flex flex-col gap-5"
               >
+                {/* User Info (Mobile mostly) */}
+                <div className="md:hidden flex items-center bg-white/[0.02] border border-white/[0.03] rounded-xl p-3 gap-3 mb-1">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                    <span className="text-xs text-emerald-400 font-bold uppercase">{user.email?.charAt(0) || "U"}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest">Akun</span>
+                    <span className="text-xs text-white/90 font-mono mt-0.5 truncate max-w-[150px]">{user.email}</span>
+                  </div>
+                </div>
+
                 {/* Configuration Toggle */}
                 <div>
-                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Model Konfigurasi</span>
-                  <div className="flex items-center bg-[#121212] border border-white/5 rounded-lg p-1">
+                  <span className="text-[9px] uppercase font-bold text-zinc-500 block tracking-widest mb-3">Model Konfigurasi</span>
+                  <div className="flex items-center bg-white/[0.01] border border-white/[0.03] rounded-xl p-1">
                     <button
                       onClick={() => setActiveConfig("prod")}
-                      className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        activeConfig === "prod" ? "bg-[#2563EB]/20 text-[#2563EB] shadow-sm" : "text-white/40 hover:text-white"
+                      className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        activeConfig === "prod" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white"
                       }`}
                     >
                       Config F
                     </button>
                     <button
                       onClick={() => setActiveConfig("res")}
-                      className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        activeConfig === "res" ? "bg-[#2563EB]/20 text-[#2563EB] shadow-sm" : "text-white/40 hover:text-white"
+                      className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        activeConfig === "res" ? "bg-blue-600/20 text-blue-400 shadow-sm" : "text-white/40 hover:text-white"
                       }`}
                     >
                       Config B
@@ -895,56 +948,75 @@ export default function App() {
 
                 {/* Theme Toggle */}
                 <div>
-                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Tema Aplikasi</span>
-                  <div className="flex items-center bg-[#121212] border border-white/5 rounded-lg p-1">
+                  <span className="text-[9px] uppercase font-bold text-zinc-500 block tracking-widest mb-3">Tema Aplikasi</span>
+                  <div className="flex bg-white/[0.01] border border-white/[0.03] rounded-xl p-1 gap-1">
                     <button
                       onClick={() => setTheme("dark")}
-                      className={`flex-1 flex gap-1.5 items-center justify-center py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        theme === "dark" ? "bg-[#F59E0B]/10 text-amber-400 shadow-sm" : "text-white/40 hover:text-white"
+                      className={`flex-1 flex gap-1.5 items-center justify-center py-2 text-[8px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        theme === "dark" ? "bg-amber-500/10 text-amber-500 shadow-sm" : "text-white/40 hover:text-white"
                       }`}
                     >
                       <Moon className="w-3 h-3" /> Gelap
                     </button>
                     <button
                       onClick={() => setTheme("light")}
-                      className={`flex-1 flex gap-1.5 items-center justify-center py-1.5 text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        theme === "light" ? "bg-sky-500/10 text-sky-400 shadow-sm" : "text-white/40 hover:text-white"
+                      className={`flex-1 flex gap-1.5 items-center justify-center py-2 text-[8px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        theme === "light" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white"
                       }`}
                     >
                       <Sun className="w-3 h-3" /> Terang
+                    </button>
+                    <button
+                      onClick={() => setTheme("stockbit")}
+                      className={`flex-1 flex gap-1.5 items-center justify-center py-2 text-[8px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        theme === "stockbit" ? "bg-[#10b981]/10 text-[#10b981] shadow-sm" : "text-white/40 hover:text-white"
+                      }`}
+                    >
+                      <Monitor className="w-3 h-3" /> Stockbit
                     </button>
                   </div>
                 </div>
 
                 {/* Data Feed Selector */}
                 <div>
-                  <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-2">Live Market Data Feed</span>
-                  <div className="flex flex-col gap-1 bg-[#121212] border border-white/5 p-1 rounded-lg">
+                  <span className="text-[9px] uppercase font-bold text-zinc-500 block tracking-widest mb-3">Live Market Data Feed</span>
+                  <div className="flex flex-col gap-1 bg-white/[0.01] border border-white/[0.03] p-1.5 rounded-xl">
                     <button
                       onClick={() => setDataFeed("yahoo")}
-                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        dataFeed === "yahoo" ? "bg-sky-500/10 text-sky-400" : "text-[#E0E0E0]/35 hover:text-white"
+                      className={`py-2 px-3 text-left text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        dataFeed === "yahoo" ? "bg-sky-500/10 text-sky-400" : "text-white/40 hover:bg-white/[0.02] hover:text-white"
                       }`}
                     >
                       Yahoo Finance Feed
                     </button>
                     <button
                       onClick={() => setDataFeed("goapi")}
-                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        dataFeed === "goapi" ? "bg-emerald-500/10 text-emerald-400" : "text-[#E0E0E0]/35 hover:text-white"
+                      className={`py-2 px-3 text-left text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        dataFeed === "goapi" ? "bg-emerald-500/10 text-emerald-400" : "text-white/40 hover:bg-white/[0.02] hover:text-white"
                       }`}
                     >
                       GoAPI.io Feed
                     </button>
                     <button
                       onClick={() => setDataFeed("simulated")}
-                      className={`py-1.5 px-2 text-left text-[10px] font-bold uppercase rounded-md transition-all cursor-pointer ${
-                        dataFeed === "simulated" ? "bg-white/10 text-white" : "text-[#E0E0E0]/35 hover:text-white"
+                      className={`py-2 px-3 text-left text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
+                        dataFeed === "simulated" ? "bg-white/10 text-white" : "text-white/40 hover:bg-white/[0.02] hover:text-white"
                       }`}
                     >
                       Simulasi Harga (Offline)
                     </button>
                   </div>
+                </div>
+
+                {/* Authentication Utilities */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => signOut(auth)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 hover:text-rose-400 rounded-xl transition-colors cursor-pointer group"
+                  >
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Keluar Akun</span>
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -960,183 +1032,26 @@ export default function App() {
         <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex absolute inset-0 z-50 bg-[#0A0A0A]' : 'hidden'} lg:flex w-full lg:static lg:w-80 bg-[#0A0A0A] lg:border-r border-white/10 shrink-0 flex-col lg:overflow-hidden`}>
           <div className="flex flex-col flex-1 overflow-y-auto lg:overflow-y-auto py-4 gap-4 scrollbar-thin">
             
-            {/* CARD INTERAKTIF: DOMPET DIGITAL & DEPOSIT/WITHDRAW/PINDAH EMAS */}
-            <div id="rdi-digital-wallet" className="mx-4 p-4.5 bg-gradient-to-br from-[#0C0E12] to-[#07080A] border border-amber-500/15 rounded-2xl shadow-xl space-y-4 relative overflow-hidden">
-              <div className="absolute -right-16 -top-16 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
-                    <Wallet className="w-3.5 h-3.5 font-bold" />
-                  </div>
-                  <div>
-                    <h3 className="text-[10px] font-extrabold text-white tracking-wider uppercase font-sans">
-                      Dompet Digital RDI
-                    </h3>
-                    <p className="text-[8px] text-white/45 font-semibold">
-                      Akun kas &amp; safe haven emas fisik
-                    </p>
-                  </div>
-                </div>
-                {isMobileMenuOpen && (
-                  <button 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-1 rounded-md bg-white/5 border border-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all cursor-pointer block lg:hidden"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* STATUS SALDO */}
-              <div className="space-y-2.5 font-mono text-xs">
-                <div>
-                  <span className="text-[8px] uppercase font-bold text-white/35 tracking-wider block">
-                    Saldo Kas Tunai (RDI)
-                  </span>
-                  <p className="text-lg font-black text-white mt-0.5">
-                    <span className="text-[10px] text-white/30 mr-1 font-semibold">IDR</span>
-                    {cash.toLocaleString("id-ID")}
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-white/5">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-[8px] uppercase font-bold text-amber-400 tracking-wider block">
-                      Safe Haven Emas Fisik
-                    </span>
-                    <span className="text-[7.5px] text-white/35">
-                      @Rp {MKT.gold.value.toLocaleString("id-ID")}/gr
-                    </span>
-                  </div>
-                  <p className="text-base font-black text-amber-400 mt-0.5">
-                    {getEmasShares().toFixed(4)} <span className="text-[10px] text-white/40 font-semibold">Gr</span>
-                  </p>
-                  <p className="text-[8.5px] text-white/45">
-                    Est. Nilai: <span className="text-white font-bold">Rp {Math.round(getEmasShares() * MKT.gold.value).toLocaleString("id-ID")}</span>
-                  </p>
-                </div>
-
-                <div className="pt-2.5 border-t border-white/5 bg-white/[0.01] p-2 rounded-lg border border-white/5">
-                  <span className="text-[7.5px] uppercase font-bold text-white/35 block">
-                    Total Kas + Emas
-                  </span>
-                  <p className="text-sm font-bold text-emerald-400 mt-0.5">
-                    Rp {Math.round(cash + (getEmasShares() * MKT.gold.value)).toLocaleString("id-ID")}
-                  </p>
-                </div>
-              </div>
-
-              {/* INPUT NOMINAL */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-[8.5px] font-sans">
-                  <label className="uppercase font-bold text-white/60 tracking-wider block">
-                    Nominal Rupiah (Untuk Topup/Beli)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setWalletNominalStr("")}
-                    className="text-rose-500 hover:underline cursor-pointer font-semibold"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={walletNominalStr}
-                    onChange={(e) => setWalletNominalStr(e.target.value)}
-                    placeholder="Beli (Rupiah) contoh 50000000 | Jual (Grams) contoh 12.5"
-                    className="w-full text-xs font-semibold p-2.5 pr-8 rounded-xl border border-white/10 outline-none focus:ring-2 focus:ring-amber-500/30 bg-black/60 text-white font-mono placeholder-white/20 transition-all"
-                  />
-                  <div className="absolute right-2.5 top-2.5 text-[8px] text-white/35 font-mono font-bold uppercase">
-                    IDR/GR
-                  </div>
-                </div>
-
-                {/* Quick Presets */}
-                <div className="flex flex-wrap gap-1 border-t border-white/5 pt-1.5 mt-1.5">
-                  {[
-                    { label: "Max Kas", val: cash.toString(), color: "text-emerald-400" },
-                    { label: "+1 Jt", val: "1000000" },
-                    { label: "+10 Jt", val: "10000000" },
-                    { label: "+100 Jt", val: "100000000" },
-                    { label: "Max Emas", val: getEmasShares().toString(), color: "text-amber-400" },
-                    { label: "10 gr", val: "10" },
-                    { label: "100 gr", val: "100" }
-                  ].map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setWalletNominalStr(preset.val)}
-                      className={`text-[8px] font-semibold font-mono px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 ${preset.color || 'text-white/70'} hover:opacity-100 opacity-80 border border-white/5 transition-all cursor-pointer`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* NOTIFICATION LOG INLINE */}
-              {walletNotification && (
-                <div className={`p-2 rounded-lg text-[9px] font-semibold flex items-center gap-1.5 leading-snug ${
-                  walletNotification.type === "success" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                }`}>
-                  <span className="w-1.5 h-1.5 shrink-0 bg-current rounded-full" />
-                  <p className="flex-1">{walletNotification.message}</p>
-                </div>
-              )}
-
-              {/* ACTION BUTTON GRID */}
-              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-white/5 font-sans">
-                <button
-                  type="button"
-                  onClick={handleDepositCash}
-                  className="py-2 px-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
-                  title="Tambahkan uang tunai baru hasil deposit ke dalam wallet RDI"
-                >
-                  <Plus className="w-3 h-3" /> Top Up
-                </button>
-                <button
-                  type="button"
-                  onClick={handleWithdrawCash}
-                  className="py-2 px-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
-                  title="Tarik dana dari saldo tunai wallet RDI"
-                >
-                  <Minus className="w-3 h-3" /> Tarik
-                </button>
-                <button
-                  type="button"
-                  onClick={handleMoveToGold}
-                  className="py-2 px-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
-                  title="Pindahkan nominal saldo Kas Rupiah ke Simpanan Emas fisik secara real-time"
-                >
-                  <Coins className="w-3 h-3" /> Pindah Emas
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSellGoldToCashInput}
-                  className="py-2 px-1.5 rounded-lg bg-amber-500/10 border border-amber-500/35 hover:bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer text-center flex items-center justify-center gap-1.5"
-                  title="Mencairkan sejumlah Gram Emas ke Kas Rupiah wallet RDI"
-                >
-                  <Wallet className="w-3 h-3" /> Jual Emas
-                </button>
-              </div>
-
-              {/* Link metadata indicating live Connected */}
-              <div className="flex items-center gap-1.5 pt-1 text-[8px] font-mono text-white/30 justify-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse bg-current shrink-0" />
-                <span>DATABASE TERKONEKSI (FIRESTORE)</span>
-              </div>
+            {/* DIGITAL WALLET RDI - OVERHAULED */}
+            <div id="rdi-digital-wallet-container" className="mx-4 overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
+              <DigitalWalletUI 
+                cash={cash}
+                goldShares={getEmasShares()}
+                tradeLogs={tradeLogs}
+                onDeposit={handleDepositCash}
+                onWithdraw={handleWithdrawCash}
+                onMoveToGold={handleMoveToGold}
+                onSellGold={handleSellGoldToCashInput}
+                onCloseMobile={() => setIsMobileMenuOpen(false)}
+              />
             </div>
             
             {/* Curated News Column for IDX info */}
-            <div id="sidebar-news-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
-              <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest flex items-center gap-1.5">
-                <Newspaper className="w-3.5 h-3.5 text-emerald-400" /> Berita Terkini
+            <div id="sidebar-news-panel" className="p-4 mx-4 bg-[#050505] border border-white/[0.03] rounded-2xl space-y-4">
+              <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest flex items-center gap-2">
+                <Newspaper className="w-4 h-4 text-white/50" /> Portal Berita
               </span>
-              <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1 scrollbar-thin">
+              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 scrollbar-thin">
                 {idxNews.map((news, idx) => (
                   <a 
                     key={idx}
@@ -1144,13 +1059,13 @@ export default function App() {
                     target="_blank"
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
-                    className="block p-2 rounded-xl bg-black/30 hover:bg-black/60 border border-white/5 hover:border-emerald-500/20 transition-all text-left group"
+                    className="block p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.02] transition-all text-left flex flex-col gap-1.5 group cursor-pointer"
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[8px] font-mono font-bold text-emerald-400/80">{news.portal}</span>
-                      <span className="text-[8px] font-mono text-white/30">{news.time}</span>
+                    <div className="flex justify-between items-center text-[9px] font-mono font-semibold">
+                      <span className="text-white/60">{news.portal}</span>
+                      <span className="text-white/30">{news.time}</span>
                     </div>
-                    <h4 className="text-[10px] font-serif italic text-white/95 group-hover:text-emerald-400 leading-snug line-clamp-2">
+                    <h4 className="text-[11px] font-serif italic text-white/90 group-hover:text-white leading-relaxed line-clamp-2">
                       {news.title}
                     </h4>
                   </a>
@@ -1158,84 +1073,80 @@ export default function App() {
               </div>
             </div>
 
-            {/* Macro Sentiment & Key Indicators (Filling the empty sidebar space beautifully) */}
-            <div id="sidebar-macro-indicators-panel" className="p-4 mx-4 bg-white/5 border border-white/10 rounded-2xl space-y-3.5">
-              <span className="text-[9px] uppercase font-bold text-white/35 block tracking-widest flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-sky-400 animate-pulse" /> Sinyal Rezim & Makro
+            {/* Macro Sentiment & Key Indicators */}
+            <div id="sidebar-macro-indicators-panel" className="p-4 mx-4 bg-[#050505] border border-white/[0.03] rounded-2xl space-y-5">
+              <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest flex items-center gap-2">
+                <Activity className="w-4 h-4 text-white/50" /> Indikator Makro
               </span>
 
               {/* Overall status Pill */}
-              <div className="flex items-center justify-between p-2 bg-black/30 border border-white/5 rounded-xl">
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-mono font-bold text-white/30 uppercase">Status Pasar</span>
-                  <span className={`text-[11px] font-mono font-black ${
-                    isIHSGInCrisis ? "text-rose-400" : (RS.status === "SAFE" ? "text-emerald-400" : "text-amber-400")
-                  }`}>{isIHSGInCrisis ? "⚠️ RISK OFF" : (RS.status === "SAFE" ? "✓ RISK ON" : "⚠️ WARNING")}</span>
+              <div className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/[0.03] rounded-xl font-mono">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] font-bold text-white/40 uppercase">Status Pasar</span>
+                  <span className="text-xs font-black text-white">{isIHSGInCrisis ? "RISK OFF" : (RS.status === "SAFE" ? "RISK ON" : "WARNING")}</span>
                 </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-[8px] font-mono font-bold text-white/30 uppercase">Aksi Sistem</span>
-                  <span className={`text-[10px] font-extrabold font-mono tracking-wide ${
-                    isIHSGInCrisis ? "text-rose-450 text-rose-400" : "text-[#D1FAE5]"
-                  }`}>{isIHSGInCrisis ? "LIQUIDATE / CASH OUT" : RS.action}</span>
+                <div className="flex flex-col text-right gap-1">
+                  <span className="text-[9px] font-bold text-white/40 uppercase">Aksi Sistem</span>
+                  <span className="text-[10px] font-extrabold text-white/80">{isIHSGInCrisis ? "CASH OUT" : RS.action}</span>
                 </div>
               </div>
 
               {/* Bar stats showing core index health, opportunity, etc. */}
-              <div className="space-y-2.5">
+              <div className="space-y-4">
                 {/* Market Health */}
                 <div>
-                  <div className="flex justify-between text-[8.5px] font-mono font-bold text-white/50 mb-1">
+                  <div className="flex justify-between text-[10px] font-mono font-bold text-white/50 mb-1.5">
                     <span>Kesehatan IHSG</span>
-                    <span className="text-white/80">{RS.market_health}%</span>
+                    <span className="text-white">{RS.market_health}%</span>
                   </div>
-                  <div className="h-1 bg-black/40 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full transition-all duration-500" style={{ width: `${RS.market_health}%` }} />
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="bg-white/80 h-full transition-all duration-500" style={{ width: `${RS.market_health}%` }} />
                   </div>
                 </div>
 
                 {/* Opportunity */}
                 <div>
-                  <div className="flex justify-between text-[8.5px] font-mono font-bold text-white/50 mb-1">
-                    <span>Peluang Transaksi</span>
-                    <span className="text-emerald-400">{RS.opportunity}%</span>
+                  <div className="flex justify-between text-[10px] font-mono font-bold text-white/50 mb-1.5">
+                    <span>Setup Peluang</span>
+                    <span className="text-white">{RS.opportunity}%</span>
                   </div>
-                  <div className="h-1 bg-black/40 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500" style={{ width: `${RS.opportunity}%` }} />
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="bg-white/60 h-full transition-all duration-500" style={{ width: `${RS.opportunity}%` }} />
                   </div>
                 </div>
 
                 {/* Risk */}
                 <div>
-                  <div className="flex justify-between text-[8.5px] font-mono font-bold text-white/50 mb-1">
-                    <span>Tingkat Risiko</span>
-                    <span className="text-rose-400">{RS.risk}%</span>
+                  <div className="flex justify-between text-[10px] font-mono font-bold text-white/50 mb-1.5">
+                    <span>Skor Risiko</span>
+                    <span className="text-white">{RS.risk}%</span>
                   </div>
-                  <div className="h-1 bg-black/40 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-rose-600 to-rose-400 h-full transition-all duration-500" style={{ width: `${RS.risk}%` }} />
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="bg-white/40 h-full transition-all duration-500" style={{ width: `${RS.risk}%` }} />
                   </div>
                 </div>
               </div>
 
               {/* Commodities & Forex Grid */}
-              <div className="border-t border-white/5 pt-3">
-                <span className="text-[8px] uppercase font-bold text-white/25 block tracking-wider mb-2">Aset Safe Haven / Valas</span>
-                <div className="grid grid-cols-2 gap-2 text-left">
+              <div className="border-t border-white/[0.05] pt-4">
+                <span className="text-[9px] uppercase font-bold text-white/40 block tracking-widest mb-3">Safe Haven Valuations</span>
+                <div className="grid grid-cols-2 gap-3 text-left">
                   {/* USDIDR */}
-                  <div className="p-2 bg-black/25 rounded-xl border border-white/5 flex flex-col justify-between">
-                    <span className="text-[8.5px] font-medium text-white/40">USD / IDR</span>
-                    <span className="text-[10px] font-mono font-extrabold text-[#E0E0E0] mt-0.5 font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
-                    <span className={`text-[7.5px] font-mono font-bold flex items-center gap-0.5 mt-1 ${MKT.usdidr.daily <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-2.5 h-2.5 shrink-0" /> : <TrendingUp className="w-2.5 h-2.5 shrink-0" />}
-                      {MKT.usdidr.daily <= 0 ? "" : "+"}{MKT.usdidr.daily}% {MKT.usdidr.daily <= 0 ? "Rupiah Menguat" : "Rupiah Melemah"}
+                  <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] flex flex-col justify-between gap-1">
+                    <span className="text-[10px] font-bold text-white/50 uppercase">USD/IDR</span>
+                    <span className="text-xs font-mono font-extrabold text-white">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
+                    <span className="text-[9px] font-mono font-bold text-white/40 flex items-center gap-1 mt-1">
+                      {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-3 h-3 shrink-0" /> : <TrendingUp className="w-3 h-3 shrink-0" />}
+                      {MKT.usdidr.daily}%
                     </span>
                   </div>
 
                   {/* Gold */}
-                  <div className="p-2 bg-black/25 rounded-xl border border-white/5 flex flex-col justify-between">
-                    <span className="text-[8.5px] font-medium text-white/40">Emas (gr)</span>
-                    <span className="text-[10px] font-mono font-extrabold text-amber-400 mt-0.5 font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
-                    <span className="text-[7.5px] font-mono font-bold text-rose-400 flex items-center gap-0.5 mt-1">
-                      <TrendingDown className="w-2.5 h-2.5 shrink-0" /> MoM {MKT.gold.monthly}%
+                  <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] flex flex-col justify-between gap-1">
+                    <span className="text-[10px] font-bold text-white/50 uppercase">Emas (gr)</span>
+                    <span className="text-xs font-mono font-extrabold text-white">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
+                    <span className="text-[9px] font-mono font-bold text-white/40 flex items-center gap-1 mt-1">
+                      <TrendingDown className="w-3 h-3 shrink-0" /> {MKT.gold.monthly}% MoM
                     </span>
                   </div>
                 </div>
@@ -1244,30 +1155,30 @@ export default function App() {
           </div>
 
           {/* Quick Listings Directory in Sidebar Footer for fast lookups */}
-          <div className="p-4 border-t border-white/5 shrink-0 max-h-[300px] flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-[#E0E0E0]/30 tracking-widest block mb-2 px-1">Ticker Directory</span>
-            <div className="relative mb-2 shrink-0">
-              <Search className="w-3.5 h-3.5 text-white/30 absolute left-3 top-2.5" />
+          <div className="p-4 border-t border-white/[0.05] shrink-0 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-4 px-1">Ticker Directory</span>
+            <div className="relative mb-3 shrink-0">
+              <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search quick tickers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-[11px] pl-8.5 pr-3 py-2 bg-white/5 border border-white/5 rounded-lg outline-none focus:border-white/20 text-white font-mono"
+                className="w-full text-xs pl-8 pr-3 py-2 bg-white/[0.02] border border-white/[0.03] rounded-xl outline-none focus:border-white/20 text-white font-mono"
               />
             </div>
-            <div className="overflow-y-auto space-y-1 pr-1 flex-1 scrollbar-thin max-h-[140px]">
+            <div className="overflow-y-auto space-y-1.5 pr-2 flex-1 scrollbar-thin max-h-[160px] lg:max-h-[220px]">
               {filteredStocks.map(s => {
                 const isSaved = watchlist.some(w => w.ticker === s.ticker);
                 return (
                   <div
                     key={s.ticker}
                     onClick={() => handleSelectTicker(s.ticker)}
-                    className="flex justify-between items-center text-[11px] p-2 bg-[#050505] hover:bg-white/5 border border-white/5 rounded-lg cursor-pointer transition-all font-mono"
+                    className="flex justify-between items-center text-xs p-2.5 bg-white/[0.01] hover:bg-white/[0.05] border border-white/[0.02] rounded-xl cursor-pointer transition-all font-mono"
                   >
-                    <span className="font-bold text-white/95">{s.ticker}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/40">Rp{s.currentPrice}</span>
+                    <span className="font-bold text-white tracking-widest">{s.ticker}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-white/50">Rp{s.currentPrice}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1275,7 +1186,7 @@ export default function App() {
                         }}
                         className={`transition-colors cursor-pointer ${isSaved ? "text-amber-400" : "text-white/20 hover:text-white"}`}
                       >
-                        <Eye className="w-3 h-3 fill-current" />
+                        <Eye className="w-4 h-4 fill-current" />
                       </button>
                     </div>
                   </div>
@@ -1286,9 +1197,9 @@ export default function App() {
         </aside>
 
         {/* WORKSPACE AREA */}
-        <main id="main-workspace" className="flex-1 p-6 sm:p-8 lg:p-10 overflow-visible lg:overflow-y-auto pb-24 lg:pb-10">
+        <main id="main-workspace" className="flex-1 p-6 sm:p-8 lg:p-10 overflow-visible lg:overflow-y-auto pb-24 lg:pb-10 flex flex-col">
           
-          <div className="max-w-5xl mx-auto space-y-8">
+          <div className="max-w-5xl mx-auto space-y-8 flex-1 flex flex-col w-full h-full">
             
             {/* GLOBAL SYSTEM ALERTS & ROTATION WARNER */}
             {(() => {
@@ -1397,6 +1308,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
+                  className="flex-1 flex flex-col"
                 >
                   <RecoveryOpsTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
                 </motion.div>
@@ -1410,6 +1322,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
+                  className="flex-1 flex flex-col"
                 >
                   <CapitalProtectionTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={handleSelectTicker} portfolio={portfolio} watchlist={watchlist} getDynamicStock={getDynamicStock} />
                 </motion.div>
@@ -1460,7 +1373,7 @@ export default function App() {
                     cash={cash}
                     setCash={setCash}
                     tradeLogs={tradeLogs}
-                    setTradeLogs={setTradeLogs}
+                    setTradeLogs={customSetTradeLogs}
                   />
                 </motion.div>
               )}
