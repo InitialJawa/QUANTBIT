@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { StockData } from "../types";
 import { Send, Sparkles, User, HelpCircle, Bot, CornerDownLeft, Loader2 } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 interface Message {
   role: "user" | "assistant";
@@ -116,8 +117,10 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
           <div
             key={index}
             id={`chat-msg-${index}`}
-            className={`flex gap-3 max-w-[85%] ${
-              msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+            className={`flex gap-3 w-full ${
+              msg.role === "user" 
+                ? "ml-auto flex-row-reverse max-w-[85%]" 
+                : "mr-auto max-w-[96%] sm:max-w-[92%]"
             }`}
           >
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
@@ -125,12 +128,16 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
             }`}>
               {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
-            <div className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
+            <div className={`p-4 rounded-2xl text-sm leading-relaxed flex-1 overflow-hidden ${
               msg.role === "user" 
                 ? "bg-emerald-950/40 text-white rounded-tr-none border border-emerald-500/20" 
                 : "bg-white/[0.03] text-white/90 rounded-tl-none border border-white/5"
             }`}>
-              {msg.content}
+              {msg.role === "user" ? (
+                <div className="whitespace-pre-line text-left">{msg.content}</div>
+              ) : (
+                <MarkdownRenderer content={msg.content} />
+              )}
             </div>
           </div>
         ))}

@@ -525,7 +525,7 @@ export function MarketTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
         
         {/* LEFT COLUMN: REAL-TIME MARKET COND (8 CoL) */}
-        <div className="md:col-span-1 lg:col-span-8 space-y-6">
+        <div className="md:col-span-1 lg:col-span-7 space-y-6">
           
           {/* A. ACTIVE ORDER BOOK (With live ticker switcher dropdown) */}
           <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-6 relative overflow-hidden">
@@ -651,7 +651,7 @@ export function MarketTab({
         </div>
 
         {/* RIGHT COLUMN: CHAT WITH AI AGENT (4 CoL) */}
-        <div className="md:col-span-1 lg:col-span-4 space-y-6 flex flex-col">
+        <div className="md:col-span-1 lg:col-span-5 space-y-6 flex flex-col">
           
           {/* A. CHAT WITH AI AGENT INTEGRATION SPACE */}
           <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-1 pb-4 relative overflow-hidden flex flex-col h-full">
