@@ -219,10 +219,14 @@ export function SimulationTab({
   hideTabs = false
 }: SimulationTabProps) {
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
+  const todayWIBStr = useMemo(() => {
+    const todayWIB = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    return todayWIB.toISOString().slice(0, 10);
+  }, []);
   // 1. Backtest state matching Stockbit UI
   const [simTicker, setSimTicker] = useState("BBCA");
   const [simStartDate, setSimStartDate] = useState("2016-01-04");
-  const [simEndDate, setSimEndDate] = useState("2026-06-12");
+  const [simEndDate, setSimEndDate] = useState(todayWIBStr);
   const [simCapitalInput, setSimCapitalInput] = useState("10000000");
 
   // Today ledger addition state
@@ -919,14 +923,31 @@ export function SimulationTab({
             "Benchmark Emas": benchmarkGoldVal,
             ranks: { ...day.stockRanks },
           });
+
+          // Carry forward to simEndDate if last trading day is before simEndDate (e.g. weekend or holiday)
+          if (stepIndex === rawData.length - 1 && day.date < simEndDate) {
+            chartData.push({
+              date: simEndDate,
+              "Strategi Rebalancer": Math.round(todayPortfolioVal),
+              "Benchmark IHSG": benchmarkIhsgVal,
+              "Benchmark Emas": benchmarkGoldVal,
+              ranks: { ...day.stockRanks },
+            });
+          }
         }
 
         if (stepIndex === rawData.length - 1) {
           currentPortfolioVal = todayPortfolioVal;
+          const isTargetWeekend = new Date(simEndDate).getDay() === 0 || new Date(simEndDate).getDay() === 6;
+          const finalLogDate = day.date < simEndDate ? simEndDate : day.date;
+          const closedReasonSuffix = day.date < simEndDate 
+            ? (isTargetWeekend ? " (Bursa Saham Tutup / Akhir Pekan)." : " (Bursa Saham Tutup / Hari Libur).") 
+            : "";
+
           logs.push({
-            date: day.date,
+            date: finalLogDate,
             type: "STATUS_AKHIR",
-            message: `🏁 BACKTEST SELESAI: Nilai akhir mencapai Rp ${todayPortfolioVal.toLocaleString("id-ID")}. ${inCrashState ? "(Berlindung di Safe Haven)." : "(Posisi aktif)."}`
+            message: `🏁 BACKTEST SELESAI: Nilai akhir mencapai Rp ${todayPortfolioVal.toLocaleString("id-ID")}. ${inCrashState ? "(Berlindung di Safe Haven)." : "(Posisi aktif)."}${closedReasonSuffix}`
           });
         }
       }
@@ -998,6 +1019,27 @@ export function SimulationTab({
       setIsBacktesting(false);
     }
   };
+
+  // Auto-run backtest when parameters change to keep everything dynamically in sync
+  useEffect(() => {
+    handleRunAlgoBacktest();
+  }, [
+    simTicker,
+    simStartDate,
+    simEndDate,
+    algoCapital,
+    simulationMode,
+    simUniverse,
+    numStocks,
+    enableCrossover,
+    enableCrashProtection,
+    crashSensitivity,
+    safeHavenAsset,
+    singleSellTrigger,
+    singleBuyTrigger,
+    reserveBufferPct,
+    backtestConfigType
+  ]);
 
   const handleDownloadCSV = async () => {
     try {
@@ -1157,7 +1199,7 @@ export function SimulationTab({
                       type="date"
                       value={simEndDate}
                       min={simStartDate}
-                      max="2026-06-12"
+                      max={todayWIBStr}
                       onChange={(e) => setSimEndDate(e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
@@ -1509,7 +1551,7 @@ export function SimulationTab({
                         type="date"
                         value={simEndDate}
                         min={simStartDate}
-                        max="2026-06-12"
+                        max={todayWIBStr}
                         onChange={(e) => setSimEndDate(e.target.value)}
                         className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-bold rounded-lg font-mono cursor-pointer block"
                       />

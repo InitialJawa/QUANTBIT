@@ -116,21 +116,32 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const [mktRevision, setMktRevision] = useState(0);
+
   // Sync real-time IHSG and USDIDR to MKT object if using Yahoo data
   useEffect(() => {
-    if (dataFeed === "yahoo" && yahooPrices["IHSG"]) {
+    let changed = false;
+    if (dataFeed === "yahoo" && yahooPrices["IHSG"] && MKT.ihsg.value !== yahooPrices["IHSG"].close) {
       MKT.ihsg.value = yahooPrices["IHSG"].close;
       MKT.ihsg.daily_pct = Number(yahooPrices["IHSG"].pct.toFixed(2));
+      changed = true;
     }
-    if (dataFeed === "yahoo" && yahooPrices["USDIDR"]) {
+    if (dataFeed === "yahoo" && yahooPrices["USDIDR"] && MKT.usdidr.value !== yahooPrices["USDIDR"].close) {
       MKT.usdidr.value = yahooPrices["USDIDR"].close;
       MKT.usdidr.daily = Number(yahooPrices["USDIDR"].pct.toFixed(2));
+      changed = true;
     }
     if (dataFeed === "yahoo" && yahooPrices["GOLD"] && yahooPrices["USDIDR"]) {
       const goldUSDPerOz = yahooPrices["GOLD"].close;
       const usdIDR = yahooPrices["USDIDR"].close;
-      const idrPerGram = (goldUSDPerOz * usdIDR) / 31.1035;
-      MKT.gold.value = Math.round(idrPerGram);
+      const idrPerGram = Math.round((goldUSDPerOz * usdIDR) / 31.1035);
+      if (MKT.gold.value !== idrPerGram) {
+        MKT.gold.value = idrPerGram;
+        changed = true;
+      }
+    }
+    if (changed) {
+      setMktRevision(prev => prev + 1);
     }
   }, [dataFeed, yahooPrices]);
 

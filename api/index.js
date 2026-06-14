@@ -732,7 +732,7 @@ function bridgeHistoricalDataToToday(rawData, configType) {
   const lastIndex = rawData.length - 1;
   const lastObj = rawData[lastIndex];
   const lastDateStr = lastObj.date;
-  const todayStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const todayStr = new Date(Date.now() + 7 * 60 * 60 * 1e3).toISOString().slice(0, 10);
   if (lastDateStr >= todayStr) return rawData;
   const lastDate = new Date(lastDateStr);
   const todayDate = new Date(todayStr);

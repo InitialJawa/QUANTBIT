@@ -562,8 +562,8 @@ function bridgeHistoricalDataToToday(rawData: any[], configType: "prod" | "res")
   const lastObj = rawData[lastIndex];
   const lastDateStr = lastObj.date;
   
-  // Today's date dynamically
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Today's date dynamically in WIB (UTC+7) timezone
+  const todayStr = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
   if (lastDateStr >= todayStr) return rawData; // Already current
   
   // Parse last date parts
