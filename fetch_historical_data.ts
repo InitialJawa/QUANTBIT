@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import { IDX80_TICKERS } from "./idx80.ts";
 
-// 2016-01-01 to Today for extended backtest
-const START_TIME = Math.floor(new Date("2016-01-01").getTime() / 1000);
+// 2000-01-01 to Today for extended backtest
+const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);
 const END_TIME = Math.floor(new Date().getTime() / 1000);
 
 // Use IDX80
@@ -103,8 +103,118 @@ const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: nu
   }
 };
 
+// ─── Real Yahoo Fundamentals (Balance Sheet + Income Statement) ─────────────────
+interface RawYahooFundamentals {
+  netIncome: number;
+  totalEquity: number;
+  totalAssets: number;
+  totalDebt: number;
+  totalRevenue: number;
+  shares: number;
+}
+
+let yahooFundamentals: Record<string, Record<number, RawYahooFundamentals>> = {};
+
+async function fetchYahooFundamentalsForTicker(ticker: string): Promise<Record<number, RawYahooFundamentals> | null> {
+  const types = "annualTotalRevenue,annualNetIncome,annualBasicEPS,annualDilutedEPS,annualCommonStockEquity,annualTotalAssets,annualTotalDebt,annualOrdinarySharesNumber";
+  const url = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}.JK?symbol=${ticker}.JK&period1=0&period2=9999999999&type=${types}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+      }
+    });
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    const ts = json?.timeseries?.result?.[0];
+    if (!ts) return null;
+
+    const years: Record<number, RawYahooFundamentals> = {};
+
+    const extract = (key: string): Record<number, number> => {
+      const map: Record<number, number> = {};
+      const data = ts?.[key]?.annualData || [];
+      for (const entry of data) {
+        const yr = new Date(entry.date).getFullYear();
+        if (entry.reportedValue?.raw != null) map[yr] = entry.reportedValue.raw;
+      }
+      return map;
+    };
+
+    const revenue = extract("annualTotalRevenue");
+    const netIncome = extract("annualNetIncome");
+    const basicEPS = extract("annualBasicEPS");
+    const equity = extract("annualCommonStockEquity");
+    const assets = extract("annualTotalAssets");
+    const debt = extract("annualTotalDebt");
+    const shares = extract("annualOrdinarySharesNumber");
+
+    const allYears = new Set([...Object.keys(revenue), ...Object.keys(netIncome), ...Object.keys(equity), ...Object.keys(assets), ...Object.keys(debt), ...Object.keys(shares)].map(Number));
+
+    for (const yr of allYears) {
+      if (equity[yr] > 0 && netIncome[yr] != null) {
+        years[yr] = {
+          netIncome: netIncome[yr] || 0,
+          totalEquity: equity[yr] || 0,
+          totalAssets: assets[yr] || 0,
+          totalDebt: debt[yr] || 0,
+          totalRevenue: revenue[yr] || 0,
+          shares: shares[yr] || 0,
+        };
+      }
+    }
+
+    if (Object.keys(years).length === 0) return null;
+    return years;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchAllYahooFundamentals(tickers: string[]) {
+  let count = 0;
+  for (const t of tickers) {
+    const data = await fetchYahooFundamentalsForTicker(t);
+    if (data) {
+      yahooFundamentals[t] = data;
+      count++;
+    }
+    const years = data ? Object.keys(data).join(",") : "(none)";
+    console.log(`Yahoo fundamentals ${t}: ${years}`);
+  }
+  console.log(`Total tickers with Yahoo fundamentals: ${count}/${tickers.length}`);
+}
+
+// ─── Fundamental Resolution Pipeline ─────────────────────────────────────────────
+
+function generateFallbackFundamentals(ticker: string, year: number) {
+  const hash = ticker.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+  const stablePseudoRoe = 0.05 + (Math.abs(hash % 20) / 100);
+  const stablePseudoPb = 1.0 + (Math.abs(hash % 30) / 10);
+  return {
+    roe: stablePseudoRoe + ((year % 3) * 0.01),
+    pb: stablePseudoPb + ((year % 2) * 0.1),
+    pe: 15.0, der: 0.5, roa: 0.05, net_margin: 0.10, dividend_per_share: Math.abs(hash % 100)
+  };
+}
+
+function computeFromYahoo(raw: RawYahooFundamentals, currentPrice?: number) {
+  const roe = raw.totalEquity > 0 ? raw.netIncome / raw.totalEquity : 0;
+  const der = raw.totalEquity > 0 ? raw.totalDebt / raw.totalEquity : 0;
+  const roa = raw.totalAssets > 0 ? raw.netIncome / raw.totalAssets : 0;
+  const net_margin = raw.totalRevenue > 0 ? raw.netIncome / raw.totalRevenue : 0;
+  const eps = raw.shares > 0 ? raw.netIncome / raw.shares : 0;
+  const bvps = raw.shares > 0 ? raw.totalEquity / raw.shares : 0;
+  const pb = (currentPrice && bvps > 0) ? currentPrice / bvps : 1.5;
+  const pe = (currentPrice && eps > 0) ? currentPrice / eps : 15;
+  return { roe, pb, pe, der, roa, net_margin, dividend_per_share: 0 };
+}
+
 // Returns point-in-time correct fundamental snapshot for a stock based on 3-month reporting publication lag
-function getPointInTimeFundamentals(ticker: string, date: Date) {
+// Uses Yahoo real data when available, falls back to hardcoded snapshots, then auto-generates
+function getPointInTimeFundamentals(ticker: string, date: Date, currentPrice?: number) {
   const currentYear = date.getFullYear();
   const lagCutoff = new Date(currentYear, 2, 31); // March 31 of Year Y is when annual reports of Y-1 are published
 
@@ -113,31 +223,23 @@ function getPointInTimeFundamentals(ticker: string, date: Date) {
     reportYear = currentYear - 2;
   }
 
-  if (reportYear < 2018) reportYear = 2018;
+  if (reportYear < 1995) reportYear = 1995;
   if (reportYear > 2025) reportYear = 2025;
 
-  let snaps = FUNDAMENTAL_SNAPSHOTS[ticker];
-  if (!snaps) {
-    // Generate stable pseudo-random fundamentals for missing tickers to avoid massive identical ties
-    const hash = ticker.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
-    const stablePseudoRoe = 0.05 + (Math.abs(hash % 20) / 100); // 5% to 25%
-    const stablePseudoPb = 1.0 + (Math.abs(hash % 30) / 10); // 1.0 to 4.0
-    
-    // Slight jitter per year
-    snaps = {};
-    for(let y = 2016; y <= 2026; y++) {
-      snaps[y] = {
-        roe: stablePseudoRoe + ((y%3) * 0.01),
-        pb: stablePseudoPb + ((y%2) * 0.1),
-        pe: 15.0, der: 0.5, roa: 0.05, net_margin: 0.10, dividend_per_share: Math.abs(hash % 100)
-      };
-    }
+  // Priority 1: Real Yahoo fundamentals (2021-2025 for most tickers)
+  const yahoo = yahooFundamentals[ticker]?.[reportYear];
+  if (yahoo) {
+    return { year: reportYear, ...computeFromYahoo(yahoo, currentPrice) };
   }
 
-  return {
-    year: reportYear,
-    ...(snaps[reportYear] || snaps[2022] || snaps[2025])
-  };
+  // Priority 2: Hardcoded snapshots for known tickers
+  const snaps = FUNDAMENTAL_SNAPSHOTS[ticker];
+  if (snaps && snaps[reportYear]) {
+    return { year: reportYear, ...snaps[reportYear] };
+  }
+
+  // Priority 3: Auto-generated fallback (no look-ahead bias)
+  return { year: reportYear, ...generateFallbackFundamentals(ticker, reportYear) };
 }
 
 async function fetchTicker(ticker: string) {
@@ -194,6 +296,13 @@ async function fetchTicker(ticker: string) {
 }
 
 async function main() {
+  // Pre-fetch real Yahoo fundamentals for all IDX80 tickers before the price loop
+  // This provides real balance sheet + income statement data (2021-2025) for all 87 stocks
+  const idx80Clean = IDX80_TICKERS.map(t => t.split(".")[0]);
+  console.log("Fetching Yahoo fundamentals for all IDX80 tickers...");
+  await fetchAllYahooFundamentals(idx80Clean);
+  console.log("Done fetching fundamentals. Starting price data download...");
+
   const allData: Record<string, any> = {};
 
   for (const ticker of TICKERS) {
@@ -331,8 +440,9 @@ async function main() {
     const rawMetrics: Record<string, { qROE: number, vPB: number, gROEChg: number, mReturn: number }> = {};
     
     for (const ticker of activeTickersToday) {
-      const fToday = getPointInTimeFundamentals(ticker, dateObj);
-      const fPrevYear = FUNDAMENTAL_SNAPSHOTS[ticker]?.[fToday.year - 1] || fToday;
+      const currentPrice = stockPrices[ticker];
+      const fToday = getPointInTimeFundamentals(ticker, dateObj, currentPrice);
+      const fPrevYear = getPointInTimeFundamentals(ticker, new Date(dateObj.getFullYear() - 1, 2, 31), currentPrice);
 
       // Quality: ROE
       const qROE = fToday.roe;

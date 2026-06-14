@@ -1,0 +1,31 @@
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "server.cjs",
+      "server.cjs.map"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "api"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "firestore": [
+    {
+      "database": "ai-studio-a587c891-a507-4cfb-a527-82fc4679c542",
+      "rules": "firestore.rules"
+    }
+  ]
+}

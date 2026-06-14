@@ -7,3 +7,12 @@ coverage/
 !.env.example
 .vercel
 
+# Build artifacts
+dist/
+functions/index.js
+functions/data/
+api/index.js
+
+# Firebase config (contains real API keys)
+firebase-config.json
+
