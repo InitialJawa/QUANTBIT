@@ -223,6 +223,18 @@ export function SimulationTab({
     const todayWIB = new Date(Date.now() + 7 * 60 * 60 * 1000);
     return todayWIB.toISOString().slice(0, 10);
   }, []);
+  const isMarketClosedDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const day = new Date(dateStr).getDay();
+    if (day === 0 || day === 6) return "weekend";
+    const exists = historicalDataJson.some(d => d.date === dateStr);
+    if (!exists) {
+      if (dateStr >= "2016-01-04" && dateStr <= todayWIBStr) {
+        return "holiday";
+      }
+    }
+    return null;
+  };
   // 1. Backtest state matching Stockbit UI
   const [simTicker, setSimTicker] = useState("BBCA");
   const [simStartDate, setSimStartDate] = useState("2016-01-04");
@@ -1190,6 +1202,12 @@ export function SimulationTab({
                       onChange={(e) => setSimStartDate(e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
+                    {(() => {
+                      const status = isMarketClosedDate(simStartDate);
+                      if (status === "weekend") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                      if (status === "holiday") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                      return null;
+                    })()}
                   </div>
                 </div>
                 <div>
@@ -1203,6 +1221,12 @@ export function SimulationTab({
                       onChange={(e) => setSimEndDate(e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
+                    {(() => {
+                      const status = isMarketClosedDate(simEndDate);
+                      if (status === "weekend") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                      if (status === "holiday") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                      return null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1542,6 +1566,12 @@ export function SimulationTab({
                         onChange={(e) => setSimStartDate(e.target.value)}
                         className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-bold rounded-lg font-mono cursor-pointer block"
                       />
+                      {(() => {
+                        const status = isMarketClosedDate(simStartDate);
+                        if (status === "weekend") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                        if (status === "holiday") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                        return null;
+                      })()}
                     </div>
                   </div>
                   <div>
@@ -1555,6 +1585,12 @@ export function SimulationTab({
                         onChange={(e) => setSimEndDate(e.target.value)}
                         className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-bold rounded-lg font-mono cursor-pointer block"
                       />
+                      {(() => {
+                        const status = isMarketClosedDate(simEndDate);
+                        if (status === "weekend") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                        if (status === "holiday") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </div>
