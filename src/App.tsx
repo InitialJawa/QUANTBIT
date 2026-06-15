@@ -22,6 +22,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 
 import { DigitalWalletUI } from "./components/DigitalWalletUI";
+import { DataSourceBadge } from "./components/DataSourceBadge";
 import { 
   Menu, 
   X, 
@@ -894,6 +895,15 @@ export default function App() {
             </span>
           </div>
 
+          <div className="hidden md:flex">
+            <DataSourceBadge
+              kind="partial"
+              what="Harga 'LIVE' di seluruh terminal"
+              why="Feed riil (Yahoo/GoAPI) hanya menarik ~9 emiten (BBCA, BBRI, BMRI, TLKM, ASII, ADRO, PTBA, ESSA, GOTO) + IHSG/USD/Emas. Sisa IDX80 memakai harga hardcoded, dan SEMUA harga ditambah random walk Math.random() tiap 3 detik sehingga gerakannya semu."
+              solution="Perluas daftar simbol di endpoint /api/yahoo|goapi/live-prices ke seluruh IDX80 dan hapus offset acak di interval priceFluctuations (App.tsx) agar harga murni mengikuti feed riil."
+            />
+          </div>
+
           {/* User Account Info */}
           <div className="hidden md:flex items-center bg-white/5 border border-white/5 rounded-xl px-3 py-1 gap-3">
             <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center border border-white/10">
@@ -1042,6 +1052,12 @@ export default function App() {
             <div id="sidebar-news-panel" className="p-4 mx-4 bg-[#050505] border border-white/[0.03] rounded-2xl space-y-4">
               <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest flex items-center gap-2">
                 <Newspaper className="w-4 h-4 text-white/50" /> Portal Berita
+                <DataSourceBadge
+                  kind="static"
+                  what="Portal Berita IDX"
+                  why="Daftar berita ini di-hardcode di kode (idxNews) dengan timestamp tetap seperti '20 mins ago' — bukan feed berita live."
+                  solution="Integrasikan RSS/News API (mis. CNBC Indonesia, Bisnis.com, atau NewsAPI) di backend lalu render hasilnya secara dinamis menggantikan array idxNews."
+                />
               </span>
               <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 scrollbar-thin">
                 {idxNews.map((news, idx) => (
@@ -1554,7 +1570,15 @@ export default function App() {
                         className="space-y-4"
                       >
                         <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4.5">
-                          <span className="text-[10px] text-white/45 uppercase tracking-widest font-bold">Audited Financial Statement (IDR Billion)</span>
+                          <span className="text-[10px] text-white/45 uppercase tracking-widest font-bold inline-flex items-center gap-2 flex-wrap">
+                            Audited Financial Statement (IDR Billion)
+                            <DataSourceBadge
+                              kind="estimated"
+                              what="Laporan keuangan (Revenue, Laba, Aset, Liabilitas, Ekuitas)"
+                              why="Angka ini BUKAN laporan keuangan riil emiten — semua disintesis dari market cap dikali pengali tetap (mis. 0.85, 0.95) di stocksData.ts, jadi label 'Audited' menyesatkan."
+                              solution="Tarik laporan keuangan riil dari IDX/GoAPI (neraca & laba rugi) lalu isi metrics dari data tersebut; sementara itu, hapus kata 'Audited' agar tidak menyesatkan."
+                            />
+                          </span>
                           <table className="w-full text-left mt-4 text-[11px] font-mono">
                             <thead>
                               <tr className="border-b border-white/5 text-white/30 uppercase text-[9px] tracking-wider">
