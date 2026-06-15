@@ -26,6 +26,10 @@ import {
   Eye,
   Trash2
 } from "lucide-react";
+import { DataBadge } from "./DataBadge";
+import { DataStatus } from "../types/DataStatus";
+import { fetchWithStatus } from "../utils/fetchWithStatus";
+import { getDataStatus } from "../utils/getDataStatus";
 
 interface MarketTabProps {
   onSelectTicker: (ticker: string) => void;
@@ -57,6 +61,9 @@ export function MarketTab({
   const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);
   const [watchlistTicker, setWatchlistTicker] = useState<string>(activeStock.ticker);
 
+  // State to hold DataStatus per ticker in watchlist
+  const [tickerStatus, setTickerStatus] = useState<Record<string, DataStatus>>({});
+
   // States for live AI summary and rationale syncing
   const [marketSummary, setMarketSummary] = useState<{
     rationale: string;
@@ -78,6 +85,21 @@ export function MarketTab({
     };
   });
 
+  // Load DataStatus for each watchlist ticker
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadStatuses() {
+      const statuses: Record<string, DataStatus> = {};
+      for (const item of watchlist) {
+        const status = await getDataStatus(item.ticker);
+        statuses[item.ticker] = status;
+      }
+      if (isMounted) setTickerStatus(statuses);
+    }
+    loadStatuses();
+    return () => { isMounted = false; };
+  }, [watchlist]);
+
   const priceValuesString = stocksWithPrices.map(s => `${s.ticker}:${s.currentPrice}`).join("|") 
     + `|IHSG:${MKT.ihsg.value}|USDIDR:${MKT.usdidr.value}`;
 
@@ -95,7 +117,7 @@ export function MarketTab({
         setSummaryError(null);
         lastFetchTimeRef.current = Date.now();
 
-        const response = await fetch("/api/gemini/market-summary", {
+        const { data: responseData, status: marketStatus } = await fetchWithStatus("/api/gemini/market-summary", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -115,6 +137,8 @@ export function MarketTab({
             })
           })
         });
+        // Use responseData as the original response
+        const response = { json: async () => responseData } as any;
 
         if (!response.ok) {
           throw new Error(`Server returned status ${response.status}`);
@@ -732,9 +756,10 @@ export function MarketTab({
                       <div>
                         <button 
                           onClick={() => onSelectTicker(liveStock.ticker)}
-                          className="font-bold font-mono text-white/90 hover:text-white cursor-pointer block text-left"
+                          className="flex items-center gap-2 group"
                         >
-                          {liveStock.ticker}
+                          <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
+                          <DataBadge status={tickerStatus[item.ticker] ?? DataStatus.ESTIMATED} />
                         </button>
                         <span className="text-[10px] text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
                       </div>
