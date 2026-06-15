@@ -31,8 +31,8 @@ function ensureHistoricalDb() {
     throw new Error("Historical JSON contains no records");
   }
   const db = new Database(HISTORICAL_DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.pragma("synchronous = NORMAL");
+  db.pragma("journal_mode = DELETE");
+  db.pragma("synchronous = OFF");
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_market (
       date TEXT PRIMARY KEY, ihsgPrice REAL, goldPrice REAL, usdidrRate REAL,
@@ -67,23 +67,17 @@ function getHistoricalDb(): Database.Database | null {
   try {
     ensureHistoricalDb();
     historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
-    console.log("better-sqlite3 opened successfully");
     return historicalDb;
   } catch (err) {
-    console.error("better-sqlite3 failed:", (err as Error).message);
-  }
-
-  try {
-    console.log("Loading JSON fallback from", HISTORICAL_JSON_PATH);
-    const start = Date.now();
-    const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
-    if (!Array.isArray(raw) || raw.length === 0) throw new Error("JSON empty");
-    historicalFallbackData = raw;
-    console.log("JSON fallback loaded", raw.length, "records in", Date.now() - start, "ms");
+    console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
+    try {
+      const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error("JSON empty");
+      historicalFallbackData = raw;
+    } catch (jsonErr) {
+      throw new Error("Cannot load historical data: " + (jsonErr as Error).message);
+    }
     return null;
-  } catch (jsonErr) {
-    console.error("JSON fallback also failed:", (jsonErr as Error).message);
-    throw new Error("Cannot load historical data");
   }
 }
 
@@ -745,8 +739,7 @@ app.get("/api/backtest-data", (req, res) => {
     });
   } catch (error: any) {
     console.error("Backtest Data API Error:", error);
-    const stackLines = (error as Error).stack?.split("\n").slice(0, 4).join(" | ");
-    res.status(500).json({ error: error.message || "Failed to load real backtest market data", stack: stackLines });
+    res.status(500).json({ error: error.message || "Failed to load real backtest market data" });
   }
 });
 

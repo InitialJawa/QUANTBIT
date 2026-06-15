@@ -20,8 +20,8 @@ function main() {
   }
 
   const db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("synchronous = NORMAL");
+  db.pragma("journal_mode = DELETE");
+  db.pragma("synchronous = OFF");
   db.exec(`CREATE TABLE IF NOT EXISTS daily_market (
     date TEXT PRIMARY KEY, ihsgPrice REAL, goldPrice REAL, usdidrRate REAL,
     stockPrices TEXT, stockAdjPrices TEXT, stockVolumes TEXT,

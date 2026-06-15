@@ -550,8 +550,8 @@ async function main() {
   }
   const dbPath = path.join(dir1, "historical_market.sqlite");
   const db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("synchronous = NORMAL");
+  db.pragma("journal_mode = DELETE");
+  db.pragma("synchronous = OFF");
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_market (
       date           TEXT PRIMARY KEY,
