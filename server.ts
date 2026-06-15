@@ -16,7 +16,7 @@ app.use(express.json());
 const PORT = 3000;
 
 // SQLite database for historical market data
-const HISTORICAL_DB_PATH = path.join(process.cwd(), "data", "historical_market.db");
+const HISTORICAL_DB_PATH = path.join(process.cwd(), "data", "historical_market.sqlite");
 const HISTORICAL_JSON_PATH = path.join(process.cwd(), "data", "historical_market_data.json");
 let historicalDb: Database.Database | null = null;
 

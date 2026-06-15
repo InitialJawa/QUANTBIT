@@ -548,7 +548,7 @@ async function main() {
   if (!fs.existsSync(dir1)) {
     fs.mkdirSync(dir1, { recursive: true });
   }
-  const dbPath = path.join(dir1, "historical_market.db");
+  const dbPath = path.join(dir1, "historical_market.sqlite");
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
   db.pragma("synchronous = NORMAL");

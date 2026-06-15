@@ -16,6 +16,7 @@ api/index.js
 # Firebase config (contains real API keys)
 firebase-config.json
 
-# SQLite database (auto-generated from JSON on startup)
+# SQLite database (auto-generated from JSON via build:db)
 *.db
+*.sqlite
 

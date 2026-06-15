@@ -5,7 +5,7 @@ import { join } from "path";
 function main() {
   const cwd = process.cwd();
   const jsonPath = join(cwd, "data", "historical_market_data.json");
-  const dbPath = join(cwd, "data", "historical_market.db");
+  const dbPath = join(cwd, "data", "historical_market.sqlite");
 
   if (!existsSync(jsonPath)) {
     console.error("JSON not found, skipping SQLite build");
