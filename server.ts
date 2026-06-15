@@ -103,7 +103,16 @@ function getGeminiClient(): GoogleGenAI {
 
 // REST APIs
 app.get("/api/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: new Date().toISOString() });
+  const dbExists = fs.existsSync(HISTORICAL_DB_PATH);
+  const jsonExists = fs.existsSync(HISTORICAL_JSON_PATH);
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    cwd: process.cwd(),
+    dbPath: HISTORICAL_DB_PATH,
+    dbExists,
+    jsonExists,
+  });
 });
 
 // Quantitative Engine Persistent State Setup
