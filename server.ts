@@ -57,11 +57,21 @@ function ensureHistoricalDb() {
   console.log(`SQLite database created with ${rawData.length} records from JSON.`);
 }
 
+let historicalFallbackData: any[] | null = null;
+
 function getHistoricalDb(): Database.Database {
   if (!historicalDb) {
     ensureHistoricalDb();
-    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
-    historicalDb.pragma("journal_mode = WAL");
+    try {
+      historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
+      historicalDb.pragma("journal_mode = WAL");
+    } catch (err) {
+      console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
+      const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error("Historical JSON contains no records");
+      historicalFallbackData = raw;
+      return null as unknown as Database.Database;
+    }
   }
   return historicalDb;
 }
@@ -662,26 +672,33 @@ app.get("/api/backtest-data", (req, res) => {
       : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
 
     const db = getHistoricalDb();
-    const rows = db.prepare("SELECT * FROM daily_market ORDER BY date ASC").all() as any[];
+    let rawData: any[];
 
-    if (rows.length === 0) {
-      throw new Error("CRITICAL PIPELINE ERROR: Real historical market database contains no records!");
+    if (db) {
+      const rows = db.prepare("SELECT * FROM daily_market ORDER BY date ASC").all() as any[];
+      if (rows.length === 0) {
+        throw new Error("CRITICAL PIPELINE ERROR: Real historical market database contains no records!");
+      }
+      rawData = rows.map((row: any) => ({
+        date: row.date,
+        ihsgPrice: row.ihsgPrice,
+        goldPrice: row.goldPrice,
+        usdidrRate: row.usdidrRate,
+        stockPrices: JSON.parse(row.stockPrices || "{}"),
+        stockAdjPrices: JSON.parse(row.stockAdjPrices || "{}"),
+        stockVolumes: JSON.parse(row.stockVolumes || "{}"),
+        stockOpens: JSON.parse(row.stockOpens || "{}"),
+        stockHighs: JSON.parse(row.stockHighs || "{}"),
+        stockLows: JSON.parse(row.stockLows || "{}"),
+        stockRanksProd: JSON.parse(row.stockRanksProd || "{}"),
+        stockRanksRes: JSON.parse(row.stockRanksRes || "{}"),
+      }));
+    } else {
+      rawData = [...(historicalFallbackData || [])];
+      if (rawData.length === 0) {
+        throw new Error("CRITICAL PIPELINE ERROR: Historical data fallback is empty!");
+      }
     }
-
-    const rawData = rows.map((row: any) => ({
-      date: row.date,
-      ihsgPrice: row.ihsgPrice,
-      goldPrice: row.goldPrice,
-      usdidrRate: row.usdidrRate,
-      stockPrices: JSON.parse(row.stockPrices || "{}"),
-      stockAdjPrices: JSON.parse(row.stockAdjPrices || "{}"),
-      stockVolumes: JSON.parse(row.stockVolumes || "{}"),
-      stockOpens: JSON.parse(row.stockOpens || "{}"),
-      stockHighs: JSON.parse(row.stockHighs || "{}"),
-      stockLows: JSON.parse(row.stockLows || "{}"),
-      stockRanksProd: JSON.parse(row.stockRanksProd || "{}"),
-      stockRanksRes: JSON.parse(row.stockRanksRes || "{}"),
-    }));
 
     // Bridge data dynamically up to today
     const bridgedRawData = bridgeHistoricalDataToToday(rawData, configType);
