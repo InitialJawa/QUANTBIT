@@ -1,14 +1,13 @@
 import fs from "fs";
 import path from "path";
 import Database from "better-sqlite3";
-import { IDX80_TICKERS } from "./idx80.ts";
+import { COMBINED_TICKERS } from "./idx80.ts";
 
 // 2000-01-01 to Today for extended backtest
 const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);
 const END_TIME = Math.floor(new Date().getTime() / 1000);
 
-// Use IDX80
-const TICKERS = [...IDX80_TICKERS, "^JKSE", "GC=F", "IDR=X"];
+const TICKERS = [...COMBINED_TICKERS, "^JKSE", "GC=F", "IDR=X"];
 
 // We keep some real fundamental point-in-time for the main ones. For the rest of the 80, we generate a stable but slightly randomized set of static fundamentals so the ranking distribution is stable but relies heavily on momentum.
 const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>> = {
@@ -299,7 +298,7 @@ async function fetchTicker(ticker: string) {
 async function main() {
   // Pre-fetch real Yahoo fundamentals for all IDX80 tickers before the price loop
   // This provides real balance sheet + income statement data (2021-2025) for all 87 stocks
-  const idx80Clean = IDX80_TICKERS.map(t => t.split(".")[0]);
+  const idx80Clean = COMBINED_TICKERS.map(t => t.split(".")[0]);
   console.log("Fetching Yahoo fundamentals for all IDX80 tickers...");
   await fetchAllYahooFundamentals(idx80Clean);
   console.log("Done fetching fundamentals. Starting price data download...");
@@ -342,7 +341,7 @@ async function main() {
   const lastKnownHighs: Record<string, number> = {};
   const lastKnownLows: Record<string, number> = {};
 
-  const stockKeys = IDX80_TICKERS.map(t => t.split(".")[0]);
+  const stockKeys = COMBINED_TICKERS.map(t => t.split(".")[0]);
 
   // Populate first unadjusted daily price grid so we can look back 60 trading days for momentum cleanly
   const rawClosesForMomentum: Record<string, number[]> = {};

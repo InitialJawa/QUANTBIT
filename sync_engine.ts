@@ -1,5 +1,5 @@
 import yahooFinance from "yahoo-finance2";
-import { IDX80_TICKERS } from "./idx80.ts";
+import { COMBINED_TICKERS } from "./idx80.ts";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import fs from "fs";
@@ -61,7 +61,7 @@ function calcGrowth(fin: any) {
 }
 
 // Store dynamic universe
-let ACTIVE_UNIVERSE = [...IDX80_TICKERS];
+let ACTIVE_UNIVERSE = [...COMBINED_TICKERS];
 
 // Fetches the dynamic universe from Firebase or external API
 export async function refreshActiveUniverse() {

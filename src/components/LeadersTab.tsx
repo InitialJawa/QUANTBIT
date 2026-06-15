@@ -5,7 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
-import { IDX80_TICKERS, IDX30_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
 export function getRotationData(ticker: string, dynamicChange?: number) {
@@ -111,6 +111,8 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
       matchesIndex = IDX80_TICKERS.includes(item.ticker) || IDX80_TICKERS.includes(rawTicker + ".JK");
     } else if (indexFilter === "IDX30") {
       matchesIndex = IDX30_TICKERS.includes(item.ticker) || IDX30_TICKERS.includes(rawTicker + ".JK");
+    } else if (indexFilter === "LQ45") {
+      matchesIndex = LQ45_TICKERS.includes(item.ticker) || LQ45_TICKERS.includes(rawTicker + ".JK");
     }
 
     return matchesSearch && matchesIndex;
@@ -181,6 +183,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
               <option value="ALL" className="bg-[#0A0A0A] text-white">Semua Saham</option>
               <option value="IDX80" className="bg-[#0A0A0A] text-white">IDX80</option>
               <option value="IDX30" className="bg-[#0A0A0A] text-white">IDX30</option>
+              <option value="LQ45" className="bg-[#0A0A0A] text-white">LQ45</option>
             </select>
           </div>
 

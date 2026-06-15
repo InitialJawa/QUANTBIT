@@ -17,3 +17,19 @@ export const IDX30_TICKERS = [
   "BRIS.JK", "BRPT.JK", "BUKA.JK", "CPIN.JK", "ESSA.JK", "EXCL.JK", "GOTO.JK", "HRUM.JK", "ICBP.JK", "INDF.JK",
   "INTP.JK", "ITMG.JK", "KLBF.JK", "MDKA.JK", "MEDC.JK", "PGAS.JK", "PTBA.JK", "SMGR.JK", "TLKM.JK", "UNTR.JK"
 ];
+
+export const LQ45_TICKERS = [
+  "AADI.JK", "ADMR.JK", "ADRO.JK", "AKRA.JK", "AMMN.JK", "AMRT.JK", "ANTM.JK", "ASII.JK",
+  "BBCA.JK", "BBNI.JK", "BBRI.JK", "BBTN.JK", "BMRI.JK", "BRPT.JK", "BUMI.JK", "CPIN.JK",
+  "CUAN.JK", "DEWA.JK", "EMTK.JK", "ESSA.JK", "EXCL.JK", "GOTO.JK", "HRTA.JK", "ICBP.JK",
+  "INCO.JK", "INDF.JK", "INKP.JK", "ISAT.JK", "ITMG.JK", "JPFA.JK", "KLBF.JK", "MAPI.JK",
+  "MBMA.JK", "MDKA.JK", "MEDC.JK", "PGAS.JK", "PGEO.JK", "PTBA.JK", "SCMA.JK", "SMGR.JK",
+  "TLKM.JK", "TOWR.JK", "UNTR.JK", "UNVR.JK", "WIFI.JK"
+];
+
+// Combined deduplicated universe from all 3 indices
+export const COMBINED_TICKERS = [...new Set([
+  ...LQ45_TICKERS,
+  ...IDX80_TICKERS,
+  ...IDX30_TICKERS,
+])];

@@ -1,5 +1,5 @@
 import { MKT, L, EX, RS, CW_F, CW_B, getProcessedLeaders } from "./marketData";
-import { IDX80_TICKERS, IDX30_TICKERS } from "../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../idx80";
 
 export type RegimeState =
   | "RISK_ON"
@@ -43,14 +43,14 @@ export interface RegimeOutput {
 }
 
 let _lastIhsgData: { close: number; date: string }[] = [];
-let _activeUniverse: "all" | "idx80" | "idx30" = "all";
+let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeConfig: "prod" | "res" = "prod";
 
 export function setIhsgHistory(data: { close: number; date: string }[]) {
   _lastIhsgData = data;
 }
 
-export function setActiveUniverse(u: "all" | "idx80" | "idx30") {
+export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
   _activeUniverse = u;
 }
 
@@ -65,6 +65,10 @@ function filterTickersForUniverse(tickers: string[]): string[] {
   }
   if (_activeUniverse === "idx80") {
     const set = new Set(IDX80_TICKERS);
+    return tickers.filter(t => set.has(t));
+  }
+  if (_activeUniverse === "lq45") {
+    const set = new Set(LQ45_TICKERS);
     return tickers.filter(t => set.has(t));
   }
   return tickers;

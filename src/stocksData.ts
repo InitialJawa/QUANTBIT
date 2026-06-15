@@ -1,7 +1,7 @@
 import { StockData } from "./types";
 import { DataStatus } from "./types/DataStatus";
 import { PF, FD, EX, L, getScanData } from "./marketData";
-import { IDX80_TICKERS } from "../idx80";
+import { COMBINED_TICKERS } from "../idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
 
 const RAW_STOCKS_DATA = [
@@ -312,4 +312,4 @@ export function getStock(ticker: string): StockData {
 }
 
 // Generate the final Universe List by running the IDX80 array through the getStock resolver!
-export const STOCKS_DATA: StockData[] = IDX80_TICKERS.map(t => getStock(t.split("|")[0]));
+export const STOCKS_DATA: StockData[] = COMBINED_TICKERS.map(t => getStock(t.split("|")[0]));
