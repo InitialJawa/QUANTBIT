@@ -1,7 +1,7 @@
-```markdown
+Markdown
 <div align="center">
 
-# 💎 QUANTBIT: Quantitative Stock Terminal
+# 💎 QUANTBIT: Quantitative Stock Trading & Portfolio Terminal
 
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
@@ -56,13 +56,9 @@ Untuk memastikan akurasi kalkulasi kuantitatif, QUANTBIT mengintegrasikan data s
 
 ## 📈 Alur Pemrosesan Data
 
-
-```
-
 [Sumber Data Riil] ➔ [Deterministic Engine] ➔ [Output Angka & Grafik] ➔ [Gemini 2.5 Flash] ➔ [Naratif Ringkasan]
 (Yahoo Fin / IDX)       (Screening & Backtest)     (Akurat 100% Tanpa AI)   (Hanya untuk Summary)    (User Interface)
 
-```
 
 ---
 
@@ -133,15 +129,5 @@ Bobot konfigurasi pemeringkat saham dapat diatur secara dinamis melalui antarmuk
 ├── 📜 fetch_historical_data.ts # Script penarik data historis riil (Yahoo Finance API scraper)
 ├── 📜 tsconfig.json         # Konfigurasi compiler TypeScript
 └── 📜 vite.config.ts        # Konfigurasi bundler Vite dev server
-
-```
-
----
-
-## 📄 Lisensi
-
-Proyek ini dilisensikan di bawah **MIT License**. Silakan gunakan, modifikasi, dan kembangkan kode ini secara bebas untuk kebutuhan analisis finansial berbasis data riil Anda.
-
-```
-
-```
+📄 Lisensi
+Proyek ini dilisensikan di bawah MIT License. Silakan gunakan, modifikasi, dan kembangkan kode ini secara bebas untuk kebutuhan analisis finansial berbasis data riil Anda.
