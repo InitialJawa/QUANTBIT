@@ -789,7 +789,7 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" data-theme={theme} className={`min-h-screen bg-[#050505] text-[#E0E0E0] font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
+    <div id="applet-main-canvas" data-theme={theme} className={`min-h-screen bg-gradient-theme text-[#E0E0E0] font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
       
       {/* APP NOTIFICATION OVERLAY */}
       <AnimatePresence>
@@ -982,7 +982,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-12 right-0 w-64 bg-[#121212] border border-white/[0.05] shadow-2xl rounded-2xl py-2 z-[60] flex flex-col font-sans"
+                  className="absolute top-12 right-0 w-64 bg-[#121212] border border-white/[0.05] shadow-2xl rounded-2xl py-2 z-[60] flex flex-col font-sans max-h-screen overflow-y-auto"
                 >
                   <div className="px-4 py-2 border-b border-white/[0.05] mb-1">
                     <div className="flex items-center gap-3">

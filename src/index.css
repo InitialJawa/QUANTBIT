@@ -7,6 +7,35 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+/* Gradient variables for each theme */
+:root,
+[data-theme="deep"] {
+  --bg-gradient-start: #0B0B14;
+  --bg-gradient-end: #161625;
+}
+[data-theme="slate"] {
+  --bg-gradient-start: #0F172A;
+  --bg-gradient-end: #1E293B;
+}
+[data-theme="nord"] {
+  --bg-gradient-start: #1A1B2F;
+  --bg-gradient-end: #252641;
+}
+[data-theme="light"] {
+  --bg-gradient-start: #F1F5F9;
+  --bg-gradient-end: #FFFFFF;
+}
+[data-theme="stockbit"] {
+  --bg-gradient-start: #1A1D21;
+  --bg-gradient-end: #23272C;
+}
+
+/* Utility class to apply gradient background */
+.bg-gradient-theme {
+  background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+
 /* ==========================================================================
    THEME VARIABLES — CSS Custom Properties
    ========================================================================== */
