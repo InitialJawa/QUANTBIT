@@ -63,26 +63,29 @@ function getHistoricalDb(): Database.Database | null {
   if (historicalFallbackData) return null;
   if (historicalDb) return historicalDb;
 
+  let sqliteError: Error | null = null;
   try {
     ensureHistoricalDb();
-    const platform = process.env.VERCEL ? "Vercel" : process.env.AWS_EXECUTION_ENV || "local";
-    console.log("Opening SQLite on", platform, HISTORICAL_DB_PATH, "readonly, fileMustExist");
     historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
     console.log("SQLite opened successfully");
     return historicalDb;
   } catch (err) {
-    console.error("SQLite open failed:", (err as Error).message);
-    try {
-      const start = Date.now();
-      const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
-      if (!Array.isArray(raw) || raw.length === 0) throw new Error("JSON empty");
-      historicalFallbackData = raw;
-      console.log("JSON fallback loaded", raw.length, "records in", Date.now() - start, "ms");
-    } catch (jsonErr) {
-      console.error("JSON fallback also failed:", (jsonErr as Error).message);
-      throw new Error("Cannot load historical data: " + (jsonErr as Error).message);
-    }
+    sqliteError = err instanceof Error ? err : new Error(String(err));
+    console.error("SQLite open failed:", sqliteError.message);
+  }
+
+  try {
+    console.log("Loading JSON fallback from", HISTORICAL_JSON_PATH);
+    const start = Date.now();
+    const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+    if (!Array.isArray(raw) || raw.length === 0) throw new Error("JSON empty");
+    historicalFallbackData = raw;
+    console.log("JSON fallback loaded", raw.length, "records in", Date.now() - start, "ms");
     return null;
+  } catch (jsonErr) {
+    const jsonError = jsonErr instanceof Error ? jsonErr : new Error(String(jsonErr));
+    console.error("JSON fallback also failed:", jsonError.message);
+    throw new Error("Cannot load historical data. SQLite:" + sqliteError?.message + " JSON:" + jsonError.message);
   }
 }
 
