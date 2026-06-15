@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
-import { IDX80_TICKERS, IDX30_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 
@@ -284,7 +284,7 @@ export function SimulationTab({
   // Algorithmic Backtester state
   const [algoCapital, setAlgoCapital] = useState("100000000"); // 100 Juta IDR default
   const [simulationMode, setSimulationMode] = useState<"algo" | "single">("algo");
-  const [simUniverse, setSimUniverse] = useState<"all" | "idx80" | "idx30">("idx80");
+  const [simUniverse, setSimUniverse] = useState<"all" | "idx80" | "idx30" | "lq45">("idx80");
   const [numStocks, setNumStocks] = useState<1 | 3 | 5>(5);
   const [enableCrossover, setEnableCrossover] = useState(true); // Rank < 7 Rule
   const [enableCrashProtection, setEnableCrashProtection] = useState(true); // IHSG Crash protection
@@ -538,12 +538,14 @@ export function SimulationTab({
       
       const cleanIdx80 = IDX80_TICKERS.map(t => t.replace('.JK', ''));
       const cleanIdx30 = IDX30_TICKERS.map(t => t.replace('.JK', ''));
+      const cleanLq45 = LQ45_TICKERS.map(t => t.replace('.JK', ''));
 
       const getTopTickersOnDay = (dayPrices: Record<string, number>, dayRanks: Record<string, number>, count: number = 3) => {
         return Object.entries(dayRanks)
           .filter(([ticker]) => {
             if (simUniverse === "idx80" && !cleanIdx80.includes(ticker)) return false;
             if (simUniverse === "idx30" && !cleanIdx30.includes(ticker)) return false;
+            if (simUniverse === "lq45" && !cleanLq45.includes(ticker)) return false;
             const price = dayPrices[ticker];
             return price !== undefined && price > 0;
           })
@@ -1492,6 +1494,16 @@ export function SimulationTab({
                         }`}
                       >
                         IDX30
+                      </button>
+                      <button
+                        onClick={() => setSimUniverse("lq45")}
+                        className={`flex-1 font-bold py-2 rounded-lg cursor-pointer border transition-all ${
+                          simUniverse === "lq45"
+                            ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
+                        }`}
+                      >
+                        LQ45
                       </button>
                     </div>
                   </div>
