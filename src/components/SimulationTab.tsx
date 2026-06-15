@@ -235,6 +235,7 @@ export function SimulationTab({
   defaultSubTab = "past",
   hideTabs = false
 }: SimulationTabProps) {
+  const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
 
   useEffect(() => {
