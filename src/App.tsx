@@ -191,9 +191,20 @@ export default function App() {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const now = new Date();
+      const jakarta = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+      const hour = jakarta.getHours();
+      const day = jakarta.getDay();
+      const marketOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 15;
+
       setPriceFluctuations(prev => {
         const next = { ...prev };
         STOCKS_DATA.forEach(stock => {
+          if (!marketOpen) {
+            next[stock.ticker] = 0;
+            return;
+          }
+
           let stockPriceBase = stock.currentPrice;
           if (dataFeed === "goapi" && goapiPrices[stock.ticker]) {
             stockPriceBase = goapiPrices[stock.ticker].close;
