@@ -148,7 +148,8 @@ export const BT = {
   }
 };
 
-export const RK: Record<string, number> = {"ADRO.JK":3,"ESSA.JK":99,"PTBA.JK":12,"MAPI.JK":99,"BMRI.JK":1,"CPIN.JK":11,"PGAS.JK":9,"ANTM.JK":1,"AKRA.JK":99,"BBRI.JK":3,"BRPT.JK":8,"BBNI.JK":-5,"INDF.JK":-8,"EXCL.JK":99,"INTP.JK":99,"MDKA.JK":-8,"ITMG.JK":-6,"ASII.JK":-6,"BBCA.JK":3,"TLKM.JK":0,"SMGR.JK":7,"MIKA.JK":99,"UNTR.JK":-9,"ICBP.JK":-6,"SIDO.JK":99,"GOTO.JK":0,"KLBF.JK":-4,"TPIA.JK":99,"AMMN.JK":99,"HEAL.JK":99};
+export const RK: Record<string, number> = {};
+let _prevRanks: Record<string, number> = {};
 
 // Factor Config weight coefficients
 export const CW_F = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 };
@@ -244,15 +245,25 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
     return qVal * weights.quality + gVal * weights.growth + vVal * weights.value + mVal * weights.momentum;
   };
 
-  return dynamicL.map((stock) => {
+  const sorted = dynamicL.map((stock) => {
     const calculatedScore = computeScore(stock);
-    const rkVal = RK[stock.ticker] || RK[stock.ticker + ".JK"] || 0;
     return {
       ...stock,
       score: parseFloat(calculatedScore.toFixed(2)),
-      rankChange: rkVal,
     };
   }).sort((a, b) => b.score - a.score);
+
+  const now = Date.now();
+  return sorted.map((stock, idx) => {
+    const currentRank = idx + 1;
+    const prevRank = _prevRanks[stock.ticker];
+    let change = 0;
+    if (prevRank !== undefined) {
+      change = prevRank - currentRank;
+    }
+    _prevRanks[stock.ticker] = currentRank;
+    return { ...stock, rankChange: change };
+  });
 }
 
 export interface NewsItem {

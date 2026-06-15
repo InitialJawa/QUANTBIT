@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { L, CW_F, CW_B, RK, EX, getProcessedLeaders } from "../marketData";
+import { L, CW_F, CW_B, EX, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
