@@ -52,6 +52,57 @@ function getLogoColor(ticker: string): string {
   return LOGO_COLORS[sum % LOGO_COLORS.length];
 }
 
+// Deterministic pseudo-noise in [0,1) derived from a seed string (FNV-1a hash).
+// Used so synthesized charts stay stable across renders instead of flickering
+// via Math.random(). These charts are still estimates, not real OHLCV.
+function seededUnit(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 100000) / 100000;
+}
+
+// Builds estimated daily/weekly/monthly chart series from the current price and
+// change. Movement is deterministic (seeded by ticker) so the same stock always
+// renders the same synthesized curve. Replace with real OHLCV from the price
+// feed when available.
+function buildChartData(ticker: string, currentPrice: number, change: number) {
+  const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
+    const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
+    const progress = i / 7;
+    const factor = Math.sin(progress * Math.PI) * 0.01 + (progress * 0.015 - 0.007);
+    return {
+      date: hours[i],
+      price: Math.round(currentPrice * (1 + (change / 100) * progress + factor)),
+      volume: Math.round(50000 + seededUnit(`${ticker}-d-vol-${i}`) * 80000),
+    };
+  });
+
+  const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    const progress = i / 4;
+    return {
+      date: days[i],
+      price: Math.round(currentPrice * (1 + (change / 200) * progress + (seededUnit(`${ticker}-w-px-${i}`) * 0.01 - 0.005))),
+      volume: Math.round(300000 + seededUnit(`${ticker}-w-vol-${i}`) * 500000),
+    };
+  });
+
+  const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
+    const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
+    const progress = i / 3;
+    return {
+      date: weeks[i],
+      price: Math.round(currentPrice * (1 + (change / 100) * progress + (seededUnit(`${ticker}-m-px-${i}`) * 0.02 - 0.01))),
+      volume: Math.round(1500000 + seededUnit(`${ticker}-m-vol-${i}`) * 2000000),
+    };
+  });
+
+  return { chartDataDaily, chartDataWeekly, chartDataMonthly };
+}
+
 const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
   const [
     ticker, name, sector, subSector, rawMcap, rawPrice, rawChange, rawPe, rawPb, rawRoe, rawDer, rawDiv
@@ -110,36 +161,7 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
     }
   ];
 
-  const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
-    const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
-    const progress = i / 7;
-    const factor = Math.sin(progress * Math.PI) * 0.01 + (progress * 0.015 - 0.007);
-    return {
-      date: hours[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + factor)),
-      volume: Math.round(50000 + Math.random() * 80000),
-    };
-  });
-
-  const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-    const progress = i / 4;
-    return {
-      date: days[i],
-      price: Math.round(currentPrice * (1 + (change / 200) * progress + (Math.random() * 0.01 - 0.005))),
-      volume: Math.round(300000 + Math.random() * 500000),
-    };
-  });
-
-  const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
-    const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
-    const progress = i / 3;
-    return {
-      date: weeks[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + (Math.random() * 0.02 - 0.01))),
-      volume: Math.round(1500000 + Math.random() * 2000000),
-    };
-  });
+  const { chartDataDaily, chartDataWeekly, chartDataMonthly } = buildChartData(ticker, currentPrice, change);
 
   return {
     ticker, name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
@@ -216,36 +238,7 @@ export function getStock(ticker: string): StockData {
     }
   ];
 
-  const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
-    const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
-    const progress = i / 7;
-    const factor = Math.sin(progress * Math.PI) * 0.01 + (progress * 0.015 - 0.007);
-    return {
-      date: hours[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + factor)),
-      volume: Math.round(50000 + Math.random() * 80000),
-    };
-  });
-
-  const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-    const progress = i / 4;
-    return {
-      date: days[i],
-      price: Math.round(currentPrice * (1 + (change / 200) * progress + (Math.random() * 0.01 - 0.005))),
-      volume: Math.round(300000 + Math.random() * 500000),
-    };
-  });
-
-  const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
-    const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
-    const progress = i / 3;
-    return {
-      date: weeks[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + (Math.random() * 0.02 - 0.01))),
-      volume: Math.round(1500000 + Math.random() * 2000000),
-    };
-  });
+  const { chartDataDaily, chartDataWeekly, chartDataMonthly } = buildChartData(cleanTicker, currentPrice, change);
 
   return {
     ticker: cleanTicker,
