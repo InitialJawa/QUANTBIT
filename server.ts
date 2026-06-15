@@ -913,6 +913,26 @@ app.get("/data/live_market.json", async (req, res) => {
     }
     res.json(staticData);
   } catch (err: any) {
+    // Build stock_prices from scan data instead of hardcoded 9-stock list
+    const scanPath = path.join(process.cwd(), "data", "idx80_scan.json");
+    let stock_prices: Record<string, number> = {};
+    try {
+      if (fs.existsSync(scanPath)) {
+        const scanRaw = fs.readFileSync(scanPath, "utf-8");
+        const scanData = JSON.parse(scanRaw);
+        if (scanData?.stocks?.length) {
+          scanData.stocks.forEach((s: any) => {
+            const ticker = (s.ticker || "").replace(".JK", "");
+            if (ticker && s.currentPrice > 0) {
+              stock_prices[ticker] = s.currentPrice;
+            }
+          });
+        }
+      }
+    } catch (_) { /* silent */ }
+    if (Object.keys(stock_prices).length === 0) {
+      stock_prices = { BBCA: 5825, BBRI: 2850, BMRI: 4250, TLKM: 2870, ASII: 4700, ADRO: 2250, PTBA: 2630, ESSA: 605, GOTO: 50 };
+    }
     res.json({
       last_update: "2026-06-11",
       market_last_update: "2026-06-11 20:04:16 WIB",
@@ -920,9 +940,7 @@ app.get("/data/live_market.json", async (req, res) => {
       usdidr: { value: 17985.0, daily: -0.26, weekly: 0.16, monthly: 2.77 },
       gold: { value: 4347, daily: 0.05, weekly: -3.4, monthly: -4.9 },
       oil: { value: 88, daily: -3.68, weekly: -5.0, monthly: -10.3 },
-      stock_prices: {
-        BBCA: 5825, BBRI: 2850, BMRI: 4250, TLKM: 2870, ASII: 4700, ADRO: 2250, PTBA: 2630, ESSA: 605, GOTO: 50
-      }
+      stock_prices
     });
   }
 });

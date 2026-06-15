@@ -1,8 +1,9 @@
 import { StockData } from "./types";
 import { DataStatus } from "./types/DataStatus";
-import { PF, FD, EX, L, getScanData } from "./marketData";
+import { PF, FD, EX, L, getScanData, setScanData } from "./marketData";
 import { COMBINED_TICKERS } from "../idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
+import scanDataRaw from "../data/idx80_scan.json";
 
 const RAW_STOCKS_DATA = [
   "ADRO|Adaro Energy Indonesia Tbk|Energy|Coal Mining|112.4|3500|2.34|4.8|1.15|23.8|0.32|11.5",
@@ -36,6 +37,31 @@ const RAW_STOCKS_DATA = [
   "AMMN|Amman Mineral Internasional Tbk|Materials|Copper & Gold|630.5|8700|0.58|42.5|6.40|15.1|0.95|0.0",
   "HEAL|Medikaloka Hermina Tbk|Healthcare|Hospitals|21.0|1400|0.72|28.5|3.45|12.2|0.42|1.2",
 ];
+
+// Enrich RAW_STOCKS_DATA with scan data for stocks not already covered
+const _scanEntries = (scanDataRaw as any)?.stocks || [];
+if (_scanEntries.length > 0) {
+  const existingTickers = new Set(RAW_STOCKS_DATA.map(row => row.split("|")[0]));
+  for (const s of _scanEntries) {
+    const cleanTicker = (s.ticker || "").replace(".JK", "");
+    if (!existingTickers.has(cleanTicker)) {
+      const quality = s.quality || 50;
+      const roe = quality > 70 ? "25" : quality > 50 ? "15" : "8";
+      const der = (0.5 + (100 - quality) / 200).toFixed(2);
+      const peRatio = s.peRatio ? s.peRatio.toFixed(1) : "14.5";
+      const pbRatio = s.pbRatio ? s.pbRatio.toFixed(1) : "1.6";
+      const divYield = s.dividendYield ? s.dividendYield.toFixed(1) : "2.0";
+      const price = s.currentPrice || 1000;
+      const mcap = (price * 1000000 / 1e12).toFixed(1);
+      const change = s.changePercent?.toFixed(2) || "0";
+      const sector = s.sector || "Unknown";
+      const industry = s.industry || "Unknown";
+      const name = s.companyName || `${cleanTicker} Tbk`;
+      RAW_STOCKS_DATA.push(`${cleanTicker}|${name}|${sector}|${industry}|${mcap}|${price}|${change}|${roe}|${der}|${peRatio}|${pbRatio}|${divYield}`);
+      existingTickers.add(cleanTicker);
+    }
+  }
+}
 
 const LOGO_COLORS = [
   "bg-blue-600",
@@ -310,6 +336,9 @@ export function getStock(ticker: string): StockData {
 
   return applyRealFundamentals(stock, cleanTicker);
 }
+
+// Populate scan data cache BEFORE building STOCKS_DATA so getScanData() returns live data
+setScanData(scanDataRaw as any);
 
 // Generate the final Universe List by running the IDX80 array through the getStock resolver!
 export const STOCKS_DATA: StockData[] = COMBINED_TICKERS.map(t => getStock(t.split("|")[0]));

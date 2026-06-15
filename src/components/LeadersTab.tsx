@@ -94,7 +94,7 @@ interface LeadersTabProps {
 export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: LeadersTabProps) {
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [search, setSearch] = useState("");
-  const [indexFilter, setIndexFilter] = useState<"ALL" | "IDX80" | "IDX30">("ALL");
+  const [indexFilter, setIndexFilter] = useState<"ALL" | "IDX80" | "IDX30" | "LQ45">("ALL");
   const [sortBy, setSortBy] = useState<"score" | "quality" | "growth" | "value" | "momentum">("score");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 

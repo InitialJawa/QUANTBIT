@@ -5,7 +5,7 @@ import { setActiveUniverse, setActiveConfig, refreshRSFromRegime } from "../mark
 import { STOCKS_DATA } from "../stocksData";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
-import { IDX80_TICKERS, IDX30_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
 import { EX, getProcessedLeaders, MKT } from "../marketData";
 import {
   PieChart,
@@ -128,7 +128,7 @@ export function PortfolioTracker({
 
   // Sync universe + config to regime engine
   useEffect(() => {
-    setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30");
+    setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
     setActiveConfig(engineConfig.activeConfig as "prod" | "res");
     refreshRSFromRegime();
   }, [engineConfig.universe, engineConfig.activeConfig]);
@@ -264,6 +264,7 @@ export function PortfolioTracker({
   // Sync market rank with Leaders tab actively based on exact active config weights
   const cleanIdx80 = IDX80_TICKERS.map((t) => t.replace(".JK", ""));
   const cleanIdx30 = IDX30_TICKERS.map((t) => t.replace(".JK", ""));
+  const cleanLq45 = LQ45_TICKERS.map((t) => t.replace(".JK", ""));
 
   const processedLeaders = getProcessedLeaders(
     visibleStocks,
@@ -272,6 +273,7 @@ export function PortfolioTracker({
     const rawTicker = item.ticker.replace(".JK", "");
     if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);
     if (engineConfig.universe === "idx30") return cleanIdx30.includes(rawTicker);
+    if (engineConfig.universe === "lq45") return cleanLq45.includes(rawTicker);
     return true;
   });
 
@@ -1527,6 +1529,18 @@ export function PortfolioTracker({
                       } disabled:cursor-not-allowed`}
                     >
                       IDX30
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSettingsLocked}
+                      onClick={() => updateConfigValue("universe", "lq45")}
+                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border ${
+                        engineConfig.universe === "lq45"
+                          ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                          : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
+                      } disabled:cursor-not-allowed`}
+                    >
+                      LQ45
                     </button>
                   </div>
                 </div>
