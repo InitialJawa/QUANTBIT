@@ -61,7 +61,8 @@ import {
   Bookmark,
   BookmarkCheck,
   Monitor,
-  Hexagon
+  Hexagon,
+  Palette
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -328,7 +329,7 @@ export default function App() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (typeof data.cash === "number") setCash(data.cash);
-        if (data.theme) setTheme(data.theme);
+        if (data.theme) setTheme(data.theme === "dark" ? "deep" : data.theme);
         if (data.dataFeed) setDataFeed(data.dataFeed);
         if (data.activeConfig) setActiveConfig(data.activeConfig);
       }
@@ -397,7 +398,8 @@ export default function App() {
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light" | "stockbit">("dark");
+  const [theme, setTheme] = useState<"deep" | "slate" | "nord" | "light" | "stockbit">("deep");
+  const getChartTheme = (): "dark" | "light" => theme === "light" ? "light" : "dark";
 
   useEffect(() => {
     syncProfileToFirebase();
@@ -787,7 +789,7 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" className={`min-h-screen bg-[#050505] text-[#E0E0E0] ${theme} font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
+    <div id="applet-main-canvas" data-theme={theme} className={`min-h-screen bg-[#050505] text-[#E0E0E0] font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
       
       {/* APP NOTIFICATION OVERLAY */}
       <AnimatePresence>
@@ -996,15 +998,23 @@ export default function App() {
 
                   <div className="px-2 py-1">
                     <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Tema Aplikasi</div>
-                    <button onClick={() => setTheme("dark")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      <Moon className="w-4 h-4" /> Gelap
-                      {theme === "dark" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                    <button onClick={() => setTheme("deep")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "deep" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                      <Moon className="w-4 h-4" /> Deep
+                      {theme === "deep" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
                     </button>
-                    <button onClick={() => setTheme("light")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                    <button onClick={() => setTheme("slate")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "slate" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                      <Palette className="w-4 h-4" /> Slate
+                      {theme === "slate" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                    </button>
+                    <button onClick={() => setTheme("nord")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "nord" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                      <Palette className="w-4 h-4" /> Nord
+                      {theme === "nord" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                    </button>
+                    <button onClick={() => setTheme("light")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "light" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
                       <Sun className="w-4 h-4" /> Terang
                       {theme === "light" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
                     </button>
-                    <button onClick={() => setTheme("stockbit")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                    <button onClick={() => setTheme("stockbit")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "stockbit" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
                       <Monitor className="w-4 h-4" /> Stockbit
                       {theme === "stockbit" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
                     </button>
@@ -1356,7 +1366,7 @@ export default function App() {
                     onSellTransaction={handleSellTransaction}
                     onSelectTicker={handleSelectTicker}
                     getDynamicStock={getDynamicStock}
-                    theme={theme}
+                    theme={getChartTheme()}
                     activeConfig={activeConfig}
                     defaultSubTab="past"
                   />
@@ -1604,7 +1614,7 @@ export default function App() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                       >
-                        <HistoricalChart stock={activeStock} theme={theme} />
+                        <HistoricalChart stock={activeStock} theme={getChartTheme()} />
                       </motion.div>
                     )}
 
@@ -1693,7 +1703,7 @@ export default function App() {
                       >
                         <ForwardDividendsForecast
                           stock={activeStock}
-                          theme={theme}
+                          theme={getChartTheme()}
                         />
                       </motion.div>
                     )}
