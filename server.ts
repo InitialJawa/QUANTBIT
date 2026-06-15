@@ -111,6 +111,8 @@ app.get("/api/health", (req, res) => {
     cwd: process.cwd(),
     dbPath: HISTORICAL_DB_PATH,
     dbExists,
+    dbIsFile: dbExists ? fs.statSync(HISTORICAL_DB_PATH).isFile() : false,
+    dbSize: dbExists ? fs.statSync(HISTORICAL_DB_PATH).size : 0,
     jsonExists,
   });
 });
