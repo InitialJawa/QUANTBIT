@@ -1,0 +1,3 @@
+[submodule "external/idx-api"]
+	path = external/idx-api
+	url = https://github.com/NeaByteLab/IDX-API.git
