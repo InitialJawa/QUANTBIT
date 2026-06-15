@@ -65,10 +65,12 @@ function getHistoricalDb(): Database.Database | null {
 
   try {
     ensureHistoricalDb();
+    const header = fs.readFileSync(HISTORICAL_DB_PATH, null).slice(0, 16).toString();
+    console.log("SQLite header check:", JSON.stringify(header), "expected: SQLite format 3\\0");
     historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
     return historicalDb;
   } catch (err) {
-    console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
+    console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message, "stack:", (err as Error).stack?.slice(0, 500));
     try {
       const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
       if (!Array.isArray(raw) || raw.length === 0) throw new Error("Historical JSON contains no records");
