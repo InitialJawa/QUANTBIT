@@ -210,14 +210,20 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
         growth: parseFloat(existing.growth).toFixed(2),
         value: parseFloat(existing.value).toFixed(2),
         momentum: parseFloat(existing.momentum).toFixed(2),
+        final_score: String(Math.round(
+          parseFloat(existing.quality) * weights.quality +
+          parseFloat(existing.growth) * weights.growth +
+          parseFloat(existing.value) * weights.value +
+          parseFloat(existing.momentum) * weights.momentum
+        )),
       };
     }
 
     const tHash = s.ticker.charCodeAt(0) * 11 + (s.ticker.charCodeAt(1) || 0) * 7;
     const qVal = Math.min(99.99, Math.max(10.01, 40 + (s.roe * 1.5) - (s.der * 5) + (tHash % 20))).toFixed(2);
-    const gVal = Math.min(99.99, Math.max(10.01, 45 + (s.roe * 0.5) + (s.change * 5) + ((tHash * 2) % 25))).toFixed(2);
+    const gVal = Math.min(99.99, Math.max(10.01, 45 + (s.roe * 0.5) + ((tHash * 2) % 25))).toFixed(2);
     const vVal = Math.min(99.99, Math.max(10.01, 85 - s.peRatio - (s.pbRatio * 3) + ((tHash * 3) % 15))).toFixed(2);
-    const mVal = Math.min(99.99, Math.max(10.01, 50 + (s.change * 8) + ((tHash * 5) % 25))).toFixed(2);
+    const mVal = Math.min(99.99, Math.max(10.01, 50 + ((tHash * 5) % 25))).toFixed(2);
     
     return {
       rank: String(idx + 1),

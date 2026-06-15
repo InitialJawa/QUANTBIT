@@ -1,4 +1,4 @@
-import { MKT, L, EX, RS, getProcessedLeaders } from "./marketData";
+import { MKT, L, EX, RS, CW_F, CW_B, getProcessedLeaders } from "./marketData";
 import { IDX80_TICKERS, IDX30_TICKERS } from "../idx80";
 
 export type RegimeState =
@@ -33,6 +33,7 @@ export interface RegimeOutput {
     stocksAbove60: number;
     stocksAbove70: number;
     totalTracked: number;
+    allScores: number[];
   };
   exitRisk: {
     exitCount: number;
@@ -43,6 +44,7 @@ export interface RegimeOutput {
 
 let _lastIhsgData: { close: number; date: string }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" = "all";
+let _activeConfig: "prod" | "res" = "prod";
 
 export function setIhsgHistory(data: { close: number; date: string }[]) {
   _lastIhsgData = data;
@@ -50,6 +52,10 @@ export function setIhsgHistory(data: { close: number; date: string }[]) {
 
 export function setActiveUniverse(u: "all" | "idx80" | "idx30") {
   _activeUniverse = u;
+}
+
+export function setActiveConfig(c: "prod" | "res") {
+  _activeConfig = c;
 }
 
 function filterTickersForUniverse(tickers: string[]): string[] {
@@ -86,7 +92,13 @@ export function computeMarketRegime(): RegimeOutput {
   const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
 
   const lenL = universeL.length || 1;
-  const scores = universeL.map(s => parseFloat(s.final_score) || 0);
+  const configWeights = _activeConfig === "prod" ? CW_F : CW_B;
+  const scores = universeL.map(s =>
+    (parseFloat(s.quality) || 0) * configWeights.quality +
+    (parseFloat(s.growth) || 0) * configWeights.growth +
+    (parseFloat(s.value) || 0) * configWeights.value +
+    (parseFloat(s.momentum) || 0) * configWeights.momentum
+  );
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;
 
@@ -201,6 +213,7 @@ export function computeMarketRegime(): RegimeOutput {
       stocksAbove60: above60,
       stocksAbove70: above70,
       totalTracked: lenL,
+      allScores: scores,
     },
     exitRisk: {
       exitCount: exCount,
@@ -227,8 +240,9 @@ export function refreshRSFromRegime(): void {
   RS.action = regime.action;
   RS.rationale = regime.rationale;
   RS.detail_message = regime.rationale;
-  const topScores = L.map(s => parseFloat(s.final_score)).filter(s => s >= 70).slice(0, 5);
-  const botScores = L.map(s => parseFloat(s.final_score)).filter(s => s < 60).slice(-5);
+  const sortedAll = [...regime.breadth.allScores].sort((a, b) => b - a);
+  const topScores = sortedAll.filter(s => s >= 70).slice(0, 5);
+  const botScores = sortedAll.filter(s => s < 60).slice(-5);
   const topAvg = topScores.length > 0 ? Math.round(topScores.reduce((a, v) => a + v, 0) / topScores.length * 10) / 10 : 0;
   const botAvg = botScores.length > 0 ? Math.round(botScores.reduce((a, v) => a + v, 0) / botScores.length * 10) / 10 : 0;
   RS.radar_context = {
