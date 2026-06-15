@@ -64,7 +64,6 @@ function getHistoricalDb(): Database.Database {
     try {
       ensureHistoricalDb();
       historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
-      historicalDb.pragma("journal_mode = WAL");
     } catch (err) {
       console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
       try {
