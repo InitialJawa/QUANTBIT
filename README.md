@@ -60,3 +60,78 @@ QUANTBIT mengintegrasikan data sekunder dari sumber-sumber berikut melalui `fetc
 ---
 
 ## 📈 Alur Pemrosesan Data
+[Sumber Data Riil] ➔ [Deterministic Engine] ➔ [Output Angka & Grafik] ➔ [Gemini 2.5 Flash] ➔ [Naratif Ringkasan]
+(Yahoo Fin / IDX)       (Screening & Backtest)     (Akurat 100% Tanpa AI)   (Hanya untuk Summary)    (User Interface)
+
+
+---
+
+## 🛠️ Instalasi & Setup Lokal
+
+### 📋 Prasyarat
+*   [Node.js](https://nodejs.org/) (Versi 18 atau lebih baru)
+*   NPM (otomatis terpasang bersama Node.js)
+
+### 💻 Langkah Instalasi
+
+1.  **Unduh dependensi proyek**:
+```bash
+    npm install
+    ```
+
+2.  **Konfigurasi Variabel Lingkungan**:
+    Salin templat file `.env.example` ke `.env`:
+```bash
+    cp .env.example .env
+    ```
+    Buka file `.env` baru Anda, kemudian konfigurasi kunci API Anda:
+```env
+    GEMINI_API_KEY="kunci_api_gemini_anda"
+    
+    # Sangat direkomendasikan pakai API berbayar jika butuh data lawas:
+    GOAPI_API_KEY="kunci_goapi_jika_ada"
+    GROQ_API_KEY="kunci_groq_jika_ada"
+    OPENROUTER_API_KEY="kunci_openrouter_jika_ada"
+    ```
+
+3.  **Sinkronisasi Awal Data Pasar (Wajib untuk Akurasi Backtest)**:
+    Jalankan script ini untuk menarik data historis ke dalam database lokal:
+```bash
+    npx tsx fetch_historical_data.ts
+    ```
+
+4.  **Jalankan Server & Terminal**:
+```bash
+    npm run dev
+    ```
+    Buka peramban Anda di alamat [http://localhost:3000](http://localhost:3000).
+
+---
+
+## 📐 Konfigurasi Bobot Multi-Factor Scoring
+
+Bobot konfigurasi pemeringkat saham dapat diatur secara dinamis melalui antarmuka terminal. Angka bobot ini akan langsung dikalikan dengan matriks finansial riil emiten:
+
+> [!NOTE]
+> *   **Strategi Fundamental (Config F / "Prod")**: `Quality: 25%` | `Growth: 10%` | `Value: 30%` | `Momentum: 35%`.
+> *   **Strategi Teknis / Momentum (Config B / "Res")**: `Quality: 25%` | `Growth: 30%` | `Value: 10%` | `Momentum: 35%`.
+
+---
+
+## 📁 Struktur Folder Proyek
+
+```bash
+├── 📂 data                  # Database offline (.json/.db) data pasar historis & laporan keuangan riil
+├── 📂 src                   # Logika antarmuka Frontend React
+│   ├── 📂 components        # Komponen modular UI (Tab, Grafik Recharts, AI Summary Panel)
+│   ├── 📂 data              # Data statis & salinan bundel data historis offline
+│   ├── 📜 App.tsx           # Entry utama komponen frontend & sync state
+│   ├── 📜 main.tsx          # React main mounter
+│   └── 📜 index.css         # Desain sistem & kustomisasi gaya visual (Tailwind)
+├── 📜 server.ts             # REST API server Express.js & gerbang AI Gemini (Parser data to summary)
+├── 📜 sync_engine.ts        # Script kalkulasi latar belakang (cron) untuk update matriks fundamental
+├── 📜 fetch_historical_data.ts # Script penarik data historis riil (Yahoo Finance API scraper)
+├── 📜 tsconfig.json         # Konfigurasi compiler TypeScript
+└── 📜 vite.config.ts        # Konfigurasi bundler Vite dev server
+📄 Lisensi
+Proyek ini dilisensikan di bawah MIT License. Silakan gunakan, modifikasi, dan kembangkan kode ini secara bebas untuk kebutuhan analisis finansial berbasis data riil Anda.
