@@ -140,6 +140,34 @@ export async function runIdx80Scan() {
   const workers = Array.from({ length: concurrencyLimit }, () => worker());
   await Promise.all(workers);
 
+  const isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
+  const dataPath = isCloudFunction
+    ? path.join("/tmp", "idx80_scan.json")
+    : path.join(process.cwd(), "data", "idx80_scan.json");
+
+  // Guard: never overwrite a valid cache with an empty or drastically smaller
+  // scan. An empty result usually means the scan failed (network/provider), not
+  // that the universe is empty — keeping the last good cache is safer than
+  // publishing a fresh-looking but empty snapshot.
+  let previousCount = 0;
+  try {
+    if (fs.existsSync(dataPath)) {
+      const prev = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+      if (Array.isArray(prev?.stocks)) previousCount = prev.stocks.length;
+    }
+  } catch (err) {
+    console.error("Could not read previous scan cache for guard check:", err);
+  }
+
+  if (results.length === 0) {
+    console.warn(`[Scan Guard] Scan returned 0 stocks; keeping previous cache (${previousCount} stocks). Skipping overwrite.`);
+    return;
+  }
+  if (previousCount > 0 && results.length < previousCount * 0.5) {
+    console.warn(`[Scan Guard] Scan returned ${results.length} stocks, less than half of cached ${previousCount}; likely a partial failure. Skipping overwrite.`);
+    return;
+  }
+
   // Save to Firebase
   if (db) {
     try {
@@ -158,10 +186,6 @@ export async function runIdx80Scan() {
   }
 
   // Also save locally as a reliable cache
-  const isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
-  const dataPath = isCloudFunction
-    ? path.join("/tmp", "idx80_scan.json")
-    : path.join(process.cwd(), "data", "idx80_scan.json");
   if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
   fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: new Date().toISOString(), stocks: results }, null, 2));
 }

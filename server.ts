@@ -135,13 +135,9 @@ if (fs.existsSync(firebaseConfigPath)) {
 
 function getEngineStateSyncFallback() {
   const defaultState = {
-    portfolio: [
-      { ticker: "BBCA", shares: 500, buyPrice: 9900, addedAt: new Date().toISOString() },
-      { ticker: "BBRI", shares: 1000, buyPrice: 4900, addedAt: new Date().toISOString() }
-    ],
-    watchlist: [
-      { ticker: "BBCA", addedAt: new Date().toISOString() }
-    ],
+    isSeedData: true, // marks a fresh simulation start, not real user activity
+    portfolio: [] as any[],
+    watchlist: [] as any[],
     cash: 100000000, // Rp 100 Juta default start balance
     config: {
       activeConfig: "prod",
@@ -160,10 +156,7 @@ function getEngineStateSyncFallback() {
       singleSellTrigger: 8,
       singleBuyTrigger: 5
     },
-    tradeLogs: [
-      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: new Date().toISOString() },
-      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1000, price: 4900, timestamp: new Date().toISOString() }
-    ]
+    tradeLogs: [] as any[]
   };
 
   try {

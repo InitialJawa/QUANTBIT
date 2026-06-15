@@ -163,7 +163,7 @@ export function MarketTab({
     totalCost += item.shares * item.buyPrice;
     totalValueNow += item.shares * lastPrice;
   });
-  const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 105 : 0; // standard simulated correction scaling!
+  const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
   // Synchronize when active stock changes from elsewhere
   React.useEffect(() => {
