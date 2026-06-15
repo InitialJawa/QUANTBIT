@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import Database from "better-sqlite3";
 import { IDX80_TICKERS } from "./idx80.ts";
 
 // 2000-01-01 to Today for extended backtest
@@ -535,15 +536,53 @@ async function main() {
     });
   }
 
-  // Write outputs in parallel
+  // Write to SQLite (primary storage)
   const dir1 = path.join(process.cwd(), "data");
   if (!fs.existsSync(dir1)) {
     fs.mkdirSync(dir1, { recursive: true });
   }
-  const outPath1 = path.join(dir1, "historical_market_data.json");
-  fs.writeFileSync(outPath1, JSON.stringify(rowList, null, 2));
-  console.log(`Wrote historical cache to ${outPath1}.`);
+  const dbPath = path.join(dir1, "historical_market.db");
+  const db = new Database(dbPath);
+  db.pragma("journal_mode = WAL");
+  db.pragma("synchronous = NORMAL");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_market (
+      date           TEXT PRIMARY KEY,
+      ihsgPrice      REAL,
+      goldPrice      REAL,
+      usdidrRate     REAL,
+      stockPrices    TEXT,
+      stockAdjPrices TEXT,
+      stockVolumes   TEXT,
+      stockOpens     TEXT,
+      stockHighs     TEXT,
+      stockLows      TEXT,
+      stockRanksProd TEXT,
+      stockRanksRes  TEXT
+    )
+  `);
+  const insert = db.prepare(`
+    INSERT OR REPLACE INTO daily_market
+      (date, ihsgPrice, goldPrice, usdidrRate, stockPrices, stockAdjPrices, stockVolumes,
+       stockOpens, stockHighs, stockLows, stockRanksProd, stockRanksRes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const transaction = db.transaction((rows: typeof rowList) => {
+    for (const row of rows) {
+      insert.run(
+        row.date, row.ihsgPrice ?? null, row.goldPrice ?? null, row.usdidrRate ?? null,
+        JSON.stringify(row.stockPrices ?? {}), JSON.stringify(row.stockAdjPrices ?? {}),
+        JSON.stringify(row.stockVolumes ?? {}), JSON.stringify(row.stockOpens ?? {}),
+        JSON.stringify(row.stockHighs ?? {}), JSON.stringify(row.stockLows ?? {}),
+        JSON.stringify(row.stockRanksProd ?? {}), JSON.stringify(row.stockRanksRes ?? {})
+      );
+    }
+  });
+  transaction(rowList);
+  db.close();
+  console.log(`Wrote ${rowList.length} records to SQLite at ${dbPath}.`);
 
+  // Keep JSON for frontend import (src/data/), until SimulationTab is refactored to use API
   const dir2 = path.join(process.cwd(), "src", "data");
   if (!fs.existsSync(dir2)) {
     fs.mkdirSync(dir2, { recursive: true });

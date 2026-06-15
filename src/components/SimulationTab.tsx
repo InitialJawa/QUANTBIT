@@ -24,7 +24,6 @@ import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS } from "../../idx80";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
-import historicalDataJson from "../data/historical_market_data.json";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -236,7 +235,15 @@ export function SimulationTab({
   defaultSubTab = "past",
   hideTabs = false
 }: SimulationTabProps) {
-  const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/backtest-data?configType=prod")
+      .then(r => r.json())
+      .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
+      .catch(() => {});
+  }, []);
+
   const todayWIBStr = useMemo(() => {
     const todayWIB = new Date(Date.now() + 7 * 60 * 60 * 1000);
     return todayWIB.toISOString().slice(0, 10);
@@ -245,7 +252,7 @@ export function SimulationTab({
     if (!dateStr) return null;
     const day = new Date(dateStr).getDay();
     if (day === 0 || day === 6) return "weekend";
-    const exists = historicalDataJson.some(d => d.date === dateStr);
+    const exists = historicalData.some(d => d.date === dateStr);
     if (!exists) {
       if (dateStr >= "2000-01-03" && dateStr <= todayWIBStr) {
         return "holiday";
@@ -333,15 +340,15 @@ export function SimulationTab({
     const cleanTicker = simTicker.toUpperCase().replace(".JK", "");
     
     // Fallback search using closest matches
-    let startIndex = historicalDataJson.findIndex(d => d.date >= simStartDate);
+    let startIndex = historicalData.findIndex(d => d.date >= simStartDate);
     if (startIndex === -1) startIndex = 0;
     
-    let endIndex = historicalDataJson.findIndex(d => d.date >= simEndDate);
-    if (endIndex === -1) endIndex = historicalDataJson.length - 1;
-    if (historicalDataJson[endIndex].date > simEndDate && endIndex > 0) endIndex--;
+    let endIndex = historicalData.findIndex(d => d.date >= simEndDate);
+    if (endIndex === -1) endIndex = historicalData.length - 1;
+    if (historicalData[endIndex].date > simEndDate && endIndex > 0) endIndex--;
 
-    const startRaw = historicalDataJson[startIndex] as any;
-    const endRaw = historicalDataJson[endIndex] as any;
+    const startRaw = historicalData[startIndex] as any;
+    const endRaw = historicalData[endIndex] as any;
     
     const sPrice = startRaw?.stockAdjPrices?.[cleanTicker] || startRaw?.stockPrices?.[cleanTicker] || 100;
     const ePrice = endRaw?.stockAdjPrices?.[cleanTicker] || endRaw?.stockPrices?.[cleanTicker] || activeStock.currentPrice;
@@ -492,23 +499,11 @@ export function SimulationTab({
         if (apiRes.success && Array.isArray(apiRes.data)) {
           rawData = apiRes.data;
         } else {
-          rawData = historicalDataJson.map((day: any) => ({
-            date: day.date,
-            ihsgPrice: day.ihsgPrice,
-            goldPrice: day.goldPrice,
-            stockPrices: day.stockAdjPrices,
-            stockRanks: backtestConfigType === "prod" ? day.stockRanksProd : day.stockRanksRes
-          }));
+          rawData = [...historicalData];
         }
       } catch (err) {
-        console.warn("Backtest backend error, fallback to client JSON: ", err);
-        rawData = historicalDataJson.map((day: any) => ({
-          date: day.date,
-          ihsgPrice: day.ihsgPrice,
-          goldPrice: day.goldPrice,
-          stockPrices: day.stockAdjPrices,
-          stockRanks: backtestConfigType === "prod" ? day.stockRanksProd : day.stockRanksRes
-        }));
+        console.warn("Backtest backend error, fallback to client data: ", err);
+        rawData = [...historicalData];
       }
 
       setBacktestProgress(85);
@@ -1073,7 +1068,7 @@ export function SimulationTab({
 
   const handleDownloadCSV = async () => {
     try {
-      const rawData = historicalDataJson;
+      const rawData = historicalData;
       const stockKeys = ["BBCA", "BBRI", "BMRI", "TLKM", "ASII", "ADRO", "PTBA", "ESSA", "GOTO"];
       const header = ["Tanggal", "Harga_IHSG", "Harga_Emas_Per_Gram", ...stockKeys].join(",");
       const rows = rawData.map((day: any) => {
@@ -1081,7 +1076,7 @@ export function SimulationTab({
           day.date,
           day.ihsgPrice,
           day.goldPrice,
-          ...stockKeys.map(k => day.stockAdjPrices[k] !== undefined ? day.stockAdjPrices[k] : "")
+          ...stockKeys.map(k => day.stockPrices[k] !== undefined ? day.stockPrices[k] : "")
         ];
         return rowData.join(",");
       });

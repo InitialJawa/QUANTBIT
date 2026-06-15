@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { exec } from "child_process";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import Database from "better-sqlite3";
 
 dotenv.config();
 
@@ -13,6 +14,57 @@ export const app = express();
 app.use(express.json());
 
 const PORT = 3000;
+
+// SQLite database for historical market data
+const HISTORICAL_DB_PATH = path.join(process.cwd(), "data", "historical_market.db");
+const HISTORICAL_JSON_PATH = path.join(process.cwd(), "data", "historical_market_data.json");
+let historicalDb: Database.Database | null = null;
+
+function ensureHistoricalDb() {
+  if (fs.existsSync(HISTORICAL_DB_PATH)) return;
+  if (!fs.existsSync(HISTORICAL_JSON_PATH)) {
+    throw new Error("Neither SQLite nor JSON historical database found at " + HISTORICAL_DB_PATH);
+  }
+  console.log("SQLite database not found. Migrating from JSON...");
+  const rawData = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+  if (!Array.isArray(rawData) || rawData.length === 0) {
+    throw new Error("Historical JSON contains no records");
+  }
+  const db = new Database(HISTORICAL_DB_PATH);
+  db.pragma("journal_mode = WAL");
+  db.pragma("synchronous = NORMAL");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_market (
+      date TEXT PRIMARY KEY, ihsgPrice REAL, goldPrice REAL, usdidrRate REAL,
+      stockPrices TEXT, stockAdjPrices TEXT, stockVolumes TEXT,
+      stockOpens TEXT, stockHighs TEXT, stockLows TEXT,
+      stockRanksProd TEXT, stockRanksRes TEXT
+    )
+  `);
+  const insert = db.prepare(`INSERT OR REPLACE INTO daily_market
+    (date, ihsgPrice, goldPrice, usdidrRate, stockPrices, stockAdjPrices, stockVolumes,
+     stockOpens, stockHighs, stockLows, stockRanksProd, stockRanksRes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const tx = db.transaction((rows: any[]) => {
+    for (const r of rows) insert.run(r.date, r.ihsgPrice, r.goldPrice, r.usdidrRate,
+      JSON.stringify(r.stockPrices ?? {}), JSON.stringify(r.stockAdjPrices ?? {}),
+      JSON.stringify(r.stockVolumes ?? {}), JSON.stringify(r.stockOpens ?? {}),
+      JSON.stringify(r.stockHighs ?? {}), JSON.stringify(r.stockLows ?? {}),
+      JSON.stringify(r.stockRanksProd ?? {}), JSON.stringify(r.stockRanksRes ?? {}));
+  });
+  tx(rawData);
+  db.close();
+  console.log(`SQLite database created with ${rawData.length} records from JSON.`);
+}
+
+function getHistoricalDb(): Database.Database {
+  if (!historicalDb) {
+    ensureHistoricalDb();
+    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
+    historicalDb.pragma("journal_mode = WAL");
+  }
+  return historicalDb;
+}
 
 // Lazy initialize Gemini client to avoid crashing on start if API key is not set
 let aiClient: GoogleGenAI | null = null;
@@ -601,7 +653,7 @@ function bridgeHistoricalDataToToday(rawData: any[], configType: "prod" | "res")
   return bridgedList;
 }
 
-// Real-time Backtest & Historical Data Backend Engine Since 2020
+// Real-time Backtest & Historical Data Backend Engine Since 2000
 app.get("/api/backtest-data", (req, res) => {
   try {
     const configType = (req.query.configType === "res" ? "res" : "prod") as "prod" | "res";
@@ -609,29 +661,41 @@ app.get("/api/backtest-data", (req, res) => {
       ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
       : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
 
-    const filePath = path.join(process.cwd(), "data", "historical_market_data.json");
-    if (!fs.existsSync(filePath)) {
-      throw new Error("CRITICAL PIPELINE ERROR: Real historical market database is missing! Fail loudly.");
-    }
+    const db = getHistoricalDb();
+    const rows = db.prepare("SELECT * FROM daily_market ORDER BY date ASC").all() as any[];
 
-    const rawData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    if (!Array.isArray(rawData) || rawData.length === 0) {
+    if (rows.length === 0) {
       throw new Error("CRITICAL PIPELINE ERROR: Real historical market database contains no records!");
     }
 
-    // Bridge data dynamically from 2024-11-20 up to today's date (June 2026)
+    const rawData = rows.map((row: any) => ({
+      date: row.date,
+      ihsgPrice: row.ihsgPrice,
+      goldPrice: row.goldPrice,
+      usdidrRate: row.usdidrRate,
+      stockPrices: JSON.parse(row.stockPrices || "{}"),
+      stockAdjPrices: JSON.parse(row.stockAdjPrices || "{}"),
+      stockVolumes: JSON.parse(row.stockVolumes || "{}"),
+      stockOpens: JSON.parse(row.stockOpens || "{}"),
+      stockHighs: JSON.parse(row.stockHighs || "{}"),
+      stockLows: JSON.parse(row.stockLows || "{}"),
+      stockRanksProd: JSON.parse(row.stockRanksProd || "{}"),
+      stockRanksRes: JSON.parse(row.stockRanksRes || "{}"),
+    }));
+
+    // Bridge data dynamically up to today
     const bridgedRawData = bridgeHistoricalDataToToday(rawData, configType);
 
-    const data = bridgedRawData.map((day: any) => {
-      // Return 100% real daily historical fields
-      return {
-        date: day.date,
-        ihsgPrice: day.ihsgPrice,
-        goldPrice: day.goldPrice,
-        stockPrices: day.stockAdjPrices, // ALWAYS use adjusted close prices for quantitative performance calculations
-        stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
-      };
-    });
+    const data = bridgedRawData.map((day: any) => ({
+      date: day.date,
+      ihsgPrice: day.ihsgPrice,
+      goldPrice: day.goldPrice,
+      stockPrices: day.stockAdjPrices,
+      stockAdjPrices: day.stockAdjPrices,
+      stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
+      stockRanksProd: day.stockRanksProd,
+      stockRanksRes: day.stockRanksRes,
+    }));
 
     res.json({
       success: true,
