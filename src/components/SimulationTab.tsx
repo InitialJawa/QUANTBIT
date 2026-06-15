@@ -337,15 +337,17 @@ export function SimulationTab({
   const activeStock = useMemo(() => getDynamicStock(simTicker) || getDynamicStock("BBCA"), [simTicker, getDynamicStock]);
 
   const simPrices = useMemo(() => {
+    if (historicalData.length === 0) {
+      return { startPrice: 0, endPrice: 0, years: 0 };
+    }
     const cleanTicker = simTicker.toUpperCase().replace(".JK", "");
     
-    // Fallback search using closest matches
     let startIndex = historicalData.findIndex(d => d.date >= simStartDate);
     if (startIndex === -1) startIndex = 0;
     
     let endIndex = historicalData.findIndex(d => d.date >= simEndDate);
     if (endIndex === -1) endIndex = historicalData.length - 1;
-    if (historicalData[endIndex].date > simEndDate && endIndex > 0) endIndex--;
+    if (historicalData[endIndex] && historicalData[endIndex].date > simEndDate && endIndex > 0) endIndex--;
 
     const startRaw = historicalData[startIndex] as any;
     const endRaw = historicalData[endIndex] as any;
@@ -356,9 +358,9 @@ export function SimulationTab({
     return {
       startPrice: Math.max(50, Math.round(sPrice)),
       endPrice: Math.round(ePrice),
-      years: Math.max(0.1, (Date.parse(endRaw.date) - Date.parse(startRaw.date)) / (1000*60*60*24*365.25))
+      years: Math.max(0.1, (Date.parse(endRaw?.date) - Date.parse(startRaw?.date)) / (1000*60*60*24*365.25))
     };
-  }, [simTicker, simStartDate, simEndDate, activeStock.currentPrice]);
+  }, [historicalData, simTicker, simStartDate, simEndDate, activeStock.currentPrice]);
   
   const startPrice = simPrices.startPrice;
 

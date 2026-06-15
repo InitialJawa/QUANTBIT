@@ -536,7 +536,14 @@ async function main() {
     });
   }
 
-  // Write to SQLite (primary storage)
+  // Write to JSON (source of truth untuk git)
+  const dir0 = path.join(process.cwd(), "data");
+  if (!fs.existsSync(dir0)) fs.mkdirSync(dir0, { recursive: true });
+  const jsonPath = path.join(dir0, "historical_market_data.json");
+  fs.writeFileSync(jsonPath, JSON.stringify(rowList, null, 2));
+  console.log(`Wrote ${rowList.length} records to JSON at ${jsonPath}.`);
+
+  // Write to SQLite (primary storage for server)
   const dir1 = path.join(process.cwd(), "data");
   if (!fs.existsSync(dir1)) {
     fs.mkdirSync(dir1, { recursive: true });
