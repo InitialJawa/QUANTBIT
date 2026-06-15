@@ -217,7 +217,7 @@ export function getStock(ticker: string): StockData {
   const change = scanStock ? scanStock.changePercent : (leaderItem ? (parseFloat(leaderItem.momentum) > 50 ? 1.45 : -0.85) : 0.45);
   const peRatio = scanStock?.peRatio || fundamentals?.pe_ratio || 14.5;
   const pbRatio = scanStock?.pbRatio || fundamentals?.pb_ratio || 1.6;
-  const roe = fundamentals?.roe ? parseFloat((fundamentals.roe * 100).toFixed(1)) : (scanStock ? 12.4 : 12.4);
+  const roe = fundamentals?.roe ? parseFloat((fundamentals.roe * 100).toFixed(1)) : 12.4;
   const der = fundamentals?.debt_to_equity || 0.35;
   const dividendYield = scanStock?.dividendYield || fundamentals?.dividend_yield || 2.4;
 
