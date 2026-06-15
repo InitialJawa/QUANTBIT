@@ -5,6 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
+import { DataSourceBadge } from "./DataSourceBadge";
 import { IDX80_TICKERS, IDX30_TICKERS } from "../../idx80";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
@@ -139,9 +140,21 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
       <div className="bg-[#050505] border border-white/[0.03] rounded-xl md:rounded-2xl p-5 shadow-sm relative overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+            <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 flex-wrap font-mono">
               <Sliders className="w-4 h-4 text-white/40" />
               {activeConfig === "prod" ? "Strategi Fundamental" : "Strategi Teknis Kuat"}
+              <DataSourceBadge
+                kind="static"
+                what="Skor faktor & rotasi Leaders"
+                why="Skor Quality/Growth/Value/Momentum 30 emiten inti adalah snapshot statis bertanggal 2026-06-11; untuk emiten di luar daftar itu skor & data rotasi (topHits/dropHits/path) disintesis dari kode karakter ticker, bukan kalkulasi data riil."
+                solution="Jalankan engine kuantitatif terhadap data fundamental/harga riil terkini untuk SELURUH IDX80, lalu simpan hasilnya ke DB dan muat lewat API alih-alih array statis L / sintesis hash di getProcessedLeaders & getRotationData."
+              />
+              <DataSourceBadge
+                kind="simulated"
+                what="Kolom perubahan harga (% change) live"
+                why="Persentase perubahan yang dipakai untuk update rotasi digerakkan oleh random walk Math.random() tiap 3 detik untuk mayoritas emiten yang tidak punya feed live."
+                solution="Sambungkan feed harga live riil untuk semua emiten (lihat badge di tab Pasar) dan hentikan penambahan offset acak di interval priceFluctuations pada App.tsx."
+              />
             </h2>
             <p className="text-[9px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">
               Kualitas: <span className="text-white/80">{(weights.quality * 100)}%</span> • Growth: <span className="text-white/80">{(weights.growth * 100)}%</span> • Value: <span className="text-white/80">{(weights.value * 100)}%</span> • Momentum: <span className="text-white/80">{(weights.momentum * 100)}%</span>

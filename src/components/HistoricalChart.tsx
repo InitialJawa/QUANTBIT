@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { StockData } from "../types";
 import { TrendingUp, TrendingDown, Clock, Calendar, BarChart3 } from "lucide-react";
+import { DataSourceBadge } from "./DataSourceBadge";
 
 interface HistoricalChartProps {
   stock: StockData;
@@ -37,9 +38,15 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
     <div id="historical-chart-container" className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 id="chart-title" className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+          <h3 id="chart-title" className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-2 flex-wrap">
             <BarChart3 className="w-4 h-4 text-emerald-500" />
             Historical Price Trend ({timeframe})
+            <DataSourceBadge
+              kind="simulated"
+              what="Grafik harga & volume intraday/mingguan/bulanan"
+              why="Titik-titik harga dan volume pada grafik ini di-generate dengan Math.random() (chartDataDaily/Weekly/Monthly), bukan candle/close riil dari bursa."
+              solution="Ambil time-series OHLCV riil dari Yahoo Finance (chart API) atau GoAPI per ticker, lalu isi chartData dari respons API alih-alih membangkitkannya secara acak."
+            />
           </h3>
           <div className="flex items-baseline gap-3">
             <span id="current-price-val" className="text-3xl font-bold tracking-tight text-white font-mono">

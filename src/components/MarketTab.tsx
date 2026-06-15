@@ -5,6 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { AIAssistant } from "./AIAssistant";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
+import { DataSourceBadge } from "./DataSourceBadge";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   TrendingUp, 
@@ -535,6 +536,12 @@ export function MarketTab({
                 <h3 className="text-[11px] uppercase font-bold tracking-widest text-white/70 font-mono">
                   Kedalaman Pasar (Order Book)
                 </h3>
+                <DataSourceBadge
+                  kind="simulated"
+                  what="Order book Bid/Ask (kedalaman pasar)"
+                  why="Volume & jumlah antrian di-generate acak dengan Math.random(), bukan antrian order riil dari bursa."
+                  solution="Sambungkan ke market data depth riil (mis. feed Level 2 broker/IDX atau penyedia seperti GoAPI/IDX) dan ganti generateOrderBook() dengan data dari API tersebut."
+                />
               </div>
               
               <div className="flex items-center gap-3 w-full sm:w-auto">
