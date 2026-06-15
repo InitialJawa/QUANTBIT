@@ -133,5 +133,7 @@ Bobot konfigurasi pemeringkat saham dapat diatur secara dinamis melalui antarmuk
 ├── 📜 fetch_historical_data.ts # Script penarik data historis riil (Yahoo Finance API scraper)
 ├── 📜 tsconfig.json         # Konfigurasi compiler TypeScript
 └── 📜 vite.config.ts        # Konfigurasi bundler Vite dev server
+
+
 📄 Lisensi
 Proyek ini dilisensikan di bawah MIT License. Silakan gunakan, modifikasi, dan kembangkan kode ini secara bebas untuk kebutuhan analisis finansial berbasis data riil Anda.
