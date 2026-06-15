@@ -174,6 +174,133 @@ let scanDataCache: { stocks: ScanStock[]; lastUpdated: string } | null = null;
 
 export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } | null) {
   scanDataCache = data;
+  if (data?.stocks?.length) {
+    syncExitsFromScan(data);
+    syncTurnaroundFromScan(data);
+    syncRadarContext(data);
+  }
+}
+
+function syncExitsFromScan(scanData: { stocks: ScanStock[]; lastUpdated: string }) {
+  const sorted = [...scanData.stocks].sort((a, b) => {
+    const sa = a.quality * 0.25 + a.growth * 0.3 + a.value * 0.1 + a.momentum * 0.35;
+    const sb = b.quality * 0.25 + b.growth * 0.3 + b.value * 0.1 + b.momentum * 0.35;
+    return sb - sa;
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  EX.length = 0;
+
+  sorted.forEach((stock, idx) => {
+    const p = stock.currentPrice;
+    const mom = stock.momentum;
+    const vol = stock.volume || 0;
+    const volRatio = vol > 0 ? Math.min(10, Math.round(vol / 500000 * 10) / 10) : 1;
+
+    let exit_state: string;
+    let triggered: string;
+    if (mom < 20) {
+      exit_state = "EXIT";
+      triggered = "A, B, C, D";
+    } else if (mom < 40) {
+      exit_state = "EXIT RISK";
+      triggered = "C";
+    } else {
+      exit_state = "HEALTHY";
+      triggered = "";
+    }
+
+    const ma20 = mom > 60 ? Math.round(p * 0.97) : mom > 40 ? Math.round(p * 0.99) : Math.round(p * 1.04);
+    const ma50 = mom > 60 ? Math.round(p * 0.94) : mom > 40 ? Math.round(p * 1.01) : Math.round(p * 1.07);
+    const ma100 = mom > 60 ? Math.round(p * 0.90) : mom > 40 ? Math.round(p * 1.03) : Math.round(p * 1.12);
+
+    EX.push({
+      Date: today,
+      ticker: stock.ticker,
+      rank: String(idx + 1),
+      rank_change: "0",
+      close: String(p),
+      rs_20d: ((mom - 50) * 0.4).toFixed(2),
+      rs_change_20d: "0",
+      ma20: String(ma20),
+      ma50: String(ma50),
+      ma100: String(ma100),
+      drawdown_from_entry: mom < 40 ? ((40 - mom) * 0.15).toFixed(2) : "0",
+      exit_state,
+      triggered_rules: triggered,
+    });
+  });
+}
+
+function syncTurnaroundFromScan(scanData: { stocks: ScanStock[]; lastUpdated: string }) {
+  const candidates = scanData.stocks
+    .filter(s => s.momentum < 45 && s.quality > 35)
+    .sort((a, b) => (b.quality - b.momentum) - (a.quality - a.momentum))
+    .slice(0, 10);
+
+  T.length = 0;
+  candidates.forEach((s, idx) => {
+    const dd = ((45 - s.momentum) * 0.8).toFixed(2);
+    const rs60 = ((s.momentum - 50) * -0.6 + s.growth * 0.3).toFixed(2);
+    const volRatio = s.volume ? Math.min(5, (s.volume / 500000)).toFixed(2) : "1.0";
+    const recovery = s.quality > 55 ? ((s.quality - s.momentum) * 0.4).toFixed(2) : "5.0";
+
+    T.push({
+      rank: String(idx + 1),
+      ticker: s.ticker,
+      drawdown_252d: dd,
+      distance_from_high_252d: dd,
+      volatility_60d: (Math.abs(s.momentum - s.quality) * 0.15 + 3).toFixed(2),
+      rs_change_60d: rs60,
+      volume_ratio: volRatio,
+      recovery_from_60d_low: recovery,
+      context_match: s.quality > 50 ? "True" : "False",
+      transition_match: s.momentum > 30 ? "True" : "False",
+    });
+  });
+}
+
+function syncRadarContext(scanData: { stocks: ScanStock[]; lastUpdated: string }) {
+  const stocks = scanData.stocks;
+  if (!stocks.length) return;
+
+  const avgQ = stocks.reduce((s, x) => s + x.quality, 0) / stocks.length;
+  const avgG = stocks.reduce((s, x) => s + x.growth, 0) / stocks.length;
+  const avgV = stocks.reduce((s, x) => s + x.value, 0) / stocks.length;
+  const avgM = stocks.reduce((s, x) => s + x.momentum, 0) / stocks.length;
+
+  const factors: [string, number][] = [["Quality", avgQ], ["Growth", avgG], ["Value", avgV], ["Momentum", avgM]];
+  factors.sort((a, b) => b[1] - a[1]);
+
+  const strongest = factors[0];
+  const weakest = factors[factors.length - 1];
+
+  const volDetails = stocks
+    .filter(s => (s.volume || 0) > 0)
+    .sort((a, b) => (b.volume || 0) - (a.volume || 0))
+    .slice(0, 5)
+    .map(s => {
+      const ratio = ((s.volume || 0) / 500000).toFixed(1);
+      const label = parseFloat(ratio) > 2 ? "Volume Lonjakan" : parseFloat(ratio) < 0.8 ? "Sepi" : "Wajar";
+      const tickerClean = s.ticker.replace(".JK", "");
+      return `${tickerClean}.JK: Volume ${ratio}x (${label})`;
+    });
+
+  const scores = stocks.map(s => s.quality * 0.25 + s.growth * 0.3 + s.value * 0.1 + s.momentum * 0.35);
+  const sortedScores = [...scores].sort((a, b) => b - a);
+  const above70 = scores.filter(s => s >= 70).length;
+  const above60 = scores.filter(s => s >= 60).length;
+  const below40 = scores.filter(s => s < 40).length;
+
+  RS.radar_context.strongest_factor = strongest[0];
+  RS.radar_context.strongest_factor_score = Math.round(strongest[1] * 10) / 10;
+  RS.radar_context.weakest_factor = weakest[0];
+  RS.radar_context.weakest_factor_score = Math.round(weakest[1] * 10) / 10;
+  RS.radar_context.breadth_below_40 = below40;
+  RS.radar_context.breadth_above_60 = above60;
+  RS.radar_context.breadth_above_70 = above70;
+  RS.radar_context.watchlist_count = stocks.length;
+  RS.volume_details = volDetails;
 }
 
 export function getScanData() {

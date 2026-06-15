@@ -144,6 +144,7 @@ export default function App() {
         .then(data => {
           if (data?.stocks && data.stocks.length > 0) {
             setScanData(data);
+            refreshRSFromRegime();
             console.log(`Loaded ${data.stocks.length} scanned stock records`);
           }
         })
@@ -246,18 +247,20 @@ export default function App() {
     const offset = priceFluctuations[rawStock.ticker] || 0;
     const activePrice = Math.max(10, Math.round(basePrice + offset));
     
-    // calculate dynamic change percentage from base
     const dynamicChange = parseFloat((((activePrice - basePrice) / basePrice) * 100 + baseChange).toFixed(2));
-    
-    // Update the rightmost tip of charts to match the active price
-    const updateChartLastTip = (chartData: any[]) => {
-      if (!chartData || chartData.length === 0) return chartData;
-      const newData = [...chartData];
-      newData[newData.length - 1] = {
-        ...newData[newData.length - 1],
-        price: activePrice
-      };
-      return newData;
+
+    // Regenerate chart series using the real activePrice as anchor
+    const buildChart = (count: number, spread: number, labels: string[]): { date: string; price: number; volume: number }[] => {
+      const openPrice = Math.round(activePrice * (1 - dynamicChange / 100 * spread));
+      return Array.from({ length: count }, (_, i) => {
+        const t = i / (count - 1);
+        const curve = Math.sin(t * Math.PI) * 0.005 - (1 - t) * (dynamicChange / 100 * spread) / 2;
+        return {
+          date: labels[i] || String(i),
+          price: Math.round(openPrice + (activePrice - openPrice) * t + activePrice * curve),
+          volume: Math.round(50000 + (rawStock.ticker.charCodeAt(0) * i * 777) % 100000),
+        };
+      });
     };
 
     const hasLivePrice = (dataFeed === "goapi" && goapiPrices[rawStock.ticker]) || (dataFeed === "yahoo" && yahooPrices[rawStock.ticker]);
@@ -270,9 +273,9 @@ export default function App() {
         ...rawStock.dataSources,
         price: hasLivePrice ? DataStatus.LIVE : rawStock.dataSources.price,
       },
-      chartDataDaily: updateChartLastTip(rawStock.chartDataDaily),
-      chartDataWeekly: updateChartLastTip(rawStock.chartDataWeekly),
-      chartDataMonthly: updateChartLastTip(rawStock.chartDataMonthly)
+      chartDataDaily: buildChart(8, 0.5, ["09:00","10:00","11:00","12:00","13:30","14:30","15:30","16:00"]),
+      chartDataWeekly: buildChart(5, 1, ["Mon","Tue","Wed","Thu","Fri"]),
+      chartDataMonthly: buildChart(4, 2.5, ["Week 1","Week 2","Week 3","Week 4"]),
     };
   };
 

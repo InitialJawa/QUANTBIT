@@ -1,6 +1,6 @@
 import { StockData } from "./types";
 import { DataStatus } from "./types/DataStatus";
-import { PF, FD, EX, L } from "./marketData";
+import { PF, FD, EX, L, getScanData } from "./marketData";
 import { IDX80_TICKERS } from "../idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
 
@@ -207,15 +207,19 @@ export function getStock(ticker: string): StockData {
   
   const logoColor = getLogoColor(cleanTicker);
 
-  const rawMcap = fundamentals?.market_cap ? (fundamentals.market_cap / 1e12) : 50.0;
+  // Prefer scan data for real prices and fundamentals
+  const scanCache = getScanData();
+  const scanStock = scanCache?.stocks.find(st => st.ticker.replace(".JK", "") === cleanTicker);
+
+  const rawMcap = fundamentals?.market_cap ? (fundamentals.market_cap / 1e12) : (scanStock ? scanStock.currentPrice * 1000000 / 1e12 : 50.0);
   const marketCap = parseFloat(rawMcap.toFixed(1));
-  const currentPrice = exitItem ? parseFloat(exitItem.close) : 1000;
-  const change = leaderItem ? (parseFloat(leaderItem.momentum) > 50 ? 1.45 : -0.85) : 0.45;
-  const peRatio = fundamentals?.pe_ratio || 14.5;
-  const pbRatio = fundamentals?.pb_ratio || 1.6;
-  const roe = fundamentals?.roe ? parseFloat((fundamentals.roe * 100).toFixed(1)) : 12.4;
+  const currentPrice = scanStock ? scanStock.currentPrice : (exitItem ? parseFloat(exitItem.close) : 1000);
+  const change = scanStock ? scanStock.changePercent : (leaderItem ? (parseFloat(leaderItem.momentum) > 50 ? 1.45 : -0.85) : 0.45);
+  const peRatio = scanStock?.peRatio || fundamentals?.pe_ratio || 14.5;
+  const pbRatio = scanStock?.pbRatio || fundamentals?.pb_ratio || 1.6;
+  const roe = fundamentals?.roe ? parseFloat((fundamentals.roe * 100).toFixed(1)) : (scanStock ? 12.4 : 12.4);
   const der = fundamentals?.debt_to_equity || 0.35;
-  const dividendYield = fundamentals?.dividend_yield || 2.4;
+  const dividendYield = scanStock?.dividendYield || fundamentals?.dividend_yield || 2.4;
 
   const baseRevenue = Math.round(marketCap * 10);
   const baseNetIncome = Math.round(baseRevenue * (fundamentals?.net_margin || 0.12));
@@ -289,13 +293,15 @@ export function getStock(ticker: string): StockData {
     };
   });
 
+  const hasScanPrice = scanStock?.currentPrice && scanStock.currentPrice > 0;
+  const hasRealFundamentals = !!(fundamentals?.pe_ratio || fundamentals?.roe);
   const stock: StockData = {
     ticker: cleanTicker,
     name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
     peRatio, pbRatio, roe, der, dividendYield, metrics,
     dataSources: {
-      price: exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED,
-      fundamentals: (fundamentals?.pe_ratio || fundamentals?.roe) ? DataStatus.CACHED : DataStatus.ESTIMATED,
+      price: hasScanPrice ? DataStatus.LIVE : (exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED),
+      fundamentals: hasRealFundamentals ? DataStatus.CACHED : (scanStock?.peRatio ? DataStatus.LIVE : DataStatus.ESTIMATED),
       charts: DataStatus.ESTIMATED,
       description: profile?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED,
     },
