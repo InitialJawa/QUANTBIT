@@ -168,7 +168,29 @@ interface ScanStock {
   peRatio?: number;
   pbRatio?: number;
   dividendYield?: number;
+  companyName?: string;
+  sector?: string;
+  industry?: string;
   lastUpdated: string;
+  longBusinessSummary?: string;
+  marketCap?: number;
+  trailingEps?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  fiftyDayAverage?: number;
+  twoHundredDayAverage?: number;
+  totalRevenue?: number;
+  netIncome?: number;
+  operatingCashflow?: number;
+  freeCashflow?: number;
+  grossProfit?: number;
+  ebitda?: number;
+  revenueGrowth?: number;
+  earningsGrowth?: number;
+  returnOnEquity?: number;
+  debtToEquity?: number;
+  operatingMargin?: number;
+  grossMargins?: number;
 }
 let scanDataCache: { stocks: ScanStock[]; lastUpdated: string } | null = null;
 
@@ -348,22 +370,9 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
       };
     }
 
-    const tHash = s.ticker.charCodeAt(0) * 11 + (s.ticker.charCodeAt(1) || 0) * 7;
-    const qVal = Math.min(99.99, Math.max(10.01, 40 + (s.roe * 1.5) - (s.der * 5) + (tHash % 20))).toFixed(2);
-    const gVal = Math.min(99.99, Math.max(10.01, 45 + (s.roe * 0.5) + ((tHash * 2) % 25))).toFixed(2);
-    const vVal = Math.min(99.99, Math.max(10.01, 85 - s.peRatio - (s.pbRatio * 3) + ((tHash * 3) % 15))).toFixed(2);
-    const mVal = Math.min(99.99, Math.max(10.01, 50 + ((tHash * 5) % 25))).toFixed(2);
-    
-    return {
-      rank: String(idx + 1),
-      ticker: s.ticker + ".JK",
-      quality: qVal,
-      growth: gVal,
-      value: vVal,
-      momentum: mVal,
-      final_score: "50.0"
-    };
-  });
+    // No scan data and not in L — skip this stock
+    return null;
+  }).filter(Boolean);
 
   const computeScore = (stock: typeof L[0]) => {
     const qVal = parseFloat(stock.quality) || 0;

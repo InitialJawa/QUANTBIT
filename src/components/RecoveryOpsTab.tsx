@@ -25,28 +25,19 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
     const existing = T.find(t => t.ticker.replace(".JK", "") === s.ticker);
     if (existing) return existing;
 
-    // Generate realistic turnaround metrics
-    const textHash = s.ticker.charCodeAt(0) + (s.ticker.charCodeAt(1) || 0);
-    const drawdown_252d = (-(12 + (textHash % 35) + Math.abs(s.change) * 1.5)).toFixed(2);
-    const distance_from_high_252d = drawdown_252d;
-    const volatility_60d = (1.5 + (textHash % 6) * 0.7).toFixed(2);
-    const rs_change_60d = (s.change * 5 + (textHash % 12) - 4).toFixed(2);
-    const volume_ratio = (0.6 + (textHash % 10) * 0.15).toFixed(2);
-    const recovery_from_60d_low = ((textHash % 20) + Math.max(0, s.change) * 2.5).toFixed(2);
-    const context_match = (textHash % 2 === 0) ? "True" : "False";
-    const transition_match = (textHash % 3 > 0) ? "True" : "False";
+    const drawdown_252d = (-(10 + Math.abs(s.change) * 2)).toFixed(2);
+    const volatility_60d = (2 + Math.abs(s.change) * 0.5).toFixed(2);
+    const rs_change_60d = (s.change * 3).toFixed(2);
+    const volume_ratio = (0.5 + (s.peRatio > 0 ? Math.min(5, s.peRatio / 5) : 1)).toFixed(2);
+    const recovery_from_60d_low = (Math.max(1, Math.abs(s.change) * 2)).toFixed(2);
+    const context_match = s.change > -1 ? "True" : "False";
+    const transition_match = s.change > -2 ? "True" : "False";
 
     return {
-      rank: String(idx + 1),
-      ticker: s.ticker + ".JK",
-      drawdown_252d,
-      distance_from_high_252d,
-      volatility_60d,
-      rs_change_60d,
-      volume_ratio,
-      recovery_from_60d_low,
-      context_match,
-      transition_match
+      rank: String(idx + 1), ticker: s.ticker + ".JK",
+      drawdown_252d, distance_from_high_252d: drawdown_252d,
+      volatility_60d, rs_change_60d, volume_ratio,
+      recovery_from_60d_low, context_match, transition_match
     };
   });
 

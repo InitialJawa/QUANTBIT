@@ -23,49 +23,29 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
 
   const dynamicExits = activeStocks.map((s, idx) => {
     const existing = EX.find(e => e.ticker.replace(".JK", "") === s.ticker);
-    
-    // Generate realistic dynamic metrics or fallback to existing
-    const textHash = s.ticker.charCodeAt(0) + (s.ticker.charCodeAt(1) || 0);
     const close = s.currentPrice.toFixed(1);
-    
-    // Evaluate live drop using actual live change data (e.g. from GoAPI)
     const drop = s.change;
+    
     let exit_state = "HEALTHY";
     let triggered_rules = "NONE";
-    
-    if (drop <= -2.2) {
-      exit_state = "EXIT";
-      triggered_rules = "B, C, D";
-    } else if (drop <= -0.5) {
-      exit_state = "EXIT RISK";
-      triggered_rules = "C";
-    }
+    if (drop <= -2.2) { exit_state = "EXIT"; triggered_rules = "B, C, D"; }
+    else if (drop <= -0.5) { exit_state = "EXIT RISK"; triggered_rules = "C"; }
 
     if (existing) {
       return { ...existing, close, drawdown_from_entry: drop.toFixed(2), exit_state, triggered_rules };
     }
-    
-    // Generate pseudo-data matched with actual stock change
-    const rs_20d = (drop * 3 + (textHash % 10) - 5).toFixed(2);
-    const rs_change_20d = (drop * 1.5 + (textHash % 5) - 2).toFixed(2);
-    const ma20 = (parseFloat(close) * (1 + (textHash % 5) * 0.01)).toFixed(1);
-    const ma50 = (parseFloat(close) * (1 + (textHash % 8) * 0.015)).toFixed(1);
-    const ma100 = (parseFloat(close) * (1 + (textHash % 12) * 0.02)).toFixed(1);
+
+    const rs_20d = (drop * 2).toFixed(2);
+    const rs_change_20d = (drop * 1).toFixed(2);
+    const ma20 = (parseFloat(close) * (1 + Math.max(-0.05, Math.min(0.05, drop / 100)))).toFixed(1);
+    const ma50 = (parseFloat(close) * (1 + Math.max(-0.08, Math.min(0.08, drop / 150)))).toFixed(1);
+    const ma100 = (parseFloat(close) * (1 + Math.max(-0.12, Math.min(0.12, drop / 200)))).toFixed(1);
 
     return {
-      Date: "2026-06-11",
-      ticker: s.ticker + ".JK",
-      rank: String(idx + 1),
-      rank_change: "0",
-      close,
-      rs_20d,
-      rs_change_20d,
-      ma20,
-      ma50,
-      ma100,
-      drawdown_from_entry: (drop * 1.3).toFixed(2),
-      exit_state,
-      triggered_rules
+      Date: new Date().toISOString().split("T")[0],
+      ticker: s.ticker + ".JK", rank: String(idx + 1), rank_change: "0", close,
+      rs_20d, rs_change_20d, ma20, ma50, ma100,
+      drawdown_from_entry: (drop * 1.3).toFixed(2), exit_state, triggered_rules
     };
   });
 

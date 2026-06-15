@@ -112,21 +112,47 @@ export async function runIdx80Scan() {
         }
         momentum = Math.min(100, Math.max(1, momentum));
         
+        const fin = quote.financialData || {};
+        const stat = quote.defaultKeyStatistics || {};
+        const detail = quote.summaryDetail || {};
+        const profile = quote.summaryProfile || {};
+        const fiftyTwoWeekHigh = detail.fiftyTwoWeekHigh || price;
+        const fiftyTwoWeekLow = detail.fiftyTwoWeekLow || price;
+
         const data = {
           ticker,
-          companyName: quote.price?.shortName || quote.price?.longName || ticker,
-          sector: quote.summaryProfile?.sector || "Unknown",
-          industry: quote.summaryProfile?.industry || "Unknown",
+          companyName: quote.price?.longName || quote.price?.shortName || ticker,
+          sector: profile.sector || "Unknown",
+          industry: profile.industry || "Unknown",
+          longBusinessSummary: profile.longBusinessSummary || "",
           currentPrice: price,
-          changePercent: change * 100, // converting fraction to percent visually if needed
+          changePercent: change * 100,
           quality,
           value,
           growth,
           momentum,
-          volume: quote.summaryDetail?.volume || 0,
-          peRatio: quote.summaryDetail?.trailingPE || quote.summaryDetail?.forwardPE || 0,
-          pbRatio: quote.defaultKeyStatistics?.priceToBook || 0,
-          dividendYield: (quote.summaryDetail?.dividendYield || 0) * 100,
+          volume: detail.volume || 0,
+          peRatio: detail.trailingPE || detail.forwardPE || 0,
+          pbRatio: stat.priceToBook || 0,
+          dividendYield: (detail.dividendYield || 0) * 100,
+          marketCap: quote.price?.marketCap || 0,
+          trailingEps: stat.trailingEps || 0,
+          fiftyTwoWeekHigh,
+          fiftyTwoWeekLow,
+          fiftyDayAverage: detail.fiftyDayAverage || price,
+          twoHundredDayAverage: detail.twoHundredDayAverage || price,
+          totalRevenue: fin.totalRevenue || 0,
+          netIncome: fin.netIncome || 0,
+          operatingCashflow: fin.operatingCashflow || 0,
+          freeCashflow: fin.freeCashflow || 0,
+          grossProfit: fin.grossProfit || 0,
+          ebitda: fin.ebitda || 0,
+          revenueGrowth: fin.revenueGrowth || 0,
+          earningsGrowth: fin.earningsGrowth || 0,
+          returnOnEquity: fin.returnOnEquity || 0,
+          debtToEquity: fin.debtToEquity || 0,
+          operatingMargin: fin.operatingMargin || 0,
+          grossMargins: fin.grossMargins || 0,
           lastUpdated: new Date().toISOString()
         };
         

@@ -214,9 +214,7 @@ export default function App() {
           }
 
           const currentOffset = next[stock.ticker] || 0;
-          // minor random walk tick: +/- 0.15% of stock price
-          const driftLimit = stockPriceBase * 0.003;
-          const delta = (Math.random() - 0.5) * driftLimit;
+          const delta = 0; // removed random walk — prices stay at scan values
           const newOffset = currentOffset + delta;
           // cap fluctuation at +/- 5% of base price
           const cap = stockPriceBase * 0.05;
