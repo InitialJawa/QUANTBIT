@@ -1,6 +1,7 @@
 import React, { useState, FormEvent, useEffect } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
+import { setActiveUniverse, refreshRSFromRegime } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
@@ -124,6 +125,12 @@ export function PortfolioTracker({
       ...parsed,
     };
   });
+
+  // Sync universe to regime engine for accurate breadth/exit risk
+  useEffect(() => {
+    setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30");
+    refreshRSFromRegime();
+  }, [engineConfig.universe]);
 
   // Sync back helper updates parents as well
   const saveStateToBackend = (

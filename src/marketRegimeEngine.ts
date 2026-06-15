@@ -1,4 +1,5 @@
 import { MKT, L, EX, RS, getProcessedLeaders } from "./marketData";
+import { IDX80_TICKERS, IDX30_TICKERS } from "../idx80";
 
 export type RegimeState =
   | "RISK_ON"
@@ -41,9 +42,26 @@ export interface RegimeOutput {
 }
 
 let _lastIhsgData: { close: number; date: string }[] = [];
+let _activeUniverse: "all" | "idx80" | "idx30" = "all";
 
 export function setIhsgHistory(data: { close: number; date: string }[]) {
   _lastIhsgData = data;
+}
+
+export function setActiveUniverse(u: "all" | "idx80" | "idx30") {
+  _activeUniverse = u;
+}
+
+function filterTickersForUniverse(tickers: string[]): string[] {
+  if (_activeUniverse === "idx30") {
+    const set = new Set(IDX30_TICKERS);
+    return tickers.filter(t => set.has(t));
+  }
+  if (_activeUniverse === "idx80") {
+    const set = new Set(IDX80_TICKERS);
+    return tickers.filter(t => set.has(t));
+  }
+  return tickers;
 }
 
 function computeSMA(data: number[], period: number): number {
@@ -63,15 +81,19 @@ export function computeMarketRegime(): RegimeOutput {
   const aboveMa20 = sma20 > 0 ? ihsgCurrent > sma20 : true;
   const aboveMa50 = sma50 > 0 ? ihsgCurrent > sma50 : true;
 
-  const lenL = L.length || 1;
-  const scores = L.map(s => parseFloat(s.final_score) || 0);
+  const universeTickers = filterTickersForUniverse(L.map(s => s.ticker));
+  const universeL = L.filter(s => universeTickers.includes(s.ticker));
+  const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
+
+  const lenL = universeL.length || 1;
+  const scores = universeL.map(s => parseFloat(s.final_score) || 0);
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;
 
-  const exCount = EX.filter(e => e.exit_state === "EXIT").length;
-  const exRiskCount = EX.filter(e => e.exit_state === "EXIT RISK").length;
-  const healthyCount = EX.filter(e => e.exit_state === "HEALTHY").length;
-  const totalEx = EX.length || 1;
+  const exCount = universeEX.filter(e => e.exit_state === "EXIT").length;
+  const exRiskCount = universeEX.filter(e => e.exit_state === "EXIT RISK").length;
+  const healthyCount = universeEX.filter(e => e.exit_state === "HEALTHY").length;
+  const totalEx = universeEX.length || 1;
 
   const crisisThreshold = ihsgMonthly < -10;
   const bearishTrend = !aboveMa20 && !aboveMa50;
