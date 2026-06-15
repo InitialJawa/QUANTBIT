@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💎 QUANTBIT: Quantitative Stock Trading & Portfolio Terminal
+# 💎 QUANTBIT: Quantitative Stock Terminal
 
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
