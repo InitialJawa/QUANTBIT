@@ -58,20 +58,19 @@ function ensureHistoricalDb() {
 }
 
 let historicalFallbackData: any[] | null = null;
+let sqlJsModule: any = null;
 
 function getHistoricalDb(): Database.Database | null {
   if (historicalFallbackData) return null;
   if (historicalDb) return historicalDb;
 
-  let sqliteError: Error | null = null;
   try {
     ensureHistoricalDb();
     historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
-    console.log("SQLite opened successfully");
+    console.log("better-sqlite3 opened successfully");
     return historicalDb;
   } catch (err) {
-    sqliteError = err instanceof Error ? err : new Error(String(err));
-    console.error("SQLite open failed:", sqliteError.message);
+    console.error("better-sqlite3 failed:", (err as Error).message);
   }
 
   try {
@@ -83,9 +82,8 @@ function getHistoricalDb(): Database.Database | null {
     console.log("JSON fallback loaded", raw.length, "records in", Date.now() - start, "ms");
     return null;
   } catch (jsonErr) {
-    const jsonError = jsonErr instanceof Error ? jsonErr : new Error(String(jsonErr));
-    console.error("JSON fallback also failed:", jsonError.message);
-    throw new Error("Cannot load historical data. SQLite:" + sqliteError?.message + " JSON:" + jsonError.message);
+    console.error("JSON fallback also failed:", (jsonErr as Error).message);
+    throw new Error("Cannot load historical data");
   }
 }
 
@@ -747,7 +745,8 @@ app.get("/api/backtest-data", (req, res) => {
     });
   } catch (error: any) {
     console.error("Backtest Data API Error:", error);
-    res.status(500).json({ error: error.message || "Failed to load real backtest market data" });
+    const stackLines = (error as Error).stack?.split("\n").slice(0, 4).join(" | ");
+    res.status(500).json({ error: error.message || "Failed to load real backtest market data", stack: stackLines });
   }
 });
 
