@@ -1,5 +1,6 @@
 import React, { useState, FormEvent, useEffect } from "react";
-import { StockData, PortfolioItem, WatchlistItem } from "../types";
+import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
+import { DataBadge } from "./DataBadge";
 import { STOCKS_DATA } from "../stocksData";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
@@ -770,7 +771,7 @@ export function PortfolioTracker({
                 </span>
                 <p className="text-white/30 text-[10px] font-sans max-w-sm">
                   Belum ada penyaluran dana ke aset saham. Gunakan sistem
-                  Rekomendasi di panel kanan untuk akuisisi optimal.
+                  Analisis di panel kanan untuk skenario akuisisi.
                 </p>
               </div>
             ) : (
@@ -2031,6 +2032,7 @@ export function PortfolioTracker({
                       >
                         {liveStock.ticker}
                       </button>
+                      <DataBadge status={liveStock.dataSources.price} />
                       <span className="text-[10px] text-white/40 block truncate max-w-32 mt-0.5">
                         {liveStock.name}
                       </span>

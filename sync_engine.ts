@@ -157,13 +157,16 @@ export async function runIdx80Scan() {
     console.log("Firebase not configured, skipping cloud save.");
   }
 
-  // Also save locally as a reliable cache
-  const isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
-  const dataPath = isCloudFunction
-    ? path.join("/tmp", "idx80_scan.json")
-    : path.join(process.cwd(), "data", "idx80_scan.json");
-  if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
-  fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: new Date().toISOString(), stocks: results }, null, 2));
+  // Also save locally as a reliable cache, but ONLY if we have results
+  // (never overwrite a valid cache with an empty scan)
+  if (results.length > 0) {
+    const isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
+    const dataPath = isCloudFunction
+      ? path.join("/tmp", "idx80_scan.json")
+      : path.join(process.cwd(), "data", "idx80_scan.json");
+    if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+    fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: new Date().toISOString(), stocks: results }, null, 2));
+  }
 }
 
 // Ensure the module isn't strictly executed instantly on load if imported, but can be started via cron

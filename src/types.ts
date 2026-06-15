@@ -1,3 +1,6 @@
+import { DataStatus } from "./types/DataStatus";
+export { DataStatus };
+
 export interface FinancialMetric {
   year: string;
   revenue: number; // in IDR Billion
@@ -8,6 +11,13 @@ export interface FinancialMetric {
   cashFlowOperating: number; // in IDR Billion
   cashFlowInvesting: number; // in IDR Billion
   cashFlowFinancing: number; // in IDR Billion
+}
+
+export interface DataSources {
+  price: DataStatus;
+  fundamentals: DataStatus;
+  charts: DataStatus;
+  description: DataStatus;
 }
 
 export interface StockData {
@@ -26,6 +36,7 @@ export interface StockData {
   der: number; // Debt to Equity ratio
   dividendYield: number; // percentage
   metrics: FinancialMetric[];
+  dataSources: DataSources;
   chartDataDaily: { date: string; price: number; volume: number }[];
   chartDataWeekly: { date: string; price: number; volume: number }[];
   chartDataMonthly: { date: string; price: number; volume: number }[];
@@ -55,8 +66,8 @@ export interface AnalysisResult {
     threats: string[];
   };
   keyRatios: { label: string; value: string; assessment: string }[];
-  fairValue: { estimatedValue: number; currentPrice: number; recommendation: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED' };
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
+  fairValue: { estimatedValue: number; currentPrice: number; stance: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED' };
+  stance: 'BULLISH' | 'CAUTIOUSLY_BULLISH' | 'NEUTRAL' | 'CAUTIOUSLY_BEARISH' | 'BEARISH';
   growthOutlook: string;
   timestamp: string;
 }

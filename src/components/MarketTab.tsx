@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { StockData, PortfolioItem, WatchlistItem } from "../types";
+import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { AIAssistant } from "./AIAssistant";
+import { DecisionAuditTrail } from "./DecisionAuditTrail";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { motion, AnimatePresence } from "motion/react";
@@ -27,7 +28,6 @@ import {
   Trash2
 } from "lucide-react";
 import { DataBadge } from "./DataBadge";
-import { DataStatus } from "../types/DataStatus";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
 
@@ -69,7 +69,7 @@ export function MarketTab({
     rationale: string;
     bullishFactors: string[];
     bearishFactors: string[];
-    strategyAdvice: string;
+    scenarioAnalysis?: string;
   } | null>(null);
   const [isFetchingSummary, setIsFetchingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -160,7 +160,7 @@ export function MarketTab({
              rationale: "IHSG berfluktuasi didorong oleh dinamika makro global dan pergerakan teknis emiten blue-chip.",
              bullishFactors: ["Ekspektasi moderasi suku bunga", "Rotasi masuk ke sektor pertahanan dan perbankan", "Valuasi atraktif di beberapa emiten Top Tier"],
              bearishFactors: ["Volatilitas nilai tukar mata uang", "Realisasi profit taking jangka pendek", "Kelemahan teknikal di atas resisten"],
-             strategyAdvice: "Pantau ketat momentum portofolio Anda. Gunakan opsi Cashout jika risiko meningkat, dan pertahankan saham dengan skor Fundamental (Config F) tinggi."
+             scenarioAnalysis: "Skenario defensif: pantau ketat momentum portofolio. Skenario agresif: akumulasi pada saham dengan skor Fundamental (Config F) tinggi jika IHSG membaik."
           });
           setSummaryError("Sistem menggunakan data ringkasan statis (API Limit / Offline)");
         }
@@ -187,7 +187,7 @@ export function MarketTab({
     totalCost += item.shares * item.buyPrice;
     totalValueNow += item.shares * lastPrice;
   });
-  const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 105 : 0; // standard simulated correction scaling!
+  const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
   // Synchronize when active stock changes from elsewhere
   React.useEffect(() => {
@@ -217,6 +217,12 @@ export function MarketTab({
         logoColor: "bg-blue-600",
         marketCap: 0,
         metrics: [],
+        dataSources: {
+          price: DataStatus.ESTIMATED,
+          fundamentals: DataStatus.ESTIMATED,
+          charts: DataStatus.ESTIMATED,
+          description: DataStatus.CACHED,
+        },
         chartDataDaily: [],
         chartDataWeekly: [],
         chartDataMonthly: [],
@@ -232,28 +238,37 @@ export function MarketTab({
     return 25;
   };
 
-  // Generate real dynamic Stockbit-like order book for a selected stock
-  const generateOrderBook = (price: number) => {
+  // Deterministic spread estimation (not live order book data)
+  // Uses ticker hash to generate a stable pseudo-random seed per stock
+  const getSpreadSeed = (ticker: string): number => {
+    let seed = 0;
+    for (let i = 0; i < ticker.length; i++) {
+      seed = ((seed << 5) - seed) + ticker.charCodeAt(i);
+      seed = seed & seed;
+    }
+    return Math.abs(seed) % 10000;
+  };
+
+  const generateEstimatedSpread = (price: number, ticker: string) => {
     const tick = getIdXTickSize(price);
+    const seed = getSpreadSeed(ticker);
     const bids = [];
     const asks = [];
 
     for (let i = 1; i <= 5; i++) {
-      // Bids are below current price
       const bidPrice = price - (i * tick);
-      const bidVol = Math.round((12000 - i * 1800) * (0.8 + Math.random() * 0.4));
+      const bidVol = Math.round((12000 - i * 1800) * (0.8 + ((seed * (i + 1)) % 1000) / 2500));
       bids.push({ price: bidPrice, vol: bidVol, count: Math.round(bidVol / 12) });
 
-      // Asks are above or equal to current price
       const askPrice = price + ((i - 1) * tick);
-      const askVol = Math.round((11500 - i * 1500) * (0.8 + Math.random() * 0.4));
+      const askVol = Math.round((11500 - i * 1500) * (0.8 + ((seed * (i + 5)) % 1000) / 2500));
       asks.push({ price: askPrice, vol: askVol, count: Math.round(askVol / 11) });
     }
 
     return { bids, asks: asks.reverse() };
   };
 
-  const { bids, asks } = generateOrderBook(currentDepthStock.currentPrice);
+  const { bids, asks } = generateEstimatedSpread(currentDepthStock.currentPrice, depthTicker);
   const totalBidVol = bids.reduce((acc, b) => acc + b.vol, 0);
   const totalAskVol = asks.reduce((acc, a) => acc + a.vol, 0);
 
@@ -476,10 +491,10 @@ export function MarketTab({
                       <div>
                         <span className="font-bold text-white/80 block text-[10px] uppercase tracking-widest font-mono">Formulasi Strategi Saham AI</span>
                         <p className="mt-1.5 text-zinc-400 text-xs">
-                          {marketSummary && marketSummary.strategyAdvice ? (
-                            marketSummary.strategyAdvice
+                          {marketSummary && marketSummary.scenarioAnalysis ? (
+                            marketSummary.scenarioAnalysis
                           ) : (
-                            `Sistem menyarankan sikap **${currentAction === "WAIT" ? "WAIT" : currentAction}** dengan alokasi modal teralokasi optimal **${RS.capital_deployment}%**. Memprioritaskan penempatan buy-on-weakness pada emiten KBMI 4 atau yang didukung ledakan volume (base breakout) saat siklus rotasi sektor IHSG mulai merangkak naik.`
+                            `Skenario saat ini: **${currentAction === "WAIT" ? "WAIT" : currentAction}** dengan alokasi **${RS.capital_deployment}%**. Skenario defensif: fokus pada emiten KBMI 4. Skenario agresif: akumulasi jika rotasi sektor IHSG mulai merangkak naik.`
                           )}
                         </p>
                       </div>
@@ -491,6 +506,9 @@ export function MarketTab({
           </div>
         </div>
       </motion.div>
+
+      {/* 1b. DECISION AUDIT TRAIL */}
+      <DecisionAuditTrail />
 
       {/* 2. SNAPSHOT METRICS GRID */}
       <h3 className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 px-1 pt-2">Ringkasan Parameter Real-Time</h3>
@@ -555,9 +573,9 @@ export function MarketTab({
           <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-6 relative overflow-hidden">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-white/[0.05] pb-4">
               <div className="flex items-center gap-2.5">
-                <Layers className="w-4 h-4 text-white/40" />
+                  <Layers className="w-4 h-4 text-white/40" />
                 <h3 className="text-[11px] uppercase font-bold tracking-widest text-white/70 font-mono">
-                  Kedalaman Pasar (Order Book)
+                  Estimasi Spread (Order Book)
                 </h3>
               </div>
               
@@ -660,7 +678,7 @@ export function MarketTab({
                         <span className="font-bold text-white/80 tracking-widest uppercase">
                           {vol.split(":")[0]}
                         </span>
-                        <span className="text-[9px] text-[#E0E0E0]/20 font-sans font-bold uppercase tracking-widest bg-white/[0.02] border border-white/[0.02] px-2 py-0.5 rounded">JCI FEED</span>
+                        <span className="text-[9px] text-[#E0E0E0]/20 font-sans font-bold uppercase tracking-widest bg-white/[0.02] border border-white/[0.02] px-2 py-0.5 rounded">CACHED</span>
                       </div>
                       <p className="text-zinc-400 mt-1 font-sans leading-relaxed text-xs">
                         {vol.split(":")[1] || vol}

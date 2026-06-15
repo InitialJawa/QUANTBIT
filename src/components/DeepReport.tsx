@@ -31,17 +31,17 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
     onGenerateReport(customFocus.trim() || undefined);
   };
 
-  const getRecBadgeColor = (rec: string) => {
-    switch (rec) {
-      case "STRONG_BUY":
+  const getStanceBadgeColor = (stance: string) => {
+    switch (stance) {
+      case "BULLISH":
         return "bg-emerald-600 text-white";
-      case "BUY":
-        return "bg-emerald-500 text-white";
-      case "HOLD":
+      case "CAUTIOUSLY_BULLISH":
+        return "bg-emerald-500/80 text-white";
+      case "NEUTRAL":
         return "bg-amber-500 text-white";
-      case "SELL":
+      case "CAUTIOUSLY_BEARISH":
         return "bg-orange-500 text-white";
-      case "STRONG_SELL":
+      case "BEARISH":
         return "bg-rose-600 text-white";
       default:
         return "bg-gray-500 text-white";
@@ -136,13 +136,13 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
                 <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
-                  Keputusan Analisis
+                  Analisis Skenario
                 </span>
-                <h4 className="text-sm font-semibold text-white/80 mt-1">Rekomendasi</h4>
+                <h4 className="text-sm font-semibold text-white/80 mt-1">Sikap Pasar</h4>
               </div>
               <div className="my-4">
-                <span className={`inline-flex px-4 py-2 rounded-xl text-base font-bold uppercase ${getRecBadgeColor(report.recommendation)}`}>
-                  {report.recommendation.replace("_", " ")}
+                <span className={`inline-flex px-4 py-2 rounded-xl text-base font-bold uppercase ${getStanceBadgeColor(report.stance)}`}>
+                  {report.stance.replace("_", " ")}
                 </span>
               </div>
               <div className="text-xs text-[#E0E0E0]/60 flex items-center gap-1.5 pt-3 border-t border-white/5">
@@ -178,13 +178,13 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
                   Status Valuasi:
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                  report.fairValue.recommendation === "UNDERVALUED" 
-                    ? "bg-emerald-500/10 text-emerald-400" 
-                    : report.fairValue.recommendation === "OVERVALUED"
+                  report.fairValue.stance === "UNDERVALUED"
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : report.fairValue.stance === "OVERVALUED"
                     ? "bg-rose-500/10 text-rose-400"
                     : "bg-amber-500/10 text-amber-400"
                 }`}>
-                  {report.fairValue.recommendation?.replace("_", " ")}
+                  {report.fairValue.stance?.replace("_", " ")}
                 </span>
               </div>
             </div>

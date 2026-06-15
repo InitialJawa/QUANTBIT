@@ -1,6 +1,8 @@
 import { StockData } from "./types";
+import { DataStatus } from "./types/DataStatus";
 import { PF, FD, EX, L } from "./marketData";
 import { IDX80_TICKERS } from "../idx80";
+import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
 
 const RAW_STOCKS_DATA = [
   "ADRO|Adaro Energy Indonesia Tbk|Energy|Coal Mining|112.4|3500|2.34|4.8|1.15|23.8|0.32|11.5",
@@ -50,6 +52,13 @@ const LOGO_COLORS = [
 function getLogoColor(ticker: string): string {
   const sum = ticker.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return LOGO_COLORS[sum % LOGO_COLORS.length];
+}
+
+// Deterministic pseudo-random using ticker hash (stable across renders)
+function seedFromTicker(tkr: string, offset: number = 0): number {
+  let h = 0;
+  for (let i = 0; i < tkr.length; i++) h = ((h << 5) - h) + tkr.charCodeAt(i) + offset;
+  return Math.abs(h % 100000) / 100000;
 }
 
 const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
@@ -117,42 +126,73 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
     return {
       date: hours[i],
       price: Math.round(currentPrice * (1 + (change / 100) * progress + factor)),
-      volume: Math.round(50000 + Math.random() * 80000),
+      volume: Math.round(50000 + seedFromTicker(ticker, i) * 80000),
     };
   });
 
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
+    const noise = seedFromTicker(ticker, i + 10) * 0.01 - 0.005;
     return {
       date: days[i],
-      price: Math.round(currentPrice * (1 + (change / 200) * progress + (Math.random() * 0.01 - 0.005))),
-      volume: Math.round(300000 + Math.random() * 500000),
+      price: Math.round(currentPrice * (1 + (change / 200) * progress + noise)),
+      volume: Math.round(300000 + seedFromTicker(ticker, i + 20) * 500000),
     };
   });
 
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
+    const noise = seedFromTicker(ticker, i + 30) * 0.02 - 0.01;
     return {
       date: weeks[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + (Math.random() * 0.02 - 0.01))),
-      volume: Math.round(1500000 + Math.random() * 2000000),
+      price: Math.round(currentPrice * (1 + (change / 100) * progress + noise)),
+      volume: Math.round(1500000 + seedFromTicker(ticker, i + 40) * 2000000),
     };
   });
 
   return {
     ticker, name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
-    peRatio, pbRatio, roe, der, dividendYield, metrics, chartDataDaily, chartDataWeekly, chartDataMonthly
+    peRatio, pbRatio, roe, der, dividendYield, metrics,
+    dataSources: {
+      price: DataStatus.ESTIMATED,
+      fundamentals: DataStatus.ESTIMATED,
+      charts: DataStatus.ESTIMATED,
+      description: PF[ticker]?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED,
+    },
+    chartDataDaily, chartDataWeekly, chartDataMonthly
   };
 });
+
+function applyRealFundamentals(stock: StockData, ticker: string): StockData {
+  const rawFundamentals = getFundamentals(ticker) as Map<number, import("./fundamentalsCache").RealFundamentals> | undefined;
+  if (!rawFundamentals || rawFundamentals.size === 0) return stock;
+
+  const metrics = buildMetricsFromFundamentals(rawFundamentals);
+  const latestF = getLatestFundamentals(ticker);
+  if (!latestF) return { ...stock, metrics };
+
+  return {
+    ...stock,
+    dataSources: {
+      ...stock.dataSources,
+      fundamentals: DataStatus.CACHED,
+    },
+    metrics,
+    roe: latestF.roe,
+    der: latestF.der,
+    peRatio: latestF.per,
+    pbRatio: latestF.price_bv,
+  };
+}
 
 export function getStock(ticker: string): StockData {
   const cleanTicker = ticker.toUpperCase().replace(".JK", "");
   
   // 1. Check if it's already in the perfectly parsed manual list that has full textual descriptions
   const manualFound = PARSED_KNOWN_STOCKS.find(s => s.ticker === cleanTicker);
-  if (manualFound) return manualFound;
+  if (manualFound) return applyRealFundamentals(manualFound, cleanTicker);
 
   // 2. Synthesize fallback details if not found in the manual 30, so any ticker from 80 works perfectly
   const profile = PF[cleanTicker];
@@ -223,35 +263,46 @@ export function getStock(ticker: string): StockData {
     return {
       date: hours[i],
       price: Math.round(currentPrice * (1 + (change / 100) * progress + factor)),
-      volume: Math.round(50000 + Math.random() * 80000),
+      volume: Math.round(50000 + seedFromTicker(cleanTicker, i) * 80000),
     };
   });
 
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
+    const noise = seedFromTicker(cleanTicker, i + 10) * 0.01 - 0.005;
     return {
       date: days[i],
-      price: Math.round(currentPrice * (1 + (change / 200) * progress + (Math.random() * 0.01 - 0.005))),
-      volume: Math.round(300000 + Math.random() * 500000),
+      price: Math.round(currentPrice * (1 + (change / 200) * progress + noise)),
+      volume: Math.round(300000 + seedFromTicker(cleanTicker, i + 20) * 500000),
     };
   });
 
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
+    const noise = seedFromTicker(cleanTicker, i + 30) * 0.02 - 0.01;
     return {
       date: weeks[i],
-      price: Math.round(currentPrice * (1 + (change / 100) * progress + (Math.random() * 0.02 - 0.01))),
-      volume: Math.round(1500000 + Math.random() * 2000000),
+      price: Math.round(currentPrice * (1 + (change / 100) * progress + noise)),
+      volume: Math.round(1500000 + seedFromTicker(cleanTicker, i + 40) * 2000000),
     };
   });
 
-  return {
+  const stock: StockData = {
     ticker: cleanTicker,
     name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
-    peRatio, pbRatio, roe, der, dividendYield, metrics, chartDataDaily, chartDataWeekly, chartDataMonthly
+    peRatio, pbRatio, roe, der, dividendYield, metrics,
+    dataSources: {
+      price: exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED,
+      fundamentals: (fundamentals?.pe_ratio || fundamentals?.roe) ? DataStatus.CACHED : DataStatus.ESTIMATED,
+      charts: DataStatus.ESTIMATED,
+      description: profile?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED,
+    },
+    chartDataDaily, chartDataWeekly, chartDataMonthly
   };
+
+  return applyRealFundamentals(stock, cleanTicker);
 }
 
 // Generate the final Universe List by running the IDX80 array through the getStock resolver!

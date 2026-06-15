@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { getStock, STOCKS_DATA } from "./stocksData";
-import { idxNews, EX, MKT, RS } from "./marketData";
+import { setFundamentalsData } from "./fundamentalsCache";
+import { DataStatus } from "./types/DataStatus";
+import { idxNews, EX, MKT, RS, setScanData } from "./marketData";
+import { refreshRSFromRegime, setIhsgHistory } from "./marketRegimeEngine";
 import { StockData, AnalysisResult, PortfolioItem, WatchlistItem } from "./types";
 import { HistoricalChart } from "./components/HistoricalChart";
 import { DeepReport } from "./components/DeepReport";
@@ -17,6 +20,7 @@ import { SimulationTab } from "./components/SimulationTab";
 import { DiagnosticsTab } from "./components/DiagnosticsTab";
 import { TickerLogo } from "./components/TickerLogo";
 import { LoginScreen } from "./components/LoginScreen";
+import { DataSourcesRow } from "./components/SourceBadge";
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
@@ -109,10 +113,45 @@ export default function App() {
           }
         })
         .catch(err => console.warn("Yahoo Finance Integration error, fallback active:", err));
+
+      // Fetch real IDX fundamentals from SQLite
+      fetch("/api/fundamentals")
+        .then(res => res.json())
+        .then(apiRes => {
+          if (apiRes.success && apiRes.data?.length > 0) {
+            setFundamentalsData(apiRes.data);
+            console.log(`Loaded ${apiRes.count} real fundamental records for ${new Set(apiRes.data.map((r: any) => r.ticker)).size} tickers`);
+          }
+        })
+        .catch(err => console.warn("Fundamentals load error:", err));
+
+      // Fetch IHSG history for MA20/MA50 computation in regime engine
+      fetch("/api/backtest-data")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setIhsgHistory(data.map((d: any) => ({ close: d.ihsgPrice, date: d.date })));
+          }
+          refreshRSFromRegime();
+        })
+        .catch(() => {
+          refreshRSFromRegime();
+        });
+
+      // Fetch scan data cache for real leader scores
+      fetch("/api/engine/idx80")
+        .then(res => res.json())
+        .then(data => {
+          if (data?.stocks && data.stocks.length > 0) {
+            setScanData(data);
+            console.log(`Loaded ${data.stocks.length} scanned stock records`);
+          }
+        })
+        .catch(() => {});
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 60000); // Increased interval to 60s
+    const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -145,6 +184,11 @@ export default function App() {
     }
   }, [dataFeed, yahooPrices]);
 
+  // Refresh market regime engine whenever MKT data changes
+  useEffect(() => {
+    refreshRSFromRegime();
+  }, [mktRevision]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setPriceFluctuations(prev => {
@@ -173,9 +217,8 @@ export default function App() {
   }, [goapiPrices, yahooPrices, dataFeed]);
 
   const getDynamicStock = (ticker: string): StockData => {
-    // 1. Fetch from cached STOCKS_DATA to avoid regenerating random chart arrays continuously
     const cleanTicker = ticker.toUpperCase().replace(".JK", "");
-    const rawStock = STOCKS_DATA.find(s => s.ticker === cleanTicker) || getStock(ticker);
+    const rawStock = getStock(ticker);
     if (!rawStock) return rawStock;
 
     let basePrice = rawStock.currentPrice;
@@ -206,10 +249,16 @@ export default function App() {
       return newData;
     };
 
+    const hasLivePrice = (dataFeed === "goapi" && goapiPrices[rawStock.ticker]) || (dataFeed === "yahoo" && yahooPrices[rawStock.ticker]);
+
     return {
       ...rawStock,
       currentPrice: activePrice,
       change: dynamicChange,
+      dataSources: {
+        ...rawStock.dataSources,
+        price: hasLivePrice ? DataStatus.LIVE : rawStock.dataSources.price,
+      },
       chartDataDaily: updateChartLastTip(rawStock.chartDataDaily),
       chartDataWeekly: updateChartLastTip(rawStock.chartDataWeekly),
       chartDataMonthly: updateChartLastTip(rawStock.chartDataMonthly)
@@ -1187,7 +1236,7 @@ export default function App() {
                       <p className="text-[11px] text-[#A0A0A0] leading-relaxed font-sans">
                         {isIHSGInCrisis ? (
                           <>
-                            IHSG melemah signifikan sebesar <strong className="text-rose-400 font-mono">{MKT.ihsg.monthly.toFixed(2)}%</strong> dalam sebulan terakhir. Sistem merekomendasikan menghentikan pembelian, melakukan <strong className="text-amber-400">Cashout</strong> segera, atau mengamankan tabungan aset Anda ke <strong className="text-amber-400 font-bold">Emas Fisik</strong>.
+                            IHSG turun <strong className="text-rose-400 font-mono">{MKT.ihsg.monthly.toFixed(2)}%</strong> dalam sebulan. Skenario defensif: hentikan pembelian baru, alokasi ke cash atau emas hingga konfirmasi pemulihan. Skenario agresif: akumulasi jika IHSG crossing di atas MA20/MA50.
                           </>
                         ) : (
                           <>
@@ -1385,6 +1434,9 @@ export default function App() {
                           PT {activeStock.name} <span className="text-emerald-400">({activeStock.ticker})</span>
                         </h3>
                         <p className="text-[10px] text-[#E0E0E0]/50 mt-1 uppercase tracking-widest">{activeStock.sector}</p>
+                        <div className="mt-1.5">
+                          <DataSourcesRow dataSources={activeStock.dataSources} />
+                        </div>
                       </div>
                     </div>
                     <button

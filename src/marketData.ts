@@ -154,10 +154,54 @@ export const RK: Record<string, number> = {"ADRO.JK":3,"ESSA.JK":99,"PTBA.JK":12
 export const CW_F = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 };
 export const CW_B = { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
 
+// Scan data cache from idx80_scan.json (loaded from /api/engine/idx80)
+interface ScanStock {
+  ticker: string;
+  quality: number;
+  growth: number;
+  value: number;
+  momentum: number;
+  currentPrice: number;
+  changePercent: number;
+  volume?: number;
+  peRatio?: number;
+  pbRatio?: number;
+  dividendYield?: number;
+  lastUpdated: string;
+}
+let scanDataCache: { stocks: ScanStock[]; lastUpdated: string } | null = null;
+
+export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } | null) {
+  scanDataCache = data;
+}
+
+export function getScanData() {
+  return scanDataCache;
+}
+
 export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod" | "res") {
   const weights = activeConfig === "prod" ? CW_F : CW_B;
 
   const dynamicL = activeStocksList.map((s, idx) => {
+    // Prefer scan data over hardcoded L for score factors
+    const scanStock = scanDataCache?.stocks.find(st => st.ticker === s.ticker);
+    if (scanStock) {
+      return {
+        rank: String(idx + 1),
+        ticker: s.ticker + ".JK",
+        quality: scanStock.quality.toFixed(2),
+        growth: scanStock.growth.toFixed(2),
+        value: scanStock.value.toFixed(2),
+        momentum: scanStock.momentum.toFixed(2),
+        final_score: String(Math.round(
+          scanStock.quality * weights.quality +
+          scanStock.growth * weights.growth +
+          scanStock.value * weights.value +
+          scanStock.momentum * weights.momentum
+        )),
+      };
+    }
+
     const existing = L.find(l => l.ticker.replace(".JK", "") === s.ticker);
     if (existing) {
       return {

@@ -135,6 +135,7 @@ if (fs.existsSync(firebaseConfigPath)) {
 
 function getEngineStateSyncFallback() {
   const defaultState = {
+    _simulated: true,
     portfolio: [
       { ticker: "BBCA", shares: 500, buyPrice: 9900, addedAt: new Date().toISOString() },
       { ticker: "BBRI", shares: 1000, buyPrice: 4900, addedAt: new Date().toISOString() }
@@ -142,7 +143,7 @@ function getEngineStateSyncFallback() {
     watchlist: [
       { ticker: "BBCA", addedAt: new Date().toISOString() }
     ],
-    cash: 100000000, // Rp 100 Juta default start balance
+    cash: 100000000,
     config: {
       activeConfig: "prod",
       safeHavenAsset: "emas",
@@ -161,8 +162,8 @@ function getEngineStateSyncFallback() {
       singleBuyTrigger: 5
     },
     tradeLogs: [
-      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: new Date().toISOString() },
-      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1000, price: 4900, timestamp: new Date().toISOString() }
+      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: new Date().toISOString(), _simulated: true },
+      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1000, price: 4900, timestamp: new Date().toISOString(), _simulated: true }
     ]
   };
 
@@ -273,16 +274,16 @@ You MUST return your response as a strict JSON object structure adhering exactly
   };
   keyRatios: { label: string; value: string; assessment: string }[]; // table of critical metrics, e.g., P/E, P/B, ROE, DER, NPM, Dividend Divestments, with assessment like 'Healthy', 'Elevated', 'Stretched' or 'Underpriced'
   fairValue: {
-    estimatedValue: number; // estimated intrinsic fair value (in IDR)
-    currentPrice: number; // current price passed
-    recommendation: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED';
+    estimatedValue: number;
+    currentPrice: number;
+    stance: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED';
   };
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
-  growthOutlook: string; // 1 solid paragraph about future projects/developments
-  timestamp: string; // ISO date string
+  stance: 'BULLISH' | 'CAUTIOUSLY_BULLISH' | 'NEUTRAL' | 'CAUTIOUSLY_BEARISH' | 'BEARISH';
+  growthOutlook: string;
+  timestamp: string;
 }
 
-Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, analytical, and highly objective.`;
+Frame your analysis as scenario assessment, not as trading instruction. Explain conditions under which each scenario applies. Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, analytical, and objective.`;
 
     const userPrompt = `Analyze PT ${stock.name} (${stock.ticker}) in Sector: ${stock.sector} / Subsector: ${stock.subSector}.
 Description: ${stock.description}
@@ -410,10 +411,10 @@ You MUST return your response as a strict JSON object adhering exactly to this T
   "rationale": string, // A deep, concise narrative (2-3 sentences) evaluating the market dynamics. Write in elegant financial Indonesian.
   "bullishFactors": string[], // 3 key positive catalysts or supportive indicators in Indonesian.
   "bearishFactors": string[], // 3 notable risk factors, headwinds, or pressure points in Indonesian.
-  "strategyAdvice": string // A clear recommendation (1-2 sentences) on capital deployment, risk mitigation, or accumulation strategies in Indonesian.
+  "scenarioAnalysis": string // A brief scenario outlook (1-2 sentences) describing possible market directions and conditions in Indonesian.
 }
 
-Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, professional, and analytical.`;
+Frame your output as scenario assessment, not investment directive. Explain what market conditions would support each scenario. Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, professional, and analytical.`;
 
     const stockSummary = stocks && Array.isArray(stocks) 
       ? stocks.map((s: any) => `${s.ticker}: IDR ${s.currentPrice} (${s.change >= 0 ? '+' : ''}${s.change}%)`).join(", ")
@@ -438,7 +439,7 @@ Please generate the daily market summary and rationale in Indonesian.`;
         rationale: `Pasar saat ini bergerak dalam rentang konsolidasi. Volatilitas terbatas sementara pelaku pasar mengamati perkembangan makro terkini (Cached Summary ${yesterday.toLocaleDateString()}).`,
         bullishFactors: ["Stabilitas Rupiah yang terjaga", "Arus modal asing di saham blue-chip stabil", "Valuasi indeks moderat mendukung akumulasi selektif"],
         bearishFactors: ["Katalis domestik terbatas dalam jangka pendek", "Kekhawatiran moderasi konsumsi", "Volatilitas komoditas menahan laju emiten energi"],
-        strategyAdvice: "Pertahankan alokasi portofolio dengan fokus pada saham-saham defensif dan perbankan yang memiliki neraca kuat."
+        scenarioAnalysis: "Skenario defensif: jika IHSG bertahan di bawah MA50, fokus pada saham defensif dan perbankan dengan neraca kuat. Skenario agresif: jika IHSG crossing di atas MA50, akumulasi pada sektor siklikal."
       });
     };
 
@@ -541,9 +542,9 @@ Description: ${selectedStock.description}
 Ratios: PE ${selectedStock.peRatio}, PB ${selectedStock.pbRatio}, ROE ${selectedStock.roe}%, DER ${selectedStock.der}, Dividend Yield ${selectedStock.dividendYield}%`;
     }
 
-    const systemInstruction = `You are a friendly, highly intelligent Indonesian stock market strategist and financial advisor.
-Provide objective, deep, and action-oriented financial reasoning. Support your answers with macroeconomic context in Indonesia, BI-Rate trends (Bank Indonesia interest rates), Rupiah exchange rate factors, or sector tailwinds.
-Keep your tone sophisticated yet accessible. Avoid any generic safe-talk; give clear, educational insights and state standard risk disclosure briefly.
+    const systemInstruction = `You are a friendly, knowledgeable Indonesian stock market analyst.
+Provide objective, balanced analysis. Support your answers with macroeconomic context in Indonesia, BI-Rate trends (Bank Indonesia interest rates), Rupiah exchange rate factors, or sector tailwinds.
+Present multiple scenarios and explain conditions for each. Keep your tone educational and balanced. Include standard risk disclosure.
 
 ${contextStockInfo}
 
@@ -734,6 +735,39 @@ app.get("/api/backtest-data", (req, res) => {
   } catch (error: any) {
     console.error("Backtest Data API Error:", error);
     res.status(500).json({ error: error.message || "Failed to load real backtest market data" });
+  }
+});
+
+// Fundamentals SQLite endpoint - serves real IDX fundamental data
+const FUNDAMENTALS_DB_PATH = path.join(process.cwd(), "data", "fundamentals.sqlite");
+let fundamentalsDb: Database.Database | null = null;
+
+function getFundamentalsDb(): Database.Database | null {
+  if (fundamentalsDb) return fundamentalsDb;
+  try {
+    if (!fs.existsSync(FUNDAMENTALS_DB_PATH)) {
+      console.warn("Fundamentals SQLite not found at", FUNDAMENTALS_DB_PATH);
+      return null;
+    }
+    fundamentalsDb = new Database(FUNDAMENTALS_DB_PATH, { readonly: true, fileMustExist: true });
+    return fundamentalsDb;
+  } catch (err) {
+    console.warn("Cannot open fundamentals DB:", (err as Error).message);
+    return null;
+  }
+}
+
+app.get("/api/fundamentals", (req, res) => {
+  try {
+    const db = getFundamentalsDb();
+    if (!db) {
+      return res.json({ success: false, count: 0, data: [] });
+    }
+    const rows = db.prepare("SELECT * FROM fundamentals_yearly WHERE year >= 2021 ORDER BY ticker, year").all();
+    res.json({ success: true, count: rows.length, data: rows });
+  } catch (error: any) {
+    console.error("Fundamentals API Error:", error);
+    res.status(500).json({ success: false, count: 0, data: [], error: error.message });
   }
 });
 
