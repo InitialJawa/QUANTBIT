@@ -60,16 +60,20 @@ function ensureHistoricalDb() {
 let historicalFallbackData: any[] | null = null;
 
 function getHistoricalDb(): Database.Database {
-  if (!historicalDb) {
-    ensureHistoricalDb();
+  if (!historicalDb && !historicalFallbackData) {
     try {
+      ensureHistoricalDb();
       historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
       historicalDb.pragma("journal_mode = WAL");
     } catch (err) {
       console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
-      const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
-      if (!Array.isArray(raw) || raw.length === 0) throw new Error("Historical JSON contains no records");
-      historicalFallbackData = raw;
+      try {
+        const raw = JSON.parse(fs.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+        if (!Array.isArray(raw) || raw.length === 0) throw new Error("Historical JSON contains no records");
+        historicalFallbackData = raw;
+      } catch (jsonErr) {
+        throw new Error("Cannot load historical data: " + (jsonErr as Error).message);
+      }
       return null as unknown as Database.Database;
     }
   }
