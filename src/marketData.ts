@@ -185,11 +185,12 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
 
   const dynamicL = activeStocksList.map((s, idx) => {
     // Prefer scan data over hardcoded L for score factors
-    const scanStock = scanDataCache?.stocks.find(st => st.ticker === s.ticker);
+    const normTicker = s.ticker.replace(".JK", "");
+    const scanStock = scanDataCache?.stocks.find(st => st.ticker.replace(".JK", "") === normTicker);
     if (scanStock) {
       return {
         rank: String(idx + 1),
-        ticker: s.ticker + ".JK",
+        ticker: normTicker + ".JK",
         quality: scanStock.quality.toFixed(2),
         growth: scanStock.growth.toFixed(2),
         value: scanStock.value.toFixed(2),
