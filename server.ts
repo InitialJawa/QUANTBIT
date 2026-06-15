@@ -65,7 +65,7 @@ function getHistoricalDb(): Database.Database | null {
 
   try {
     ensureHistoricalDb();
-    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
+    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
     return historicalDb;
   } catch (err) {
     console.warn("SQLite unavailable, using JSON fallback:", (err as Error).message);
