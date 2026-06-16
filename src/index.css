@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..850;1,100..850&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..850;1,100..850&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: 'Playfair Display', Georgia, Cambria, serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-ios: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Gradient variables for each theme */
@@ -137,9 +138,123 @@
   color-scheme: dark;
 }
 
+[data-theme="ios26"] {
+  --bg-primary: #060608;
+  --bg-surface: rgba(255,255,255,0.055);
+  --bg-surface-alt: rgba(255,255,255,0.07);
+  --bg-header: rgba(10,10,14,0.7);
+  --bg-elevated: rgba(255,255,255,0.055);
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-muted: rgba(255,255,255,0.25);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong: rgba(255,255,255,0.15);
+  --accent: #30D158;
+  --color-scheme: dark;
+  color-scheme: dark;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* iOS 26 glass surface overrides */
+[data-theme="ios26"] #applet-main-canvas::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(30,30,60,0.5) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(20,40,30,0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="ios26"] #applet-main-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="ios26"] header,
+[data-theme="ios26"] #main-sidebar,
+[data-theme="ios26"] [class*="bg-[#0A0A0A]"],
+[data-theme="ios26"] [class*="bg-[#0a0a0a]"],
+[data-theme="ios26"] .bg-\[\#0A0A0A\] {
+  background: rgba(10,10,14,0.7) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+[data-theme="ios26"] [class*="bg-[#121212]"],
+[data-theme="ios26"] [class*="bg-[#121212]/95"],
+[data-theme="ios26"] [class*="bg-[#070707]"],
+[data-theme="ios26"] [class*="bg-[#080808]"],
+[data-theme="ios26"] [class*="bg-[#0f0f0f]"],
+[data-theme="ios26"] nav.bg-\[\#121212\],
+[data-theme="ios26"] nav[class*="bg-[#121212]"] {
+  background: rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  border-color: rgba(255,255,255,0.09) !important;
+}
+
+[data-theme="ios26"] .bg-white\/5,
+[data-theme="ios26"] .bg-white\/10,
+[data-theme="ios26"] .bg-white\/20,
+[data-theme="ios26"] [class*="bg-white/"],
+[data-theme="ios26"] [class*="bg-white\\["] {
+  background: rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+[data-theme="ios26"] #sidebar-news-panel,
+[data-theme="ios26"] #sidebar-macro-indicators-panel,
+[data-theme="ios26"] #config-panel,
+[data-theme="ios26"] #historical-chart-container,
+[data-theme="ios26"] #ai-assistant-card,
+[data-theme="ios26"] #summary-report-panel {
+  background: rgba(255,255,255,0.055) !important;
+  backdrop-filter: blur(32px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(160%) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.06) inset,
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 16px 48px rgba(0,0,0,0.6),
+    0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+[data-theme="ios26"] .recharts-default-tooltip {
+  background: rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+
+[data-theme="ios26"] input,
+[data-theme="ios26"] textarea,
+[data-theme="ios26"] select {
+  background: rgba(0,0,0,0.3) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+}
+
+[data-theme="ios26"] .text-emerald-400,
+[data-theme="ios26"] .text-emerald-300,
+[data-theme="ios26"] [class*="text-emerald-4"] {
+  color: #30D158 !important;
+}
+
+[data-theme="ios26"] .text-rose-400,
+[data-theme="ios26"] .text-rose-455,
+[data-theme="ios26"] [class*="text-rose-4"] {
+  color: #FF453A !important;
+}
+
 /* ==========================================================================
    DATA-THEME ATTRIBUTE OVERRIDES
-   Applies when root div has data-theme="deep|slate|nord|light|stockbit"
+   Applies when root div has data-theme="deep|slate|nord|light|stockbit|ios26"
    ========================================================================== */
 
 /* ---------- A. BACKGROUND SURFACES ---------- */
@@ -465,6 +580,48 @@
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── GLASS UTILITY (iOS 26 style) ── */
+.glass {
+  background: rgba(255,255,255,0.055);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.06) inset,
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 16px 48px rgba(0,0,0,0.6),
+    0 4px 12px rgba(0,0,0,0.4);
+}
+
+.glass-sm {
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.10) inset,
+    0 8px 24px rgba(0,0,0,0.5);
+}
+
+/* iOS 26 live dot */
+.live-dot {
+  width: 6px; height: 6px;
+  background: #30D158;
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.font-ios {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ==========================================================================
