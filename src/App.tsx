@@ -329,7 +329,6 @@ export default function App() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (typeof data.cash === "number") setCash(data.cash);
-        if (data.theme) setTheme(data.theme === "dark" ? "deep" : data.theme);
         if (data.dataFeed) setDataFeed(data.dataFeed);
         if (data.activeConfig) setActiveConfig(data.activeConfig);
       }
