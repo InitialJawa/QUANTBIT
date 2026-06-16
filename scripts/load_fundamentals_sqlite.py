@@ -1,7 +1,7 @@
 import sqlite3, json, os, math
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 JSON_PATH = DATA_DIR / "idx_fundamentals_all.json"
 DB_PATH = DATA_DIR / "fundamentals.sqlite"
 

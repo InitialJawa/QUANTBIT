@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from curl_cffi import requests
 
 BASE_URL = "https://www.idx.co.id/primary/DigitalStatistic/GetApiDataPaginated"
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "data")
 OUTPUT_FILE = os.path.join(DATA_DIR, "idx_fundamentals_all.json")
 
 HEADERS = {

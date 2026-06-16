@@ -812,7 +812,7 @@ app.post("/api/market/sync", (req, res) => {
     });
   }
   console.log("Starting full Yahoo Finance market database synchronization...");
-  exec("npx tsx fetch_historical_data.ts", (error, stdout, stderr) => {
+  exec("npx tsx scripts/fetch_historical_data.ts", (error, stdout, stderr) => {
     if (error) {
       console.error("Subprocess execution error during sync:", error);
       return res.status(500).json({ success: false, error: error.message, details: stderr });
@@ -981,7 +981,7 @@ app.get("/data/live_market.json", async (req, res) => {
 app.use("/data", express.static(path.join(process.cwd(), "data")));
 
 // Start Background Scanner Engine
-import { startScannerCron, runIdx80Scan } from "./sync_engine.ts";
+import { startScannerCron, runIdx80Scan } from "../src/engine/sync_engine.ts";
 app.all("/api/engine/force-sync", async (req, res) => {
   try {
     // Await execution in cloud environment so that serverless functions do not freeze before finishing

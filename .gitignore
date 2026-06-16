@@ -12,6 +12,7 @@ dist/
 functions/index.js
 functions/data/
 api/index.js
+server.cjs
 
 # Firebase config (contains real API keys)
 firebase-config.json

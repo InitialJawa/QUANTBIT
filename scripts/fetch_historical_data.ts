@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Database from "better-sqlite3";
-import { COMBINED_TICKERS } from "./idx80.ts";
+import { COMBINED_TICKERS } from "../src/constants/idx80.ts";
 
 // 2000-01-01 to Today for extended backtest
 const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);

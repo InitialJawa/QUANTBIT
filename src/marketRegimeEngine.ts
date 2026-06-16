@@ -1,5 +1,5 @@
 import { MKT, L, EX, RS, CW_F, CW_B, getProcessedLeaders } from "./marketData";
-import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "./constants/idx80";
 
 export type RegimeState =
   | "RISK_ON"

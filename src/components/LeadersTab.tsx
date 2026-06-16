@@ -5,7 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
-import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
 export function getRotationData(ticker: string, dynamicChange?: number) {

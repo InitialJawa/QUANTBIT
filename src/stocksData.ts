@@ -1,7 +1,7 @@
 import { StockData } from "./types";
 import { DataStatus } from "./types/DataStatus";
 import { PF, FD, EX, L, getScanData, setScanData } from "./marketData";
-import { COMBINED_TICKERS } from "../idx80";
+import { COMBINED_TICKERS } from "./constants/idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
 import scanDataRaw from "../data/idx80_scan.json";
 

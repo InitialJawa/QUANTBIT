@@ -1,6 +1,6 @@
 import YahooFinance from "yahoo-finance2";
 const yahooFinance = new YahooFinance();
-import { COMBINED_TICKERS } from "./idx80.ts";
+import { COMBINED_TICKERS } from "../constants/idx80.ts";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { initializeApp as initAdminApp, getApps as getAdminApps } from "firebase-admin/app";

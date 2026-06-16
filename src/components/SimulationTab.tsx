@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
-import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 

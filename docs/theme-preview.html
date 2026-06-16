@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUANTBIT — iOS 26 Theme Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── BACKGROUND ── */
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #060608;
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* Subtle ambient background blobs */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(30,30,60,0.5) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 80% 20%, rgba(20,40,30,0.3) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLASS MIXIN ── */
+  .glass {
+    background: rgba(255,255,255,0.055);
+    backdrop-filter: blur(32px) saturate(160%);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 0.5px rgba(255,255,255,0.06) inset,
+      0 1px 0 rgba(255,255,255,0.12) inset,
+      0 16px 48px rgba(0,0,0,0.6),
+      0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .glass-sm {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.10) inset,
+      0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: rgba(10,10,14,0.7);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    position: relative;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    color: #060608;
+  }
+
+  .logo-text {
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+  }
+
+  .logo-sub {
+    font-size: 10px; font-weight: 400;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.12em;
+    margin-top: -1px;
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .nav-btn {
+    width: 34px; height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+    display: grid; place-items: center;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .nav-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+  .nav-btn.active { background: rgba(255,255,255,0.12); color: #fff; }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge-live {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(48,209,88,0.12);
+    border: 0.5px solid rgba(48,209,88,0.25);
+    border-radius: 20px;
+    padding: 3px 10px 3px 8px;
+    font-size: 11px; font-weight: 600;
+    color: #30D158;
+    letter-spacing: 0.06em;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #30D158;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .badge-source {
+    font-size: 11px; font-weight: 500;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.1em;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  .user-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 20px;
+    padding: 3px 10px 3px 4px;
+  }
+
+  .avatar {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+    border-radius: 50%;
+    font-size: 10px;
+    display: grid; place-items: center;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .user-email { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* ── BODY LAYOUT ── */
+  .body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* ── LEFT SIDEBAR ── */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wallet-panel {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel-header {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .panel-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 13px;
+  }
+
+  .panel-title {
+    font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.90);
+    letter-spacing: 0.04em;
+  }
+
+  .aset-label {
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .aset-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px; font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .stat-row {
+    display: flex; gap: 8px;
+  }
+
+  .stat-pill {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-pill span { font-size: 12px; }
+
+  /* Separator */
+  .sep {
+    height: 0.5px;
+    background: rgba(255,255,255,0.07);
+  }
+
+  /* Segmented Control — iOS exact */
+  .segment {
+    display: flex;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .seg-btn {
+    flex: 1;
+    padding: 6px 4px;
+    border: none; background: transparent;
+    border-radius: 7px;
+    font-size: 11px; font-weight: 500;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.03em;
+  }
+
+  .seg-btn.active {
+    background: rgba(255,255,255,0.13);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0.5px 0 rgba(255,255,255,0.15) inset;
+  }
+
+  /* Form */
+  .form-label {
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.28);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .input-field {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input-field::placeholder { color: rgba(255,255,255,0.18); }
+  .input-field:focus { border-color: rgba(255,255,255,0.20); }
+
+  .input-suffix {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .input-suffix input {
+    flex: 1; background: transparent; border: none;
+    padding: 10px 12px; color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; outline: none;
+  }
+
+  .input-suffix input::placeholder { color: rgba(255,255,255,0.18); }
+
+  .suffix-tag {
+    padding: 0 12px;
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 600;
+    color: rgba(255,255,255,0.25);
+    border-left: 0.5px solid rgba(255,255,255,0.08);
+    letter-spacing: 0.08em;
+  }
+
+  .quick-btns {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+
+  .quick-btn {
+    padding: 7px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 9px;
+    font-size: 11px; font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .quick-btn:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.7); }
+
+  .quick-btn.full { grid-column: span 2; }
+
+  /* CTA Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px; font-weight: 700;
+    color: #060608;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.75);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.11); }
+
+  /* Disclaimer */
+  .disclaimer {
+    font-size: 10.5px; line-height: 1.6;
+    color: rgba(255,255,255,0.22);
+    text-align: center;
+  }
+
+  /* ── NEWS PANEL ── */
+  .news-panel {
+    padding: 14px 16px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .news-panel::-webkit-scrollbar { width: 3px; }
+  .news-panel::-webkit-scrollbar-track { background: transparent; }
+  .news-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .news-item {
+    padding: 10px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  }
+
+  .news-item:last-child { border-bottom: none; }
+
+  .news-source {
+    font-size: 10px; font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: flex; justify-content: space-between;
+  }
+
+  .news-time { font-weight: 400; color: rgba(255,255,255,0.2); }
+
+  .news-title {
+    font-size: 12px; line-height: 1.5;
+    color: rgba(255,255,255,0.65);
+    font-weight: 400;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  .main::-webkit-scrollbar { display: none; }
+
+  /* Alert banner */
+  .alert-banner {
+    padding: 14px 16px;
+    background: rgba(255,59,48,0.08);
+    border: 0.5px solid rgba(255,59,48,0.2);
+    border-radius: 14px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .alert-body { flex: 1; }
+
+  .alert-title {
+    font-size: 12px; font-weight: 700;
+    color: #FF453A;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .alert-text {
+    font-size: 12px; line-height: 1.6;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .alert-text strong { color: #FF453A; font-weight: 600; }
+
+  .alert-cta {
+    margin-top: 10px;
+    padding: 9px 14px;
+    background: #FF453A;
+    border: none; border-radius: 10px;
+    font-size: 11px; font-weight: 700;
+    color: #fff; cursor: pointer;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .alert-close {
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 50%; font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer; display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 16px 18px;
+  }
+
+  .card-header {
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  .card-icon {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  .card-label {
+    font-size: 10.5px; font-weight: 500;
+    color: rgba(255,255,255,0.30);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+  }
+
+  .card-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px; font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .card-value.green { color: #30D158; }
+
+  .card-sub {
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+  }
+
+  .card-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .badge-green {
+    background: rgba(48,209,88,0.12);
+    border: 0.5px solid rgba(48,209,88,0.22);
+    color: #30D158;
+  }
+
+  .badge-return {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.5);
+    font-size: 10px;
+  }
+
+  .badge-return.positive { color: #30D158; }
+
+  /* Bottom cards */
+  .cards-grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .holding-card { padding: 16px 18px; }
+
+  .holding-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .ticker-badge {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px; font-weight: 600;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .empty-state {
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  .empty-title {
+    font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.30);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .empty-desc {
+    font-size: 11px; line-height: 1.6;
+    color: rgba(255,255,255,0.18);
+  }
+
+  .mesin-card { padding: 16px 18px; }
+
+  .mode-label {
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .mode-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .mode-btn {
+    padding: 9px 8px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 9px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mode-btn.active {
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .mode-btn-title {
+    font-size: 10.5px; font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.05em;
+  }
+
+  .mode-btn.active .mode-btn-title { color: #fff; }
+
+  .mode-btn-sub {
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.22);
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+
+  .config-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+
+  .config-btn {
+    padding: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    text-align: center; cursor: pointer;
+  }
+
+  .config-btn.active {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .config-name {
+    font-size: 10.5px; font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.06em;
+  }
+
+  .config-btn.active .config-name { color: #fff; }
+
+  .config-sub {
+    font-size: 9px; color: rgba(255,255,255,0.2);
+    margin-top: 1px; letter-spacing: 0.04em;
+  }
+
+  .lock-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 10px; color: rgba(255,255,255,0.25);
+  }
+
+  /* ── THEME SWITCHER ── */
+  .theme-switcher {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .theme-label {
+    font-size: 10px; color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 4px;
+    text-align: right;
+  }
+
+  .theme-options {
+    display: flex; gap: 6px;
+  }
+
+  .theme-opt {
+    width: 28px; height: 28px;
+    border-radius: 50%; border: 1.5px solid transparent;
+    cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+
+  .theme-opt:hover { transform: scale(1.1); }
+  .theme-opt.selected { border-color: rgba(255,255,255,0.5); }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo-icon">Q</div>
+      <div>
+        <div class="logo-text">QUANTBIT</div>
+        <div class="logo-sub">TERMINAL</div>
+      </div>
+    </div>
+
+    <div class="header-nav">
+      <button class="nav-btn active">📈</button>
+      <button class="nav-btn">💼</button>
+      <button class="nav-btn">⚙️</button>
+      <button class="nav-btn">🔔</button>
+      <button class="nav-btn">🛡️</button>
+      <button class="nav-btn">👤</button>
+    </div>
+
+    <div class="header-right">
+      <div class="badge-live">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <div class="badge-source">YAHOO</div>
+      <div class="user-chip">
+        <div class="avatar">I</div>
+        <span class="user-email">imamnasrulloh02@gm...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Wallet Panel -->
+      <div class="glass wallet-panel">
+        <div class="panel-header">
+          <div class="panel-icon">💳</div>
+          <div class="panel-title">DOMPET RDI</div>
+        </div>
+
+        <div>
+          <div class="aset-label">Total Nilai Aset</div>
+          <div class="aset-value">Rp 27.317.323</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-pill">
+            <span>💵</span> Rp 0
+          </div>
+          <div class="stat-pill">
+            <span>🥇</span> 11.0000 gr
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="segment">
+          <button class="seg-btn active">Kas Tunai</button>
+          <button class="seg-btn">Emas Fisik</button>
+          <button class="seg-btn">Riwayat</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-label">Nominal Transaksi (Rp)</div>
+          <div class="input-suffix">
+            <input type="text" placeholder="Contoh: 1000000">
+            <div class="suffix-tag">IDR</div>
+          </div>
+
+          <div class="quick-btns">
+            <button class="quick-btn">+100.000</button>
+            <button class="quick-btn">+1.000.000</button>
+            <button class="quick-btn">+5.000.000</button>
+            <button class="quick-btn">Max Kas</button>
+          </div>
+
+          <button class="btn-primary">DEPOSIT KAS</button>
+          <button class="btn-secondary">TARIK TUNAI</button>
+        </div>
+
+        <div class="disclaimer">
+          Transaksi disimulasikan secara real-time berdasarkan harga acuan pasar saat ini. Saldo Emas dikonversi dalam ukuran gram.
+        </div>
+      </div>
+
+      <!-- News Panel -->
+      <div class="glass news-panel">
+        <div class="panel-header" style="margin-bottom:12px;">
+          <div class="panel-icon">📰</div>
+          <div class="panel-title">PORTAL BERITA</div>
+        </div>
+
+        <div class="news-item">
+          <div class="news-source">CNBC Indonesia <span class="news-time">20 mins ago</span></div>
+          <div class="news-title">BI-Rate Tetap 6.25%; Sentimen Likuiditas Perbankan Masih Terjaga</div>
+        </div>
+        <div class="news-item">
+          <div class="news-source">Bisnis.com <span class="news-time">1 hour ago</span></div>
+          <div class="news-title">Emiten Batubara Membukukan ARPU Kuartal I Tertinggi Sejak 2022</div>
+        </div>
+        <div class="news-item">
+          <div class="news-source">Kontan <span class="news-time">2 hours ago</span></div>
+          <div class="news-title">IHSG Kembali ke Level 7.200 Ditopang Sektor Perbankan</div>
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- Alert -->
+      <div class="alert-banner">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <div class="alert-title">Sinyal Krisis Makro Terdeteksi!</div>
+          <div class="alert-text">
+            IHSG turun <strong>-17.96%</strong> dalam sebulan. Skenario defensif: hentikan pembelian baru, alokasi ke cash atau emas hingga konfirmasi pemulihan.
+          </div>
+          <button class="alert-cta">Buka Live Ledger & Amankan Aset →</button>
+        </div>
+        <button class="alert-close">✕</button>
+      </div>
+
+      <!-- Cards Row 1 -->
+      <div class="cards-grid">
+
+        <div class="glass metric-card">
+          <div class="card-header">
+            <div class="card-icon">📊</div>
+            <div class="card-label">Likuiditas Kas (RDI)</div>
+          </div>
+          <div class="card-value">IDR 0</div>
+          <div class="card-badge badge-green">✓ Secure & Verified</div>
+        </div>
+
+        <div class="glass metric-card">
+          <div class="card-header">
+            <div class="card-icon">📋</div>
+            <div class="card-label">Modal Investasi Saham</div>
+          </div>
+          <div class="card-value">IDR 0</div>
+          <div class="card-sub">Cost-Basis Value</div>
+        </div>
+
+        <div class="glass metric-card">
+          <div class="card-header">
+            <div class="card-icon">📡</div>
+            <div class="card-label">Nilai Saham Saat Ini</div>
+          </div>
+          <div class="card-value">IDR 0</div>
+          <div class="card-sub">Market Live Pricing</div>
+        </div>
+
+        <div class="glass metric-card">
+          <div class="card-header">
+            <div class="card-icon">📈</div>
+            <div class="card-label">Total P&L Portofolio</div>
+          </div>
+          <div class="card-value green">+0</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+            <span class="card-sub">Return</span>
+            <span class="card-badge badge-return positive">+0.00%</span>
+          </div>
+        </div>
+
+      </div><!-- /cards-grid -->
+
+      <!-- Cards Row 2 -->
+      <div class="cards-grid-bottom">
+
+        <div class="glass holding-card">
+          <div class="holding-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="card-icon">📁</div>
+              <div class="card-label">Holding Saham Aktif</div>
+            </div>
+            <div class="ticker-badge">1 Tickers</div>
+          </div>
+          <div class="empty-state">
+            <div class="empty-title">Portofolio Kosong</div>
+            <div class="empty-desc">Belum ada penyaluran dana ke aset saham. Gunakan sistem Analisis di panel kanan untuk skenario akuisisi.</div>
+          </div>
+        </div>
+
+        <div class="glass mesin-card">
+          <div class="holding-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="card-icon">⚙️</div>
+              <div class="card-label">Mesin Kuantitatif Terpadu</div>
+            </div>
+            <div class="lock-badge">🔒 Terkunci</div>
+          </div>
+
+          <div class="mode-label">Mode Sistem</div>
+          <div class="mode-grid">
+            <div class="mode-btn active">
+              <div class="mode-btn-title">Algo Rebalancer</div>
+              <div class="mode-btn-sub">Rotasi Multisektor</div>
+            </div>
+            <div class="mode-btn">
+              <div class="mode-btn-title">Single/Focus</div>
+              <div class="mode-btn-sub">Fokus Saham Tunggal</div>
+            </div>
+          </div>
+
+          <div class="mode-label">Model Konfigurasi</div>
+          <div class="config-row">
+            <div class="config-btn active">
+              <div class="config-name">Config F</div>
+              <div class="config-sub">Capital Protection</div>
+            </div>
+            <div class="config-btn">
+              <div class="config-name">Config B</div>
+              <div class="config-sub">Aggressive Growth</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /cards-grid-bottom -->
+
+    </div><!-- /main -->
+
+  </div><!-- /body -->
+
+</div><!-- /app -->
+
+<script>
+  // Tab interactions
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.segment').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.mode-grid').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.config-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.config-row').querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelector('.alert-close').addEventListener('click', (e) => {
+    e.target.closest('.alert-banner').style.display = 'none';
+  });
+</script>
+</body>
+</html>

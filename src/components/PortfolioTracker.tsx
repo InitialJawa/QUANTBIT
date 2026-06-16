@@ -5,7 +5,7 @@ import { setActiveUniverse, setActiveConfig, refreshRSFromRegime } from "../mark
 import { STOCKS_DATA } from "../stocksData";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
-import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../../idx80";
+import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { EX, getProcessedLeaders, MKT } from "../marketData";
 import {
   PieChart,
