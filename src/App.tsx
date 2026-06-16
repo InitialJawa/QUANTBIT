@@ -788,7 +788,7 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" data-theme={theme} className={`min-h-screen bg-gradient-theme text-[#E0E0E0] font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col`}>
+    <div id="applet-main-canvas" data-theme={theme} className={`min-h-screen bg-gradient-theme text-[#E0E0E0] font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-400 flex flex-col pt-24`}>
       
       {/* APP NOTIFICATION OVERLAY */}
       <AnimatePresence>
@@ -814,274 +814,203 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* BRAND STYLE TOP NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 px-3 py-2 md:px-6 md:py-2.5 shrink-0 flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-4">
-        {/* Brand Logo & Name */}
-        <div className="flex items-center justify-start w-full md:w-auto gap-2.5">
-          <div className="flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 115 100" className="w-8 h-8 text-white transition-colors duration-300 dark:text-white" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
-              <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-              <circle cx="98" cy="70" r="10" className="fill-emerald-400" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-[13px] md:text-sm font-black text-white tracking-widest uppercase">
-              Quantbit
-            </h1>
-            <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.2em] font-medium leading-none mt-0.5">
-              Terminal
-            </span>
-          </div>
-        </div>
-
-        {/* Gemini-Style Rounded Pill Navigation (Fitted precisely & extremely responsive!) */}
-        <div className="flex-1 max-w-4xl overflow-x-auto scrollbar-none py-0.5 md:py-0 w-full">
-          <nav className="flex items-center space-x-1 bg-[#121212] border border-white/5 p-1 rounded-full w-max mx-auto">
-            
-            <button
-              id="tab-market"
-              onClick={() => setActiveTab("market")}
-              title="Market"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "market"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Activity className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Market</span>
-            </button>
-
-            <button
-              id="tab-ledger"
-              onClick={() => setActiveTab("ledger")}
-              title="Ledger"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "ledger"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Briefcase className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Portfolio</span>
-            </button>
-
-            <button
-              id="tab-leaders"
-              onClick={() => setActiveTab("leaders")}
-              title="Leaders"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "leaders"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Leaders</span>
-            </button>
-
-            <button
-              id="tab-turnaround"
-              onClick={() => setActiveTab("turnaround")}
-              title="Recovery"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "turnaround"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Flame className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Recovery</span>
-            </button>
-
-            <button
-              id="tab-exit"
-              onClick={() => setActiveTab("exit")}
-              title="Manajemen Resiko"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "exit"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <ShieldAlert className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Risiko</span>
-            </button>
-
-            <button
-              id="tab-simulation"
-              onClick={() => setActiveTab("simulation")}
-              title="Simulation"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "simulation"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Award className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Simulasi</span>
-            </button>
-
-            <button
-              id="tab-diagnostics"
-              onClick={() => setActiveTab("diagnostics")}
-              title="AI Labs"
-              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer gap-2 ${
-                activeTab === "diagnostics"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Cpu className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              <span className="hidden lg:inline-block text-[10px] font-bold uppercase tracking-widest">Sistem</span>
-            </button>
-
-          </nav>
-        </div>
-
-        {/* Brand Control Utilities & Theme Toggle panel */}
-        <div className="flex items-center gap-3 shrink-0 self-end md:self-center relative">
+      {/* THEME 2.0 FLOATING NAVIGATION */}
+      <nav className="top-nav fixed top-0 left-0 right-0 z-50 flex justify-center mt-3 px-4 pointer-events-none">
+        <div className="w-full max-w-7xl bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-2xl px-4 sm:px-5 py-2.5 flex items-center justify-between shadow-2xl pointer-events-auto">
           
-          {/* Active Online badge */}
-          <div className="hidden md:flex items-center gap-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-ping" />
-            <span className="text-[9px] font-bold font-mono tracking-widest text-white/80 uppercase">LIVE</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 bg-white/5" title="Data Feed Indicator">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
-            <span className="text-[9px] font-bold font-mono tracking-widest uppercase text-white/50">
-              {dataFeed === "yahoo" ? "Yahoo" : dataFeed === "goapi" ? "GoAPI" : "Simulasi"}
+          {/* LEFT: Brand Logo */}
+          <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => setActiveTab('leaders')}>
+            <div className="w-8 h-8 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <span className="text-white font-bold text-sm">Q</span>
+            </div>
+            <span className="font-semibold text-sm sm:text-base tracking-tight text-white hidden sm:inline uppercase">
+              Quantbit Terminal
             </span>
           </div>
 
-          {/* User Account Info */}
-          <div className="hidden md:flex items-center bg-white/5 border border-white/5 rounded-xl px-3 py-1 gap-3">
-            <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center border border-white/10">
-              <span className="text-[10px] text-white font-bold uppercase">{user?.email?.charAt(0) || "U"}</span>
-            </div>
-            <span className="text-[10px] text-white/70 font-medium truncate max-w-[120px]">{user?.email}</span>
+          {/* CENTER: Tab Buttons */}
+          <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.05] p-1 rounded-xl overflow-x-auto no-scrollbar mx-2">
+            <button id="tab-market" onClick={() => setActiveTab("market")} title="Market"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "market" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <Activity className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Market</span>
+            </button>
+            <button id="tab-ledger" onClick={() => setActiveTab("ledger")} title="Ledger"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "ledger" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <Briefcase className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Portfolio</span>
+            </button>
+            <button id="tab-leaders" onClick={() => setActiveTab("leaders")} title="Leaders"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "leaders" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Leaders</span>
+            </button>
+            <button id="tab-turnaround" onClick={() => setActiveTab("turnaround")} title="Recovery"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "turnaround" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <Flame className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Recovery</span>
+            </button>
+            <button id="tab-exit" onClick={() => setActiveTab("exit")} title="Manajemen Resiko"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "exit" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Risiko</span>
+            </button>
+            <button id="tab-simulation" onClick={() => setActiveTab("simulation")} title="Simulation"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "simulation" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <Award className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Simulasi</span>
+            </button>
+            <button id="tab-diagnostics" onClick={() => setActiveTab("diagnostics")} title="AI Labs"
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "diagnostics" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}>
+              <Cpu className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Sistem</span>
+            </button>
           </div>
 
-          <div className="relative" ref={settingsDropdownRef}>
-            {/* Settings Menu Toggle */}
-            <button 
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className="w-8 h-8 rounded-xl border border-white/5 hover:bg-white/10 flex items-center justify-center transition-all bg-[#0A0A0A] z-50 relative"
-            >
-              <Settings className="w-4 h-4 text-white/70" />
-            </button>
+          {/* RIGHT: Controls */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            
+            <div className="hidden md:flex items-center gap-2 bg-white/[0.03] border border-white/[0.05] px-3 py-1.5 rounded-xl">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-ping" />
+              <span className="text-[9px] font-bold font-mono tracking-widest text-white/80 uppercase">LIVE</span>
+            </div>
 
-            {/* Settings Dropdown */}
-            <AnimatePresence>
-              {isSettingsOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-12 right-0 w-64 bg-[#121212] border border-white/[0.05] shadow-2xl rounded-2xl py-2 z-[60] flex flex-col font-sans max-h-screen overflow-y-auto"
-                >
-                  <div className="px-4 py-2 border-b border-white/[0.05] mb-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-                        <span className="text-xs font-bold uppercase">{user.email?.charAt(0) || "U"}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] text-white font-medium truncate max-w-[150px]">{user.email}</span>
-                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Signed in</span>
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/[0.05] bg-white/[0.03]" title="Data Feed Indicator">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
+              <span className="text-[9px] font-bold font-mono tracking-widest uppercase text-white/50">
+                {dataFeed === "yahoo" ? "Yahoo" : dataFeed === "goapi" ? "GoAPI" : "Simulasi"}
+              </span>
+            </div>
+
+            <div className="hidden md:flex items-center bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-1 gap-3">
+              <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center border border-white/10">
+                <span className="text-[10px] text-white font-bold uppercase">{user?.email?.charAt(0) || "U"}</span>
+              </div>
+              <span className="text-[10px] text-white/70 font-medium truncate max-w-[120px]">{user?.email}</span>
+            </div>
+
+            <div className="relative" ref={settingsDropdownRef}>
+              <button onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className="w-8 h-8 rounded-xl border border-white/[0.05] hover:bg-white/10 flex items-center justify-center transition-all bg-white/[0.03] z-50 relative">
+                <Settings className="w-4 h-4 text-white/70" />
+              </button>
+
+              <AnimatePresence>
+                {isSettingsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-12 right-0 w-64 bg-[#121212] border border-white/[0.05] shadow-2xl rounded-2xl py-2 z-[60] flex flex-col font-sans max-h-screen overflow-y-auto"
+                  >
+                    <div className="px-4 py-2 border-b border-white/[0.05] mb-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                          <span className="text-xs font-bold uppercase">{user.email?.charAt(0) || "U"}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] text-white font-medium truncate max-w-[150px]">{user.email}</span>
+                          <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Signed in</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="px-2 py-1">
-                    <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Tema Aplikasi</div>
-                    <button onClick={() => setTheme("deep")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "deep" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Moon className="w-4 h-4" /> Deep
-                      {theme === "deep" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("slate")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "slate" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Palette className="w-4 h-4" /> Slate
-                      {theme === "slate" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("nord")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "nord" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Palette className="w-4 h-4" /> Nord
-                      {theme === "nord" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("light")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "light" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Sun className="w-4 h-4" /> Terang
-                      {theme === "light" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("stockbit")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "stockbit" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Monitor className="w-4 h-4" /> Stockbit
-                      {theme === "stockbit" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("v2")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "v2" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Sparkles className="w-4 h-4" /> Quantbit V2
-                      {theme === "v2" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("ios26")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "ios26" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Hexagon className="w-4 h-4" /> iOS 26
-                      {theme === "ios26" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                  </div>
+                    <div className="px-2 py-1">
+                      <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Tema Aplikasi</div>
+                      <button onClick={() => setTheme("deep")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "deep" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Moon className="w-4 h-4" /> Deep
+                        {theme === "deep" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("slate")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "slate" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Palette className="w-4 h-4" /> Slate
+                        {theme === "slate" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("nord")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "nord" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Palette className="w-4 h-4" /> Nord
+                        {theme === "nord" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("light")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "light" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Sun className="w-4 h-4" /> Terang
+                        {theme === "light" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("stockbit")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "stockbit" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Monitor className="w-4 h-4" /> Stockbit
+                        {theme === "stockbit" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("v2")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "v2" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Sparkles className="w-4 h-4" /> Quantbit V2
+                        {theme === "v2" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setTheme("ios26")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "ios26" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
+                        <Hexagon className="w-4 h-4" /> iOS 26
+                        {theme === "ios26" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                    </div>
 
-                  <div className="h-px w-full bg-white/[0.05] my-1" />
+                    <div className="h-px w-full bg-white/[0.05] my-1" />
+                    <div className="px-2 py-1">
+                      <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Data Feed</div>
+                      <button onClick={() => setDataFeed("yahoo")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                        Yahoo Finance
+                        {dataFeed === "yahoo" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setDataFeed("goapi")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                        GoAPI.io
+                        {dataFeed === "goapi" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setDataFeed("simulated")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                        Simulasi Offline
+                        {dataFeed === "simulated" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                    </div>
 
-                  <div className="px-2 py-1">
-                    <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Data Feed</div>
-                    <button onClick={() => setDataFeed("yahoo")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      Yahoo Finance
-                      {dataFeed === "yahoo" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setDataFeed("goapi")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      GoAPI.io
-                      {dataFeed === "goapi" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setDataFeed("simulated")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      Simulasi Offline
-                      {dataFeed === "simulated" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                  </div>
+                    <div className="h-px w-full bg-white/[0.05] my-1" />
+                    <div className="px-2 py-1">
+                      <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Konfigurasi</div>
+                      <button onClick={() => setActiveConfig("prod")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                        <Sliders className="w-4 h-4" /> Config F
+                        {activeConfig === "prod" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                      <button onClick={() => setActiveConfig("res")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
+                        <Sliders className="w-4 h-4" /> Config B
+                        {activeConfig === "res" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
+                      </button>
+                    </div>
 
-                  <div className="h-px w-full bg-white/[0.05] my-1" />
+                    <div className="h-px w-full bg-white/[0.05] my-1" />
+                    <div className="px-2 py-1">
+                      <button onClick={() => { setIsSettingsOpen(false); signOut(auth); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors">
+                        <LogOut className="w-4 h-4" /> Keluar Akun
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-                  <div className="px-2 py-1">
-                    <div className="text-[10px] font-bold text-zinc-500 px-3 pt-2 pb-1 uppercase tracking-widest">Konfigurasi</div>
-                    <button onClick={() => setActiveConfig("prod")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      <Sliders className="w-4 h-4" /> Config F
-                      {activeConfig === "prod" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setActiveConfig("res")} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] rounded-xl transition-colors">
-                      <Sliders className="w-4 h-4" /> Config B
-                      {activeConfig === "res" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                  </div>
-
-                  <div className="h-px w-full bg-white/[0.05] my-1" />
-
-                  <div className="px-2 py-1">
-                    <button onClick={() => { setIsSettingsOpen(false); signOut(auth); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors">
-                      <LogOut className="w-4 h-4" /> Keluar Akun
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <button className="md:hidden w-8 h-8 rounded-xl border border-white/[0.05] hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
 
-          {/* Unified Mobile Menu Toggle */}
-          <button 
-            className="md:hidden w-8 h-8 rounded-xl border border-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
-
         </div>
-
-      </header>
+      </nav>
 
       <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
         
