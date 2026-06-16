@@ -42,16 +42,16 @@
 
 :root,
 [data-theme="deep"] {
-  --bg-primary: #0B0B14;
-  --bg-surface: #161625;
-  --bg-surface-alt: #1C1C30;
-  --bg-header: #0F0F1A;
-  --bg-elevated: #242440;
-  --text-primary: #E0E0E0;
-  --text-secondary: rgba(255, 255, 255, 0.55);
-  --text-muted: rgba(255, 255, 255, 0.30);
-  --border-default: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.10);
+  --bg-primary: #000000;
+  --bg-surface: #000000;
+  --bg-surface-alt: #111111;
+  --bg-header: #000000;
+  --bg-elevated: #111111;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.60);
+  --border-default: rgba(255, 255, 255, 0.20);
+  --border-strong: rgba(255, 255, 255, 0.30);
   --accent: #10b981;
   --color-scheme: dark;
   color-scheme: dark;
