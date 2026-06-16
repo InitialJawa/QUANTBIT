@@ -189,7 +189,6 @@
   z-index: 1;
 }
 
-[data-theme="ios26"] .top-nav,
 [data-theme="ios26"] header,
 [data-theme="ios26"] #main-sidebar,
 [data-theme="ios26"] [class*="bg-[#0A0A0A]"],
@@ -282,7 +281,6 @@
   z-index: 0;
 }
 
-[data-theme="v2"] .top-nav,
 [data-theme="v2"] header,
 [data-theme="v2"] #main-sidebar,
 [data-theme="v2"] [class*="bg-[#0A0A0A]"],
