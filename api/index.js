@@ -1,4 +1,4 @@
-// server.ts
+// server/server.ts
 import express from "express";
 import path2 from "path";
 import { GoogleGenAI } from "@google/genai";
@@ -7,58 +7,226 @@ import dotenv from "dotenv";
 import { exec } from "child_process";
 import { initializeApp as initializeApp2 } from "firebase/app";
 import { getFirestore as getFirestore2, doc as doc2, getDoc, setDoc as setDoc2 } from "firebase/firestore";
+import { initializeApp as initAdminApp2, getApps as getAdminApps2 } from "firebase-admin/app";
+import { getDatabase as getAdminDatabase2 } from "firebase-admin/database";
 import Database from "better-sqlite3";
 import Groq from "groq-sdk";
 import OpenAI from "openai";
 
-// sync_engine.ts
+// src/engine/sync_engine.ts
 import YahooFinance from "yahoo-finance2";
-const yahooFinance = new YahooFinance();
 
-// idx80.ts
+// src/constants/idx80.ts
 var IDX80_TICKERS = [
-  "BBCA.JK", "BBRI.JK", "BMRI.JK", "BBNI.JK", "ASII.JK", "TLKM.JK", "UNVR.JK", "ICBP.JK", "INDF.JK", "GOTO.JK",
-  "ADRO.JK", "PTBA.JK", "ITMG.JK", "UNTR.JK", "AMMN.JK", "BREN.JK", "CUAN.JK", "PGEO.JK", "TPIA.JK", "BYAN.JK",
+  "BBCA.JK",
+  "BBRI.JK",
+  "BMRI.JK",
+  "BBNI.JK",
+  "ASII.JK",
+  "TLKM.JK",
+  "UNVR.JK",
+  "ICBP.JK",
+  "INDF.JK",
+  "GOTO.JK",
+  "ADRO.JK",
+  "PTBA.JK",
+  "ITMG.JK",
+  "UNTR.JK",
+  "AMMN.JK",
+  "BREN.JK",
+  "CUAN.JK",
+  "PGEO.JK",
+  "TPIA.JK",
+  "BYAN.JK",
   "ESSA.JK",
-  "BRPT.JK", "KLBF.JK", "MIKA.JK", "CPIN.JK", "JPFA.JK", "INDY.JK", "MEDC.JK", "ENRG.JK", "HRUM.JK", "AMRT.JK",
-  "MIDI.JK", "MAPA.JK", "MAPI.JK", "ACES.JK", "SCMA.JK", "EMTK.JK", "BUKA.JK", "ARTO.JK", "BRIS.JK", "BBTN.JK",
-  "BDMN.JK", "BNGA.JK", "NISP.JK", "PNBN.JK", "JSMR.JK", "WIKA.JK", "PTPP.JK", "ADHI.JK", "WSKT.JK", "SMGR.JK",
-  "INTP.JK", "SMRA.JK", "CTRA.JK", "BSDE.JK", "PWON.JK", "ASRI.JK", "AKRA.JK", "PGAS.JK", "EXCL.JK", "ISAT.JK",
-  "TOWR.JK", "TBIG.JK", "MTEL.JK", "INCO.JK", "ANTM.JK", "MDKA.JK", "TINS.JK", "SMDR.JK", "TMAS.JK", "NELY.JK",
-  "SIDO.JK", "MYOR.JK", "ULTJ.JK", "CLEO.JK", "ROTI.JK", "WOOD.JK", "INKP.JK", "TKIM.JK", "SMAR.JK", "LSIP.JK",
+  "BRPT.JK",
+  "KLBF.JK",
+  "MIKA.JK",
+  "CPIN.JK",
+  "JPFA.JK",
+  "INDY.JK",
+  "MEDC.JK",
+  "ENRG.JK",
+  "HRUM.JK",
+  "AMRT.JK",
+  "MIDI.JK",
+  "MAPA.JK",
+  "MAPI.JK",
+  "ACES.JK",
+  "SCMA.JK",
+  "EMTK.JK",
+  "BUKA.JK",
+  "ARTO.JK",
+  "BRIS.JK",
+  "BBTN.JK",
+  "BDMN.JK",
+  "BNGA.JK",
+  "NISP.JK",
+  "PNBN.JK",
+  "JSMR.JK",
+  "WIKA.JK",
+  "PTPP.JK",
+  "ADHI.JK",
+  "WSKT.JK",
+  "SMGR.JK",
+  "INTP.JK",
+  "SMRA.JK",
+  "CTRA.JK",
+  "BSDE.JK",
+  "PWON.JK",
+  "ASRI.JK",
+  "AKRA.JK",
+  "PGAS.JK",
+  "EXCL.JK",
+  "ISAT.JK",
+  "TOWR.JK",
+  "TBIG.JK",
+  "MTEL.JK",
+  "INCO.JK",
+  "ANTM.JK",
+  "MDKA.JK",
+  "TINS.JK",
+  "SMDR.JK",
+  "TMAS.JK",
+  "NELY.JK",
+  "SIDO.JK",
+  "MYOR.JK",
+  "ULTJ.JK",
+  "CLEO.JK",
+  "ROTI.JK",
+  "WOOD.JK",
+  "INKP.JK",
+  "TKIM.JK",
+  "SMAR.JK",
+  "LSIP.JK",
   // 💀 TRASH & DEAD STOCKS (To Prove Survivorship Avoidance)
-  "TRIL.JK", "TRAM.JK", "MYRX.JK", "RIMO.JK", "KREN.JK", "SUGI.JK", "NUSA.JK"
+  "TRIL.JK",
+  "TRAM.JK",
+  "MYRX.JK",
+  "RIMO.JK",
+  "KREN.JK",
+  "SUGI.JK",
+  "NUSA.JK"
 ];
-
-var LQ45_TICKERS = [
-  "AADI.JK", "ADMR.JK", "ADRO.JK", "AKRA.JK", "AMMN.JK", "AMRT.JK", "ANTM.JK", "ASII.JK",
-  "BBCA.JK", "BBNI.JK", "BBRI.JK", "BBTN.JK", "BMRI.JK", "BRPT.JK", "BUMI.JK", "CPIN.JK",
-  "CUAN.JK", "DEWA.JK", "EMTK.JK", "ESSA.JK", "EXCL.JK", "GOTO.JK", "HRTA.JK", "ICBP.JK",
-  "INCO.JK", "INDF.JK", "INKP.JK", "ISAT.JK", "ITMG.JK", "JPFA.JK", "KLBF.JK", "MAPI.JK",
-  "MBMA.JK", "MDKA.JK", "MEDC.JK", "PGAS.JK", "PGEO.JK", "PTBA.JK", "SCMA.JK", "SMGR.JK",
-  "TLKM.JK", "TOWR.JK", "UNTR.JK", "UNVR.JK", "WIFI.JK"
-];
-
 var IDX30_TICKERS = [
-  "ADRO.JK", "AKRA.JK", "AMRT.JK", "ANTM.JK", "ARTO.JK", "ASII.JK", "BBCA.JK", "BBNI.JK", "BBRI.JK", "BMRI.JK",
-  "BRIS.JK", "BRPT.JK", "BUKA.JK", "CPIN.JK", "ESSA.JK", "EXCL.JK", "GOTO.JK", "HRUM.JK", "ICBP.JK", "INDF.JK",
-  "INTP.JK", "ITMG.JK", "KLBF.JK", "MDKA.JK", "MEDC.JK", "PGAS.JK", "PTBA.JK", "SMGR.JK", "TLKM.JK", "UNTR.JK"
+  "ADRO.JK",
+  "AKRA.JK",
+  "AMRT.JK",
+  "ANTM.JK",
+  "ARTO.JK",
+  "ASII.JK",
+  "BBCA.JK",
+  "BBNI.JK",
+  "BBRI.JK",
+  "BMRI.JK",
+  "BRIS.JK",
+  "BRPT.JK",
+  "BUKA.JK",
+  "CPIN.JK",
+  "ESSA.JK",
+  "EXCL.JK",
+  "GOTO.JK",
+  "HRUM.JK",
+  "ICBP.JK",
+  "INDF.JK",
+  "INTP.JK",
+  "ITMG.JK",
+  "KLBF.JK",
+  "MDKA.JK",
+  "MEDC.JK",
+  "PGAS.JK",
+  "PTBA.JK",
+  "SMGR.JK",
+  "TLKM.JK",
+  "UNTR.JK"
 ];
+var LQ45_TICKERS = [
+  "AADI.JK",
+  "ADMR.JK",
+  "ADRO.JK",
+  "AKRA.JK",
+  "AMMN.JK",
+  "AMRT.JK",
+  "ANTM.JK",
+  "ASII.JK",
+  "BBCA.JK",
+  "BBNI.JK",
+  "BBRI.JK",
+  "BBTN.JK",
+  "BMRI.JK",
+  "BRPT.JK",
+  "BUMI.JK",
+  "CPIN.JK",
+  "CUAN.JK",
+  "DEWA.JK",
+  "EMTK.JK",
+  "ESSA.JK",
+  "EXCL.JK",
+  "GOTO.JK",
+  "HRTA.JK",
+  "ICBP.JK",
+  "INCO.JK",
+  "INDF.JK",
+  "INKP.JK",
+  "ISAT.JK",
+  "ITMG.JK",
+  "JPFA.JK",
+  "KLBF.JK",
+  "MAPI.JK",
+  "MBMA.JK",
+  "MDKA.JK",
+  "MEDC.JK",
+  "PGAS.JK",
+  "PGEO.JK",
+  "PTBA.JK",
+  "SCMA.JK",
+  "SMGR.JK",
+  "TLKM.JK",
+  "TOWR.JK",
+  "UNTR.JK",
+  "UNVR.JK",
+  "WIFI.JK"
+];
+var COMBINED_TICKERS = [.../* @__PURE__ */ new Set([
+  ...LQ45_TICKERS,
+  ...IDX80_TICKERS,
+  ...IDX30_TICKERS
+])];
 
-var COMBINED_TICKERS = [...new Set([...LQ45_TICKERS, ...IDX80_TICKERS, ...IDX30_TICKERS])];
-
-// sync_engine.ts
+// src/engine/sync_engine.ts
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { initializeApp as initAdminApp, getApps as getAdminApps } from "firebase-admin/app";
+import { getDatabase as getAdminDatabase } from "firebase-admin/database";
 import fs from "fs";
 import path from "path";
 import cron from "node-cron";
+import { fileURLToPath } from "url";
+var yahooFinance = new YahooFinance();
 var firebaseConfigPath = path.join(process.cwd(), "firebase-config.json");
 var db = null;
+var rtdb = null;
 if (fs.existsSync(firebaseConfigPath)) {
   const config = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf-8"));
   const fbApp = initializeApp(config);
   db = getFirestore(fbApp, config.firestoreDatabaseId);
+  try {
+    const databaseURL = "https://gen-lang-client-0592253886-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const adminApps = getAdminApps();
+    let adminApp;
+    if (adminApps.length === 0) {
+      adminApp = initAdminApp({
+        projectId: config.projectId,
+        databaseURL
+      });
+    } else {
+      adminApp = adminApps[0];
+    }
+    rtdb = getAdminDatabase(adminApp);
+    console.log("Firebase Realtime Database successfully connected server-side (sync_engine.ts).");
+  } catch (err) {
+    console.warn("Failed to initialize Firebase Admin Realtime Database in sync_engine.ts:", err.message);
+  }
 }
 function calcQuality(stats, fin) {
   let score = 50;
@@ -146,7 +314,6 @@ async function runIdx80Scan() {
         const profile = quote.summaryProfile || {};
         const fiftyTwoWeekHigh = detail.fiftyTwoWeekHigh || price;
         const fiftyTwoWeekLow = detail.fiftyTwoWeekLow || price;
-
         const data = {
           ticker,
           companyName: quote.price?.longName || quote.price?.shortName || ticker,
@@ -194,7 +361,7 @@ async function runIdx80Scan() {
   await Promise.all(workers);
   if (db) {
     try {
-      const docRef = doc(db, "engine", "idx80_scan");
+      const docRef = doc(db, "engine", "idx_data");
       await setDoc(docRef, {
         lastUpdated: (/* @__PURE__ */ new Date()).toISOString(),
         count: results.length,
@@ -207,10 +374,25 @@ async function runIdx80Scan() {
   } else {
     console.log("Firebase not configured, skipping cloud save.");
   }
-  const isCloudFunction2 = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
-  const dataPath = isCloudFunction2 ? path.join("/tmp", "idx80_scan.json") : path.join(process.cwd(), "data", "idx80_scan.json");
-  if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
-  fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: (/* @__PURE__ */ new Date()).toISOString(), stocks: results }, null, 2));
+  if (rtdb) {
+    try {
+      console.log("Syncing scan data to Firebase Realtime Database...");
+      await rtdb.ref("engine/idx_data").set({
+        lastUpdated: (/* @__PURE__ */ new Date()).toISOString(),
+        count: results.length,
+        stocks: results
+      });
+      console.log("IDX80 Scan data successfully synced to Firebase Realtime Database!");
+    } catch (err) {
+      console.error("Error saving scan data to Firebase Realtime Database:", err);
+    }
+  }
+  if (results.length > 0) {
+    const isCloudFunction2 = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
+    const dataPath = isCloudFunction2 ? path.join("/tmp", "idx80_scan.json") : path.join(process.cwd(), "data", "idx80_scan.json");
+    if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+    fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: (/* @__PURE__ */ new Date()).toISOString(), stocks: results }, null, 2));
+  }
 }
 function startScannerCron() {
   console.log("Scheduling IDX80 Scanner to run every 15 minutes during market hours...");
@@ -221,19 +403,20 @@ function startScannerCron() {
     runIdx80Scan();
   }, 5e3);
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
+var isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+if (isMain) {
   runIdx80Scan().then(() => process.exit(0)).catch((err) => {
     console.error(err);
     process.exit(1);
   });
 }
 
-// server.ts
+// server/server.ts
 dotenv.config();
 var app = express();
 app.use(express.json());
 var PORT = 3e3;
-var HISTORICAL_DB_PATH = path2.join(process.cwd(), "data", "historical_market.db");
+var HISTORICAL_DB_PATH = path2.join(process.cwd(), "data", "historical_market.sqlite");
 var HISTORICAL_JSON_PATH = path2.join(process.cwd(), "data", "historical_market_data.json");
 var historicalDb = null;
 function ensureHistoricalDb() {
@@ -247,8 +430,8 @@ function ensureHistoricalDb() {
     throw new Error("Historical JSON contains no records");
   }
   const db3 = new Database(HISTORICAL_DB_PATH);
-  db3.pragma("journal_mode = WAL");
-  db3.pragma("synchronous = NORMAL");
+  db3.pragma("journal_mode = DELETE");
+  db3.pragma("synchronous = OFF");
   db3.exec(`
     CREATE TABLE IF NOT EXISTS daily_market (
       date TEXT PRIMARY KEY, ihsgPrice REAL, goldPrice REAL, usdidrRate REAL,
@@ -281,13 +464,25 @@ function ensureHistoricalDb() {
   db3.close();
   console.log(`SQLite database created with ${rawData.length} records from JSON.`);
 }
+var historicalFallbackData = null;
 function getHistoricalDb() {
-  if (!historicalDb) {
+  if (historicalFallbackData) return null;
+  if (historicalDb) return historicalDb;
+  try {
     ensureHistoricalDb();
-    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true });
-    historicalDb.pragma("journal_mode = WAL");
+    historicalDb = new Database(HISTORICAL_DB_PATH, { readonly: true, fileMustExist: true });
+    return historicalDb;
+  } catch (err) {
+    console.warn("SQLite unavailable, using JSON fallback:", err.message);
+    try {
+      const raw = JSON.parse(fs2.readFileSync(HISTORICAL_JSON_PATH, "utf-8"));
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error("JSON empty");
+      historicalFallbackData = raw;
+    } catch (jsonErr) {
+      throw new Error("Cannot load historical data: " + jsonErr.message);
+    }
+    return null;
   }
-  return historicalDb;
 }
 var aiClient = null;
 function getGeminiClient() {
@@ -308,24 +503,48 @@ function getGeminiClient() {
   return aiClient;
 }
 app.get("/api/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  const dbExists = fs2.existsSync(HISTORICAL_DB_PATH);
+  const jsonExists = fs2.existsSync(HISTORICAL_JSON_PATH);
+  res.json({
+    status: "healthy",
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  });
 });
 var isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG || process.env.VERCEL);
 var statePath = isCloudFunction ? path2.join("/tmp", "engine_state.json") : path2.join(process.cwd(), "data", "engine_state.json");
 var firebaseConfigPath2 = path2.join(process.cwd(), "firebase-config.json");
 var db2 = null;
+var rtdb2 = null;
 if (fs2.existsSync(firebaseConfigPath2)) {
   try {
     const config = JSON.parse(fs2.readFileSync(firebaseConfigPath2, "utf-8"));
     const fbApp = initializeApp2(config);
     db2 = getFirestore2(fbApp, config.firestoreDatabaseId);
     console.log("Firebase Firestore successfully connected server-side with database ID:", config.firestoreDatabaseId);
+    try {
+      const databaseURL = "https://gen-lang-client-0592253886-default-rtdb.asia-southeast1.firebasedatabase.app";
+      const adminApps = getAdminApps2();
+      let adminApp;
+      if (adminApps.length === 0) {
+        adminApp = initAdminApp2({
+          projectId: config.projectId,
+          databaseURL
+        });
+      } else {
+        adminApp = adminApps[0];
+      }
+      rtdb2 = getAdminDatabase2(adminApp);
+      console.log("Firebase Realtime Database successfully connected server-side (server.ts).");
+    } catch (err) {
+      console.warn("Failed to initialize Firebase Admin Realtime Database in server.ts:", err.message);
+    }
   } catch (err) {
     console.error("Firebase startup initialization failed on server:", err);
   }
 }
 function getEngineStateSyncFallback() {
   const defaultState = {
+    _simulated: true,
     portfolio: [
       { ticker: "BBCA", shares: 500, buyPrice: 9900, addedAt: (/* @__PURE__ */ new Date()).toISOString() },
       { ticker: "BBRI", shares: 1e3, buyPrice: 4900, addedAt: (/* @__PURE__ */ new Date()).toISOString() }
@@ -334,7 +553,6 @@ function getEngineStateSyncFallback() {
       { ticker: "BBCA", addedAt: (/* @__PURE__ */ new Date()).toISOString() }
     ],
     cash: 1e8,
-    // Rp 100 Juta default start balance
     config: {
       activeConfig: "prod",
       safeHavenAsset: "emas",
@@ -353,8 +571,8 @@ function getEngineStateSyncFallback() {
       singleBuyTrigger: 5
     },
     tradeLogs: [
-      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: (/* @__PURE__ */ new Date()).toISOString() },
-      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1e3, price: 4900, timestamp: (/* @__PURE__ */ new Date()).toISOString() }
+      { id: "log-1", type: "BUY", ticker: "BBCA", shares: 500, price: 9900, timestamp: (/* @__PURE__ */ new Date()).toISOString(), _simulated: true },
+      { id: "log-2", type: "BUY", ticker: "BBRI", shares: 1e3, price: 4900, timestamp: (/* @__PURE__ */ new Date()).toISOString(), _simulated: true }
     ]
   };
   try {
@@ -403,6 +621,14 @@ function saveEngineStateSyncFallback(state) {
 }
 async function saveEngineStateAsync(state) {
   saveEngineStateSyncFallback(state);
+  if (rtdb2) {
+    try {
+      await rtdb2.ref("engine/state").set(state);
+      console.log("Engine state successfully synced to Firebase Realtime Database!");
+    } catch (err) {
+      console.error("Error saving engine state to Firebase Realtime Database:", err);
+    }
+  }
   if (!db2) return;
   try {
     const docRef = doc2(db2, "engine", "state");
@@ -452,16 +678,16 @@ You MUST return your response as a strict JSON object structure adhering exactly
   };
   keyRatios: { label: string; value: string; assessment: string }[]; // table of critical metrics, e.g., P/E, P/B, ROE, DER, NPM, Dividend Divestments, with assessment like 'Healthy', 'Elevated', 'Stretched' or 'Underpriced'
   fairValue: {
-    estimatedValue: number; // estimated intrinsic fair value (in IDR)
-    currentPrice: number; // current price passed
-    recommendation: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED';
+    estimatedValue: number;
+    currentPrice: number;
+    stance: 'UNDERVALUED' | 'FAIRLY_VALUED' | 'OVERVALUED';
   };
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
-  growthOutlook: string; // 1 solid paragraph about future projects/developments
-  timestamp: string; // ISO date string
+  stance: 'BULLISH' | 'CAUTIOUSLY_BULLISH' | 'NEUTRAL' | 'CAUTIOUSLY_BEARISH' | 'BEARISH';
+  growthOutlook: string;
+  timestamp: string;
 }
 
-Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, analytical, and highly objective.`;
+Frame your analysis as scenario assessment, not as trading instruction. Explain conditions under which each scenario applies. Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, analytical, and objective.`;
     const userPrompt = `Analyze PT ${stock.name} (${stock.ticker}) in Sector: ${stock.sector} / Subsector: ${stock.subSector}.
 Description: ${stock.description}
 
@@ -573,10 +799,10 @@ You MUST return your response as a strict JSON object adhering exactly to this T
   "rationale": string, // A deep, concise narrative (2-3 sentences) evaluating the market dynamics. Write in elegant financial Indonesian.
   "bullishFactors": string[], // 3 key positive catalysts or supportive indicators in Indonesian.
   "bearishFactors": string[], // 3 notable risk factors, headwinds, or pressure points in Indonesian.
-  "strategyAdvice": string // A clear recommendation (1-2 sentences) on capital deployment, risk mitigation, or accumulation strategies in Indonesian.
+  "scenarioAnalysis": string // A brief scenario outlook (1-2 sentences) describing possible market directions and conditions in Indonesian.
 }
 
-Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, professional, and analytical.`;
+Frame your output as scenario assessment, not investment directive. Explain what market conditions would support each scenario. Ensure the output is pure JSON and nothing else, without markdown wrappers. Be rigorous, professional, and analytical.`;
     const stockSummary = stocks && Array.isArray(stocks) ? stocks.map((s) => `${s.ticker}: IDR ${s.currentPrice} (${s.change >= 0 ? "+" : ""}${s.change}%)`).join(", ") : "No stock data";
     const userPrompt = `Real-Time Market Indicators:
 - IHSG (JCI Index): ${mkt?.ihsg?.value || "N/A"} (Daily Change: ${mkt?.ihsg?.daily_pct || mkt?.ihsg?.daily || 0}%, Monthly Trend: ${mkt?.ihsg?.monthly || 0}%)
@@ -596,7 +822,7 @@ Please generate the daily market summary and rationale in Indonesian.`;
         rationale: `Pasar saat ini bergerak dalam rentang konsolidasi. Volatilitas terbatas sementara pelaku pasar mengamati perkembangan makro terkini (Cached Summary ${yesterday.toLocaleDateString()}).`,
         bullishFactors: ["Stabilitas Rupiah yang terjaga", "Arus modal asing di saham blue-chip stabil", "Valuasi indeks moderat mendukung akumulasi selektif"],
         bearishFactors: ["Katalis domestik terbatas dalam jangka pendek", "Kekhawatiran moderasi konsumsi", "Volatilitas komoditas menahan laju emiten energi"],
-        strategyAdvice: "Pertahankan alokasi portofolio dengan fokus pada saham-saham defensif dan perbankan yang memiliki neraca kuat."
+        scenarioAnalysis: "Skenario defensif: jika IHSG bertahan di bawah MA50, fokus pada saham defensif dan perbankan dengan neraca kuat. Skenario agresif: jika IHSG crossing di atas MA50, akumulasi pada sektor siklikal."
       });
     };
     let textContent = "{}";
@@ -677,9 +903,9 @@ Recent Price: IDR ${selectedStock.currentPrice} (${selectedStock.change > 0 ? "+
 Description: ${selectedStock.description}
 Ratios: PE ${selectedStock.peRatio}, PB ${selectedStock.pbRatio}, ROE ${selectedStock.roe}%, DER ${selectedStock.der}, Dividend Yield ${selectedStock.dividendYield}%`;
     }
-    const systemInstruction = `You are a friendly, highly intelligent Indonesian stock market strategist and financial advisor.
-Provide objective, deep, and action-oriented financial reasoning. Support your answers with macroeconomic context in Indonesia, BI-Rate trends (Bank Indonesia interest rates), Rupiah exchange rate factors, or sector tailwinds.
-Keep your tone sophisticated yet accessible. Avoid any generic safe-talk; give clear, educational insights and state standard risk disclosure briefly.
+    const systemInstruction = `You are a friendly, knowledgeable Indonesian stock market analyst.
+Provide objective, balanced analysis. Support your answers with macroeconomic context in Indonesia, BI-Rate trends (Bank Indonesia interest rates), Rupiah exchange rate factors, or sector tailwinds.
+Present multiple scenarios and explain conditions for each. Keep your tone educational and balanced. Include standard risk disclosure.
 
 ${contextStockInfo}
 
@@ -787,24 +1013,32 @@ app.get("/api/backtest-data", (req, res) => {
     const configType = req.query.configType === "res" ? "res" : "prod";
     const weights = configType === "prod" ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 } : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
     const db3 = getHistoricalDb();
-    const rows = db3.prepare("SELECT * FROM daily_market ORDER BY date ASC").all();
-    if (rows.length === 0) {
-      throw new Error("CRITICAL PIPELINE ERROR: Real historical market database contains no records!");
+    let rawData;
+    if (db3) {
+      const rows = db3.prepare("SELECT * FROM daily_market ORDER BY date ASC").all();
+      if (rows.length === 0) {
+        throw new Error("CRITICAL PIPELINE ERROR: Real historical market database contains no records!");
+      }
+      rawData = rows.map((row) => ({
+        date: row.date,
+        ihsgPrice: row.ihsgPrice,
+        goldPrice: row.goldPrice,
+        usdidrRate: row.usdidrRate,
+        stockPrices: JSON.parse(row.stockPrices || "{}"),
+        stockAdjPrices: JSON.parse(row.stockAdjPrices || "{}"),
+        stockVolumes: JSON.parse(row.stockVolumes || "{}"),
+        stockOpens: JSON.parse(row.stockOpens || "{}"),
+        stockHighs: JSON.parse(row.stockHighs || "{}"),
+        stockLows: JSON.parse(row.stockLows || "{}"),
+        stockRanksProd: JSON.parse(row.stockRanksProd || "{}"),
+        stockRanksRes: JSON.parse(row.stockRanksRes || "{}")
+      }));
+    } else {
+      rawData = [...historicalFallbackData || []];
+      if (rawData.length === 0) {
+        throw new Error("CRITICAL PIPELINE ERROR: Historical data fallback is empty!");
+      }
     }
-    const rawData = rows.map((row) => ({
-      date: row.date,
-      ihsgPrice: row.ihsgPrice,
-      goldPrice: row.goldPrice,
-      usdidrRate: row.usdidrRate,
-      stockPrices: JSON.parse(row.stockPrices || "{}"),
-      stockAdjPrices: JSON.parse(row.stockAdjPrices || "{}"),
-      stockVolumes: JSON.parse(row.stockVolumes || "{}"),
-      stockOpens: JSON.parse(row.stockOpens || "{}"),
-      stockHighs: JSON.parse(row.stockHighs || "{}"),
-      stockLows: JSON.parse(row.stockLows || "{}"),
-      stockRanksProd: JSON.parse(row.stockRanksProd || "{}"),
-      stockRanksRes: JSON.parse(row.stockRanksRes || "{}")
-    }));
     const bridgedRawData = bridgeHistoricalDataToToday(rawData, configType);
     const data = bridgedRawData.map((day) => ({
       date: day.date,
@@ -828,6 +1062,35 @@ app.get("/api/backtest-data", (req, res) => {
     res.status(500).json({ error: error.message || "Failed to load real backtest market data" });
   }
 });
+var FUNDAMENTALS_DB_PATH = path2.join(process.cwd(), "data", "fundamentals.sqlite");
+var fundamentalsDb = null;
+function getFundamentalsDb() {
+  if (fundamentalsDb) return fundamentalsDb;
+  try {
+    if (!fs2.existsSync(FUNDAMENTALS_DB_PATH)) {
+      console.warn("Fundamentals SQLite not found at", FUNDAMENTALS_DB_PATH);
+      return null;
+    }
+    fundamentalsDb = new Database(FUNDAMENTALS_DB_PATH, { readonly: true, fileMustExist: true });
+    return fundamentalsDb;
+  } catch (err) {
+    console.warn("Cannot open fundamentals DB:", err.message);
+    return null;
+  }
+}
+app.get("/api/fundamentals", (req, res) => {
+  try {
+    const db3 = getFundamentalsDb();
+    if (!db3) {
+      return res.json({ success: false, count: 0, data: [] });
+    }
+    const rows = db3.prepare("SELECT * FROM fundamentals_yearly WHERE year >= 2021 ORDER BY ticker, year").all();
+    res.json({ success: true, count: rows.length, data: rows });
+  } catch (error) {
+    console.error("Fundamentals API Error:", error);
+    res.status(500).json({ success: false, count: 0, data: [], error: error.message });
+  }
+});
 app.post("/api/market/sync", (req, res) => {
   if (isCloudFunction) {
     return res.status(400).json({
@@ -836,7 +1099,7 @@ app.post("/api/market/sync", (req, res) => {
     });
   }
   console.log("Starting full Yahoo Finance market database synchronization...");
-  exec("npx tsx fetch_historical_data.ts", (error, stdout, stderr) => {
+  exec("npx tsx scripts/fetch_historical_data.ts", (error, stdout, stderr) => {
     if (error) {
       console.error("Subprocess execution error during sync:", error);
       return res.status(500).json({ success: false, error: error.message, details: stderr });
@@ -954,7 +1217,6 @@ app.get("/data/live_market.json", async (req, res) => {
     }
     res.json(staticData);
   } catch (err) {
-    // Build stock_prices from scan data instead of hardcoded 9-stock list
     const scanPath = path2.join(process.cwd(), "data", "idx80_scan.json");
     let stock_prices = {};
     try {
@@ -970,7 +1232,8 @@ app.get("/data/live_market.json", async (req, res) => {
           });
         }
       }
-    } catch (_) { /* silent */ }
+    } catch (_) {
+    }
     if (Object.keys(stock_prices).length === 0) {
       stock_prices = { BBCA: 5825, BBRI: 2850, BMRI: 4250, TLKM: 2870, ASII: 4700, ADRO: 2250, PTBA: 2630, ESSA: 605, GOTO: 50 };
     }
@@ -1004,7 +1267,7 @@ app.all("/api/engine/force-sync", async (req, res) => {
 app.get("/api/engine/idx80", async (req, res) => {
   try {
     if (db2) {
-      const docSnap = await getDoc(doc2(db2, "engine", "idx80_scan"));
+      const docSnap = await getDoc(doc2(db2, "engine", "idx_data"));
       if (docSnap.exists()) {
         return res.json(docSnap.data());
       }
@@ -1046,7 +1309,7 @@ if (!isCloudFunction) {
   startServer();
 }
 
-// api-handler.ts
+// server/api-handler.ts
 var api_handler_default = app;
 export {
   api_handler_default as default
