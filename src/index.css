@@ -155,23 +155,6 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-[data-theme="v2"] {
-  --bg-primary: #050505;
-  --bg-surface: rgba(255,255,255,0.03);
-  --bg-surface-alt: rgba(255,255,255,0.05);
-  --bg-header: rgba(255,255,255,0.03);
-  --bg-elevated: rgba(255,255,255,0.04);
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.50);
-  --text-muted: rgba(255,255,255,0.30);
-  --border-default: rgba(255,255,255,0.06);
-  --border-strong: rgba(255,255,255,0.12);
-  --accent: #3b82f6;
-  --color-scheme: dark;
-  color-scheme: dark;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
 /* iOS 26 glass surface overrides */
 [data-theme="ios26"] #applet-main-canvas::before {
   content: '';
@@ -267,86 +250,6 @@
 [data-theme="ios26"] .text-rose-455,
 [data-theme="ios26"] [class*="text-rose-4"] {
   color: #FF453A !important;
-}
-
-/* V2 surface overrides */
-[data-theme="v2"] #applet-main-canvas::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 40% at 50% -5%, rgba(59,130,246,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 15% 70%, rgba(6,182,212,0.03) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-[data-theme="v2"] header,
-[data-theme="v2"] #main-sidebar,
-[data-theme="v2"] [class*="bg-[#0A0A0A]"],
-[data-theme="v2"] [class*="bg-[#0a0a0a]"],
-[data-theme="v2"] .bg-\[\#0A0A0A\] {
-  background: rgba(255,255,255,0.03) !important;
-  backdrop-filter: blur(20px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
-  border-color: rgba(255,255,255,0.06) !important;
-}
-
-[data-theme="v2"] [class*="bg-[#121212]"],
-[data-theme="v2"] [class*="bg-[#121212]/95"],
-[data-theme="v2"] [class*="bg-[#070707]"],
-[data-theme="v2"] [class*="bg-[#080808]"],
-[data-theme="v2"] [class*="bg-[#0f0f0f]"],
-[data-theme="v2"] nav.bg-\[\#121212\],
-[data-theme="v2"] nav[class*="bg-[#121212]"] {
-  background: rgba(255,255,255,0.03) !important;
-  backdrop-filter: blur(12px) saturate(130%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(130%) !important;
-  border-color: rgba(255,255,255,0.06) !important;
-}
-
-[data-theme="v2"] .bg-white\/5,
-[data-theme="v2"] .bg-white\/10,
-[data-theme="v2"] .bg-white\/20,
-[data-theme="v2"] [class*="bg-white/"],
-[data-theme="v2"] [class*="bg-white\\["] {
-  background: rgba(255,255,255,0.03) !important;
-  backdrop-filter: blur(12px) saturate(130%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(130%) !important;
-  border-color: rgba(255,255,255,0.05) !important;
-}
-
-[data-theme="v2"] #sidebar-news-panel,
-[data-theme="v2"] #sidebar-macro-indicators-panel,
-[data-theme="v2"] #config-panel,
-[data-theme="v2"] #historical-chart-container,
-[data-theme="v2"] #ai-assistant-card,
-[data-theme="v2"] #summary-report-panel {
-  background: rgba(255,255,255,0.03) !important;
-  backdrop-filter: blur(16px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
-  border-radius: 16px !important;
-  box-shadow:
-    0 0 0 0.5px rgba(255,255,255,0.04) inset,
-    0 1px 0 rgba(255,255,255,0.06) inset,
-    0 16px 48px rgba(0,0,0,0.5),
-    0 4px 12px rgba(0,0,0,0.3) !important;
-}
-
-[data-theme="v2"] .recharts-default-tooltip {
-  background: rgba(255,255,255,0.04) !important;
-  backdrop-filter: blur(12px) saturate(130%) !important;
-  border-color: rgba(255,255,255,0.06) !important;
-}
-
-[data-theme="v2"] input,
-[data-theme="v2"] textarea,
-[data-theme="v2"] select {
-  background: rgba(255,255,255,0.02) !important;
-  border-color: rgba(255,255,255,0.06) !important;
-  border-radius: 12px !important;
-  color: #fff !important;
 }
 
 /* ==========================================================================

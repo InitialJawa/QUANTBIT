@@ -397,7 +397,7 @@ export default function App() {
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<"deep" | "slate" | "nord" | "light" | "stockbit" | "ios26" | "v2">("v2");
+  const [theme, setTheme] = useState<"deep" | "slate" | "nord" | "light" | "stockbit" | "ios26">("ios26");
   const getChartTheme = (): "dark" | "light" => theme === "light" ? "light" : "dark";
 
   useEffect(() => {
@@ -1016,10 +1016,6 @@ export default function App() {
                     <button onClick={() => setTheme("stockbit")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "stockbit" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
                       <Monitor className="w-4 h-4" /> Stockbit
                       {theme === "stockbit" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
-                    </button>
-                    <button onClick={() => setTheme("v2")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "v2" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
-                      <Sparkles className="w-4 h-4" /> Quantbit V2
-                      {theme === "v2" && <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full" />}
                     </button>
                     <button onClick={() => setTheme("ios26")} className={`w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl transition-all ${theme === "ios26" ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/[0.05]"}`}>
                       <Hexagon className="w-4 h-4" /> iOS 26
