@@ -140,10 +140,10 @@
 
 [data-theme="ios26"] {
   --bg-primary: #060608;
-  --bg-surface: rgba(255,255,255,0.055);
-  --bg-surface-alt: rgba(255,255,255,0.07);
+  --bg-surface: rgba(255,255,255,0.10);
+  --bg-surface-alt: rgba(255,255,255,0.12);
   --bg-header: rgba(10,10,14,0.7);
-  --bg-elevated: rgba(255,255,255,0.055);
+  --bg-elevated: rgba(255,255,255,0.10);
   --text-primary: #FFFFFF;
   --text-secondary: rgba(255,255,255,0.55);
   --text-muted: rgba(255,255,255,0.25);
@@ -177,7 +177,7 @@
 [data-theme="ios26"] [class*="bg-[#0A0A0A]"],
 [data-theme="ios26"] [class*="bg-[#0a0a0a]"],
 [data-theme="ios26"] .bg-\[\#0A0A0A\] {
-  background: rgba(10,10,14,0.7) !important;
+  background: rgba(10,10,14,0.85) !important;
   backdrop-filter: blur(40px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
   border-color: rgba(255,255,255,0.08) !important;
@@ -190,7 +190,7 @@
 [data-theme="ios26"] [class*="bg-[#0f0f0f]"],
 [data-theme="ios26"] nav.bg-\[\#121212\],
 [data-theme="ios26"] nav[class*="bg-[#121212]"] {
-  background: rgba(255,255,255,0.06) !important;
+  background: rgba(255,255,255,0.10) !important;
   backdrop-filter: blur(24px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
   border-color: rgba(255,255,255,0.09) !important;
@@ -201,7 +201,7 @@
 [data-theme="ios26"] .bg-white\/20,
 [data-theme="ios26"] [class*="bg-white/"],
 [data-theme="ios26"] [class*="bg-white\\["] {
-  background: rgba(255,255,255,0.06) !important;
+  background: rgba(255,255,255,0.10) !important;
   backdrop-filter: blur(20px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
   border-color: rgba(255,255,255,0.08) !important;
@@ -213,20 +213,20 @@
 [data-theme="ios26"] #historical-chart-container,
 [data-theme="ios26"] #ai-assistant-card,
 [data-theme="ios26"] #summary-report-panel {
-  background: rgba(255,255,255,0.055) !important;
+  background: rgba(255,255,255,0.10) !important;
   backdrop-filter: blur(32px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(160%) !important;
   border: 1px solid rgba(255,255,255,0.10) !important;
   border-radius: 16px !important;
   box-shadow:
-    0 0 0 0.5px rgba(255,255,255,0.06) inset,
+    0 0 0 0.5px rgba(255,255,255,0.10) inset,
     0 1px 0 rgba(255,255,255,0.12) inset,
     0 16px 48px rgba(0,0,0,0.6),
     0 4px 12px rgba(0,0,0,0.4) !important;
 }
 
 [data-theme="ios26"] .recharts-default-tooltip {
-  background: rgba(255,255,255,0.07) !important;
+  background: rgba(255,255,255,0.10) !important;
   backdrop-filter: blur(20px) saturate(150%) !important;
   border-color: rgba(255,255,255,0.10) !important;
 }
