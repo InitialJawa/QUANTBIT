@@ -3,6 +3,8 @@ const yahooFinance = new YahooFinance();
 import { COMBINED_TICKERS } from "./idx80.ts";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { initializeApp as initAdminApp, getApps as getAdminApps } from "firebase-admin/app";
+import { getDatabase as getAdminDatabase } from "firebase-admin/database";
 import fs from "fs";
 import path from "path";
 import cron from "node-cron";
@@ -10,12 +12,33 @@ import cron from "node-cron";
 // Firebase Connection
 const firebaseConfigPath = path.join(process.cwd(), "firebase-config.json");
 let db: any = null;
+let rtdb: any = null;
 
 if (fs.existsSync(firebaseConfigPath)) {
   const config = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf-8"));
   const fbApp = initializeApp(config);
   db = getFirestore(fbApp, config.firestoreDatabaseId);
+
+  // Initialize Realtime Database via Admin SDK for bypass of rules
+  try {
+    const databaseURL = "https://gen-lang-client-0592253886-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const adminApps = getAdminApps();
+    let adminApp;
+    if (adminApps.length === 0) {
+      adminApp = initAdminApp({
+        projectId: config.projectId,
+        databaseURL
+      });
+    } else {
+      adminApp = adminApps[0];
+    }
+    rtdb = getAdminDatabase(adminApp);
+    console.log("Firebase Realtime Database successfully connected server-side (sync_engine.ts).");
+  } catch (err: any) {
+    console.warn("Failed to initialize Firebase Admin Realtime Database in sync_engine.ts:", err.message);
+  }
 }
+
 
 // Calculate scores ranging 1-100 based on basic bounds, fallback to neutral 50 if missing
 function calcQuality(stats: any, fin: any) {
@@ -170,7 +193,7 @@ export async function runIdx80Scan() {
   // Save to Firebase
   if (db) {
     try {
-      const docRef = doc(db, "engine", "idx80_scan");
+      const docRef = doc(db, "engine", "idx_data");
       await setDoc(docRef, { 
         lastUpdated: new Date().toISOString(),
         count: results.length,
@@ -183,6 +206,22 @@ export async function runIdx80Scan() {
   } else {
     console.log("Firebase not configured, skipping cloud save.");
   }
+
+  // Save to Firebase Realtime Database
+  if (rtdb) {
+    try {
+      console.log("Syncing scan data to Firebase Realtime Database...");
+      await rtdb.ref("engine/idx_data").set({
+        lastUpdated: new Date().toISOString(),
+        count: results.length,
+        stocks: results
+      });
+      console.log("IDX80 Scan data successfully synced to Firebase Realtime Database!");
+    } catch (err) {
+      console.error("Error saving scan data to Firebase Realtime Database:", err);
+    }
+  }
+
 
   // Also save locally as a reliable cache, but ONLY if we have results
   // (never overwrite a valid cache with an empty scan)
@@ -210,7 +249,9 @@ export function startScannerCron() {
   }, 5000);
 }
 
-// If run directly from CLI (e.g., node sync_engine.js)
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { fileURLToPath } from "url";
+const isMain = process.argv[1] && (path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url)));
+if (isMain) {
   runIdx80Scan().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
 }
+

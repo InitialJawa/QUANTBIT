@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import { exec } from "child_process";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { initializeApp as initAdminApp, getApps as getAdminApps } from "firebase-admin/app";
+import { getDatabase as getAdminDatabase } from "firebase-admin/database";
 import Database from "better-sqlite3";
 
 dotenv.config();
@@ -121,6 +123,7 @@ const statePath = isCloudFunction
 // Firebase SDK Database connection
 const firebaseConfigPath = path.join(process.cwd(), "firebase-config.json");
 let db: any = null;
+let rtdb: any = null;
 
 if (fs.existsSync(firebaseConfigPath)) {
   try {
@@ -128,6 +131,25 @@ if (fs.existsSync(firebaseConfigPath)) {
     const fbApp = initializeApp(config);
     db = getFirestore(fbApp, config.firestoreDatabaseId);
     console.log("Firebase Firestore successfully connected server-side with database ID:", config.firestoreDatabaseId);
+
+    // Initialize Realtime Database via Admin SDK
+    try {
+      const databaseURL = "https://gen-lang-client-0592253886-default-rtdb.asia-southeast1.firebasedatabase.app";
+      const adminApps = getAdminApps();
+      let adminApp;
+      if (adminApps.length === 0) {
+        adminApp = initAdminApp({
+          projectId: config.projectId,
+          databaseURL
+        });
+      } else {
+        adminApp = adminApps[0];
+      }
+      rtdb = getAdminDatabase(adminApp);
+      console.log("Firebase Realtime Database successfully connected server-side (server.ts).");
+    } catch (err: any) {
+      console.warn("Failed to initialize Firebase Admin Realtime Database in server.ts:", err.message);
+    }
   } catch (err) {
     console.error("Firebase startup initialization failed on server:", err);
   }
@@ -218,6 +240,16 @@ function saveEngineStateSyncFallback(state: any) {
 
 async function saveEngineStateAsync(state: any) {
   saveEngineStateSyncFallback(state);
+
+  if (rtdb) {
+    try {
+      await rtdb.ref("engine/state").set(state);
+      console.log("Engine state successfully synced to Firebase Realtime Database!");
+    } catch (err) {
+      console.error("Error saving engine state to Firebase Realtime Database:", err);
+    }
+  }
+
   if (!db) return;
 
   try {
@@ -971,7 +1003,7 @@ app.all("/api/engine/force-sync", async (req, res) => {
 app.get("/api/engine/idx80", async (req, res) => {
   try {
     if (db) {
-      const docSnap = await getDoc(doc(db, "engine", "idx80_scan"));
+      const docSnap = await getDoc(doc(db, "engine", "idx_data"));
       if (docSnap.exists()) {
         return res.json(docSnap.data());
       }

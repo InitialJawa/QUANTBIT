@@ -18,7 +18,8 @@
     "start": "node dist/server.cjs",
     "clean": "node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.rmSync('functions/index.js', { force: true }); fs.rmSync('functions/data', { recursive: true, force: true }); fs.rmSync('api/index.js', { force: true });\"",
     "lint": "tsc --noEmit",
-    "deploy": "npm run build && npm run copy:data && npm run build:functions && firebase deploy"
+    "deploy": "npm run build && npm run copy:data && npm run build:functions && firebase deploy",
+    "db:audit": "tsx scripts/audit_and_sync_rtdb.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
