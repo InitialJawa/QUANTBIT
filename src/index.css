@@ -30,7 +30,23 @@
   --bg-gradient-end: #23272C;
 }
 
-/* Utility class to apply gradient background */
+// Legacy dark background overrides – apply glass‑morphism style
+.bg-\[\#0A0A0A\] {
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(8px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.bg-\[\#0a0a0a\] {
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(8px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
 .bg-gradient-theme {
   background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-end));
 }
