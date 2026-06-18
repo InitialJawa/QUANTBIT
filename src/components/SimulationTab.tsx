@@ -24,6 +24,7 @@ import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
+import { getSession, api } from "../services/api";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -239,8 +240,7 @@ export function SimulationTab({
   const [historicalData, setHistoricalData] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/backtest-data?configType=prod")
-      .then(r => r.json())
+    api.get<{ success: boolean; data: any[] }>("/api/backtest-data?configType=prod")
       .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
       .catch(() => {});
   }, []);
@@ -497,8 +497,7 @@ export function SimulationTab({
 
       let rawData: BacktestDayData[] = [];
       try {
-        const res = await fetch(`/api/backtest-data?configType=${backtestConfigType}`);
-        const apiRes = await res.json();
+        const apiRes = await api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${backtestConfigType}`);
         if (apiRes.success && Array.isArray(apiRes.data)) {
           rawData = apiRes.data;
         } else {

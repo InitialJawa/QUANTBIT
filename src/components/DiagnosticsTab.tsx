@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AIAssistant } from "./AIAssistant";
 import { StockData } from "../types";
 import { SearchableSelect } from "./SearchableSelect";
+import { api } from "../services/api";
 import { Activity, ShieldCheck, Database, Cpu, MessageSquare, RefreshCw, CheckCircle, AlertTriangle } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -19,9 +20,8 @@ export function DiagnosticsTab({ activeStock, availableStocks, onSelectStock }: 
     setSyncStatus("syncing");
     setSyncMessage("Menghubungi server & mengunduh harga harian real dari Yahoo Finance API (2020 - hari ini)...");
     try {
-      const response = await fetch("/api/market/sync", { method: "POST" });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const data = await api.post<{ success: boolean }>("/api/market/sync");
+      if (data.success) {
         setSyncStatus("success");
         setSyncMessage("Sinkronisasi selesai! Seluruh database lokal (IHSG, Emas, & 30 Saham) telah dimutakhirkan dengan data real time harian terbaru.");
       } else {

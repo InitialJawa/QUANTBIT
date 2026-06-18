@@ -5,6 +5,7 @@ import { DataStatus } from "./types/DataStatus";
 import { idxNews, EX, MKT, RS, setScanData } from "./marketData";
 import { refreshRSFromRegime, setIhsgHistory } from "./marketRegimeEngine";
 import { StockData, AnalysisResult, PortfolioItem, WatchlistItem } from "./types";
+import { api } from "./services/api";
 import { HistoricalChart } from "./components/HistoricalChart";
 import { DeepReport } from "./components/DeepReport";
 import { AIAssistant } from "./components/AIAssistant";
@@ -21,9 +22,8 @@ import { DiagnosticsTab } from "./components/DiagnosticsTab";
 import { TickerLogo } from "./components/TickerLogo";
 import { LoginScreen } from "./components/LoginScreen";
 import { DataSourcesRow } from "./components/SourceBadge";
-import { auth, db } from "./firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { useAuth } from "./contexts/AuthContext";
+import { api, authApi } from "./services/api";
 
 import { DigitalWalletUI } from "./components/DigitalWalletUI";
 import { 
@@ -67,16 +67,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const { user, loading: authLoading, logout } = useAuth();
 
   // GOAPI & Yahoo Finance Live Stock prices integration
   const [goapiPrices, setGoapiPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
@@ -94,8 +85,7 @@ export default function App() {
   useEffect(() => {
     const fetchPrices = () => {
       // Fetch GoAPI Price Feed
-      fetch("/api/goapi/live-prices")
-        .then(res => res.json())
+      api.get<{ success: boolean; prices: any }>("/api/goapi/live-prices")
         .then(apiRes => {
           if (apiRes.success && apiRes.prices) {
             setGoapiPrices(apiRes.prices);
@@ -105,8 +95,7 @@ export default function App() {
         .catch(err => console.warn("GoAPI Integration error, fallback active:", err));
 
       // Fetch Yahoo Finance Price Feed
-      fetch("/api/yahoo/live-prices")
-        .then(res => res.json())
+      api.get<{ success: boolean; prices: any }>("/api/yahoo/live-prices")
         .then(apiRes => {
           if (apiRes.success && apiRes.prices) {
             setYahooPrices(apiRes.prices);
@@ -116,8 +105,7 @@ export default function App() {
         .catch(err => console.warn("Yahoo Finance Integration error, fallback active:", err));
 
       // Fetch real IDX fundamentals from SQLite
-      fetch("/api/fundamentals")
-        .then(res => res.json())
+      api.get<{ success: boolean; data: any[]; count: number }>("/api/fundamentals")
         .then(apiRes => {
           if (apiRes.success && apiRes.data?.length > 0) {
             setFundamentalsData(apiRes.data);
@@ -127,11 +115,10 @@ export default function App() {
         .catch(err => console.warn("Fundamentals load error:", err));
 
       // Fetch IHSG history for MA20/MA50 computation in regime engine
-      fetch("/api/backtest-data")
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setIhsgHistory(data.map((d: any) => ({ close: d.ihsgPrice, date: d.date })));
+      api.get<{ success: boolean; data: any[] }>("/api/backtest-data")
+        .then(apiRes => {
+          if (apiRes.success && Array.isArray(apiRes.data)) {
+            setIhsgHistory(apiRes.data.map((d: any) => ({ close: d.ihsgPrice, date: d.date })));
           }
           refreshRSFromRegime();
         })
@@ -140,8 +127,7 @@ export default function App() {
         });
 
       // Fetch scan data cache for real leader scores
-      fetch("/api/engine/idx80")
-        .then(res => res.json())
+      api.get<{ stocks: any[] }>("/api/engine/idx80")
         .then(data => {
           if (data?.stocks && data.stocks.length > 0) {
             setScanData(data);
@@ -318,76 +304,42 @@ export default function App() {
     }
   }, [appNotification]);
   
-  // Startup Database Synchronization from Firebase
+  // Startup Database Synchronization from D1 API
   useEffect(() => {
     if (!user) return;
-    
     setIsDbLoaded(false);
 
-    // Profile listener
-    const unsubProfile = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (typeof data.cash === "number") setCash(data.cash);
-        if (data.dataFeed) setDataFeed(data.dataFeed);
-        if (data.activeConfig) setActiveConfig(data.activeConfig);
-      }
-    });
-
-    // Watchlist listener
-    const unsubWatchlist = onSnapshot(collection(db, "users", user.uid, "watchlist"), (snapshot) => {
-      const items: WatchlistItem[] = [];
-      snapshot.forEach(doc => items.push(doc.data() as WatchlistItem));
-      setWatchlist(items);
-    });
-
-    // Portfolio listener
-    const unsubPortfolio = onSnapshot(collection(db, "users", user.uid, "portfolio"), (snapshot) => {
-      const items: PortfolioItem[] = [];
-      snapshot.forEach(doc => items.push(doc.data() as PortfolioItem));
-      setPortfolio(items);
-    });
-
-    // Logs listener
-    const unsubLogs = onSnapshot(collection(db, "users", user.uid, "tradeLogs"), (snapshot) => {
-      const items: any[] = [];
-      snapshot.forEach(doc => items.push(doc.data()));
-      items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setTradeLogs(items);
-    });
-
-    // Reports listener
-    const unsubReports = onSnapshot(collection(db, "users", user.uid, "cachedReports"), (snapshot) => {
-      const reports: Record<string, AnalysisResult> = {};
-      snapshot.forEach(doc => {
-        reports[doc.id] = doc.data().data as AnalysisResult;
-      });
-      setCachedReports(reports);
-    });
-
-    setIsDbLoaded(true);
-
-    return () => {
-      unsubProfile();
-      unsubWatchlist();
-      unsubPortfolio();
-      unsubLogs();
-      unsubReports();
-    };
+    Promise.all([
+      api.get<{ user: any }>("/api/auth/me").then(d => {
+        if (d.user.cash) setCash(d.user.cash);
+        if (d.user.data_feed) setDataFeed(d.user.data_feed);
+        if (d.user.active_config) setActiveConfig(d.user.active_config);
+      }).catch(() => {}),
+      api.get<{ watchlist: WatchlistItem[] }>("/api/watchlist").then(d => {
+        setWatchlist(d.watchlist || []);
+      }).catch(() => {}),
+      api.get<{ portfolio: PortfolioItem[] }>("/api/portfolio").then(d => {
+        setPortfolio(d.portfolio || []);
+      }).catch(() => {}),
+      api.get<{ tradeLogs: any[] }>("/api/trade-logs").then(d => {
+        const items = (d.tradeLogs || []).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setTradeLogs(items);
+      }).catch(() => {}),
+      api.get<{ reports: Record<string, any> }>("/api/cached-reports").then(d => {
+        const reports: Record<string, AnalysisResult> = {};
+        Object.entries(d.reports || {}).forEach(([ticker, r]) => {
+          reports[ticker] = r.data;
+        });
+        setCachedReports(reports);
+      }).catch(() => {}),
+    ]).then(() => setIsDbLoaded(true));
   }, [user]);
 
-  // Handle Syncs to Firebase instead of localStorage
-  const syncProfileToFirebase = async () => {
+  // Sync profile to D1
+  const syncProfileToApi = async () => {
     if (!user || !isDbLoaded) return;
     try {
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        cash,
-        theme,
-        dataFeed,
-        activeConfig,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      await api.patch("/api/user/profile", { cash, theme, dataFeed, activeConfig });
     } catch(e) {
       console.error(e);
     }
@@ -401,7 +353,7 @@ export default function App() {
   const getChartTheme = (): "dark" | "light" => theme === "light" ? "light" : "dark";
 
   useEffect(() => {
-    syncProfileToFirebase();
+    syncProfileToApi();
   }, [theme, dataFeed, activeConfig, cash]);
 
   useEffect(() => {
@@ -429,11 +381,12 @@ export default function App() {
   // Watchlist quick toggle
   const handleToggleWatchlist = async (ticker: string) => {
     if (!user) return;
-    const docRef = doc(db, "users", user.uid, "watchlist", ticker);
     if (watchlist.some(w => w.ticker === ticker)) {
-      await import("firebase/firestore").then(m => m.deleteDoc(docRef));
+      await api.del("/api/watchlist", { ticker });
+      setWatchlist(prev => prev.filter(w => w.ticker !== ticker));
     } else {
-      await setDoc(docRef, { ticker, addedAt: new Date().toISOString() });
+      await api.post("/api/watchlist", { ticker });
+      setWatchlist(prev => [...prev, { ticker, addedAt: new Date().toISOString() }]);
     }
   };
 
@@ -448,20 +401,16 @@ export default function App() {
         return;
       }
       
-      setCash(prev => {
-        const nextCash = prev - details.net;
-        import("firebase/firestore").then(m => {
-          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-        });
-        return nextCash;
-      });
+      const nextCash = cash - details.net;
+      setCash(nextCash);
+      api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
       
       const logId = "log-" + Date.now();
       const messageStr = ticker === "EMAS" 
         ? `Pembelian ${shares.toFixed(4)} Gram Emas @ Rp ${buyPrice.toLocaleString("id-ID")}`
         : `Pembelian ${shares / 100} Lot ${ticker} @ Rp ${buyPrice.toLocaleString("id-ID")}`;
         
-      const nextLogs = [{
+      const newLog = {
         id: logId,
         type: ticker === "EMAS" ? "BUY_GOLD" : "BUY",
         ticker,
@@ -469,8 +418,9 @@ export default function App() {
         price: buyPrice,
         timestamp: new Date().toISOString(),
         message: messageStr
-      }, ...tradeLogs];
-      customSetTradeLogs(nextLogs);
+      };
+      api.post("/api/trade-logs", newLog).catch(() => {});
+      setTradeLogs(prev => [newLog, ...prev]);
       
       const successMsg = ticker === "EMAS" 
         ? `Berhasil membeli ${shares.toFixed(4)} Gram Emas!`
@@ -478,31 +428,31 @@ export default function App() {
       setAppNotification({ message: successMsg, type: "success" });
     }
 
-    const docRef = doc(db, "users", user.uid, "portfolio", ticker);
     const existing = portfolio.find(p => p.ticker === ticker);
     if (existing) {
       const combinedShares = existing.shares + shares;
       const averagePrice = Math.round(((existing.shares * existing.buyPrice) + (shares * buyPrice)) / combinedShares);
-      await setDoc(docRef, {
-        ticker,
-        shares: combinedShares,
-        buyPrice: averagePrice,
-        addedAt: existing.addedAt || new Date().toISOString()
-      }, { merge: true });
+      api.post("/api/portfolio", { ticker, shares: combinedShares, buyPrice: averagePrice }).catch(() => {});
     } else {
-      await setDoc(docRef, { ticker, shares, buyPrice, addedAt: new Date().toISOString() });
+      api.post("/api/portfolio", { ticker, shares, buyPrice }).catch(() => {});
     }
+    setPortfolio(prev => {
+      const filtered = prev.filter(p => p.ticker !== ticker);
+      const combinedShares = (existing?.shares || 0) + shares;
+      const avgPrice = existing ? Math.round(((existing.shares * existing.buyPrice) + (shares * buyPrice)) / combinedShares) : buyPrice;
+      return [...filtered, { ticker, shares: combinedShares, buyPrice: avgPrice, addedAt: existing?.addedAt || new Date().toISOString() }];
+    });
   };
 
   const handleRemoveTransaction = async (ticker: string) => {
     if (!user) return;
-    await import("firebase/firestore").then(m => m.deleteDoc(doc(db, "users", user.uid, "portfolio", ticker)));
+    await api.del("/api/portfolio", { ticker });
+    setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
     setAppNotification({ message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
   };
 
   const handleSellTransaction = async (ticker: string, sharesToSell: number, silent: boolean = false) => {
     if (!user) return;
-    const docRef = doc(db, "users", user.uid, "portfolio", ticker);
     const existing = portfolio.find(p => p.ticker === ticker);
     
     if (existing) {
@@ -510,30 +460,24 @@ export default function App() {
         const currentPrice = ticker === "EMAS" ? MKT.gold.value : getDynamicStock(ticker).currentPrice;
         const details = calculateTradeDetails("SELL", ticker, sharesToSell, currentPrice);
         
-        // Update local cash and firebase explicitly
-        setCash(prev => {
-          const nextCash = prev + details.net;
-          import("firebase/firestore").then(m => {
-            m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-          });
-          return nextCash;
-        });
+        const nextCash = cash + details.net;
+        setCash(nextCash);
+        api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
 
         const logId = "log-" + Date.now();
-        const messageStr = ticker === "EMAS"
-          ? `Mencairkan ${sharesToSell.toFixed(4)} Gram Emas @ Rp ${currentPrice.toLocaleString("id-ID")}`
-          : `Penjualan ${sharesToSell / 100} Lot ${ticker} @ Rp ${currentPrice.toLocaleString("id-ID")}`;
-
-        const nextLogs = [{
+        const newLog = {
           id: logId,
           type: "SELL",
           ticker,
           shares: sharesToSell,
           price: currentPrice,
           timestamp: new Date().toISOString(),
-          message: messageStr
-        }, ...tradeLogs];
-        customSetTradeLogs(nextLogs);
+          message: ticker === "EMAS"
+            ? `Mencairkan ${sharesToSell.toFixed(4)} Gram Emas @ Rp ${currentPrice.toLocaleString("id-ID")}`
+            : `Penjualan ${sharesToSell / 100} Lot ${ticker} @ Rp ${currentPrice.toLocaleString("id-ID")}`
+        };
+        api.post("/api/trade-logs", newLog).catch(() => {});
+        setTradeLogs(prev => [newLog, ...prev]);
         
         const successMsg = ticker === "EMAS" 
           ? `Berhasil menjual ${sharesToSell.toFixed(4)} gram Emas!`
@@ -542,11 +486,12 @@ export default function App() {
       }
 
       if (existing.shares <= sharesToSell) {
-        await import("firebase/firestore").then(m => m.deleteDoc(docRef));
+        await api.del("/api/portfolio", { ticker });
+        setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
       } else {
-        await setDoc(docRef, {
-          shares: existing.shares - sharesToSell,
-        }, { merge: true });
+        const remaining = existing.shares - sharesToSell;
+        api.post("/api/portfolio", { ticker, shares: remaining, buyPrice: existing.buyPrice }).catch(() => {});
+        setPortfolio(prev => prev.map(p => p.ticker === ticker ? { ...p, shares: remaining } : p));
       }
     }
   };
@@ -597,37 +542,28 @@ export default function App() {
     if (!user) return;
     const nextLogs = typeof value === 'function' ? value(tradeLogs) : value;
     
-    // Determine changes
     if (nextLogs.length === 0 && tradeLogs.length > 0) {
-      // Clear history
-      tradeLogs.forEach(log => {
-        import("firebase/firestore").then(m => m.deleteDoc(doc(db, "users", user.uid, "tradeLogs", log.id)));
-      });
+      // Clear all logs
+      Promise.all(tradeLogs.map(log => api.del("/api/trade-logs", { id: log.id }).catch(() => {})));
     } else if (nextLogs.length > tradeLogs.length) {
-      // Assuming prepend new logs
       const diff = nextLogs.length - tradeLogs.length;
       for (let i = 0; i < diff; i++) {
         const newLog = nextLogs[i];
         if (newLog) {
-          setDoc(doc(db, "users", user.uid, "tradeLogs", newLog.id), newLog);
+          api.post("/api/trade-logs", newLog).catch(() => {});
         }
       }
     }
+    setTradeLogs(nextLogs);
   };
 
   const handleDepositCash = (rupiahAmount: number) => {
-    setCash(prev => {
-      const nextCash = prev + rupiahAmount;
-      if (user) {
-        import("firebase/firestore").then(m => {
-          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-        });
-      }
-      return nextCash;
-    });
+    const nextCash = cash + rupiahAmount;
+    setCash(nextCash);
+    api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
     
     const logId = "log-" + Date.now();
-    const nextLogs = [{
+    const newLog = {
       id: logId,
       type: "DEPOSIT",
       ticker: "KAS",
@@ -635,23 +571,18 @@ export default function App() {
       price: 1,
       timestamp: new Date().toISOString(),
       message: `Deposit Nominal sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
-    }, ...tradeLogs];
-    customSetTradeLogs(nextLogs);
+    };
+    api.post("/api/trade-logs", newLog).catch(() => {});
+    setTradeLogs(prev => [newLog, ...prev]);
   };
 
   const handleWithdrawCash = (rupiahAmount: number) => {
-    setCash(prev => {
-      const nextCash = prev - rupiahAmount;
-      if (user) {
-        import("firebase/firestore").then(m => {
-          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-        });
-      }
-      return nextCash;
-    });
+    const nextCash = cash - rupiahAmount;
+    setCash(nextCash);
+    api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
     
     const logId = "log-" + Date.now();
-    const nextLogs = [{
+    const newLog = {
       id: logId,
       type: "WITHDRAWAL",
       ticker: "KAS",
@@ -659,8 +590,9 @@ export default function App() {
       price: 1,
       timestamp: new Date().toISOString(),
       message: `Penarikan Dana sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
-    }, ...tradeLogs];
-    customSetTradeLogs(nextLogs);
+    };
+    api.post("/api/trade-logs", newLog).catch(() => {});
+    setTradeLogs(prev => [newLog, ...prev]);
   };
 
   const handleMoveToGold = (rupiahAmount: number) => {
@@ -673,20 +605,14 @@ export default function App() {
       return;
     }
 
-    setCash(prev => {
-      const nextCash = prev - details.net;
-      if (user) {
-        import("firebase/firestore").then(m => {
-          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-        });
-      }
-      return nextCash;
-    });
+    const nextCash = cash - details.net;
+    setCash(nextCash);
+    api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
     
-    handleAddTransaction("EMAS", grams, goldPrice, true); // true = silent/no double deduct
+    handleAddTransaction("EMAS", grams, goldPrice, true);
     
     const logId = "log-" + Date.now();
-    const nextLogs = [{
+    const newLog = {
       id: logId,
       type: "BUY_GOLD",
       ticker: "EMAS",
@@ -694,8 +620,9 @@ export default function App() {
       price: goldPrice,
       timestamp: new Date().toISOString(),
       message: `Konversi Kas ke Safe Haven Emas Fisik sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`
-    }, ...tradeLogs];
-    customSetTradeLogs(nextLogs);
+    };
+    api.post("/api/trade-logs", newLog).catch(() => {});
+    setTradeLogs(prev => [newLog, ...prev]);
     setAppNotification({ message: `Berhasil membeli ${grams.toFixed(4)} gram Emas!`, type: "success" });
   };
 
@@ -703,20 +630,14 @@ export default function App() {
     const goldPrice = MKT.gold.value;
     const details = calculateTradeDetails("SELL", "EMAS", enteredVal, goldPrice);
 
-    setCash(prev => {
-      const nextCash = prev + details.net;
-      if (user) {
-        import("firebase/firestore").then(m => {
-          m.setDoc(doc(db, "users", user.uid), { cash: nextCash }, { merge: true });
-        });
-      }
-      return nextCash;
-    });
+    const nextCash = cash + details.net;
+    setCash(nextCash);
+    api.patch("/api/user/profile", { cash: nextCash }).catch(() => {});
 
-    handleSellTransaction("EMAS", enteredVal, true); // true = silent
+    handleSellTransaction("EMAS", enteredVal, true);
 
     const logId = "log-" + Date.now();
-    const nextLogs = [{
+    const newLog = {
       id: logId,
       type: "SELL_GOLD",
       ticker: "EMAS",
@@ -724,8 +645,9 @@ export default function App() {
       price: goldPrice,
       timestamp: new Date().toISOString(),
       message: `Mencairkan ${enteredVal} Gram Emas Fisik ke Kas Wallet`
-    }, ...tradeLogs];
-    customSetTradeLogs(nextLogs);
+    };
+    api.post("/api/trade-logs", newLog).catch(() => {});
+    setTradeLogs(prev => [newLog, ...prev]);
     setAppNotification({ message: `Berhasil mencairkan ${enteredVal} gram Emas!`, type: "success" });
   };
 
@@ -735,27 +657,12 @@ export default function App() {
     setGenerationError(null);
 
     try {
-      const response = await fetch("/api/gemini/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stock: activeStock,
-          customFocus,
-        }),
+      const reportData: AnalysisResult = await api.post("/api/gemini/analyze", {
+        stock: activeStock,
+        customFocus,
       });
-
-      if (!response.ok) {
-        const errObj = await response.json();
-        throw new Error(errObj.error || "Failed to parse. Is GEMINI_API_KEY declared?");
-      }
-
-      const reportData: AnalysisResult = await response.json();
       if (user) {
-        await setDoc(doc(db, "users", user.uid, "cachedReports", activeStock.ticker), {
-          ticker: activeStock.ticker,
-          data: reportData,
-          updatedAt: new Date().toISOString()
-        });
+        api.post("/api/cached-reports", { ticker: activeStock.ticker, data: reportData }).catch(() => {});
       }
     } catch (err: any) {
       console.error(err);
@@ -1058,7 +965,7 @@ export default function App() {
                   <div className="h-px w-full bg-white/[0.05] my-1" />
 
                   <div className="px-2 py-1">
-                    <button onClick={() => { setIsSettingsOpen(false); signOut(auth); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors">
+                    <button onClick={() => { setIsSettingsOpen(false); logout(); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors">
                       <LogOut className="w-4 h-4" /> Keluar Akun
                     </button>
                   </div>

@@ -7,6 +7,12 @@ coverage/
 !.env.example
 .vercel
 
+# Cloudflare
+.wrangler/
+
+# opencode AI config
+.opencode/
+
 # Build artifacts
 dist/
 functions/index.js
@@ -20,4 +26,8 @@ firebase-config.json
 # SQLite database (auto-generated from JSON via build:db)
 *.db
 *.sqlite
+
+# Large auto-generated data
+historical_market_data.json
+*.bak
 

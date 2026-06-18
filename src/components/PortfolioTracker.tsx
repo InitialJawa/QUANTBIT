@@ -3,6 +3,7 @@ import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
 import { setActiveUniverse, setActiveConfig, refreshRSFromRegime } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
+import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
@@ -147,16 +148,12 @@ export function PortfolioTracker({
     localStorage.setItem("idx_engine_config", JSON.stringify(updatedConfig));
     localStorage.setItem("idx_trade_logs", JSON.stringify(updatedLogs));
 
-    fetch("/api/engine/state", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        portfolio,
-        watchlist,
-        cash: updatedCash,
-        config: updatedConfig,
-        tradeLogs: updatedLogs,
-      }),
+    api.post("/api/engine/state", {
+      portfolio,
+      watchlist,
+      cash: updatedCash,
+      config: updatedConfig,
+      tradeLogs: updatedLogs,
     }).catch((err) =>
       console.warn("Failed to persist to standard full-stack server:", err),
     );

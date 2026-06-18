@@ -5,21 +5,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx server/server.ts",
-    "frontend": "vite",
-    "dev:all": "concurrently \"tsx server/server.ts\" \"vite\"",
-    "build": "npm run build:db && vite build && esbuild server/server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && npm run build:vercel",
+    "dev": "vite",
     "build:db": "tsx scripts/build-db.ts",
-    "build:functions": "esbuild server/functions-entry.ts --bundle --platform=node --format=esm --target=node20 --external:firebase-admin --external:firebase-functions --external:vite --outfile=functions/index.js",
-    "build:vercel": "esbuild server/api-handler.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=api/index.js",
-    "prebuild": "node -e \"const c=process.env.FIREBASE_CONFIG; if(c) require('fs').writeFileSync('firebase-config.json', c); else if(!require('fs').existsSync('firebase-config.json')){console.error('firebase-config.json missing'); process.exit(1)}\"",
-    "vercel-build": "npm run prebuild && npm run build",
-    "copy:data": "node -e \"const fs = require('fs'); fs.cpSync('data', 'functions/data', { recursive: true });\"",
-    "start": "node dist/server.cjs",
-    "clean": "node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.rmSync('functions/index.js', { force: true }); fs.rmSync('functions/data', { recursive: true, force: true }); fs.rmSync('api/index.js', { force: true });\"",
-    "lint": "tsc --noEmit",
-    "deploy": "npm run build && npm run copy:data && npm run build:functions && firebase deploy",
-    "db:audit": "tsx scripts/audit_and_sync_rtdb.ts"
+    "split-data": "tsx scripts/split-data.ts",
+    "build": "npm run build:db && npm run split-data && vite build && tsx scripts/build-cf.ts",
+    "start": "npx wrangler pages dev dist",
+    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true });\"",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -29,15 +21,9 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "better-sqlite3": "^12.10.1",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^4.22.2",
-    "firebase": "^12.14.0",
-    "firebase-admin": "^14.0.0",
     "groq-sdk": "^1.2.1",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "node-cron": "^4.2.1",
     "openai": "^6.42.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
@@ -49,11 +35,6 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node-cron": "^3.0.11",
-    "esbuild": "^0.28.1",
-    "tsx": "^4.22.4",
-    "concurrently": "^8.2.2"
+    "tsx": "^4.22.4"
   }
 }

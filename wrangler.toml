@@ -1,0 +1,24 @@
+name = "quantbit-terminal"
+compatibility_date = "2026-06-18"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quantbit-db"
+database_id = "6535096c-b60e-44c3-8b8a-308f0897b980"
+
+[env.production]
+vars = { API_ORIGIN = "" }
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "quantbit-db"
+database_id = "6535096c-b60e-44c3-8b8a-308f0897b980"
+
+[env.preview]
+vars = { API_ORIGIN = "" }
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "quantbit-db"
+database_id = "6535096c-b60e-44c3-8b8a-308f0897b980"

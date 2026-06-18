@@ -1,0 +1,6 @@
+{
+  "name": "Quantbit",
+  "description": "An elegant iOS-inspired redesign for Quantbit, featuring sleek glassmorphism, fluid animations, and a modern dark theme.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

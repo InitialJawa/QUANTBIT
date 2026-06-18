@@ -1,46 +1,11 @@
 import YahooFinance from "yahoo-finance2";
 const yahooFinance = new YahooFinance();
 import { COMBINED_TICKERS } from "../constants/idx80.ts";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { initializeApp as initAdminApp, getApps as getAdminApps } from "firebase-admin/app";
-import { getDatabase as getAdminDatabase } from "firebase-admin/database";
 import fs from "fs";
 import path from "path";
-import cron from "node-cron";
 
-// Firebase Connection
-const firebaseConfigPath = path.join(process.cwd(), "firebase-config.json");
-let db: any = null;
-let rtdb: any = null;
+const API_BASE = process.env.API_BASE || "http://localhost:8788";
 
-if (fs.existsSync(firebaseConfigPath)) {
-  const config = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf-8"));
-  const fbApp = initializeApp(config);
-  db = getFirestore(fbApp, config.firestoreDatabaseId);
-
-  // Initialize Realtime Database via Admin SDK for bypass of rules
-  try {
-    const databaseURL = "https://gen-lang-client-0592253886-default-rtdb.asia-southeast1.firebasedatabase.app";
-    const adminApps = getAdminApps();
-    let adminApp;
-    if (adminApps.length === 0) {
-      adminApp = initAdminApp({
-        projectId: config.projectId,
-        databaseURL
-      });
-    } else {
-      adminApp = adminApps[0];
-    }
-    rtdb = getAdminDatabase(adminApp);
-    console.log("Firebase Realtime Database successfully connected server-side (sync_engine.ts).");
-  } catch (err: any) {
-    console.warn("Failed to initialize Firebase Admin Realtime Database in sync_engine.ts:", err.message);
-  }
-}
-
-
-// Calculate scores ranging 1-100 based on basic bounds, fallback to neutral 50 if missing
 function calcQuality(stats: any, fin: any) {
   let score = 50;
   if (fin?.returnOnEquity) {
@@ -84,27 +49,26 @@ function calcGrowth(fin: any) {
   return Math.min(100, Math.max(1, score));
 }
 
-// Store dynamic universe
 let ACTIVE_UNIVERSE = [...COMBINED_TICKERS];
 
-// Fetches the dynamic universe from Firebase or external API
 export async function refreshActiveUniverse() {
-  if (!db) return;
   try {
-    const { getDoc } = await import("firebase/firestore");
-    const docSnap = await getDoc(doc(db, "engine", "active_universe"));
-    if (docSnap.exists() && Array.isArray(docSnap.data().tickers)) {
-      ACTIVE_UNIVERSE = docSnap.data().tickers;
-      console.log(`[Universe Update] Successfully pulled ${ACTIVE_UNIVERSE.length} tickers dynamically from Cloud.`);
+    const resp = await fetch(`${API_BASE}/api/engine/active-universe`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (Array.isArray(data.tickers)) {
+        ACTIVE_UNIVERSE = data.tickers;
+        console.log(`[Universe Update] Pulled ${ACTIVE_UNIVERSE.length} tickers from D1.`);
+      }
     }
-  } catch (err) {
-    console.log("[Universe Update] Defaulting to base list due to absence of cloud dynamic universe.", err.message);
+  } catch (err: any) {
+    console.log("[Universe Update] Defaulting to base list.", err.message);
   }
 }
 
 export async function runIdx80Scan() {
   await refreshActiveUniverse();
-  console.log(`Starting Quantitative Scan & Sync to Firebase for ${ACTIVE_UNIVERSE.length} stocks...`);
+  console.log(`Starting Quantitative Scan for ${ACTIVE_UNIVERSE.length} stocks...`);
   const results: any[] = [];
 
   const concurrencyLimit = 15;
@@ -126,7 +90,6 @@ export async function runIdx80Scan() {
         const value = calcValue(quote.defaultKeyStatistics, quote.summaryDetail);
         const growth = calcGrowth(quote.financialData);
         
-        // Momentum proxy using 50d vs 200d average
         let momentum = 50;
         if (quote.summaryDetail?.fiftyDayAverage && quote.summaryDetail?.twoHundredDayAverage) {
            if (quote.summaryDetail.fiftyDayAverage > quote.summaryDetail.twoHundredDayAverage) momentum += 30;
@@ -190,60 +153,37 @@ export async function runIdx80Scan() {
   const workers = Array.from({ length: concurrencyLimit }, () => worker());
   await Promise.all(workers);
 
-  // Save to Firebase
-  if (db) {
-    try {
-      const docRef = doc(db, "engine", "idx_data");
-      await setDoc(docRef, { 
-        lastUpdated: new Date().toISOString(),
-        count: results.length,
-        stocks: results 
-      });
-      console.log("IDX80 Scan data successfully synced to Firebase!");
-    } catch (err) {
-      console.error("Error saving scan data to Firebase:", err);
+  // Save to D1 API
+  try {
+    const resp = await fetch(`${API_BASE}/api/engine/idx-data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lastUpdated: new Date().toISOString(), count: results.length, stocks: results })
+    });
+    if (resp.ok) {
+      console.log("IDX80 Scan data successfully synced to D1!");
+    } else {
+      console.error("Error saving scan data to D1:", await resp.text());
     }
-  } else {
-    console.log("Firebase not configured, skipping cloud save.");
+  } catch (err) {
+    console.error("Error saving scan data to D1:", err);
   }
 
-  // Save to Firebase Realtime Database
-  if (rtdb) {
-    try {
-      console.log("Syncing scan data to Firebase Realtime Database...");
-      await rtdb.ref("engine/idx_data").set({
-        lastUpdated: new Date().toISOString(),
-        count: results.length,
-        stocks: results
-      });
-      console.log("IDX80 Scan data successfully synced to Firebase Realtime Database!");
-    } catch (err) {
-      console.error("Error saving scan data to Firebase Realtime Database:", err);
-    }
-  }
-
-
-  // Also save locally as a reliable cache, but ONLY if we have results
-  // (never overwrite a valid cache with an empty scan)
+  // Local cache fallback
   if (results.length > 0) {
-    const isCloudFunction = !!(process.env.FUNCTIONS_EMULATOR || process.env.FIREBASE_CONFIG);
-    const dataPath = isCloudFunction
-      ? path.join("/tmp", "idx80_scan.json")
-      : path.join(process.cwd(), "data", "idx80_scan.json");
+    const dataPath = path.join(process.cwd(), "data", "idx80_scan.json");
     if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
     fs.writeFileSync(dataPath, JSON.stringify({ lastUpdated: new Date().toISOString(), stocks: results }, null, 2));
   }
 }
 
-// Ensure the module isn't strictly executed instantly on load if imported, but can be started via cron
-export function startScannerCron() {
-  console.log("Scheduling IDX80 Scanner to run every 15 minutes during market hours...");
-  // Run every 15 minutes
+export async function startScannerCron() {
+  console.log("Scheduling IDX80 Scanner to run every 15 minutes...");
+  const { default: cron } = await import("node-cron");
   cron.schedule("*/15 * * * *", () => {
     runIdx80Scan();
   });
   
-  // Initial run in background exactly once 5 seconds after server start
   setTimeout(() => {
     runIdx80Scan();
   }, 5000);
@@ -254,4 +194,3 @@ const isMain = process.argv[1] && (path.resolve(process.argv[1]) === path.resolv
 if (isMain) {
   runIdx80Scan().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
 }
-

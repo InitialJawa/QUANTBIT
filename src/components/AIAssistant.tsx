@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { StockData } from "../types";
 import { Send, Sparkles, User, HelpCircle, Bot, CornerDownLeft, Loader2 } from "lucide-react";
+import { api } from "../services/api";
 import { TickerLogo } from "./TickerLogo";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
@@ -59,20 +60,10 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/gemini/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMsg],
-          selectedStock: stock,
-        }),
+      const data = await api.post<{ content: string }>("/api/gemini/chat", {
+        messages: [...messages, userMsg],
+        selectedStock: stock,
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI advisor");
-      }
-
-      const data = await response.json();
       setMessages((prev) => [...prev, { role: "assistant", content: data.content }]);
     } catch (error: any) {
       console.error(error);
