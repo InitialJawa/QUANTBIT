@@ -4,8 +4,7 @@ compatibility_flags = ["nodejs_compat"]
 
 pages_build_output_dir = "dist"
 
-[build]
-command = "npm run build"
+pages_build_command = "npm run build"
 
 [[d1_databases]]
 binding = "DB"
