@@ -2,10 +2,6 @@ name = "quantbit-terminal"
 compatibility_date = "2026-06-18"
 compatibility_flags = ["nodejs_compat"]
 
-pages_build_output_dir = "dist"
-
-pages_build_command = "npm run build"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "quantbit-db"
