@@ -14,7 +14,7 @@ if (_scanEntries.length > 0) {
     const cleanTicker = (s.ticker || "").replace(".JK", "");
     if (!existingTickers.has(cleanTicker)) {
       const quality = s.quality || 50;
-      const roe = quality > 70 ? "25" : quality > 50 ? "15" : "8";
+      const roe = quality > 70 ? "25" : quality > 55 ? "15" : "8";
       const der = (0.5 + (100 - quality) / 200).toFixed(2);
       const peRatio = s.peRatio ? s.peRatio.toFixed(1) : "14.5";
       const pbRatio = s.pbRatio ? s.pbRatio.toFixed(1) : "1.6";
@@ -42,13 +42,11 @@ const LOGO_COLORS = [
   "bg-amber-600"
 ];
 
-// Helper to generate a deterministically stable color based on string
 function getLogoColor(ticker: string): string {
   const sum = ticker.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return LOGO_COLORS[sum % LOGO_COLORS.length];
 }
 
-// Deterministic pseudo-random using ticker hash (stable across renders)
 function seedFromTicker(tkr: string, offset: number = 0): number {
   let h = 0;
   for (let i = 0; i < tkr.length; i++) h = ((h << 5) - h) + tkr.charCodeAt(i) + offset;
@@ -159,35 +157,64 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
   const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
     const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
     const progress = i / 7;
-    const price = Math.round(ma50 + (currentPrice - ma50) * progress + (Math.sin(progress * Math.PI * 4) * (high - low) * 0.01));
+    const price = Math.round(
+      ma50 +
+        (currentPrice - ma50) * progress +
+        Math.sin(progress * Math.PI * 4) * (high - low) * 0.01
+    );
     return { date: hours[i], price, volume: Math.round(50000 + (i + 1) * vol / 8) };
   });
 
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
-    const price = Math.round(ma200 + (currentPrice - ma200) * progress + (Math.sin(progress * Math.PI * 3) * (high - low) * 0.015));
+    const price = Math.round(
+      ma200 +
+        (currentPrice - ma200) * progress +
+        Math.sin(progress * Math.PI * 3) * (high - low) * 0.015
+    );
     return { date: days[i], price, volume: Math.round(300000 + (i + 1) * vol / 5) };
   });
 
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
-    const price = Math.round(ma200 * 0.95 + (currentPrice - ma200 * 0.95) * progress + (Math.sin(progress * Math.PI * 2) * (high - low) * 0.02));
+    const price = Math.round(
+      ma200 * 0.95 +
+        (currentPrice - ma200 * 0.95) * progress +
+        Math.sin(progress * Math.PI * 2) * (high - low) * 0.02
+    );
     return { date: weeks[i], price, volume: Math.round(1500000 + (i + 1) * vol / 4) };
   });
 
-  return {
-    ticker, name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
-    peRatio, pbRatio, roe, der, dividendYield, metrics,
+  const stock: StockData = {
+    ticker,
+    name,
+    sector,
+    subSector,
+    description,
+    logoColor,
+    marketCap,
+    currentPrice,
+    change,
+    peRatio,
+    pbRatio,
+    roe,
+    der,
+    dividendYield,
+    metrics,
     dataSources: {
-      price: scanStock?.currentPrice > 0 ? DataStatus.LIVE : DataStatus.ESTIMATED,
-      fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : DataStatus.ESTIMATED),
+      price: scanStock?.currentPrice > 0 ? DataStatus.LIVE : (exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED),
+      fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : (fundamentals?.pe_ratio ? DataStatus.CACHED : DataStatus.ESTIMATED)),
       charts: DataStatus.ESTIMATED,
       description: scanStock?.longBusinessSummary ? DataStatus.LIVE : (PF[ticker]?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED),
     },
-    chartDataDaily, chartDataWeekly, chartDataMonthly
+    chartDataDaily,
+    chartDataWeekly,
+    chartDataMonthly
   };
+
+  return applyRealFundamentals(stock, cleanTicker);
 });
 
 function applyRealFundamentals(stock: StockData, ticker: string): StockData {
@@ -200,10 +227,7 @@ function applyRealFundamentals(stock: StockData, ticker: string): StockData {
 
   return {
     ...stock,
-    dataSources: {
-      ...stock.dataSources,
-      fundamentals: DataStatus.CACHED,
-    },
+    dataSources: { ...stock.dataSources, fundamentals: DataStatus.CACHED },
     metrics,
     roe: latestF.roe,
     der: latestF.der,
@@ -214,7 +238,7 @@ function applyRealFundamentals(stock: StockData, ticker: string): StockData {
 
 export function getStock(ticker: string): StockData {
   const cleanTicker = ticker.toUpperCase().replace(".JK", "");
-  
+
   // 1. Check if it's already in the perfectly parsed manual list that has full textual descriptions
   const manualFound = PARSED_KNOWN_STOCKS.find(s => s.ticker === cleanTicker);
   if (manualFound) return applyRealFundamentals(manualFound, cleanTicker);
@@ -235,7 +259,7 @@ export function getStock(ticker: string): StockData {
   const name = scanStock?.companyName || profile?.name || `${cleanTicker} Tbk`;
   const sector = scanStock?.sector || profile?.sector || "General Sector";
   const subSector = scanStock?.industry || profile?.industry || "General Industry";
-  const description = scanStock?.longBusinessSummary || profile?.summary || `PT ${name} is a major publicly traded company in Indonesia, listed on the Bursa Efek Indonesia (IDX). It is analyzed as part of our core IDX80 quantitative stock selection engine.`;
+  const description = scanStock?.longBusinessSummary || profile?.summary || `PT ${name} is a major publicly traded company in Indonesia, listed on the Bursa Efek Indonesia (IDX).`;
 
   const logoColor = getLogoColor(cleanTicker);
 
@@ -333,42 +357,68 @@ export function getStock(ticker: string): StockData {
   const chartDataDaily = Array.from({ length: 8 }, (_, i) => {
     const hours = ["09:00", "10:00", "11:00", "12:00", "13:30", "14:30", "15:30", "16:00"];
     const progress = i / 7;
-    const price = Math.round(ma50 + (currentPrice - ma50) * progress + (Math.sin(progress * Math.PI * 4) * (high - low) * 0.01));
+    const price = Math.round(
+      ma50 +
+        (currentPrice - ma50) * progress +
+        Math.sin(progress * Math.PI * 4) * (high - low) * 0.01
+    );
     return { date: hours[i], price, volume: Math.round(50000 + (i + 1) * vol / 8) };
   });
 
   const chartDataWeekly = Array.from({ length: 5 }, (_, i) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
     const progress = i / 4;
-    const price = Math.round(ma200 + (currentPrice - ma200) * progress + (Math.sin(progress * Math.PI * 3) * (high - low) * 0.015));
+    const price = Math.round(
+      ma200 +
+        (currentPrice - ma200) * progress +
+        Math.sin(progress * Math.PI * 3) * (high - low) * 0.015
+    );
     return { date: days[i], price, volume: Math.round(300000 + (i + 1) * vol / 5) };
   });
 
   const chartDataMonthly = Array.from({ length: 4 }, (_, i) => {
     const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
     const progress = i / 3;
-    const price = Math.round(ma200 * 0.95 + (currentPrice - ma200 * 0.95) * progress + (Math.sin(progress * Math.PI * 2) * (high - low) * 0.02));
+    const price = Math.round(
+      ma200 * 0.95 +
+        (currentPrice - ma200 * 0.95) * progress +
+        Math.sin(progress * Math.PI * 2) * (high - low) * 0.02
+    );
     return { date: weeks[i], price, volume: Math.round(1500000 + (i + 1) * vol / 4) };
   });
 
   const stock: StockData = {
-    ticker: cleanTicker,
-    name, sector, subSector, description, logoColor, marketCap, currentPrice, change,
-    peRatio, pbRatio, roe, der, dividendYield, metrics,
+    ticker,
+    name,
+    sector,
+    subSector,
+    description,
+    logoColor,
+    marketCap,
+    currentPrice,
+    change,
+    peRatio,
+    pbRatio,
+    roe,
+    der,
+    dividendYield,
+    metrics,
     dataSources: {
       price: hasScanPrice ? DataStatus.LIVE : (exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED),
       fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : (fundamentals?.pe_ratio ? DataStatus.CACHED : DataStatus.ESTIMATED)),
       charts: DataStatus.ESTIMATED,
-      description: scanStock?.longBusinessSummary ? DataStatus.LIVE : (profile?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED),
+      description: scanStock?.longBusinessSummary ? DataStatus.LIVE : (PF[ticker]?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED),
     },
-    chartDataDaily, chartDataWeekly, chartDataMonthly
+    chartDataDaily,
+    chartDataWeekly,
+    chartDataMonthly
   };
 
   return applyRealFundamentals(stock, cleanTicker);
 }
 
-// Populate scan data cache BEFORE building STOCKS_DATA so getScanData() returns live data
+// Populate scan data cache BEFORE building STOCKS_DATA
 setScanData(scanDataRaw as any);
 
-// Generate the final Universe List by running the IDX80 array through the getStock resolver!
+// Generate the final Universe List
 export const STOCKS_DATA: StockData[] = COMBINED_TICKERS.map(t => getStock(t.split("|")[0]));
