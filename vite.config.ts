@@ -18,14 +18,10 @@ export default defineConfig(() => {
     build: {
       // Raise warning limit; actual size can be larger if acceptable
       chunkSizeWarningLimit: 2000,
+      // No manual chunk splitting to ensure React bundle is included
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Split heavy libraries into separate chunks
-            react: ['react', 'react-dom'],
-            recharts: ['recharts'],
-            tailwind: ['tailwindcss'],
-          },
+          // Keep default chunking
         },
       },
     },
