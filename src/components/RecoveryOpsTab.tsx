@@ -11,7 +11,7 @@ interface RecoveryOpsTabProps {
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
   watchlist?: WatchlistItem[];
-  getDynamicStock: (ticker: string) => StockData | null;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: RecoveryOpsTabProps) {

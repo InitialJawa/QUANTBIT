@@ -35,7 +35,7 @@ interface SimulationTabProps {
   onRemoveTransaction: (ticker: string) => void;
   onSellTransaction?: (ticker: string, sharesToSell: number) => void;
   onSelectTicker: (ticker: string) => void;
-  getDynamicStock: (ticker: string) => StockData;
+  getDynamicStock: (ticker: string) => StockData | undefined;
   theme?: "dark" | "light";
   activeConfig?: "prod" | "res";
   defaultSubTab?: "past" | "algo" | "ledger";

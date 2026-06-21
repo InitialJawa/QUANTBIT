@@ -88,7 +88,7 @@ interface LeadersTabProps {
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
   watchlist?: WatchlistItem[];
-  getDynamicStock: (ticker: string) => StockData | null;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: LeadersTabProps) {

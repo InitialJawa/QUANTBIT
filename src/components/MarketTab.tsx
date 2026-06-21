@@ -38,7 +38,7 @@ interface MarketTabProps {
   onRemoveTransaction: (ticker: string) => void;
   onSellTransaction: (ticker: string, shares: number) => void;
   onToggleWatchlist: (ticker: string) => void;
-  getDynamicStock: (ticker: string) => StockData | null;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 export function MarketTab({ 

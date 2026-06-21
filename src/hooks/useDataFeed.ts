@@ -121,9 +121,9 @@ export function useDataFeed() {
     return () => clearInterval(interval);
   }, [goapiPrices, yahooPrices, dataFeed]);
 
-  const getDynamicStock = (ticker: string): StockData => {
+  const getDynamicStock = (ticker: string): StockData | undefined => {
     const rawStock = getStock(ticker);
-    if (!rawStock) return rawStock;
+    if (!rawStock) return undefined;
 
     let basePrice = rawStock.currentPrice;
     let baseChange = rawStock.change;

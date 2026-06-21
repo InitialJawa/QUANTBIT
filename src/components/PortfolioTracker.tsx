@@ -44,7 +44,7 @@ interface PortfolioTrackerProps {
   onSellTransaction: (ticker: string, shares: number) => void;
   onSelectStock: (ticker: string) => void;
   onToggleWatchlist: (ticker: string) => void;
-  getDynamicStock: (ticker: string) => StockData | null;
+  getDynamicStock: (ticker: string) => StockData | undefined;
   activeConfig: "prod" | "res";
   cash: number;
   setCash: React.Dispatch<React.SetStateAction<number>>;

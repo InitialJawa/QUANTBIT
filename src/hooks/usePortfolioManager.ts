@@ -15,7 +15,7 @@ interface TradeLog {
 
 export function usePortfolioManager(
   user: any | null,
-  getDynamicStock: (ticker: string) => StockData,
+  getDynamicStock: (ticker: string) => StockData | undefined,
   setAppNotification?: (n: { message: string; type: "success" | "error" | "info" } | null) => void,
 ) {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
@@ -183,7 +183,7 @@ export function usePortfolioManager(
 
     if (existing) {
       if (!silent) {
-        const currentPrice = ticker === "EMAS" ? MKT.gold.value : getDynamicStock(ticker).currentPrice;
+        const currentPrice = ticker === "EMAS" ? MKT.gold.value : (getDynamicStock(ticker)?.currentPrice ?? existing.buyPrice);
         const details = calculateTradeDetails("SELL", ticker, sharesToSell, currentPrice);
 
         const nextCash = cash + details.net;

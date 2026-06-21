@@ -20,7 +20,7 @@ interface AppSidebarProps {
   onMoveToGold: (amount: number) => void;
   onSellGold: (shares: number) => void;
   onClearPortfolio?: () => void;
-  getDynamicStock: (ticker: string) => StockData;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 function formatRupiah(val: number) {
@@ -44,10 +44,10 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
 
-  const totalInvestment = portfolio.reduce((sum, p) => sum + p.shares * p.avgPrice, 0);
+  const totalInvestment = portfolio.reduce((sum, p) => sum + p.shares * p.buyPrice, 0);
   const totalCurrentValue = portfolio.reduce((sum, p) => {
     const stock = getDynamicStock(p.ticker);
-    return sum + p.shares * (stock?.price || p.avgPrice);
+    return sum + p.shares * (stock?.currentPrice || p.buyPrice);
   }, 0);
   const totalReturn = totalCurrentValue - totalInvestment;
   const totalReturnPct = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
@@ -156,7 +156,7 @@ export function AppSidebar({
     portfolio.forEach(p => {
       const stock = getDynamicStock(p.ticker);
       const sector = stock?.sector || "Unknown";
-      sectorMap[sector] = (sectorMap[sector] || 0) + p.shares * (stock?.price || p.avgPrice);
+      sectorMap[sector] = (sectorMap[sector] || 0) + p.shares * (stock?.currentPrice || p.buyPrice);
     });
     const sectorEntries = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
 
@@ -231,8 +231,8 @@ export function AppSidebar({
             ) : (
               portfolio.map(p => {
                 const stock = getDynamicStock(p.ticker);
-                const currentPrice = stock?.price || p.avgPrice;
-                const gainPct = ((currentPrice - p.avgPrice) / p.avgPrice) * 100;
+                const currentPrice = stock?.currentPrice || p.buyPrice;
+                const gainPct = ((currentPrice - p.buyPrice) / p.buyPrice) * 100;
                 return (
                   <div key={p.ticker} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export function AppSidebar({
     const totalStocks = portfolio.length;
     const winners = portfolio.filter(p => {
       const stock = getDynamicStock(p.ticker);
-      return (stock?.price || p.avgPrice) > p.avgPrice;
+      return (stock?.currentPrice || p.buyPrice) > p.buyPrice;
     }).length;
     const losers = totalStocks - winners;
 

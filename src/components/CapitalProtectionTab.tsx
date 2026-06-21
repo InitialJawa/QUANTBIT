@@ -11,7 +11,7 @@ interface CapitalProtectionTabProps {
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
   watchlist?: WatchlistItem[];
-  getDynamicStock: (ticker: string) => StockData | null;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: CapitalProtectionTabProps) {
