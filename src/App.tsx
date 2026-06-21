@@ -124,7 +124,7 @@ export default function App() {
             getDynamicStock={df.getDynamicStock}
           />
 
-          <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col">
+          <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col px-3">
 
           <div className="space-y-2 flex-1 flex flex-col w-full h-full">
 
