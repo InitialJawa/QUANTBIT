@@ -3,6 +3,7 @@
 // Quantbit API — Cloudflare Pages Functions (D1-based)
 // Replaces: Express server + Firebase Auth + Firestore + RTDB
 // ─────────────────────────────────────────────────────────────
+import { buildSystemPrompt, type AILiveContext } from "../../src/ai/systemKnowledge";
 
 async function hashPassword(password: string, salt: string): Promise<string> {
   const enc = new TextEncoder();
@@ -371,7 +372,10 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     return json({ success: false, error: "Direct market sync not available in cloud environment. Run sync locally and redeploy." });
   }
 
-  // Gemini AI proxies
+  // Unified context-aware AI analyst (system-knowledge + provider fallback)
+  if (path === "/api/ai/chat" && method === "POST") return handleAiChat(request, env);
+
+  // Gemini AI proxies (legacy — kept for backward-compat / fallback)
   if (path === "/api/gemini/analyze" && method === "POST") return handleGeminiAnalyze(request, env);
   if (path === "/api/gemini/market-summary" && method === "POST") return handleGeminiMarketSummary(request, env);
   if (path === "/api/gemini/chat" && method === "POST") return handleGeminiChat(request, env);
@@ -476,6 +480,111 @@ async function handleGeminiChat(request: Request, env: Env): Promise<Response> {
     return json({ content: text });
   } catch (e: any) {
     return json({ content: "Maaf, sedang ada kendala teknis." });
+  }
+}
+
+// ── Unified AI analyst ──────────────────────────────────────
+// One endpoint. System-knowledge aware (knows the app's own formulas) +
+// live-context aware + provider fallback chain (Gemini → Groq → OpenRouter).
+
+type ChatMsg = { role: "user" | "assistant"; content: string };
+
+async function chatGemini(system: string, messages: ChatMsg[], key: string): Promise<string> {
+  const contents = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents,
+        systemInstruction: { role: "user", parts: [{ text: system }] },
+      }),
+    }
+  );
+  if (!resp.ok) throw new Error(`Gemini ${resp.status}: ${await resp.text()}`);
+  const data: any = await resp.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Gemini returned empty response");
+  return text;
+}
+
+// OpenAI-compatible caller (Groq & OpenRouter share this shape).
+async function chatOpenAICompatible(
+  url: string,
+  model: string,
+  apiKey: string,
+  system: string,
+  messages: ChatMsg[],
+  extraHeaders: Record<string, string> = {}
+): Promise<string> {
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      ...extraHeaders,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "system", content: system }, ...messages],
+      temperature: 0.4,
+    }),
+  });
+  if (!resp.ok) throw new Error(`${url} ${resp.status}: ${await resp.text()}`);
+  const data: any = await resp.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error("OpenAI-compatible provider returned empty response");
+  return text;
+}
+
+async function handleAiChat(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json() as { messages?: ChatMsg[]; context?: AILiveContext };
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    if (messages.length === 0) return json({ error: "messages array required" }, 400);
+
+    const system = buildSystemPrompt(body.context);
+    const errors: string[] = [];
+
+    // 1) Gemini (primary)
+    if (env.GEMINI_API_KEY) {
+      try {
+        const content = await chatGemini(system, messages, env.GEMINI_API_KEY);
+        return json({ content, provider: "gemini" });
+      } catch (e: any) { errors.push(`gemini: ${e.message}`); }
+    }
+    // 2) Groq (fallback)
+    if (env.GROQ_API_KEY) {
+      try {
+        const content = await chatOpenAICompatible(
+          "https://api.groq.com/openai/v1/chat/completions",
+          "llama-3.3-70b-versatile",
+          env.GROQ_API_KEY, system, messages
+        );
+        return json({ content, provider: "groq" });
+      } catch (e: any) { errors.push(`groq: ${e.message}`); }
+    }
+    // 3) OpenRouter (last resort)
+    if (env.OPENROUTER_API_KEY) {
+      try {
+        const content = await chatOpenAICompatible(
+          "https://openrouter.ai/api/v1/chat/completions",
+          "google/gemini-2.0-flash-exp:free",
+          env.OPENROUTER_API_KEY, system, messages,
+          { "HTTP-Referer": "https://quantbit.pages.dev", "X-Title": "Quantbit" }
+        );
+        return json({ content, provider: "openrouter" });
+      } catch (e: any) { errors.push(`openrouter: ${e.message}`); }
+    }
+
+    const reason = errors.length ? errors.join(" | ") : "No AI provider configured (set GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY)";
+    return json({ content: `Maaf, AI sedang tidak tersedia. (${reason})`, provider: "none" }, 200);
+  } catch (e: any) {
+    return json({ content: `Maaf, terjadi kendala: ${e.message}`, provider: "error" }, 200);
   }
 }
 
@@ -626,6 +735,8 @@ interface Env {
   DB: D1Database;
   ASSETS: { fetch: (req: Request) => Promise<Response> };
   GEMINI_API_KEY?: string;
+  GROQ_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
   GOAPI_API_KEY?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
