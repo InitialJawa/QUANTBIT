@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3 } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, FlaskConical } from "lucide-react";
 
 interface AppHeaderProps {
   activeTab: string;
@@ -24,6 +24,7 @@ const TABS = [
   { id: "market", icon: Activity, label: "Market" },
   { id: "portfolio", icon: Briefcase, label: "Portfolio" },
   { id: "analytics", icon: BarChart3, label: "Analitik" },
+  { id: "simulasi", icon: FlaskConical, label: "Simulasi" },
 ] as const;
 
 export function AppHeader({

@@ -11,6 +11,7 @@ import { AppHeader } from "./components/AppHeader";
 import { MarketTab } from "./components/MarketTab";
 import { PortfolioTracker } from "./components/PortfolioTracker";
 import { AnalyticsTab } from "./components/AnalyticsTab";
+import { SimulasiTab } from "./components/SimulasiTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { useDataFeed } from "./hooks/useDataFeed";
@@ -181,6 +182,24 @@ export default function App() {
                     setCash={pm.setCash}
                     tradeLogs={pm.tradeLogs}
                     setTradeLogs={pm.customSetTradeLogs}
+                  />
+                </motion.div>
+              )}
+
+              {ui.activeTab === "simulasi" && (
+                <motion.div
+                  key="simulasi"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex-1 flex flex-col"
+                >
+                  <SimulasiTab
+                    portfolio={pm.portfolio}
+                    watchlist={pm.watchlist}
+                    cash={pm.cash}
+                    getDynamicStock={df.getDynamicStock}
                   />
                 </motion.div>
               )}

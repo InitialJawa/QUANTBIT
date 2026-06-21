@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export type Tab = "market" | "portfolio" | "analytics";
+export type Tab = "market" | "portfolio" | "analytics" | "simulasi";
 export type Theme = "dark" | "light";
 
 export function useUIState() {
