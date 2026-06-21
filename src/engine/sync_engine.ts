@@ -55,7 +55,7 @@ export async function refreshActiveUniverse() {
   try {
     const resp = await fetch(`${API_BASE}/api/engine/active-universe`);
     if (resp.ok) {
-      const data = await resp.json();
+      const data = await resp.json() as { tickers?: unknown };
       if (Array.isArray(data.tickers)) {
         ACTIVE_UNIVERSE = data.tickers;
         console.log(`[Universe Update] Pulled ${ACTIVE_UNIVERSE.length} tickers from D1.`);

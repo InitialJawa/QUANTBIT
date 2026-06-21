@@ -1,4 +1,7 @@
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
+
+// yahoo-finance2 v3 exports a class that must be instantiated.
+const yahooFinance = new YahooFinance();
 
 export interface YahooStock {
   ticker: string;
@@ -19,7 +22,7 @@ export interface YahooStock {
  */
 export async function fetchYahooData(ticker: string): Promise<YahooStock | null> {
   try {
-    const quote = await yahooFinance.quote(ticker + ".JK", {
+    const summary = await yahooFinance.quoteSummary(ticker + ".JK", {
       modules: [
         "price",
         "summaryDetail",
@@ -28,16 +31,17 @@ export async function fetchYahooData(ticker: string): Promise<YahooStock | null>
       ],
     });
 
-    const price = quote.price?.regularMarketPrice ?? 0;
-    const marketCap = quote.price?.marketCap ?? 0;
-    const peRatio = quote.summaryDetail?.trailingPE ?? 0;
-    const pbRatio = quote.defaultKeyStatistics?.priceToBook ?? 0;
-    const roeRaw = quote.financialData?.returnOnEquity?.raw;
+    // yahoo-finance2 normalizes numeric fields to plain numbers (no `.raw` wrapper).
+    const price = summary.price?.regularMarketPrice ?? 0;
+    const marketCap = summary.price?.marketCap ?? 0;
+    const peRatio = summary.summaryDetail?.trailingPE ?? 0;
+    const pbRatio = summary.defaultKeyStatistics?.priceToBook ?? 0;
+    const roeRaw = summary.financialData?.returnOnEquity;
     const roe = typeof roeRaw === "number" ? roeRaw * 100 : 0;
-    const der = quote.financialData?.debtToEquity?.raw ?? 0;
-    const dividendYield = quote.summaryDetail?.dividendYield?.raw ?? 0;
-    const revenue = quote.financialData?.totalRevenue?.raw;
-    const netIncome = quote.financialData?.netIncome?.raw;
+    const der = summary.financialData?.debtToEquity ?? 0;
+    const dividendYield = summary.summaryDetail?.dividendYield ?? 0;
+    const revenue = summary.financialData?.totalRevenue;
+    const netIncome = summary.defaultKeyStatistics?.netIncomeToCommon;
 
     return {
       ticker,
