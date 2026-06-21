@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 // ─────────────────────────────────────────────────────────────
 // Quantbit API — Cloudflare Pages Functions (D1-based)
 // Replaces: Express server + Firebase Auth + Firestore + RTDB

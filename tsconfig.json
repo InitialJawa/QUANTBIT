@@ -22,5 +22,7 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": ["src", "functions", "scripts", "server.ts", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", "external", "QUANTBIT THEME 2.0", "quantbit"]
 }

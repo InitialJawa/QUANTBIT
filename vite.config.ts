@@ -16,12 +16,16 @@ export default defineConfig(() => {
       host: true,
     },
     build: {
-      // Raise warning limit; actual size can be larger if acceptable
-      chunkSizeWarningLimit: 2000,
-      // No manual chunk splitting to ensure React bundle is included
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          // Keep default chunking
+          // Split heavy third-party libs into separate cacheable chunks.
+          // React is intentionally left in the main bundle to avoid load-order issues.
+          manualChunks: {
+            'charts-vendor': ['recharts'],
+            'motion-vendor': ['motion'],
+            'icons-vendor': ['lucide-react'],
+          },
         },
       },
     },
