@@ -33,6 +33,12 @@ function devMock(path: string, options: RequestInit): any {
   if (path.startsWith("/api/user/profile") && options.method === "PATCH") {
     return {};
   }
+  if (path === "/api/ai/chat") {
+    return {
+      content: "🔌 AI belum aktif di mode dev lokal. AI live butuh Cloudflare Functions + GEMINI_API_KEY (atau GROQ/OPENROUTER). Jalankan via `npm start` setelah build, atau deploy ke Pages.",
+      provider: "dev-mock",
+    };
+  }
   throw new Error("No dev mock for " + path);
 }
 
