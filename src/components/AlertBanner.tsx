@@ -26,11 +26,11 @@ export function AlertBanner({
   if (hideAlertBanner || (!isIHSGInCrisis && portfolioExits.length === 0)) return null;
 
   return (
-    <div id="global-ledger-warning-banner" className="relative p-4 pr-12 bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-rose-500/5 border border-rose-500/20 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
+    <div id="global-ledger-warning-banner" className="relative p-4 pr-12 bg-[#1a1015] border border-rose-800/30 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
       <button
         id="close-ledger-warning-banner"
         onClick={onDismiss}
-        className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors cursor-pointer"
+        className="absolute top-3 right-3 p-1.5 rounded-lg bg-[#2a1520] hover:bg-[#3a2028] text-rose-300 hover:text-rose-200 transition-colors cursor-pointer"
         title="Tutup banner peringatan"
       >
         <X className="w-3.5 h-3.5" />
@@ -64,7 +64,7 @@ export function AlertBanner({
         <button
           id="action-btn-go-ledger"
           onClick={onGoToLedger}
-          className="w-full md:w-auto px-4 py-2 bg-rose-600/95 hover:bg-rose-600 text-white font-bold text-[10px] rounded-xl font-sans uppercase tracking-widest transition-all shadow-md hover:scale-[1.02] cursor-pointer"
+          className="w-full md:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-xl font-sans uppercase tracking-widest transition-all shadow-md hover:scale-[1.02] cursor-pointer"
         >
           Buka Live Ledger &amp; Amankan Aset
         </button>

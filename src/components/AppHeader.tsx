@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Monitor, Hexagon, Palette, Menu, X } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Sliders, Menu, X } from "lucide-react";
 
 interface AppHeaderProps {
   dataFeed: string;
@@ -93,12 +93,8 @@ export function AppHeader({
                 <div className="px-1.5 py-0.5">
                   <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-0.5 uppercase tracking-wider">Theme</div>
                   {([
-                    ["deep", Moon, "Deep"],
-                    ["slate", Palette, "Slate"],
-                    ["nord", Palette, "Nord"],
+                    ["dark", Moon, "Dark"],
                     ["light", Sun, "Light"],
-                    ["stockbit", Monitor, "TradingView"],
-                    ["ios26", Hexagon, "iOS 26"],
                   ] as const).map(([t, Icon, label]) => (
                     <button
                       key={t}

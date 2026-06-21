@@ -8,87 +8,24 @@
   --font-ios: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Gradient variables for each theme */
-:root,
-[data-theme="deep"] {
-  --bg-gradient-start: #0B0B14;
-  --bg-gradient-end: #161625;
-}
-[data-theme="slate"] {
-  --bg-gradient-start: #0F172A;
-  --bg-gradient-end: #1E293B;
-}
-[data-theme="nord"] {
-  --bg-gradient-start: #1A1B2F;
-  --bg-gradient-end: #252641;
-}
-[data-theme="light"] {
-  --bg-gradient-start: #F1F5F9;
-  --bg-gradient-end: #FFFFFF;
-}
-[data-theme="stockbit"] {
-  --bg-gradient-start: #131722;
-  --bg-gradient-end: #1a1e28;
-}
-
-/* Legacy glass‑morphism CSS removed – Tailwind arbitrary class bg-[#0A0A0A] now handles styling */
-
-/* Removed duplicate bg-[#0a0a0a] selector – Tailwind arbitrary class already covers it */
-
-.bg-gradient-theme {
-  background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-end));
-}
-
-
 /* ==========================================================================
    THEME VARIABLES — CSS Custom Properties
    ========================================================================== */
 
 :root,
-[data-theme="deep"] {
-  --bg-primary: #000000;
-  --bg-surface: #000000;
-  --bg-surface-alt: #111111;
-  --bg-header: #000000;
-  --bg-elevated: #111111;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-muted: rgba(255, 255, 255, 0.60);
-  --border-default: rgba(255, 255, 255, 0.20);
-  --border-strong: rgba(255, 255, 255, 0.30);
-  --accent: #10b981;
-  --color-scheme: dark;
-  color-scheme: dark;
-}
-
-[data-theme="slate"] {
-  --bg-primary: #0F172A;
-  --bg-surface: #1E293B;
-  --bg-surface-alt: #263548;
-  --bg-header: #0A0F1E;
-  --bg-elevated: #334155;
-  --text-primary: #E2E8F0;
-  --text-secondary: rgba(226, 232, 240, 0.55);
-  --text-muted: rgba(226, 232, 240, 0.30);
+[data-theme="dark"] {
+  --bg-primary: #131722;
+  --bg-surface: #1e222d;
+  --bg-surface-alt: #2a2e39;
+  --bg-header: #131722;
+  --bg-elevated: #363a45;
+  --text-primary: #d1d4dc;
+  --text-secondary: #787b86;
+  --text-muted: #5d6080;
   --border-default: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.10);
-  --accent: #10b981;
-  --color-scheme: dark;
-  color-scheme: dark;
-}
-
-[data-theme="nord"] {
-  --bg-primary: #1A1B2F;
-  --bg-surface: #252641;
-  --bg-surface-alt: #2E2F4A;
-  --bg-header: #14152A;
-  --bg-elevated: #373858;
-  --text-primary: #D8DEE9;
-  --text-secondary: rgba(216, 222, 233, 0.55);
-  --text-muted: rgba(216, 222, 233, 0.30);
-  --border-default: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.10);
-  --accent: #81A1C1;
+  --accent-green: #089981;
+  --accent-red: #f23645;
   --color-scheme: dark;
   color-scheme: dark;
 }
@@ -104,152 +41,24 @@
   --text-muted: #94A3B8;
   --border-default: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.12);
-  --accent: #059669;
+  --accent-green: #15803d;
+  --accent-red: #b91c1c;
   --color-scheme: light;
   color-scheme: light;
 }
 
-[data-theme="stockbit"] {
-  --bg-primary: #131722;
-  --bg-surface: #1e222d;
-  --bg-surface-alt: #2a2e39;
-  --bg-header: #131722;
-  --bg-elevated: #363a45;
-  --text-primary: #d1d4dc;
-  --text-secondary: #787b86;
-  --text-muted: #5d6080;
-  --border-default: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.10);
-  --accent: #089981;
-  --color-scheme: dark;
-  color-scheme: dark;
-}
-
-[data-theme="ios26"] {
-  --bg-primary: #0A0A0E;
-  --bg-surface: #14141C;
-  --bg-surface-alt: #1A1A24;
-  --bg-header: #0A0A0E;
-  --bg-elevated: #16161E;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-muted: rgba(255,255,255,0.25);
-  --border-default: rgba(255,255,255,0.10);
-  --border-strong: rgba(255,255,255,0.15);
-  --accent: #30D158;
-  --color-scheme: dark;
-  color-scheme: dark;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* iOS 26 glass surface overrides */
-[data-theme="ios26"] #applet-main-canvas::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(30,30,60,0.5) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(20,40,30,0.3) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-[data-theme="ios26"] #applet-main-canvas > * {
-  position: relative;
-  z-index: 1;
-}
-
-[data-theme="ios26"] header,
-[data-theme="ios26"] #main-sidebar,
-[data-theme="ios26"] [class*="bg-[#0A0A0A]"],
-[data-theme="ios26"] [class*="bg-[#0a0a0a]"],
-[data-theme="ios26"] .bg-\[\#0A0A0A\] {
-  background: #0A0A0E !important;
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-[data-theme="ios26"] [class*="bg-[#121212]"],
-[data-theme="ios26"] [class*="bg-[#121212]/95"],
-[data-theme="ios26"] [class*="bg-[#070707]"],
-[data-theme="ios26"] [class*="bg-[#080808]"],
-[data-theme="ios26"] [class*="bg-[#0f0f0f]"],
-[data-theme="ios26"] nav.bg-\[\#121212\],
-[data-theme="ios26"] nav[class*="bg-[#121212]"] {
-  background: #14141C !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
-  border-color: rgba(255,255,255,0.09) !important;
-}
-
-[data-theme="ios26"] .bg-white\/5,
-[data-theme="ios26"] .bg-white\/10,
-[data-theme="ios26"] .bg-white\/20,
-[data-theme="ios26"] [class*="bg-white/"],
-[data-theme="ios26"] [class*="bg-white\\["] {
-  background: #14141C !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
-
-[data-theme="ios26"] #sidebar-news-panel,
-[data-theme="ios26"] #sidebar-macro-indicators-panel,
-[data-theme="ios26"] #config-panel,
-[data-theme="ios26"] #historical-chart-container,
-[data-theme="ios26"] #ai-assistant-card,
-[data-theme="ios26"] #summary-report-panel {
-  background: #16161E !important;
-  backdrop-filter: blur(32px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(160%) !important;
-  border: 1px solid rgba(255,255,255,0.10) !important;
-  border-radius: 16px !important;
-  box-shadow:
-    0 0 0 0.5px rgba(255,255,255,0.10) inset,
-    0 1px 0 rgba(255,255,255,0.12) inset,
-    0 16px 48px rgba(0,0,0,0.6),
-    0 4px 12px rgba(0,0,0,0.4) !important;
-}
-
-[data-theme="ios26"] .recharts-default-tooltip {
-  background: #1A1A24 !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  border-color: rgba(255,255,255,0.10) !important;
-}
-
-[data-theme="ios26"] input,
-[data-theme="ios26"] textarea,
-[data-theme="ios26"] select {
-  background: #0A0A0E !important;
-  border-color: rgba(255,255,255,0.08) !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-}
-
-[data-theme="ios26"] .text-emerald-400,
-[data-theme="ios26"] .text-emerald-300,
-[data-theme="ios26"] [class*="text-emerald-4"] {
-  color: #30D158 !important;
-}
-
-[data-theme="ios26"] .text-rose-400,
-[data-theme="ios26"] .text-rose-455,
-[data-theme="ios26"] [class*="text-rose-4"] {
-  color: #FF453A !important;
-}
-
 /* ==========================================================================
-   DATA-THEME ATTRIBUTE OVERRIDES
-   Applies when root div has data-theme="deep|slate|nord|light|stockbit|ios26"
+   BASE — apply theme vars
    ========================================================================== */
-
-/* ---------- A. BACKGROUND SURFACES ---------- */
 
 [data-theme] {
   background: var(--bg-primary) !important;
   color: var(--text-primary) !important;
 }
+
+/* ==========================================================================
+   BACKGROUND SURFACES
+   ========================================================================== */
 
 [data-theme] [class*="bg-[#050505]"],
 [data-theme] [class*="bg-[#050505]/95"],
@@ -318,7 +127,9 @@
   background: rgba(15, 23, 42, 0.05) !important;
 }
 
-/* ---------- B. TEXT COLORS ---------- */
+/* ==========================================================================
+   TEXT COLORS
+   ========================================================================== */
 
 [data-theme] .text-white,
 [data-theme] .text-white\/95,
@@ -372,65 +183,38 @@
   color: var(--text-muted) !important;
 }
 
-/* State highlight colors for dark themes */
-[data-theme="deep"] .text-emerald-400,
-[data-theme="deep"] .text-emerald-300,
-[data-theme="deep"] [class*="text-emerald-4"],
-[data-theme="slate"] .text-emerald-400,
-[data-theme="slate"] .text-emerald-300,
-[data-theme="slate"] [class*="text-emerald-4"],
-[data-theme="nord"] .text-emerald-400,
-[data-theme="nord"] .text-emerald-300,
-[data-theme="nord"] [class*="text-emerald-4"],
-[data-theme="stockbit"] .text-emerald-400,
-[data-theme="stockbit"] .text-emerald-300,
-[data-theme="stockbit"] [class*="text-emerald-4"] {
-  color: #089981 !important;
+[data-theme] .text-emerald-400,
+[data-theme] .text-emerald-300,
+[data-theme] [class*="text-emerald-4"] {
+  color: var(--accent-green) !important;
 }
 
-[data-theme="deep"] .text-rose-400,
-[data-theme="deep"] .text-rose-455,
-[data-theme="deep"] [class*="text-rose-4"],
-[data-theme="slate"] .text-rose-400,
-[data-theme="slate"] .text-rose-455,
-[data-theme="slate"] [class*="text-rose-4"],
-[data-theme="nord"] .text-rose-400,
-[data-theme="nord"] .text-rose-455,
-[data-theme="nord"] [class*="text-rose-4"],
-[data-theme="stockbit"] .text-rose-400,
-[data-theme="stockbit"] .text-rose-455,
-[data-theme="stockbit"] [class*="text-rose-4"] {
-  color: #f23645 !important;
+[data-theme] .text-rose-400,
+[data-theme] .text-rose-455,
+[data-theme] [class*="text-rose-4"] {
+  color: var(--accent-red) !important;
 }
 
-[data-theme="deep"] .text-amber-400,
-[data-theme="deep"] [class*="text-amber-4"],
-[data-theme="slate"] .text-amber-400,
-[data-theme="slate"] [class*="text-amber-4"],
-[data-theme="nord"] .text-amber-400,
-[data-theme="nord"] [class*="text-amber-4"],
-[data-theme="stockbit"] .text-amber-400,
-[data-theme="stockbit"] [class*="text-amber-4"] {
-  color: #f0a500 !important;
-}
-
-/* Light theme text overrides */
 [data-theme="light"] .text-emerald-400,
 [data-theme="light"] .text-emerald-300,
 [data-theme="light"] [class*="text-emerald-4"] {
   color: #15803d !important;
 }
+
 [data-theme="light"] .text-rose-400,
 [data-theme="light"] .text-rose-455,
 [data-theme="light"] [class*="text-rose-4"] {
   color: #b91c1c !important;
 }
+
 [data-theme="light"] .text-amber-400,
 [data-theme="light"] [class*="text-amber-4"] {
   color: #b45309 !important;
 }
 
-/* ---------- C. BORDERS & DIVIDES ---------- */
+/* ==========================================================================
+   BORDERS & DIVIDES
+   ========================================================================== */
 
 [data-theme] [class*="border-white/"],
 [data-theme] .border-white\/5,
@@ -446,7 +230,9 @@
   border-color: var(--border-default) !important;
 }
 
-/* ---------- D. FORM ELEMENTS ---------- */
+/* ==========================================================================
+   FORM ELEMENTS
+   ========================================================================== */
 
 [data-theme] input,
 [data-theme] textarea,
@@ -466,7 +252,9 @@
   color: var(--text-primary) !important;
 }
 
-/* ---------- E. TABLES ---------- */
+/* ==========================================================================
+   TABLES
+   ========================================================================== */
 
 [data-theme] table th {
   border-bottom-color: var(--border-default) !important;
@@ -486,7 +274,9 @@
   border-color: var(--border-default) !important;
 }
 
-/* ---------- F. RECOMPONENTS ---------- */
+/* ==========================================================================
+   RECHARTS TOOLTIP
+   ========================================================================== */
 
 [data-theme] .recharts-default-tooltip {
   background: var(--bg-surface-alt) !important;
@@ -497,7 +287,9 @@
   stroke-opacity: 0.95 !important;
 }
 
-/* ---------- G. NAVIGATION ACTIVE STATES ---------- */
+/* ==========================================================================
+   NAVIGATION ACTIVE STATES
+   ========================================================================== */
 
 [data-theme] [class*="bg-white/10"] {
   background: rgba(255, 255, 255, 0.08) !important;
@@ -511,49 +303,136 @@
   color: var(--text-primary) !important;
 }
 
-/* ---------- H. BADGE / STATUS PILL OVERRIDES (dark themes) ---------- */
+/* ==========================================================================
+   BADGE / STATUS PILLS
+   ========================================================================== */
 
-[data-theme="deep"] [class*="bg-emerald-500/10"],
-[data-theme="deep"] .bg-emerald-500\/10,
-[data-theme="slate"] [class*="bg-emerald-500/10"],
-[data-theme="slate"] .bg-emerald-500\/10,
-[data-theme="nord"] [class*="bg-emerald-500/10"],
-[data-theme="nord"] .bg-emerald-500\/10,
-[data-theme="stockbit"] [class*="bg-emerald-500/10"],
-[data-theme="stockbit"] .bg-emerald-500\/10 {
+[data-theme] [class*="bg-emerald-500/10"],
+[data-theme] .bg-emerald-500\/10 {
   background: rgba(8, 153, 129, 0.12) !important;
   border-color: rgba(8, 153, 129, 0.25) !important;
 }
 
-[data-theme="deep"] [class*="bg-amber-500/10"],
-[data-theme="deep"] [class*="bg-amber-500/15"],
-[data-theme="slate"] [class*="bg-amber-500/10"],
-[data-theme="slate"] [class*="bg-amber-500/15"],
-[data-theme="nord"] [class*="bg-amber-500/10"],
-[data-theme="nord"] [class*="bg-amber-500/15"],
-[data-theme="stockbit"] [class*="bg-amber-500/10"],
-[data-theme="stockbit"] [class*="bg-amber-500/15"] {
+[data-theme] [class*="bg-amber-500/10"],
+[data-theme] [class*="bg-amber-500/15"] {
   background: rgba(240, 165, 0, 0.12) !important;
   border-color: rgba(240, 165, 0, 0.25) !important;
 }
 
-[data-theme="deep"] [class*="bg-rose-500/10"],
-[data-theme="deep"] [class*="bg-rose-500/15"],
-[data-theme="deep"] [class*="bg-rose-500/20"],
-[data-theme="slate"] [class*="bg-rose-500/10"],
-[data-theme="slate"] [class*="bg-rose-500/15"],
-[data-theme="slate"] [class*="bg-rose-500/20"],
-[data-theme="nord"] [class*="bg-rose-500/10"],
-[data-theme="nord"] [class*="bg-rose-500/15"],
-[data-theme="nord"] [class*="bg-rose-500/20"],
-[data-theme="stockbit"] [class*="bg-rose-500/10"],
-[data-theme="stockbit"] [class*="bg-rose-500/15"],
-[data-theme="stockbit"] [class*="bg-rose-500/20"] {
+[data-theme] [class*="bg-rose-500/10"],
+[data-theme] [class*="bg-rose-500/15"],
+[data-theme] [class*="bg-rose-500/20"] {
   background: rgba(242, 54, 69, 0.12) !important;
   border-color: rgba(242, 54, 69, 0.25) !important;
 }
 
-/* Custom scrollbars and styling optimizations for the dark theme */
+/* Light badge overrides */
+[data-theme="light"] [class*="bg-emerald-500/10"],
+[data-theme="light"] .bg-emerald-500\/10 {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="light"] [class*="bg-amber-500/10"],
+[data-theme="light"] [class*="bg-amber-500/15"] {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+[data-theme="light"] [class*="bg-rose-500/10"],
+[data-theme="light"] [class*="bg-rose-500/15"],
+[data-theme="light"] [class*="bg-rose-500/20"] {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+/* ==========================================================================
+   LIGHT MODE SPECIFIC OVERRIDES
+   ========================================================================== */
+
+[data-theme="light"] .light header {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .bg-emerald-500,
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-rose-500,
+[data-theme="light"] .bg-red-500,
+[data-theme="light"] .bg-indigo-500,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] .bg-blue-600 {
+  color: #ffffff !important;
+}
+[data-theme="light"] .bg-emerald-500 *,
+[data-theme="light"] .bg-emerald-600 *,
+[data-theme="light"] .bg-rose-500 *,
+[data-theme="light"] .bg-red-500 *,
+[data-theme="light"] .bg-indigo-500 *,
+[data-theme="light"] .bg-indigo-600 *,
+[data-theme="light"] .bg-blue-600 * {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] table {
+  background-color: #ffffff !important;
+}
+
+[data-theme="light"] tr,
+[data-theme="light"] td {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] #messages-viewport [class*="bg-white/"] {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+[data-theme="light"] #messages-viewport [class*="bg-white/"] * {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] #messages-viewport [class*="bg-emerald-950/"] {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] #messages-viewport [class*="bg-emerald-950/"] * {
+  color: #047857 !important;
+}
+
+[data-theme="light"] #applet-main-canvas aside div[onClick] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] #applet-main-canvas aside div[onClick]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+[data-theme="light"] #global-ledger-warning-banner {
+  background-color: #fff1f2 !important;
+  border-color: #fecaca !important;
+}
+[data-theme="light"] #global-ledger-warning-banner button#close-ledger-warning-banner {
+  background-color: #fecaca !important;
+  color: #e11d48 !important;
+}
+[data-theme="light"] #global-ledger-warning-banner button#close-ledger-warning-banner:hover {
+  background-color: #fca5a5 !important;
+}
+
+/* ==========================================================================
+   SCROLLBARS
+   ========================================================================== */
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -569,35 +448,23 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* ── GLASS UTILITY (iOS 26 style) ── */
-.glass {
-  background: rgba(255,255,255,0.055);
-  backdrop-filter: blur(32px) saturate(160%);
-  -webkit-backdrop-filter: blur(32px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
-  box-shadow:
-    0 0 0 0.5px rgba(255,255,255,0.06) inset,
-    0 1px 0 rgba(255,255,255,0.12) inset,
-    0 16px 48px rgba(0,0,0,0.6),
-    0 4px 12px rgba(0,0,0,0.4);
+[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.02) !important;
+}
+[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12) !important;
+}
+[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.22) !important;
 }
 
-.glass-sm {
-  background: rgba(255,255,255,0.07);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 12px;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.10) inset,
-    0 8px 24px rgba(0,0,0,0.5);
-}
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
 
-/* iOS 26 live dot */
 .live-dot {
   width: 6px; height: 6px;
-  background: #30D158;
+  background: #089981;
   border-radius: 50%;
   animation: pulse-dot 2s infinite;
 }
@@ -610,654 +477,3 @@
 .font-ios {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-
-/* ==========================================================================
-   LIGHT MODE STYLING OVERRIDES (Institutional Financial Software Style)
-   ========================================================================== */
-
-/* Root element transitions & basic properties */
-.light {
-  color-scheme: light !important;
-  background-color: #f1f5f9 !important; /* Premium clean slate-100 canvas */
-  color: #0f172a !important; /* Clear slate-950 text */
-}
-
-/* Base scrollbars in light mode */
-.light .scrollbar-thin::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.02) !important;
-}
-.light .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.12) !important;
-  border-radius: 4px;
-}
-.light .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.22) !important;
-}
-
-/* ==========================================
-   A. WILDCARD & CLASS BACKGROUND OVERRIDES
-   ========================================== */
-
-/* Main canvas base color fallback (covers lower and uppercase tailwind classes) */
-.light #applet-main-canvas,
-.light.bg-\[\#050505\],
-.light [class*="bg-[#050505]"],
-.light [class*="bg-[#050505]/95"],
-.light .bg-black {
-  background-color: #f1f5f9 !important; /* Soft slate backdrop */
-}
-
-/* Standard cards, sidebar containers, headers and main workspace panels */
-.light header,
-.light #main-sidebar,
-.light [class*="bg-[#0A0A0A]"],
-.light [class*="bg-[#0a0a0a]"],
-.light .bg-\[\#0A0A0A\] {
-  background-color: #ffffff !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
-}
-
-/* Header background fallback */
-.light header {
-  background-color: #ffffff !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
-}
-
-/* Secondary panel backgrounds (e.g. watchlist container, layout blocks, report cards) */
-.light #config-panel,
-.light #sidebar-news-panel,
-.light #historical-chart-container,
-.light #ai-assistant-card,
-.light #summary-report-panel,
-.light [class*="bg-[#121212]"],
-.light [class*="bg-[#121212]/95"],
-.light [class*="bg-[#070707]"],
-.light [class*="bg-[#080808]"],
-.light [class*="bg-[#0f0f0f]"] {
-  background-color: #ffffff !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
-}
-
-/* Navigation pill containers & search bars */
-.light nav.bg-\[\#121212\],
-.light nav[class*="bg-[#121212]"] {
-  background-color: rgba(15, 23, 42, 0.04) !important;
-  border-color: rgba(15, 23, 42, 0.08) !important;
-}
-
-/* Custom dark active tabs selection */
-.light [class*="bg-[#2A2A2A]"],
-.light .bg-\[\#2A2A2A\] {
-  background-color: #0f172a !important; /* High contrast active deep slate background */
-  color: #10b981 !important; /* Beautiful green active text */
-}
-
-/* Safe/unselected button selections inside pill lists */
-.light nav button:not(.bg-\[\#2A2A2A\]) {
-  background-color: transparent !important;
-  color: #475569 !important; /* Muted gray-600 */
-}
-.light nav button:not(.bg-\[\#2A2A2A\]):hover {
-  background-color: rgba(15, 23, 42, 0.05) !important;
-  color: #0f172a !important;
-}
-
-/* White-opacity subtle backgrounds overridden with slate-opacities for light mode */
-.light .bg-white\/5,
-.light .bg-white\/10,
-.light .bg-white\/20,
-.light [class*="bg-white/"],
-.light [class*="bg-white\\["] {
-  background-color: rgba(15, 23, 42, 0.045) !important;
-  border-color: rgba(15, 23, 42, 0.08) !important;
-}
-
-.light [class*="hover:bg-white/"]:hover {
-  background-color: rgba(15, 23, 42, 0.06) !important;
-}
-
-/* Semi-transparent black overlays */
-.light [class*="bg-black/"],
-.light .bg-black\/30,
-.light .bg-black\/40,
-.light .bg-black\/50 {
-  background-color: rgba(15, 23, 42, 0.05) !important;
-}
-
-/* AI assistant message box fallbacks (ensuring perfect chat contrast) */
-.light #messages-viewport [class*="bg-white/"] {
-  background-color: #f1f5f9 !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
-}
-.light #messages-viewport [class*="bg-white/"] * {
-  color: #0f172a !important;
-}
-
-.light #messages-viewport [class*="bg-emerald-950/"] {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-}
-.light #messages-viewport [class*="bg-emerald-950/"] * {
-  color: #047857 !important;
-}
-
-/* ==========================================
-   B. TYPOGRAPHY & CONTRAST OVERRIDES
-   ========================================== */
-
-/* Main headers and pristine default text color (overriding light text) */
-.light .text-white,
-.light .text-white\/95,
-.light .text-white\/90,
-.light .text-white\/85,
-.light .text-zinc-100,
-.light .text-zinc-200,
-.light [class*="text-white"],
-.light [class*="text-[#E0E0E0]"],
-.light .text-\[\#E0E0E0\] {
-  color: #0f172a !important; /* Ultimate Slate-950 visibility */
-}
-
-/* Medium opacity, descriptions and metadata text values */
-.light .text-white\/70,
-.light .text-white\/65,
-.light .text-white\/60,
-.light .text-white\/55,
-.light .text-white\/50,
-.light [class*="text-white/7"],
-.light [class*="text-white/6"],
-.light [class*="text-white/5"],
-.light [class*="text-[#E0E0E0]/50"],
-.light [class*="text-[#E0E0E0]/60"] {
-  color: #334155 !important; /* Slate-700 readability for descriptions */
-}
-
-/* Lowest opacity system/log lines, auxiliary dates and labels */
-.light .text-white\/45,
-.light .text-white\/40,
-.light .text-white\/35,
-.light .text-white\/30,
-.light .text-white\/20,
-.light .text-white\/15,
-.light [class*="text-white/4"],
-.light [class*="text-white/3"],
-.light [class*="text-white/2"],
-.light [class*="text-[#E0E0E0]/30"],
-.light [class*="text-[#E0E0E0]/40"] {
-  color: #475569 !important; /* Slate-600 crisp details */
-}
-
-/* Specific helper colors */
-.light .text-zinc-400,
-.light .text-gray-400,
-.light .text-slate-400,
-.light [class*="text-[#A0A0A0]"] {
-  color: #334155 !important;
-}
-.light .text-zinc-500,
-.light .text-gray-500,
-.light .text-slate-500 {
-  color: #475569 !important;
-}
-
-/* State highlights to guarantee maximum readable contrast */
-.light .text-emerald-400,
-.light .text-emerald-300,
-.light [class*="text-emerald-4"] {
-  color: #15803d !important; /* High contrast green */
-}
-.light .text-rose-400,
-.light .text-rose-455,
-.light [class*="text-rose-4"] {
-  color: #b91c1c !important; /* High contrast red */
-}
-.light .text-amber-400,
-.light [class*="text-amber-4"] {
-  color: #b45309 !important; /* High contrast dark amber */
-}
-
-/* Solid states white details security exceptions */
-.light .bg-emerald-500,
-.light .bg-emerald-600,
-.light .bg-rose-500,
-.light .bg-red-500,
-.light .bg-indigo-500,
-.light .bg-indigo-600,
-.light .bg-blue-600 {
-  color: #ffffff !important;
-}
-.light .bg-emerald-500 *,
-.light .bg-emerald-600 *,
-.light .bg-rose-500 *,
-.light .bg-red-500 *,
-.light .bg-indigo-500 *,
-.light .bg-indigo-600 *,
-.light .bg-blue-600 * {
-  color: #ffffff !important;
-}
-
-/* Active buttons & tabs text overrides inside selected views */
-.light button.bg-\[\#2A2A2A\] {
-  color: #10b981 !important; /* Emerald active text label */
-}
-
-/* Custom header branding fallback */
-.light h1.text-white span[class*="bg-gradient-to-r"] {
-  color: inherit !important;
-  background-image: none !important;
-  background-clip: unset !important;
-  -webkit-background-clip: unset !important;
-  color: #0f172a !important;
-}
-
-/* ==========================================
-   C. BORDERS, DIVIDES & INPUTS OVERRIDES
-   ========================================== */
-
-.light [class*="border-white/"],
-.light .border-white\/5,
-.light .border-white\/10,
-.light .border-white\/15,
-.light .border-white\/20,
-.light .border-white\/30 {
-  border-color: rgba(15, 23, 42, 0.1) !important;
-}
-
-.light .divide-white\/5 > *,
-.light .divide-white\/10 > * {
-  border-color: rgba(15, 23, 42, 0.08) !important;
-}
-
-/* General form elements: inputs, select dropdowns & modal controls */
-.light input,
-.light textarea,
-.light select,
-.light button[class*="border-white/10"] {
-  background-color: #ffffff !important;
-  border: 1px solid rgba(15, 23, 42, 0.15) !important;
-  color: #0f172a !important;
-}
-
-.light input::placeholder,
-.light textarea::placeholder {
-  color: #64748b !important;
-}
-
-/* Dropdown native lists (absolutely critical for browser standard option blocks!) */
-.light option {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-}
-
-/* Dialog table grids custom structures */
-.light table th {
-  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
-  color: #475569 !important;
-}
-
-.light table tbody tr:hover {
-  background-color: #f8fafc !important;
-}
-
-/* Ensure Lucide icons inherit the new crisp light mode colors beautifully */
-.light svg {
-  stroke-opacity: 0.95 !important;
-}
-
-/* Recharts Tooltip Custom styling fallback for lighter canvases */
-.light .recharts-default-tooltip {
-  background-color: #ffffff !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Sidebar directory lists click fallbacks */
-.light #applet-main-canvas aside div[onClick] {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-.light #applet-main-canvas aside div[onClick]:hover {
-  background-color: #f1f5f9 !important;
-}
-
-/* Extra crispness for badges, status indicators, and tables in light mode */
-.light [class*="bg-emerald-500/10"],
-.light .bg-emerald-500\/10,
-.light .bg-\[\#34A853\]\/10 {
-  background-color: #d1fae5 !important; /* Perfect soft green background */
-  color: #065f46 !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-}
-
-.light [class*="bg-emerald-500/15"] {
-  background-color: #d1fae5 !important;
-}
-
-.light [class*="bg-amber-500/10"],
-.light [class*="bg-amber-500/15"] {
-  background-color: #fef3c7 !important; /* Solid warm gold */
-  color: #92400e !important;
-  border-color: rgba(245, 158, 11, 0.3) !important;
-}
-
-.light [class*="bg-rose-500/10"],
-.light [class*="bg-rose-500/15"],
-.light [class*="bg-rose-500/20"] {
-  background-color: #ffe4e6 !important; /* Warm light rose */
-  color: #9f1239 !important;
-  border-color: rgba(244, 63, 94, 0.3) !important;
-}
-
-/* Highlight search inputs, configuration tabs and simulation table cells */
-.light #config-panel button {
-  border-color: rgba(15, 23, 42, 0.1) !important;
-}
-
-.light #config-panel button:not(.bg-white\/10) {
-  color: #475569 !important;
-}
-
-.light #config-panel button:not(.bg-white\/10):hover {
-  background-color: rgba(15, 23, 42, 0.04) !important;
-  color: #0f172a !important;
-}
-
-.light table {
-  background-color: #ffffff !important;
-}
-
-.light tr, .light td {
-  border-color: rgba(15, 23, 42, 0.08) !important;
-}
-
-.light h1.text-white span[class*="bg-gradient-to-r"],
-.light h1 span.bg-gradient-to-tr {
-  background-image: none !important;
-  color: #0f172a !important;
-  -webkit-text-fill-color: #0f172a !important;
-}
-
-/* ==========================================================================
-   STOCKBIT TONE (GREY THEME OVERRIDES)
-   ========================================================================== */
-
-.stockbit,
-[data-theme="stockbit"] {
-  color-scheme: dark !important;
-  color: #d1d4dc !important;
-}
-
-.stockbit#applet-main-canvas,
-[data-theme="stockbit"]#applet-main-canvas,
-.stockbit.bg-\[\#050505\],
-.stockbit [class*="bg-[#050505]"],
-.stockbit [class*="bg-[#050505]/95"],
-.stockbit .bg-black,
-[data-theme="stockbit"].bg-\[\#050505\],
-[data-theme="stockbit"] [class*="bg-[#050505]"],
-[data-theme="stockbit"] [class*="bg-[#050505]/95"],
-[data-theme="stockbit"] .bg-black {
-  background-color: #131722 !important; 
-}
-
-/* Stockbit surface panels */
-.stockbit header,
-.stockbit #main-sidebar,
-.stockbit [class*="bg-[#0A0A0A]"],
-.stockbit [class*="bg-[#0a0a0a]"],
-.stockbit .bg-\[\#0A0A0A\],
-.stockbit [class*="bg-[#121212]"],
-.stockbit [class*="bg-[#121212]/95"],
-.stockbit [class*="bg-[#070707]"],
-.stockbit [class*="bg-[#080808]"],
-.stockbit [class*="bg-[#0f0f0f]"],
-[data-theme="stockbit"] header,
-[data-theme="stockbit"] #main-sidebar,
-[data-theme="stockbit"] [class*="bg-[#0A0A0A]"],
-[data-theme="stockbit"] [class*="bg-[#0a0a0a]"],
-[data-theme="stockbit"] .bg-\[\#0A0A0A\],
-[data-theme="stockbit"] [class*="bg-[#121212]"],
-[data-theme="stockbit"] [class*="bg-[#121212]/95"],
-[data-theme="stockbit"] [class*="bg-[#070707]"],
-[data-theme="stockbit"] [class*="bg-[#080808]"],
-[data-theme="stockbit"] [class*="bg-[#0f0f0f]"] {
-  background-color: #1e222d !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
-}
-
-.stockbit header,
-[data-theme="stockbit"] header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Base text */
-.stockbit .text-white,
-[data-theme="stockbit"] .text-white { color: #d1d4dc !important; }
-.stockbit .text-\[\#E0E0E0\],
-[data-theme="stockbit"] .text-\[\#E0E0E0\] { color: #d1d4dc !important; }
-.stockbit .text-zinc-500,
-[data-theme="stockbit"] .text-zinc-500 { color: #787b86 !important; }
-.stockbit .border-white\/\[0\.05\],
-[data-theme="stockbit"] .border-white\/\[0\.05\] { border-color: rgba(255, 255, 255, 0.06) !important; }
-.stockbit .border-white\/\[0\.03\],
-[data-theme="stockbit"] .border-white\/\[0\.03\] { border-color: rgba(255, 255, 255, 0.03) !important; }
-.stockbit .bg-white\/\[0\.01\],
-[data-theme="stockbit"] .bg-white\/\[0\.01\] { background-color: rgba(255, 255, 255, 0.02) !important; }
-
-/* Tabs bg */
-.stockbit nav.bg-\[\#121212\],
-.stockbit nav[class*="bg-[#121212]"],
-[data-theme="stockbit"] nav.bg-\[\#121212\],
-[data-theme="stockbit"] nav[class*="bg-[#121212]"] {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
-}
-
-/* Custom dark active tabs selection */
-.stockbit [class*="bg-white/10"],
-[data-theme="stockbit"] [class*="bg-white/10"] {
-  background-color: rgba(255, 255, 255, 0.10) !important;
-  color: #089981 !important; 
-}
-
-/* Solid button colors */
-.stockbit .bg-emerald-500,
-.stockbit .hover\:bg-emerald-600:hover,
-[data-theme="stockbit"] .bg-emerald-500,
-[data-theme="stockbit"] .hover\:bg-emerald-600:hover {
-  background-color: #089981 !important;
-}
-.stockbit .bg-rose-500,
-.stockbit .hover\:bg-rose-600:hover,
-[data-theme="stockbit"] .bg-rose-500,
-[data-theme="stockbit"] .hover\:bg-rose-600:hover {
-  background-color: #f23645 !important;
-}
-.stockbit .bg-amber-500,
-.stockbit .hover\:bg-amber-500:hover,
-[data-theme="stockbit"] .bg-amber-500,
-[data-theme="stockbit"] .hover\:bg-amber-500:hover {
-  background-color: #f0a500 !important;
-}
-.stockbit .bg-rose-600,
-[data-theme="stockbit"] .bg-rose-600 {
-  background-color: #d32f3f !important;
-}
-
-/* ==========================================================================
-   TRADINGVIEW SUPERCHART — Global Override
-   Makes ALL components match TV's dense, square, data-first aesthetic
-   ========================================================================== */
-
-[data-theme="stockbit"],
-[data-theme="stockbit"] #applet-main-canvas {
-  background-color: #131722 !important;
-}
-
-[data-theme="stockbit"] * {
-  border-radius: 0 !important;
-}
-
-[data-theme="stockbit"] .rounded-sm,
-[data-theme="stockbit"] .rounded,
-[data-theme="stockbit"] .rounded-md,
-[data-theme="stockbit"] .rounded-lg,
-[data-theme="stockbit"] .rounded-xl,
-[data-theme="stockbit"] .rounded-2xl,
-[data-theme="stockbit"] .rounded-full,
-[data-theme="stockbit"] [class*="rounded-"] {
-  border-radius: 0 !important;
-}
-
-[data-theme="stockbit"] .shadow-sm,
-[data-theme="stockbit"] .shadow,
-[data-theme="stockbit"] .shadow-md,
-[data-theme="stockbit"] .shadow-lg,
-[data-theme="stockbit"] .shadow-xl,
-[data-theme="stockbit"] .shadow-2xl,
-[data-theme="stockbit"] [class*="shadow-"] {
-  box-shadow: none !important;
-}
-
-[data-theme="stockbit"] .gap-2 { gap: 4px !important; }
-[data-theme="stockbit"] .gap-3 { gap: 6px !important; }
-[data-theme="stockbit"] .gap-4 { gap: 8px !important; }
-[data-theme="stockbit"] .gap-5 { gap: 10px !important; }
-[data-theme="stockbit"] .gap-6 { gap: 12px !important; }
-[data-theme="stockbit"] .space-y-2 { margin-top: 4px !important; }
-[data-theme="stockbit"] .space-y-3 { margin-top: 6px !important; }
-[data-theme="stockbit"] .space-y-4 { margin-top: 8px !important; }
-[data-theme="stockbit"] .space-y-5 { margin-top: 10px !important; }
-[data-theme="stockbit"] .space-y-6 { margin-top: 12px !important; }
-[data-theme="stockbit"] .space-y-8 { margin-top: 16px !important; }
-[data-theme="stockbit"] .p-2 { padding: 4px !important; }
-[data-theme="stockbit"] .p-3 { padding: 6px !important; }
-[data-theme="stockbit"] .p-4 { padding: 8px !important; }
-[data-theme="stockbit"] .p-5 { padding: 10px !important; }
-[data-theme="stockbit"] .p-6 { padding: 12px !important; }
-[data-theme="stockbit"] .p-8 { padding: 16px !important; }
-[data-theme="stockbit"] .p-10 { padding: 20px !important; }
-[data-theme="stockbit"] .px-2 { padding-left: 4px !important; padding-right: 4px !important; }
-[data-theme="stockbit"] .px-3 { padding-left: 6px !important; padding-right: 6px !important; }
-[data-theme="stockbit"] .px-4 { padding-left: 8px !important; padding-right: 8px !important; }
-[data-theme="stockbit"] .px-5 { padding-left: 10px !important; padding-right: 10px !important; }
-[data-theme="stockbit"] .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
-[data-theme="stockbit"] .py-1 { padding-top: 2px !important; padding-bottom: 2px !important; }
-[data-theme="stockbit"] .py-1\.5 { padding-top: 3px !important; padding-bottom: 3px !important; }
-[data-theme="stockbit"] .py-2 { padding-top: 4px !important; padding-bottom: 4px !important; }
-[data-theme="stockbit"] .py-2\.5 { padding-top: 5px !important; padding-bottom: 5px !important; }
-[data-theme="stockbit"] .py-3 { padding-top: 6px !important; padding-bottom: 6px !important; }
-[data-theme="stockbit"] .py-4 { padding-top: 8px !important; padding-bottom: 8px !important; }
-[data-theme="stockbit"] .py-5 { padding-top: 10px !important; padding-bottom: 10px !important; }
-[data-theme="stockbit"] .py-6 { padding-top: 12px !important; padding-bottom: 12px !important; }
-[data-theme="stockbit"] .py-8 { padding-top: 16px !important; padding-bottom: 16px !important; }
-[data-theme="stockbit"] .py-10 { padding-top: 20px !important; padding-bottom: 20px !important; }
-[data-theme="stockbit"] .pt-2 { padding-top: 4px !important; }
-[data-theme="stockbit"] .pt-3 { padding-top: 6px !important; }
-[data-theme="stockbit"] .pt-4 { padding-top: 8px !important; }
-[data-theme="stockbit"] .pt-6 { padding-top: 12px !important; }
-[data-theme="stockbit"] .pb-24 { padding-bottom: 48px !important; }
-[data-theme="stockbit"] .mb-1 { margin-bottom: 2px !important; }
-[data-theme="stockbit"] .mb-2 { margin-bottom: 4px !important; }
-[data-theme="stockbit"] .mb-3 { margin-bottom: 6px !important; }
-[data-theme="stockbit"] .mb-4 { margin-bottom: 8px !important; }
-[data-theme="stockbit"] .mb-6 { margin-bottom: 12px !important; }
-[data-theme="stockbit"] .mb-8 { margin-bottom: 16px !important; }
-[data-theme="stockbit"] .mt-2 { margin-top: 4px !important; }
-[data-theme="stockbit"] .mt-3 { margin-top: 6px !important; }
-[data-theme="stockbit"] .mt-4 { margin-top: 8px !important; }
-[data-theme="stockbit"] .mt-6 { margin-top: 12px !important; }
-[data-theme="stockbit"] .mt-8 { margin-top: 16px !important; }
-[data-theme="stockbit"] .mx-2 { margin-left: 4px !important; margin-right: 4px !important; }
-[data-theme="stockbit"] .mx-3 { margin-left: 6px !important; margin-right: 6px !important; }
-
-[data-theme="stockbit"] .text-xs { font-size: 10px !important; }
-[data-theme="stockbit"] .text-sm { font-size: 11px !important; }
-[data-theme="stockbit"] .text-base { font-size: 12px !important; }
-[data-theme="stockbit"] .text-lg { font-size: 13px !important; }
-[data-theme="stockbit"] .text-xl { font-size: 14px !important; }
-[data-theme="stockbit"] .text-2xl { font-size: 16px !important; }
-[data-theme="stockbit"] .text-3xl { font-size: 20px !important; }
-
-[data-theme="stockbit"] h1 { font-size: 14px !important; }
-[data-theme="stockbit"] h2 { font-size: 12px !important; }
-[data-theme="stockbit"] h3 { font-size: 11px !important; }
-[data-theme="stockbit"] h4 { font-size: 10px !important; }
-
-[data-theme="stockbit"] button,
-[data-theme="stockbit"] input,
-[data-theme="stockbit"] select,
-[data-theme="stockbit"] textarea {
-  font-size: 11px !important;
-}
-
-[data-theme="stockbit"] thead th {
-  font-size: 10px !important;
-  font-weight: 500 !important;
-  color: #787b86 !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-}
-
-[data-theme="stockbit"] tbody td {
-  font-size: 11px !important;
-  padding-top: 3px !important;
-  padding-bottom: 3px !important;
-}
-
-[data-theme="stockbit"] [class*="max-w-"] {
-  max-width: none !important;
-}
-
-[data-theme="stockbit"] button.bg-white\/\[\.04\] {
-  background-color: rgba(255,255,255,0.04) !important;
-}
-
-[data-theme="stockbit"] .backdrop-blur-md,
-[data-theme="stockbit"] .backdrop-blur-sm,
-[data-theme="stockbit"] .backdrop-blur,
-[data-theme="stockbit"] [class*="backdrop-blur-"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-[data-theme="stockbit"] .animate-pulse {
-  animation: none !important;
-}
-
-[data-theme="stockbit"] .glass,
-[data-theme="stockbit"] .glass-sm {
-  background: #1e222d !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-[data-theme="stockbit"] [class*="bg-white/[0.04]"],
-[data-theme="stockbit"] [class*="bg-white/[0.05]"] {
-  background-color: rgba(255,255,255,0.04) !important;
-}
-
-[data-theme="stockbit"] [class*="backdrop-blur"],
-[data-theme="stockbit"] [class*="backdrop-saturate"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-[data-theme="stockbit"] .text-emerald-400,
-[data-theme="stockbit"] [class*="text-emerald-4"] {
-  color: #089981 !important;
-}
-
-[data-theme="stockbit"] .text-rose-400,
-[data-theme="stockbit"] [class*="text-rose-4"] {
-  color: #f23645 !important;
-}
-

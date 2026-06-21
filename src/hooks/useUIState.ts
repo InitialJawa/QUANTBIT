@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 export type Tab = "market" | "leaders" | "turnaround" | "exit" | "ledger" | "simulation" | "diagnostics";
-export type Theme = "deep" | "slate" | "nord" | "light" | "stockbit" | "ios26";
+export type Theme = "dark" | "light";
 
 export function useUIState() {
   const [activeTab, setActiveTab] = useState<Tab>("market");
@@ -19,7 +19,7 @@ export function useUIState() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [theme, setTheme] = useState<Theme>("stockbit");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
 

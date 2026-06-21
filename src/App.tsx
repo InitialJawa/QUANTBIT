@@ -64,7 +64,7 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" data-theme={ui.theme} className={`min-h-screen text-[#d1d4dc] font-sans antialiased flex flex-col`} style={{ backgroundColor: '#131722' }}>
+    <div id="applet-main-canvas" data-theme={ui.theme} className={`min-h-screen font-sans antialiased flex flex-col ${ui.theme === 'dark' ? 'text-[#d1d4dc]' : 'text-[#131722]'}`} style={{ backgroundColor: ui.theme === 'dark' ? '#131722' : '#FFFFFF' }}>
 
       <AnimatePresence>
         {ui.appNotification && (
@@ -72,10 +72,10 @@ export default function App() {
             initial={{ opacity: 0, y: -20, x: "-50%" }}
             animate={{ opacity: 1, y: 20, x: "-50%" }}
             exit={{ opacity: 0, y: -20, x: "-50%" }}
-            className={`fixed top-4 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 backdrop-blur-md ${
-              ui.appNotification.type === "success" ? "bg-emerald-500/90 border-emerald-400 text-black" :
-              ui.appNotification.type === "error" ? "bg-rose-500/90 border-rose-400 text-white" :
-              "bg-blue-500/90 border-blue-400 text-white"
+            className={`fixed top-4 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 ${
+              ui.appNotification.type === "success" ? "bg-emerald-600 border-emerald-400 text-black" :
+              ui.appNotification.type === "error" ? "bg-rose-600 border-rose-400 text-white" :
+              "bg-blue-600 border-blue-400 text-white"
             }`}
           >
             <div className={`w-2 h-2 rounded-full animate-pulse ${

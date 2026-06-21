@@ -15,15 +15,15 @@ function clearSession() {
 function devMock(path: string, options: RequestInit): any {
   if (path === "/api/auth/login" && options.method === "POST") {
     const body = JSON.parse(options.body as string);
-    return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+    return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
   }
   if (path === "/api/auth/signup" && options.method === "POST") {
     const body = JSON.parse(options.body as string);
-    return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+    return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
   }
   if (path === "/api/auth/me") {
     if (getSession() === "dev-session") {
-      return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod", engine_config: "{}" } };
+      return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod", engine_config: "{}" } };
     }
     throw new Error("No dev session");
   }
