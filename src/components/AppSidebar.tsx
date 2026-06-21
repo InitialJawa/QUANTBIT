@@ -19,6 +19,7 @@ interface AppSidebarProps {
   onWithdraw: (amount: number) => void;
   onMoveToGold: (amount: number) => void;
   onSellGold: (shares: number) => void;
+  onClearPortfolio?: () => void;
   getDynamicStock: (ticker: string) => StockData;
 }
 
@@ -38,6 +39,7 @@ export function AppSidebar({
   onWithdraw,
   onMoveToGold,
   onSellGold,
+  onClearPortfolio,
   getDynamicStock,
 }: AppSidebarProps) {
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
@@ -291,6 +293,14 @@ export function AppSidebar({
               <span className="text-label text-tertiary">Win Rate</span>
               <span className="text-caption text-secondary">{totalStocks > 0 ? ((winners / totalStocks) * 100).toFixed(0) : 0}%</span>
             </div>
+            {totalStocks > 0 && (
+              <button
+                onClick={onClearPortfolio}
+                className="w-full mt-1 py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-white/[0.03] hover:bg-rose-900/20 rounded-lg border border-white/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
+              >
+                Hapus Semua
+              </button>
+            )}
           </div>
         </div>
 

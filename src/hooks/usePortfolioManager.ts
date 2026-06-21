@@ -162,9 +162,19 @@ export function usePortfolioManager(
 
   const handleRemoveTransaction = async (ticker: string) => {
     if (!user) return;
-    await api.del("/api/portfolio", { ticker });
+    try { await api.del("/api/portfolio", { ticker }); } catch { /* ignore */ }
     setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
     setAppNotification?.({ message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
+  };
+
+  const handleClearPortfolio = async () => {
+    if (!user || portfolio.length === 0) return;
+    const tickers = [...portfolio.map(p => p.ticker)];
+    for (const ticker of tickers) {
+      try { await api.del("/api/portfolio", { ticker }); } catch { /* ignore */ }
+    }
+    setPortfolio([]);
+    setAppNotification?.({ message: `Semua ${tickers.length} posisi portofolio berhasil dihapus.`, type: "info" });
   };
 
   const handleSellTransaction = async (ticker: string, sharesToSell: number, silent: boolean = false) => {
@@ -349,6 +359,7 @@ export function usePortfolioManager(
     generationError,
     handleAddTransaction,
     handleRemoveTransaction,
+    handleClearPortfolio,
     handleSellTransaction,
     handleToggleWatchlist,
     handleDepositCash,

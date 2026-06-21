@@ -121,6 +121,7 @@ export default function App() {
             onWithdraw={pm.handleWithdrawCash}
             onMoveToGold={pm.handleMoveToGold}
             onSellGold={pm.handleSellGoldToCashInput}
+            onClearPortfolio={pm.handleClearPortfolio}
             getDynamicStock={df.getDynamicStock}
           />
 

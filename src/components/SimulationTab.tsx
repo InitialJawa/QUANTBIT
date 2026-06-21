@@ -238,8 +238,13 @@ function generateClientBacktestData(): BacktestDayData[] {
   };
 
   const basePrices: Record<string, number> = {};
+  const qualityFactors: Record<string, number> = {};
+  const momentum: Record<string, number> = {};
+
   tickers.forEach(t => {
-    basePrices[t] = 500 + nextRandom() * 9500;
+    qualityFactors[t] = 0.3 + nextRandom() * 0.6;
+    basePrices[t] = 500 + qualityFactors[t] * 9500;
+    momentum[t] = 0;
   });
 
   let ihsg = 500 + nextRandom() * 500;
@@ -254,13 +259,19 @@ function generateClientBacktestData(): BacktestDayData[] {
       const stockRanks: Record<string, number> = {};
 
       tickers.forEach(t => {
-        const change = (nextRandom() - 0.48) * 0.035;
-        basePrices[t] = Math.max(10, basePrices[t] * (1 + change));
+        const dailyShock = (nextRandom() - 0.5) * 0.035;
+        momentum[t] = momentum[t] * 0.8 + dailyShock * 0.2;
+        const drift = (qualityFactors[t] - 0.45) * 0.003;
+        basePrices[t] = Math.max(10, basePrices[t] * (1 + drift + momentum[t]));
         stockPrices[t] = Math.round(basePrices[t] * 100) / 100;
       });
 
-      const ranked = [...tickers].sort(() => nextRandom() - 0.5);
-      ranked.forEach((t, i) => { stockRanks[t] = i + 1; });
+      const scores = tickers.map(t => ({
+        ticker: t,
+        score: qualityFactors[t] * 0.7 + momentum[t] * 0.3 + nextRandom() * 0.05,
+      }));
+      scores.sort((a, b) => b.score - a.score);
+      scores.forEach((s, i) => { stockRanks[s.ticker] = i + 1; });
 
       ihsg = Math.max(200, ihsg * (1 + (nextRandom() - 0.48) * 0.014));
       gold = Math.max(100000, gold * (1 + (nextRandom() - 0.49) * 0.007));
