@@ -106,15 +106,18 @@ export default function App() {
       <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
 
         <AppSidebar
+          activeTab={ui.activeTab}
           isMobileMenuOpen={ui.isMobileMenuOpen}
           onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
           cash={pm.cash}
           goldShares={pm.getEmasShares()}
           tradeLogs={pm.tradeLogs}
+          portfolio={pm.portfolio}
           onDeposit={pm.handleDepositCash}
           onWithdraw={pm.handleWithdrawCash}
           onMoveToGold={pm.handleMoveToGold}
           onSellGold={pm.handleSellGoldToCashInput}
+          getDynamicStock={df.getDynamicStock}
         />
 
         <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col">
