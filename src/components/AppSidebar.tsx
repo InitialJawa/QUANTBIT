@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings } from "lucide-react";
 import { DigitalWalletUI } from "./DigitalWalletUI";
 import { idxNews, MKT, RS } from "../marketData";
 import type { PortfolioItem, StockData } from "../types";
