@@ -870,7 +870,136 @@ export function PortfolioTracker({
             )}
           </div>
 
-          {/* Form and Chart Container */}
+          
+        </div>
+
+        {/* RIGHT COLUMN: PENDING REBALANCING ALERTS */}
+          <div className="md:col-span-1 xl:col-span-4 space-y-3 flex flex-col">
+
+          {/* DYNAMIC PENDING REBALANCING SIGNAL ALERTS (Direct Transaction Instruction) */}
+          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-4 space-y-3">
+            <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-white/50" />
+              Instruksi Ledger Cerdas
+            </h3>
+
+            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin">
+              {activeAlerts.length === 0 ? (
+                <div className="p-6 text-center rounded-2xl bg-white/[0.02] border border-white/[0.03] flex flex-col items-center gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-white/50" />
+                  <span className="text-body text-white font-extrabold uppercase tracking-widest">
+                    Portofolio Optimal
+                  </span>
+                  <p className="text-caption text-white/40 leading-relaxed max-w-xs">
+                    Distribusi alokasi modal saat ini selaras 100% dengan
+                    parameter kebijakan investasi & analisa kuantitatif. Tidak
+                    ada transaksi yang disarankan.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activeAlerts.map((alertItem, idx) => {
+                    const isBuy = alertItem.type === "BUY";
+                    return (
+                      <div
+                        key={alertItem.id}
+                        className="p-4 rounded-xl relative flex flex-col justify-between gap-4 text-left transition-all bg-white/[0.01] border hover:bg-white/[0.03] border-white/[0.03]"
+                      >
+                        <div className="flex justify-between items-start gap-3">
+                          <div>
+                            <span className="text-label font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-white/5 text-white/80 border border-white/5">
+                              {alertItem.badge}
+                            </span>
+                            <h4 className="text-body font-black text-white mt-3 flex items-baseline gap-2">
+                              {alertItem.ticker}
+                              <span className="text-caption font-medium text-white/40 truncate block max-w-[160px]">
+                                {alertItem.name}
+                              </span>
+                            </h4>
+                          </div>
+                          <div className="text-right font-mono">
+                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">
+                              Pricing Spot
+                            </span>
+                            <span className="text-xs font-bold text-white mt-1 block">
+                              Rp {alertItem.price.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-caption text-white/50 leading-relaxed font-sans border-l-2 border-white/10 pl-3 italic">
+                          {alertItem.reason}
+                        </p>
+
+                        <div className="flex border-t border-white/[0.05] pt-3 items-center justify-between gap-4 mt-1">
+                          <div className="font-mono">
+                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">
+                              Volume Trading
+                            </span>
+                            <span className="text-xs font-black text-white mt-1 block">
+                              {alertItem.shares.toLocaleString()}{" "}
+                              {alertItem.ticker === "EMAS" ||
+                              alertItem.ticker === "GOLD"
+                                ? "Gram"
+                                : "Lembar"}
+                              {!(
+                                alertItem.ticker === "EMAS" ||
+                                alertItem.ticker === "GOLD"
+                              ) && (
+                                <span className="text-caption text-white/40 font-semibold lowercase">
+                                  {" "}
+                                  ({Math.round(alertItem.shares / 100)} Lot)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              if (isBuy) {
+                                const details = calculateTradeDetails(
+                                  "BUY",
+                                  alertItem.ticker,
+                                  alertItem.shares,
+                                  alertItem.price,
+                                );
+                                if (details.net > cash) {
+                                  setNotification({
+                                    message:
+                                      "Saldo Kas Tunai Anda tidak mencukupi untuk membeli! Diperlukan Rp " +
+                                      Math.round(details.net).toLocaleString(),
+                                    type: "error",
+                                  });
+                                  return;
+                                }
+                                onAddTransaction(
+                                  alertItem.ticker,
+                                  alertItem.shares,
+                                  alertItem.price,
+                                );
+                              } else {
+                                onSellTransaction(
+                                  alertItem.ticker,
+                                  alertItem.shares,
+                                );
+                              }
+                            }}
+                            className="px-4 py-2.5 rounded-xl text-caption font-bold uppercase tracking-widest cursor-pointer transition-all hover:scale-[1.02] bg-white text-black shadow-sm font-sans flex gap-2 items-center"
+                          >
+                            Setujui {isBuy ? "Akuisisi" : "Likuidasi"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+{/* Form and Chart Container */}
           <div className="space-y-3">
             {/* TRANSAKSI MANDIRI (PILIHAN SAHAM INDIVIDUAL) */}
             <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-3">
@@ -1231,133 +1360,6 @@ export function PortfolioTracker({
               )}
             </div>
           </div>
-        </div>
-
-        {/* RIGHT COLUMN: PENDING REBALANCING ALERTS */}
-          <div className="md:col-span-1 xl:col-span-4 space-y-3 flex flex-col">
-
-          {/* DYNAMIC PENDING REBALANCING SIGNAL ALERTS (Direct Transaction Instruction) */}
-          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-4 space-y-3">
-            <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-white/50" />
-              Instruksi Ledger Cerdas
-            </h3>
-
-            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin">
-              {activeAlerts.length === 0 ? (
-                <div className="p-6 text-center rounded-2xl bg-white/[0.02] border border-white/[0.03] flex flex-col items-center gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-white/50" />
-                  <span className="text-body text-white font-extrabold uppercase tracking-widest">
-                    Portofolio Optimal
-                  </span>
-                  <p className="text-caption text-white/40 leading-relaxed max-w-xs">
-                    Distribusi alokasi modal saat ini selaras 100% dengan
-                    parameter kebijakan investasi & analisa kuantitatif. Tidak
-                    ada transaksi yang disarankan.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {activeAlerts.map((alertItem, idx) => {
-                    const isBuy = alertItem.type === "BUY";
-                    return (
-                      <div
-                        key={alertItem.id}
-                        className="p-4 rounded-xl relative flex flex-col justify-between gap-4 text-left transition-all bg-white/[0.01] border hover:bg-white/[0.03] border-white/[0.03]"
-                      >
-                        <div className="flex justify-between items-start gap-3">
-                          <div>
-                            <span className="text-label font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-white/5 text-white/80 border border-white/5">
-                              {alertItem.badge}
-                            </span>
-                            <h4 className="text-body font-black text-white mt-3 flex items-baseline gap-2">
-                              {alertItem.ticker}
-                              <span className="text-caption font-medium text-white/40 truncate block max-w-[160px]">
-                                {alertItem.name}
-                              </span>
-                            </h4>
-                          </div>
-                          <div className="text-right font-mono">
-                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">
-                              Pricing Spot
-                            </span>
-                            <span className="text-xs font-bold text-white mt-1 block">
-                              Rp {alertItem.price.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-caption text-white/50 leading-relaxed font-sans border-l-2 border-white/10 pl-3 italic">
-                          {alertItem.reason}
-                        </p>
-
-                        <div className="flex border-t border-white/[0.05] pt-3 items-center justify-between gap-4 mt-1">
-                          <div className="font-mono">
-                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">
-                              Volume Trading
-                            </span>
-                            <span className="text-xs font-black text-white mt-1 block">
-                              {alertItem.shares.toLocaleString()}{" "}
-                              {alertItem.ticker === "EMAS" ||
-                              alertItem.ticker === "GOLD"
-                                ? "Gram"
-                                : "Lembar"}
-                              {!(
-                                alertItem.ticker === "EMAS" ||
-                                alertItem.ticker === "GOLD"
-                              ) && (
-                                <span className="text-caption text-white/40 font-semibold lowercase">
-                                  {" "}
-                                  ({Math.round(alertItem.shares / 100)} Lot)
-                                </span>
-                              )}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() => {
-                              if (isBuy) {
-                                const details = calculateTradeDetails(
-                                  "BUY",
-                                  alertItem.ticker,
-                                  alertItem.shares,
-                                  alertItem.price,
-                                );
-                                if (details.net > cash) {
-                                  setNotification({
-                                    message:
-                                      "Saldo Kas Tunai Anda tidak mencukupi untuk membeli! Diperlukan Rp " +
-                                      Math.round(details.net).toLocaleString(),
-                                    type: "error",
-                                  });
-                                  return;
-                                }
-                                onAddTransaction(
-                                  alertItem.ticker,
-                                  alertItem.shares,
-                                  alertItem.price,
-                                );
-                              } else {
-                                onSellTransaction(
-                                  alertItem.ticker,
-                                  alertItem.shares,
-                                );
-                              }
-                            }}
-                            className="px-4 py-2.5 rounded-xl text-caption font-bold uppercase tracking-widest cursor-pointer transition-all hover:scale-[1.02] bg-white text-black shadow-sm font-sans flex gap-2 items-center"
-                          >
-                            Setujui {isBuy ? "Akuisisi" : "Likuidasi"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Watchlist Strip */}
       <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
