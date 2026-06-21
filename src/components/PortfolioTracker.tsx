@@ -871,9 +871,9 @@ export function PortfolioTracker({
           </div>
 
           {/* Form and Chart Container */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             {/* TRANSAKSI MANDIRI (PILIHAN SAHAM INDIVIDUAL) */}
-            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-4 flex flex-col">
+            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-white/[0.05]">
                 <h4 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                   <ArrowRightLeft className="w-4 h-4 text-white/50" />
@@ -886,7 +886,7 @@ export function PortfolioTracker({
 
               <form
                 onSubmit={handleAdd}
-                className="flex-1 flex flex-col gap-4 pt-2"
+                className="flex flex-col gap-4 pt-2"
               >
                 {/* Dropdown Saham Individual */}
                 <div className="space-y-2">
@@ -945,8 +945,6 @@ export function PortfolioTracker({
                     />
                   </div>
                 </div>
-
-                <div className="flex-1"></div>
 
                 {/* Submit Button */}
                 <div className="flex justify-end pt-3 border-t border-white/[0.05]">
