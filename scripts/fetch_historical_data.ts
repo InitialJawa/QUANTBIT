@@ -3,6 +3,27 @@ import path from "path";
 import Database from "better-sqlite3";
 import { COMBINED_TICKERS } from "../src/constants/idx80.ts";
 
+// Historical fallback values for when Yahoo Finance data is unavailable.
+// Gold price in USD per troy ounce (approximate yearly start/average).
+const HISTORICAL_GOLD_USD: Record<number, number> = {
+  2000: 280, 2001: 265, 2002: 300, 2003: 360, 2004: 410,
+  2005: 440, 2006: 600, 2007: 700, 2008: 870, 2009: 970,
+  2010: 1225, 2011: 1570, 2012: 1670, 2013: 1410, 2014: 1270,
+  2015: 1160, 2016: 1250, 2017: 1260, 2018: 1270, 2019: 1400,
+  2020: 1770, 2021: 1800, 2022: 1800, 2023: 1940, 2024: 2060,
+  2025: 2350, 2026: 2600,
+};
+
+// Historical USD/IDR exchange rate (approximate yearly average).
+const HISTORICAL_USDIDR: Record<number, number> = {
+  2000: 8400, 2001: 10400, 2002: 9300, 2003: 8500, 2004: 9000,
+  2005: 9700, 2006: 9100, 2007: 9100, 2008: 9700, 2009: 10400,
+  2010: 9100, 2011: 8700, 2012: 9600, 2013: 12200, 2014: 12400,
+  2015: 13800, 2016: 13300, 2017: 13500, 2018: 14300, 2019: 14100,
+  2020: 14500, 2021: 14400, 2022: 15000, 2023: 15400, 2024: 15700,
+  2025: 16000, 2026: 16600,
+};
+
 // 2000-01-01 to Today for extended backtest
 const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);
 const END_TIME = Math.floor(new Date().getTime() / 1000);
@@ -363,22 +384,22 @@ async function main() {
       ihsg = lastKnownPrices["^JKSE"] || 6000;
     }
 
-    let usdidr = 15000;
+    let usdidr = HISTORICAL_USDIDR[dateObj.getFullYear()] || 15000;
     const usdidrRow = allData["IDR=X"]?.[dateStr];
     if (usdidrRow) {
       usdidr = usdidrRow.close;
       lastKnownPrices["IDR=X"] = usdidr;
     } else {
-      usdidr = lastKnownPrices["IDR=X"] || 15000;
+      usdidr = lastKnownPrices["IDR=X"] || HISTORICAL_USDIDR[dateObj.getFullYear()] || 15000;
     }
 
-    let gold_usd = 1800;
+    let gold_usd = HISTORICAL_GOLD_USD[dateObj.getFullYear()] || 1800;
     const goldRow = allData["GC=F"]?.[dateStr];
     if (goldRow) {
       gold_usd = goldRow.close;
       lastKnownPrices["GC=F"] = gold_usd;
     } else {
-      gold_usd = lastKnownPrices["GC=F"] || 1800;
+      gold_usd = lastKnownPrices["GC=F"] || HISTORICAL_GOLD_USD[dateObj.getFullYear()] || 1800;
     }
     const goldPriceIdrPerGram = Math.round((gold_usd * usdidr) / 31.1034768);
 
