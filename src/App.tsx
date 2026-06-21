@@ -14,6 +14,7 @@ import { AnalyticsTab } from "./components/AnalyticsTab";
 import { SimulationTab } from "./components/SimulationTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
+import { BacktestProvider } from "./contexts/BacktestContext";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
@@ -85,42 +86,43 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AppHeader
-        activeTab={ui.activeTab}
-        onTabChange={ui.setActiveTab}
-        dataFeed={df.dataFeed}
-        userEmail={user?.email}
-        settingsRef={ui.settingsDropdownRef}
-        isSettingsOpen={ui.isSettingsOpen}
-        setSettingsOpen={ui.setIsSettingsOpen}
-        theme={ui.theme}
-        setTheme={ui.setTheme}
-        activeConfig={ui.activeConfig}
-        setActiveConfig={ui.setActiveConfig}
-        isMobileMenuOpen={ui.isMobileMenuOpen}
-        setMobileMenuOpen={ui.setIsMobileMenuOpen}
-        setDataFeed={df.setDataFeed}
-        logout={logout}
-      />
-
-      <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
-
-        <AppSidebar
+      <BacktestProvider>
+        <AppHeader
           activeTab={ui.activeTab}
+          onTabChange={ui.setActiveTab}
+          dataFeed={df.dataFeed}
+          userEmail={user?.email}
+          settingsRef={ui.settingsDropdownRef}
+          isSettingsOpen={ui.isSettingsOpen}
+          setSettingsOpen={ui.setIsSettingsOpen}
+          theme={ui.theme}
+          setTheme={ui.setTheme}
+          activeConfig={ui.activeConfig}
+          setActiveConfig={ui.setActiveConfig}
           isMobileMenuOpen={ui.isMobileMenuOpen}
-          onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
-          cash={pm.cash}
-          goldShares={pm.getEmasShares()}
-          tradeLogs={pm.tradeLogs}
-          portfolio={pm.portfolio}
-          onDeposit={pm.handleDepositCash}
-          onWithdraw={pm.handleWithdrawCash}
-          onMoveToGold={pm.handleMoveToGold}
-          onSellGold={pm.handleSellGoldToCashInput}
-          getDynamicStock={df.getDynamicStock}
+          setMobileMenuOpen={ui.setIsMobileMenuOpen}
+          setDataFeed={df.setDataFeed}
+          logout={logout}
         />
 
-        <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col">
+        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
+
+          <AppSidebar
+            activeTab={ui.activeTab}
+            isMobileMenuOpen={ui.isMobileMenuOpen}
+            onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
+            cash={pm.cash}
+            goldShares={pm.getEmasShares()}
+            tradeLogs={pm.tradeLogs}
+            portfolio={pm.portfolio}
+            onDeposit={pm.handleDepositCash}
+            onWithdraw={pm.handleWithdrawCash}
+            onMoveToGold={pm.handleMoveToGold}
+            onSellGold={pm.handleSellGoldToCashInput}
+            getDynamicStock={df.getDynamicStock}
+          />
+
+          <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col">
 
           <div className="space-y-2 flex-1 flex flex-col w-full h-full">
 
@@ -235,6 +237,8 @@ export default function App() {
         </main>
 
       </div>
+
+      </BacktestProvider>
 
       <StockDrawer
         isOpen={ui.isDrawerOpen}

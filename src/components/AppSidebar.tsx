@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar } from "lucide-react";
 import { DigitalWalletUI } from "./DigitalWalletUI";
 import { idxNews, MKT, RS } from "../marketData";
 import type { PortfolioItem, StockData } from "../types";
 import { useState } from "react";
+import { useBacktest } from "../contexts/BacktestContext";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -327,72 +328,255 @@ export function AppSidebar({
     );
   };
 
-  const renderBacktestContent = () => (
-    <>
-      <div className="mx-2">
-        <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <Clock className="w-3 h-3 text-tertiary" />
-          <span className="text-label font-medium text-tertiary uppercase tracking-wider">Backtest</span>
-        </div>
-        <div className="px-2 py-2 space-y-2">
-          <div className="text-label text-tertiary leading-relaxed">
-            Panel simulasi historis. Atur parameter di tab utama untuk backtest strategi rebalancing dari tahun 2000.
+  const renderBacktestContent = () => {
+    const bt = useBacktest();
+    return (
+      <>
+        <div className="mx-2">
+          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
+            <Clock className="w-3 h-3 text-tertiary" />
+            <span className="text-label font-medium text-primary uppercase tracking-wider">Mode</span>
           </div>
-          <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Data</span>
-              <span className="text-caption text-secondary">2000 - 2026</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Mode</span>
-              <span className="text-caption text-secondary">Algo / Single</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Universe</span>
-              <span className="text-caption text-secondary">All / IDX80 / LQ45</span>
+          <div className="px-2 py-2 space-y-2">
+            <div className="flex gap-1">
+              <button onClick={() => bt.setSimulationMode("algo")}
+                className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                style={{ backgroundColor: bt.simulationMode === "algo" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "algo" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "algo" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                Algo
+              </button>
+              <button onClick={() => bt.setSimulationMode("single")}
+                className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                style={{ backgroundColor: bt.simulationMode === "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "single" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "single" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                Single
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mx-2">
-        <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <Layers className="w-3 h-3 text-tertiary" />
-          <span className="text-label font-medium text-tertiary uppercase tracking-wider">Strategi</span>
-        </div>
-        <div className="px-2 py-2 space-y-1.5">
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">Rank Crossover</span>
-            <span className="text-caption text-emerald-400">Aktif</span>
-          </div>
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">Crash Protection</span>
-            <span className="text-caption text-emerald-400">Aktif</span>
-          </div>
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">Safe Haven</span>
-            <span className="text-caption text-secondary">Emas / Kas</span>
-          </div>
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">Reserve Buffer</span>
-            <span className="text-caption text-secondary">10%</span>
-          </div>
-        </div>
-      </div>
+        {bt.simulationMode === "algo" ? (
+          <>
+            <div className="mx-2">
+              <div className="px-2 py-1.5 border-b border-white/[0.04]">
+                <span className="text-label font-medium text-tertiary uppercase tracking-wider">Jumlah Saham</span>
+              </div>
+              <div className="px-2 py-2">
+                <div className="flex gap-1">
+                  {[1, 3, 5].map((n) => (
+                    <button key={n} onClick={() => bt.setNumStocks(n as 1|3|5)}
+                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                      style={{ backgroundColor: bt.numStocks === n ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.numStocks === n ? '#00c9a5' : '#7a7a7a', border: bt.numStocks === n ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      Top {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-      <div className="mx-2">
-        <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <FileSpreadsheet className="w-3 h-3 text-tertiary" />
-          <span className="text-label font-medium text-tertiary uppercase tracking-wider">Sub-Tab</span>
-        </div>
-        <div className="px-2 py-2">
-          <div className="text-label text-tertiary leading-relaxed">
-            Gunakan sub-tab <span className="text-secondary font-medium">Historis</span>, <span className="text-secondary font-medium">Algoritma</span>, dan <span className="text-secondary font-medium">Log</span> untuk navigasi hasil backtest.
+            <div className="mx-2">
+              <div className="px-2 py-1.5 border-b border-white/[0.04]">
+                <span className="text-label font-medium text-tertiary uppercase tracking-wider">Universe</span>
+              </div>
+              <div className="px-2 py-2">
+                <div className="flex gap-1 flex-wrap">
+                  {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
+                    <button key={k} onClick={() => bt.setSimUniverse(k)}
+                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                      style={{ backgroundColor: bt.simUniverse === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simUniverse === k ? '#00c9a5' : '#7a7a7a', border: bt.simUniverse === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-2">
+              <div className="px-2 py-1.5 border-b border-white/[0.04]">
+                <span className="text-label font-medium text-tertiary uppercase tracking-wider">Konfigurasi</span>
+              </div>
+              <div className="px-2 py-2">
+                <div className="flex gap-1">
+                  <button onClick={() => bt.setBacktestConfigType("prod")}
+                    className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                    style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                    Config F
+                  </button>
+                  <button onClick={() => bt.setBacktestConfigType("res")}
+                    className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                    style={{ backgroundColor: bt.backtestConfigType === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "res" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                    Config B
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="mx-2">
+            <div className="px-2 py-1.5 border-b border-white/[0.04]">
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
+            </div>
+            <div className="px-2 py-2 space-y-2">
+              <input type="text" value={bt.simTicker}
+                onChange={e => bt.setSimTicker(e.target.value.toUpperCase())}
+                placeholder="BBCA"
+                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
+              <div>
+                <div className="flex justify-between text-label mb-1">
+                  <span className="text-tertiary">Jual Turun</span>
+                  <span className="text-accent">{bt.singleSellTrigger}%</span>
+                </div>
+                <input type="range" min="1" max="25" value={bt.singleSellTrigger}
+                  onChange={e => bt.setSingleSellTrigger(Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-1.5" />
+              </div>
+              <div>
+                <div className="flex justify-between text-label mb-1">
+                  <span className="text-tertiary">Beli Naik</span>
+                  <span className="text-accent">{bt.singleBuyTrigger}%</span>
+                </div>
+                <input type="range" min="1" max="25" value={bt.singleBuyTrigger}
+                  onChange={e => bt.setSingleBuyTrigger(Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-1.5" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mx-2">
+          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
+            <Calendar className="w-3 h-3 text-tertiary" />
+            <span className="text-label font-medium text-primary uppercase tracking-wider">Waktu & Modal</span>
+          </div>
+          <div className="px-2 py-2 space-y-2">
+            <div className="grid grid-cols-2 gap-1.5">
+              <div>
+                <label className="text-label text-tertiary block mb-0.5">Mulai</label>
+                <input type="date" value={bt.simStartDate} min="2000-01-03" max={bt.simEndDate}
+                  onChange={e => bt.setSimStartDate(e.target.value)}
+                  className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
+              </div>
+              <div>
+                <label className="text-label text-tertiary block mb-0.5">Sampai</label>
+                <input type="date" value={bt.simEndDate} min={bt.simStartDate} max={bt.todayWIBStr}
+                  onChange={e => bt.setSimEndDate(e.target.value)}
+                  className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
+              </div>
+            </div>
+            <div>
+              <label className="text-label text-tertiary block mb-1">Modal (IDR)</label>
+              <input type="text" value={bt.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                onChange={e => bt.setAlgoCapital(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="Rp 100.000.000"
+                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
+              <div className="flex gap-1 mt-1">
+                {["10000000", "50000000", "100000000"].map((preset) => (
+                  <button key={preset} onClick={() => bt.setAlgoCapital(preset)}
+                    className={`text-label px-1.5 py-0.5 font-medium rounded transition-colors cursor-pointer ${
+                      bt.algoCapital === preset
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-white/5 border border-white/[0.06] text-tertiary hover:text-secondary"
+                    }`}>
+                    Rp {(parseInt(preset) / 1000000).toLocaleString("id-ID")}Jt
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </>
-  );
+
+        <div className="mx-2">
+          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
+            <Layers className="w-3 h-3 text-tertiary" />
+            <span className="text-label font-medium text-primary uppercase tracking-wider">Strategi</span>
+          </div>
+          <div className="px-2 py-2 space-y-2">
+            <div>
+              <span className="text-label text-tertiary block mb-1">Rotasi Saham</span>
+              <div className="flex gap-1">
+                <button onClick={() => bt.setEnableCrossover(true)}
+                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                  style={{ backgroundColor: bt.enableCrossover ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrossover ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Rank &lt; 7
+                </button>
+                <button onClick={() => bt.setEnableCrossover(false)}
+                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                  style={{ backgroundColor: !bt.enableCrossover ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.04)', color: !bt.enableCrossover ? '#ff4757' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Tanpa
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
+              <div className="flex gap-1 items-center">
+                <button onClick={() => bt.setEnableCrashProtection(!bt.enableCrashProtection)}
+                  className="px-2 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                  style={{ backgroundColor: bt.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {bt.enableCrashProtection ? "ON" : "OFF"}
+                </button>
+                <select value={bt.crashSensitivity} onChange={e => bt.setCrashSensitivity(Number(e.target.value))}
+                  disabled={!bt.enableCrashProtection}
+                  className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40">
+                  <option value="3">Sensitif (3%)</option>
+                  <option value="5">Normal (5%)</option>
+                  <option value="8">Moderat (8%)</option>
+                  <option value="10">Konservatif (10%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-label text-tertiary block mb-1">Safe Haven</span>
+              <div className="flex gap-1">
+                <button onClick={() => bt.setSafeHavenAsset("emas")} disabled={!bt.enableCrashProtection}
+                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
+                  style={{ backgroundColor: bt.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Emas
+                </button>
+                <button onClick={() => bt.setSafeHavenAsset("kas")} disabled={!bt.enableCrashProtection}
+                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
+                  style={{ backgroundColor: bt.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Kas
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-label mb-1">
+                <span className="text-tertiary">Buffer Kas</span>
+                <span className="text-accent">{bt.reserveBufferPct}%</span>
+              </div>
+              <input type="range" min="0" max="30" step="5" value={bt.reserveBufferPct}
+                onChange={e => bt.setReserveBufferPct(Number(e.target.value))}
+                className="w-full accent-emerald-500 h-1.5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-2">
+          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
+            <Play className="w-3 h-3 text-tertiary" />
+            <span className="text-label font-medium text-primary uppercase tracking-wider">Eksekusi</span>
+          </div>
+          <div className="px-2 py-2 space-y-2">
+            <button onClick={() => bt.triggerBacktest()}
+              disabled={bt.isBacktesting}
+              className="w-full py-1.5 text-caption font-bold rounded-md transition-opacity cursor-pointer disabled:opacity-50"
+              style={{ backgroundColor: '#00c9a5', color: '#000' }}>
+              {bt.isBacktesting ? "Memproses..." : "Jalankan Backtest"}
+            </button>
+            {bt.backtestResult && (
+              <button onClick={() => document.dispatchEvent(new CustomEvent("download-csv-backtest"))}
+                className="w-full py-1.5 text-caption font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#b0b0b0', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Download className="w-3 h-3 text-accent" />
+                Unduh CSV
+              </button>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  };
 
   const [collapsed, setCollapsed] = useState(false);
 
