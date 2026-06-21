@@ -37,7 +37,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
     <div id="historical-chart-container" className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 id="chart-title" className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+          <h3 id="chart-title" className="text-caption font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-emerald-500" />
             Historical Price Trend ({timeframe})
           </h3>
@@ -132,7 +132,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
       {/* High, Low, Avg stats strip */}
       <div id="chart-summary-stats-strip" className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
         <div>
-          <span className="text-[9px] uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
+          <span className="text-label uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
             <TrendingUp className="w-3 h-3 text-emerald-400" /> High Price
           </span>
           <span id="stat-high-val" className="text-sm font-semibold text-white font-mono">
@@ -140,7 +140,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
           </span>
         </div>
         <div>
-          <span className="text-[9px] uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
+          <span className="text-label uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
             <TrendingDown className="w-3 h-3 text-rose-400" /> Low Price
           </span>
           <span id="stat-low-val" className="text-sm font-semibold text-white font-mono">
@@ -148,7 +148,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
           </span>
         </div>
         <div>
-          <span className="text-[9px] uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
+          <span className="text-label uppercase font-bold text-white/40 tracking-wider flex items-center gap-1 mb-0.5">
             <Clock className="w-3 h-3 text-emerald-500" /> Average
           </span>
           <span id="stat-avg-val" className="text-sm font-semibold text-white font-mono">

@@ -32,7 +32,7 @@ export function AnalyticsTab({ activeConfig, onSelectTicker, portfolio, watchlis
           <button
             key={id}
             onClick={() => setSubTab(id)}
-            className={`flex-1 py-2.5 text-[11px] font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 text-body font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
               subTab === id
                 ? "text-emerald-500 border-b-2 border-emerald-500"
                 : "text-white/30 hover:text-white/60"

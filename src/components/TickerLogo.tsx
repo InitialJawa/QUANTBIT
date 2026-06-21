@@ -5,8 +5,8 @@ export function TickerLogo({ ticker, size = "md", fallbackColor = "bg-blue-600",
   const cleanTicker = ticker.replace(".JK", "");
 
   const sizeClasses = {
-    sm: "w-6 h-6 text-[8px] rounded",
-    md: "w-9 h-9 text-[10px] rounded-lg",
+    sm: "w-6 h-6 text-label rounded",
+    md: "w-9 h-9 text-caption rounded-lg",
     lg: "w-10 h-10 text-xs rounded-xl"
   };
 

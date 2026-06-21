@@ -90,7 +90,7 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-1.5 font-sans">
             Asisten AI {isWatchlist ? 'Analis Portofolio' : 'Analis Saham'}
-            <span className="text-[10px] bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
+            <span className="text-caption bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
               {isWatchlist ? 'Aktif' : 'Membantu'}
             </span>
           </h4>
@@ -147,7 +147,7 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
       {/* Preset / Suggestions */}
       {messages.length === 1 && !isLoading && (
         <div id="ai-presets-box" className="mt-4 pt-3 border-t border-white/5">
-          <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-2 flex items-center gap-1.5">
+          <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 flex items-center gap-1.5">
             <HelpCircle className="w-4 h-4 text-emerald-400" /> Pertanyaan Populer
           </span>
           <div className="flex flex-wrap gap-2">

@@ -96,13 +96,13 @@ export function AppHeader({
               >
                 <div className="px-3 py-2.5 border-b border-white/[0.05]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 text-[11px] font-bold uppercase bg-emerald-500/10">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 text-body font-bold uppercase bg-emerald-500/10">
                       {userEmail?.charAt(0) || "U"}
                     </div>
                     <div className="flex flex-col leading-tight">
-                      <span className="text-white font-medium truncate max-w-[140px] text-[11px]">{userEmail}</span>
-                      <span className="text-[9px] text-white/30">Signed in</span>
-                      <span className="text-[8px] text-white/20 font-mono mt-0.5">
+                      <span className="text-white font-medium truncate max-w-[140px] text-body">{userEmail}</span>
+                      <span className="text-label text-white/30">Signed in</span>
+                      <span className="text-label text-white/20 font-mono mt-0.5">
                         {dataFeed === "yahoo" ? "Yahoo Finance" : dataFeed === "goapi" ? "GoAPI.io" : "Offline Sim"}
                       </span>
                     </div>
@@ -110,7 +110,7 @@ export function AppHeader({
                 </div>
 
                 <div className="px-1.5 py-1">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Theme</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Theme</div>
                   {([
                     ["dark", Moon, "Dark"],
                     ["light", Sun, "Light"],
@@ -129,7 +129,7 @@ export function AppHeader({
                 <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Data Feed</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Data Feed</div>
                   {([
                     ["yahoo", "Yahoo Finance"],
                     ["goapi", "GoAPI.io"],
@@ -149,7 +149,7 @@ export function AppHeader({
                 <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
                   {([
                     ["prod", "Config F"],
                     ["res", "Config B"],

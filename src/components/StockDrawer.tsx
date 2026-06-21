@@ -87,10 +87,10 @@ export function StockDrawer({
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium text-white">{activeStock.ticker}</h3>
-                      <span className="text-[11px] text-white/50">{activeStock.name}</span>
+                      <span className="text-body text-white/50">{activeStock.name}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[9px] text-white/30 uppercase">{activeStock.sector}</span>
+                      <span className="text-label text-white/30 uppercase">{activeStock.sector}</span>
                       <DataSourcesRow dataSources={activeStock.dataSources} />
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export function StockDrawer({
 
               <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2 flex-wrap">
                 {inPorto && (
-                  <span className="text-[11px] text-white/50 mr-1">
+                  <span className="text-body text-white/50 mr-1">
                     Held: <strong className="text-emerald-500 font-medium">{(inPorto.shares / 100).toLocaleString('id-ID')} Lot</strong>
                   </span>
                 )}
@@ -115,7 +115,7 @@ export function StockDrawer({
                   value={drawerLots}
                   onChange={(e) => onLotsChange(e.target.value ? parseInt(e.target.value) : "")}
                   placeholder="Lots"
-                  className="w-16 px-2 py-1 bg-white/[0.04] border border-white/[0.08] focus:border-emerald-500/50 outline-none text-white text-[11px] font-mono rounded text-center"
+                  className="w-16 px-2 py-1 bg-white/[0.04] border border-white/[0.08] focus:border-emerald-500/50 outline-none text-white text-body font-mono rounded text-center"
                 />
                 <button
                   onClick={() => {
@@ -124,7 +124,7 @@ export function StockDrawer({
                       onLotsChange("");
                     }
                   }}
-                  className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
+                  className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
                 >
                   <Plus className="w-3 h-3 inline mr-1" />Buy
                 </button>
@@ -137,7 +137,7 @@ export function StockDrawer({
                           onLotsChange("");
                         }
                       }}
-                      className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-rose-500 hover:bg-rose-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
+                      className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-rose-500 hover:bg-rose-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
                     >
                       <Minus className="w-3 h-3 inline mr-1" />Sell
                     </button>
@@ -168,7 +168,7 @@ export function StockDrawer({
                   <button
                     key={id}
                     onClick={() => onTabChange(id)}
-                    className={`flex-1 py-2 text-[10px] font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`flex-1 py-2 text-caption font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
                       drawerTab === id
                         ? "text-emerald-500 border-b-2 border-emerald-500"
                         : "text-white/30 hover:text-white/60"
@@ -188,7 +188,7 @@ export function StockDrawer({
                     ["Div Yield", `${activeStock.dividendYield}%`],
                   ].map(([label, val]) => (
                     <div key={label as string} className="text-center">
-                      <span className="text-[9px] text-white/30 block">{label}</span>
+                      <span className="text-label text-white/30 block">{label}</span>
                       <span className="text-sm font-medium text-white block mt-0.5">{val}</span>
                     </div>
                   ))}
@@ -214,10 +214,10 @@ export function StockDrawer({
                       exit={{ opacity: 0 }}
                     >
                       <div className="border border-white/[0.06] rounded-lg p-4">
-                        <span className="text-[10px] text-white/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
-                        <table className="w-full text-left mt-3 text-[11px]">
+                        <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
+                        <table className="w-full text-left mt-3 text-body">
                           <thead>
-                            <tr className="border-b border-white/[0.04] text-white/25 text-[9px] tracking-wide uppercase">
+                            <tr className="border-b border-white/[0.04] text-white/25 text-label tracking-wide uppercase">
                               <th className="pb-2 font-medium">Metric</th>
                               {activeStock.metrics.map(m => (
                                 <th key={m.year} className="pb-2 text-right font-medium">FY {m.year}</th>
@@ -280,13 +280,13 @@ export function StockDrawer({
                 </AnimatePresence>
 
                 <div className="border-t border-white/[0.04] pt-4">
-                  <span className="text-[9px] text-white/25 uppercase tracking-wider font-medium">Profile</span>
-                  <p className="text-[11px] text-white/60 mt-1.5 leading-relaxed">{activeStock.description}</p>
+                  <span className="text-label text-white/25 uppercase tracking-wider font-medium">Profile</span>
+                  <p className="text-body text-white/60 mt-1.5 leading-relaxed">{activeStock.description}</p>
                 </div>
               </div>
             </div>
 
-            <div className="py-3 border-t border-white/[0.04] text-[9px] text-white/20 text-center shrink-0">
+            <div className="py-3 border-t border-white/[0.04] text-label text-white/20 text-center shrink-0">
               Click outside to close
             </div>
           </motion.div>

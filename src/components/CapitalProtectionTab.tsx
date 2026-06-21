@@ -81,16 +81,16 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+            <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <ShieldAlert className="w-4 h-4 text-rose-500" />
               Sistem Manajemen Risiko
             </h2>
-            <p className="text-[10px] text-zinc-500 mt-2 max-w-xl leading-relaxed">
+            <p className="text-caption text-zinc-500 mt-2 max-w-xl leading-relaxed">
               Peringatan keluar otomatis berdasarkan momentum dan persilangan garis teknikal pelindung harga rata-rata. Modal teralokasi: <span className="text-emerald-400 font-bold">{RS.capital_deployment}%</span>.
             </p>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest block">Peringatan Aktif</span>
+            <span className="text-label text-zinc-500 uppercase font-bold tracking-widest block">Peringatan Aktif</span>
             <span className="text-2xl font-black font-mono text-rose-500 mt-1 block">
               {dynamicExits.filter(e => e.exit_state === "EXIT" || e.exit_state === "EXIT RISK").length} / {dynamicExits.length}
             </span>
@@ -101,20 +101,20 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
       {/* 2. REGIME RULES INTERPRETATION CLAUSE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-4 bg-[#050505] border border-white/[0.03] rounded-2xl flex flex-col gap-2">
-          <span className="font-bold text-rose-400 font-mono text-[9px] uppercase tracking-widest">RULE A</span>
-          <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">Turun melewati -25% momentum absolut.</p>
+          <span className="font-bold text-rose-400 font-mono text-label uppercase tracking-widest">RULE A</span>
+          <p className="text-caption text-zinc-500 leading-relaxed font-medium">Turun melewati -25% momentum absolut.</p>
         </div>
         <div className="p-4 bg-[#050505] border border-white/[0.03] rounded-2xl flex flex-col gap-2">
-          <span className="font-bold text-white/60 font-mono text-[9px] uppercase tracking-widest">RULE B</span>
-          <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">Turun melewati MA50 (garis support 2 bulan).</p>
+          <span className="font-bold text-white/60 font-mono text-label uppercase tracking-widest">RULE B</span>
+          <p className="text-caption text-zinc-500 leading-relaxed font-medium">Turun melewati MA50 (garis support 2 bulan).</p>
         </div>
         <div className="p-4 bg-[#050505] border border-white/[0.03] rounded-2xl flex flex-col gap-2">
-          <span className="font-bold text-white/60 font-mono text-[9px] uppercase tracking-widest">RULE C</span>
-          <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">Penurunan lebih dari -10% pada drawdown berjalan.</p>
+          <span className="font-bold text-white/60 font-mono text-label uppercase tracking-widest">RULE C</span>
+          <p className="text-caption text-zinc-500 leading-relaxed font-medium">Penurunan lebih dari -10% pada drawdown berjalan.</p>
         </div>
         <div className="p-4 bg-[#050505] border border-white/[0.03] rounded-2xl flex flex-col gap-2">
-          <span className="font-bold text-white/60 font-mono text-[9px] uppercase tracking-widest">RULE D</span>
-          <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">Merosot drastis dibawah batas gawat MA100.</p>
+          <span className="font-bold text-white/60 font-mono text-label uppercase tracking-widest">RULE D</span>
+          <p className="text-caption text-zinc-500 leading-relaxed font-medium">Merosot drastis dibawah batas gawat MA100.</p>
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-[10px] uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
+              className="text-caption uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
             >
               <option value="drawdown_from_entry" className="bg-[#0A0A0A] text-white">Drawdown</option>
               <option value="rs_20d" className="bg-[#0A0A0A] text-white">RS 20D</option>
@@ -184,7 +184,7 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
                       </h4>
                     </div>
                   </div>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-widest font-mono ${getBadgeClass(item.exit_state)}`}>
+                  <span className={`text-label font-bold px-2 py-0.5 rounded border uppercase tracking-widest font-mono ${getBadgeClass(item.exit_state)}`}>
                     {item.exit_state}
                   </span>
                 </div>
@@ -192,17 +192,17 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
                 {/* Closing prices and Indicators status */}
                 <div className="space-y-3 font-mono border-y border-white/[0.05] py-4 my-4">
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500 font-sans text-[10px] uppercase font-bold tracking-widest">Close Price</span>
+                    <span className="text-zinc-500 font-sans text-caption uppercase font-bold tracking-widest">Close Price</span>
                     <span className="text-white/90 font-bold">Rp {parseFloat(item.close).toLocaleString("id-ID")}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500 font-sans text-[10px] uppercase font-bold tracking-widest">Drawdown</span>
+                    <span className="text-zinc-500 font-sans text-caption uppercase font-bold tracking-widest">Drawdown</span>
                     <span className={parseFloat(item.drawdown_from_entry) < 0 ? "text-rose-400 font-bold" : "text-emerald-400 font-bold"}>
                       {item.drawdown_from_entry}%
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500 font-sans text-[10px] uppercase font-bold tracking-widest">MA Support</span>
+                    <span className="text-zinc-500 font-sans text-caption uppercase font-bold tracking-widest">MA Support</span>
                     <span className="text-white/60">
                       {Math.round(parseFloat(item.ma20))} <span className="text-zinc-700">|</span> {Math.round(parseFloat(item.ma50))}
                     </span>
@@ -211,7 +211,7 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
               </div>
 
               {/* Rules triggered footer */}
-              <div className="flex justify-between items-center text-[10px] pt-1 uppercase tracking-widest font-bold">
+              <div className="flex justify-between items-center text-caption pt-1 uppercase tracking-widest font-bold">
                 <span className="text-zinc-500">Rules: <strong className={isHealthy ? "text-emerald-400 font-mono" : "text-rose-400 font-mono"}>{item.triggered_rules}</strong></span>
                 <span className="text-zinc-500">RS20D: <span className="text-white/60 font-mono">{item.rs_20d}%</span></span>
               </div>

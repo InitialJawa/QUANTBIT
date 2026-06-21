@@ -141,16 +141,16 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
       <div className="bg-[#050505] border border-white/[0.03] rounded-xl md:rounded-2xl p-5 shadow-sm relative overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+            <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <Sliders className="w-4 h-4 text-white/40" />
               {activeConfig === "prod" ? "Strategi Fundamental" : "Strategi Teknis Kuat"}
             </h2>
-            <p className="text-[9px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">
+            <p className="text-label text-zinc-500 mt-2 uppercase tracking-widest font-bold">
               Kualitas: <span className="text-white/80">{(weights.quality * 100)}%</span> • Growth: <span className="text-white/80">{(weights.growth * 100)}%</span> • Value: <span className="text-white/80">{(weights.value * 100)}%</span> • Momentum: <span className="text-white/80">{(weights.momentum * 100)}%</span>
             </p>
           </div>
           <div className="text-left sm:text-right shrink-0 mt-2 sm:mt-0">
-            <span className="text-[9px] text-[#E0E0E0]/30 uppercase block font-bold tracking-widest">Rata-rata 5 Teratas</span>
+            <span className="text-label text-[#E0E0E0]/30 uppercase block font-bold tracking-widest">Rata-rata 5 Teratas</span>
             <span className="text-2xl font-black font-mono text-white block mt-1">{avgTop5Score.toFixed(1)}</span>
           </div>
         </div>
@@ -178,7 +178,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
             <select
               value={indexFilter}
               onChange={(e) => setIndexFilter(e.target.value as any)}
-              className="pl-7 pr-3 py-2 text-[10px] uppercase tracking-widest font-bold bg-transparent outline-none text-emerald-400 appearance-none cursor-pointer"
+              className="pl-7 pr-3 py-2 text-caption uppercase tracking-widest font-bold bg-transparent outline-none text-emerald-400 appearance-none cursor-pointer"
             >
               <option value="ALL" className="bg-[#0A0A0A] text-white">Semua Saham</option>
               <option value="IDX80" className="bg-[#0A0A0A] text-white">IDX80</option>
@@ -192,7 +192,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-[10px] uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
+              className="text-caption uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
             >
               <option value="score" className="bg-[#0A0A0A] text-white">Total Score</option>
               <option value="quality" className="bg-[#0A0A0A] text-white">Quality</option>
@@ -213,7 +213,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
           <div className="inline-flex rounded-xl bg-white/[0.01] p-0.5 border border-white/[0.05] shrink-0">
             <button
               onClick={() => setViewMode("table")}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-caption font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1.5 transition-all ${
                 viewMode === "table" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white"
               }`}
             >
@@ -221,7 +221,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
             </button>
             <button
               onClick={() => setViewMode("cards")}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-caption font-bold uppercase tracking-widest cursor-pointer flex items-center gap-1.5 transition-all ${
                 viewMode === "cards" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white"
               }`}
             >
@@ -247,7 +247,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
             <div className="overflow-x-auto overflow-y-auto flex-1 min-h-[400px] text-xs scrollbar-thin">
               <table className="w-full text-left border-collapse relative">
                 <thead className="sticky top-0 bg-[#050505] z-10">
-                  <tr className="border-b border-white/[0.05] text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                  <tr className="border-b border-white/[0.05] text-label font-bold text-white/30 uppercase tracking-widest">
                     <th className="py-4 px-3 md:px-5 font-sans">Rank</th>
                     <th className="py-4 px-3 font-sans">Emiten Saham</th>
                     <th className="py-4 px-3 text-center hidden md:table-cell font-sans">Quality</th>
@@ -271,7 +271,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                         className={`transition-colors cursor-pointer group ${isInPorto ? "bg-white/[0.02] hover:bg-white/[0.04]" : "hover:bg-white/[0.02]"}`}
                         onClick={() => onSelectTicker(clean)}
                       >
-                        <td className="py-3 px-3 md:px-5 font-bold text-white/30 font-mono text-[10px]">
+                        <td className="py-3 px-3 md:px-5 font-bold text-white/30 font-mono text-caption">
                           #{processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}
                         </td>
                         <td className="py-3 px-3">
@@ -286,12 +286,12 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                                </div>
                                <div className="flex items-center gap-1.5 mt-1">
                                  {item.rankChange > 0 && (
-                                   <span className="text-[8px] font-bold text-emerald-400 border border-emerald-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                   <span className="text-label font-bold text-emerald-400 border border-emerald-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
                                      <TrendingUp className="w-2 h-2" /> +{item.rankChange}
                                    </span>
                                  )}
                                  {item.rankChange < 0 && (
-                                   <span className="text-[8px] font-bold text-rose-400 border border-rose-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                   <span className="text-label font-bold text-rose-400 border border-rose-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
                                      <TrendingDown className="w-2 h-2" /> {item.rankChange}
                                    </span>
                                  )}
@@ -299,14 +299,14 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                                    const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
                                    if (matchEX?.exit_state === "EXIT") {
                                       return (
-                                        <span className="text-[8px] font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
+                                        <span className="text-label font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
                                           EXIT
                                         </span>
                                       );
                                    }
                                    if (matchEX?.exit_state === "EXIT RISK") {
                                       return (
-                                        <span className="text-[8px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
+                                        <span className="text-label font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
                                           RISK
                                         </span>
                                       );
@@ -325,11 +325,11 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                         {/* ROTATION STATS MATRIX COLUMN */}
                         <td className="py-3 px-3">
                           <div className="flex flex-col items-start gap-1">
-                            <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest flex items-center gap-1 border ${getRotationColor(rot.label, rot.trend)}`}>
+                            <span className={`text-label px-1.5 py-0.5 rounded font-black uppercase tracking-widest flex items-center gap-1 border ${getRotationColor(rot.label, rot.trend)}`}>
                               <span className="font-mono text-xs tracking-tight leading-none">{rot.path}</span>
                               <span>{rot.label}</span>
                             </span>
-                            <span className="text-[9px] text-zinc-500 font-mono font-medium">
+                            <span className="text-label text-zinc-500 font-mono font-medium">
                               T: {rot.topHits} | B: {rot.dropHits}
                             </span>
                           </div>
@@ -375,7 +375,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                       <div className="flex items-center gap-3">
                         <TickerLogo ticker={clean} size="md" fallbackColor={liveStk?.logoColor} />
                         <div>
-                          <span className="text-[9px] text-zinc-500 block font-mono font-bold uppercase tracking-widest">Rank {processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}</span>
+                          <span className="text-label text-zinc-500 block font-mono font-bold uppercase tracking-widest">Rank {processedLeaders.findIndex(p => p.ticker === item.ticker) + 1}</span>
                           <h4 className={`text-base font-black tracking-widest mt-1 font-mono flex flex-wrap items-center gap-2 ${isInPorto ? "text-emerald-400" : "text-white/90"}`}>
                             {clean}
                             {isInPorto ? <BookmarkCheck className="w-4 h-4 text-emerald-400" /> : isInWatchlist ? <Bookmark className="w-4 h-4 text-white/30" /> : null}
@@ -383,14 +383,14 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-[9px] text-zinc-500 block font-mono font-bold uppercase tracking-widest">Score</span>
+                        <span className="text-label text-zinc-500 block font-mono font-bold uppercase tracking-widest">Score</span>
                         <span className="text-lg font-bold text-white font-mono leading-none block">{item.score.toFixed(1)}</span>
                       </div>
                     </div>
                     
                     <div className="flex flex-wrap gap-1.5 mb-4">
                         {item.rankChange !== 0 && (
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded border border-transparent font-bold font-mono ${item.rankChange > 0 ? "text-emerald-400 border-emerald-500/20" : "text-rose-400 border-rose-500/20"}`}>
+                          <span className={`text-label px-1.5 py-0.5 rounded border border-transparent font-bold font-mono ${item.rankChange > 0 ? "text-emerald-400 border-emerald-500/20" : "text-rose-400 border-rose-500/20"}`}>
                             {item.rankChange > 0 ? "+" : ""}{item.rankChange} Rnk
                           </span>
                         )}
@@ -398,14 +398,14 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                            const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
                            if (matchEX?.exit_state === "EXIT") {
                              return (
-                               <span className="text-[9px] font-black text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
+                               <span className="text-label font-black text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
                                  EXIT
                                </span>
                              );
                            }
                            if (matchEX?.exit_state === "EXIT RISK") {
                              return (
-                               <span className="text-[9px] font-bold text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
+                               <span className="text-label font-bold text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
                                  RISK
                                </span>
                              );
@@ -415,9 +415,9 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                     </div>
 
                   {/* Visual Progress Rails */}
-                  <div className="space-y-2.5 text-[10px] font-sans">
+                  <div className="space-y-2.5 text-caption font-sans">
                     <div>
-                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-[9px]">
+                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-label">
                         <span>Quality</span>
                         <span className="font-mono text-zinc-500">{item.quality}</span>
                       </div>
@@ -426,7 +426,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-[9px]">
+                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-label">
                         <span>Growth</span>
                         <span className="font-mono text-zinc-500">{item.growth}</span>
                       </div>
@@ -435,7 +435,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-[9px]">
+                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-label">
                         <span>Value</span>
                         <span className="font-mono text-zinc-500">{item.value}</span>
                       </div>
@@ -444,7 +444,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-[9px]">
+                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-label">
                         <span>Momentum</span>
                         <span className="font-mono text-zinc-500">{item.momentum}</span>
                       </div>
@@ -457,15 +457,15 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
                   {/* ROTATION STATS HIGHLIGHT */}
                   <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between gap-2">
                     <div className="flex flex-col">
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Rotasi Pasar</span>
+                      <span className="text-label text-zinc-500 uppercase tracking-widest font-bold">Rotasi Pasar</span>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-xs font-mono font-bold text-white/80">{rot.path}</span>
-                        <span className="text-[10px] text-white/60 font-medium">{rot.label}</span>
+                        <span className="text-caption text-white/60 font-medium">{rot.label}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Posisi</span>
-                      <span className="text-[9px] text-zinc-400 font-mono block mt-1">
+                      <span className="text-label text-zinc-500 uppercase tracking-widest font-bold">Posisi</span>
+                      <span className="text-label text-zinc-400 font-mono block mt-1">
                         T: <strong className="text-white/60">{rot.topHits}</strong> B: <strong className="text-white/60">{rot.dropHits}</strong>
                       </span>
                     </div>

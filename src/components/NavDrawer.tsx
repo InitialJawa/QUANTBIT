@@ -43,9 +43,9 @@ export function NavDrawer({ open, activeTab, onTabChange, onClose }: NavDrawerPr
                   <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
                   <circle cx="98" cy="70" r="10" fill="#089981" />
                 </svg>
-                <span className="text-[11px] font-bold tracking-wide" style={{ color: '#d1d4dc' }}>Quantbit</span>
+                <span className="text-body font-bold tracking-wide" >Quantbit</span>
               </div>
-              <button onClick={onClose} className="p-1 transition-colors" style={{ color: '#5d6080' }}>
+              <button onClick={onClose} className="p-1 transition-colors" >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -54,7 +54,7 @@ export function NavDrawer({ open, activeTab, onTabChange, onClose }: NavDrawerPr
                 <button
                   key={id}
                   onClick={() => { onTabChange(id); onClose(); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-[11px] font-medium transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-body font-medium transition-colors"
                   style={{
                     backgroundColor: activeTab === id ? 'rgba(8,153,129,0.12)' : 'transparent',
                     color: activeTab === id ? '#089981' : '#787b86',

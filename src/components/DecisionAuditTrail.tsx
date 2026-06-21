@@ -23,15 +23,15 @@ export function DecisionAuditTrail() {
 
   return (
     <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-6 space-y-4">
-      <h3 className="text-[10px] uppercase font-bold tracking-widest text-white/50 flex items-center gap-2 font-mono border-b border-white/[0.05] pb-3">
+      <h3 className="text-caption uppercase font-bold tracking-widest text-white/50 flex items-center gap-2 font-mono border-b border-white/[0.05] pb-3">
         Decision Audit Trail
         <DataBadge status={DataStatus.CACHED} />
       </h3>
 
-      <div className="grid grid-cols-2 gap-4 text-[11px]">
+      <div className="grid grid-cols-2 gap-4 text-body">
         <div className="space-y-3">
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Keputusan Saat Ini</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Keputusan Saat Ini</span>
             <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${decisionColor[trail.decision] || "text-white/60 bg-white/5 border-white/10"}`}>
               {trail.decision === "BUY_STOCKS" ? "BELI SAHAM" :
                trail.decision === "HOLD_GOLD" ? "PEGANG EMAS" :
@@ -40,7 +40,7 @@ export function DecisionAuditTrail() {
             </span>
           </div>
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Rezim Pasar</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Rezim Pasar</span>
             <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${regimeColor[trail.regime] || "text-white/60 bg-white/5 border-white/10"}`}>
               {trail.regime === "RISK_ON" ? "RISK ON" :
                trail.regime === "RISK_OFF" ? "RISK OFF" :
@@ -50,14 +50,14 @@ export function DecisionAuditTrail() {
             </span>
           </div>
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Posisi</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Posisi</span>
             <span className="text-white font-bold">{trail.position}</span>
           </div>
         </div>
 
         <div className="space-y-3">
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">IHSG vs MA</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">IHSG vs MA</span>
             <div className="flex gap-3">
               <span className={`text-xs font-bold ${trail.ihsgMa20Above ? "text-emerald-400" : "text-rose-400"}`}>
                 MA20: {trail.ihsgMa20Above ? "DI ATAS" : "DI BAWAH"}
@@ -68,11 +68,11 @@ export function DecisionAuditTrail() {
             </div>
           </div>
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Breadth (Score &gt;=60)</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Breadth (Score &gt;=60)</span>
             <span className="text-white font-bold">{trail.breadthPercent}</span>
           </div>
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Exit Risk</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Exit Risk</span>
             <span className="text-white font-bold">{trail.exitRiskPercent}</span>
           </div>
         </div>
@@ -80,13 +80,13 @@ export function DecisionAuditTrail() {
 
       <div className="pt-3 border-t border-white/[0.05] space-y-2">
         <div>
-          <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Alasan</span>
+          <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Alasan</span>
           <p className="text-zinc-400 text-xs leading-relaxed">{trail.reason}</p>
         </div>
 
         {trail.noBuyReasons.length > 0 && (
           <div>
-            <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Kenapa Belum Beli Saham?</span>
+            <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Kenapa Belum Beli Saham?</span>
             <ul className="space-y-1">
               {trail.noBuyReasons.map((r, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-zinc-500">
@@ -99,7 +99,7 @@ export function DecisionAuditTrail() {
         )}
 
         <div>
-          <span className="text-[9px] uppercase tracking-widest text-white/30 block mb-1 font-mono">Syarat Masuk Kembali</span>
+          <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Syarat Masuk Kembali</span>
           <p className="text-zinc-400 text-xs leading-relaxed">{trail.reentryCondition}</p>
         </div>
       </div>

@@ -1132,11 +1132,11 @@ export function SimulationTab({
       <div className="p-5 md:p-6 bg-[#050505] border border-white/[0.03] rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         <div>
-          <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+          <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
              <Award className="w-4 h-4 text-indigo-400" />
              Interactive Trading & Backtest Laboratory
           </h2>
-          <p className="text-[10px] text-zinc-500 mt-2 max-w-2xl leading-relaxed">
+          <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
             Bandingkan performa investasi harian sejak {simStartDate} dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
           </p>
         </div>
@@ -1145,7 +1145,7 @@ export function SimulationTab({
           <div className="flex bg-[#050505] p-1 border border-white/[0.05] rounded-xl self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto">
             <button
               onClick={() => setActiveSubTab("past")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
                 activeSubTab === "past" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
               }`}
             >
@@ -1158,7 +1158,7 @@ export function SimulationTab({
                   handleRunAlgoBacktest();
                 }
               }}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
                 activeSubTab === "algo" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
               }`}
             >
@@ -1178,10 +1178,10 @@ export function SimulationTab({
               <Coins className="w-5 h-5 text-amber-400" />
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Stockbit-Style Past Investment Simulator</h3>
-                <p className="text-[11px] text-white/35 mt-0.5">Andaikata Anda melakukan pembelian saham IDX di masa lalu.</p>
+                <p className="text-body text-white/35 mt-0.5">Andaikata Anda melakukan pembelian saham IDX di masa lalu.</p>
               </div>
             </div>
-            <span className="text-[9px] font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-1 rounded">
+            <span className="text-label font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-1 rounded">
               BACKTESTING ENGINE ACTIVE
             </span>
           </div>
@@ -1191,7 +1191,7 @@ export function SimulationTab({
             
             {/* 1. Stock Selector */}
             <div>
-              <label className="text-[10px] uppercase font-bold text-white/40 block mb-2 font-mono">1. Pilih Saham IDX</label>
+              <label className="text-caption uppercase font-bold text-white/40 block mb-2 font-mono">1. Pilih Saham IDX</label>
               <SearchableSelect
                 options={[
                   ...visibleStocks.map(stk => ({ value: stk.ticker, label: `${stk.ticker} - ${stk.name}` })),
@@ -1208,10 +1208,10 @@ export function SimulationTab({
 
             {/* 2. Timeline selector */}
             <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold text-white/40 block font-mono">2. Rentang Tanggal Simulasi</label>
+              <label className="text-caption uppercase font-bold text-white/40 block font-mono">2. Rentang Tanggal Simulasi</label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[9px] uppercase font-bold text-white/30 block mb-1 font-mono">Mulai Dari</label>
+                  <label className="text-label uppercase font-bold text-white/30 block mb-1 font-mono">Mulai Dari</label>
                   <div className="relative">
                     <input
                       type="date"
@@ -1223,14 +1223,14 @@ export function SimulationTab({
                     />
                     {(() => {
                       const status = isMarketClosedDate(simStartDate);
-                      if (status === "weekend") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
-                      if (status === "holiday") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                      if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                      if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
                     })()}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] uppercase font-bold text-white/30 block mb-1 font-mono">Sampai Dengan</label>
+                  <label className="text-label uppercase font-bold text-white/30 block mb-1 font-mono">Sampai Dengan</label>
                   <div className="relative">
                     <input
                       type="date"
@@ -1242,8 +1242,8 @@ export function SimulationTab({
                     />
                     {(() => {
                       const status = isMarketClosedDate(simEndDate);
-                      if (status === "weekend") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
-                      if (status === "holiday") return <span className="text-[8px] text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
+                      if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
+                      if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
                     })()}
                   </div>
@@ -1253,7 +1253,7 @@ export function SimulationTab({
 
             {/* 3. Capital amount */}
             <div>
-              <label className="text-[10px] uppercase font-bold text-white/40 block mb-2 font-mono">3. Modal Pembelian (IDR)</label>
+              <label className="text-caption uppercase font-bold text-white/40 block mb-2 font-mono">3. Modal Pembelian (IDR)</label>
               <div className="space-y-2">
                 <input
                   type="text"
@@ -1272,7 +1272,7 @@ export function SimulationTab({
                       key={preset}
                       type="button"
                       onClick={() => setSimCapitalInput(preset)}
-                      className={`text-[9px] px-2 py-1 font-bold font-sans rounded-md border transition-all cursor-pointer ${
+                      className={`text-label px-2 py-1 font-bold font-sans rounded-md border transition-all cursor-pointer ${
                         simCapitalInput === preset 
                           ? "bg-amber-400 text-black border-amber-400" 
                           : "bg-white/5 border-white/5 text-white/50 hover:border-white/10"
@@ -1291,35 +1291,35 @@ export function SimulationTab({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
             
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Harga Jual Masa Lalu</span>
+              <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Harga Jual Masa Lalu</span>
               <span className="text-sm font-bold font-mono text-white block">{formatRupiah(startPrice)}</span>
-              <span className="text-[9px] text-[#A0A0A0] block">Per lembar pada {simStartDate}</span>
+              <span className="text-label text-[#A0A0A0] block">Per lembar pada {simStartDate}</span>
             </div>
 
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Jumlah Kepemilikan</span>
+              <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Jumlah Kepemilikan</span>
               <span className="text-sm font-bold font-mono text-white block">
                 {simReturnDetails.realSharesPurchased.toLocaleString("id-ID")} Lmbr
               </span>
-              <span className="text-[9px] text-emerald-400 font-semibold block">
+              <span className="text-label text-emerald-400 font-semibold block">
                 💡 {simReturnDetails.totalLots} Lot (Sisa Kas: {formatRupiah(simReturnDetails.cashResidual)})
               </span>
             </div>
 
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Dividen Akumulatif</span>
+              <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Dividen Akumulatif</span>
               <span className="text-sm font-bold font-mono text-[#EAB308] block">
                 +{formatRupiah(simReturnDetails.totalDividends)}
               </span>
-              <span className="text-[9px] text-white/40 block">Hasil Dividen yield {activeStock.dividendYield}% (Nett)</span>
+              <span className="text-label text-white/40 block">Hasil Dividen yield {activeStock.dividendYield}% (Nett)</span>
             </div>
 
             <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-amber-400 block">Total Nilai Sekarang</span>
+              <span className="text-label uppercase font-bold tracking-widest text-amber-400 block">Total Nilai Sekarang</span>
               <span className="text-sm font-black font-mono text-amber-300 block">
                 {formatRupiah(simReturnDetails.finalValue)}
               </span>
-              <span className="text-[9px] text-white/40 block">Terdiri dari Saham + Dividen + Sisa Kas</span>
+              <span className="text-label text-white/40 block">Terdiri dari Saham + Dividen + Sisa Kas</span>
             </div>
 
           </div>
@@ -1327,7 +1327,7 @@ export function SimulationTab({
           {/* Profit ratio highlights banner */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4.5 bg-[#050505] border border-white/5 rounded-xl gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-white/30 block">Pemberitahuan Hasil Simulasi:</span>
+              <span className="text-caption uppercase font-bold text-white/30 block">Pemberitahuan Hasil Simulasi:</span>
               <div className="flex items-center gap-2">
                 <span className={`text-base font-black font-mono ${simReturnDetails.absoluteProfitLoss >= 0 ? "text-emerald-400" : "text-rose-455 text-rose-400"}`}>
                   {simReturnDetails.absoluteProfitLoss >= 0 ? "+" : ""}{formatRupiah(simReturnDetails.absoluteProfitLoss)}
@@ -1340,14 +1340,14 @@ export function SimulationTab({
               </div>
             </div>
 
-            <div className="text-[11px] text-white/50 leading-relaxed font-sans max-w-md sm:text-right">
+            <div className="text-body text-white/50 leading-relaxed font-sans max-w-md sm:text-right">
               Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{simTicker}</span> dari <span className="text-white">{simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{simEndDate}</span>.
             </div>
           </div>
 
           {/* Simulator Recharts Trajectory Line plot */}
           <div className="space-y-4">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Lintasan Simulasi Pertumbuhan Modal (IDR)</span>
+            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Lintasan Simulasi Pertumbuhan Modal (IDR)</span>
             <div className="h-64 sm:h-72 w-full font-mono text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={simulatorChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -1393,10 +1393,10 @@ export function SimulationTab({
               <Award className="w-5 h-5 text-emerald-400" />
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Advanced Real-time Algorithmic Backtester ({simStartDate} hingga {simEndDate})</h3>
-                <p className="text-[11px] text-white/35 mt-0.5">Simulasikan rotasi harian dengan perlindungan crash IHSG & rebalance otomatis.</p>
+                <p className="text-body text-white/35 mt-0.5">Simulasikan rotasi harian dengan perlindungan crash IHSG & rebalance otomatis.</p>
               </div>
             </div>
-            <span className="text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-1 rounded">
+            <span className="text-label font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-1 rounded">
               DAILY REBALANCING ENGINE
             </span>
           </div>
@@ -1404,17 +1404,17 @@ export function SimulationTab({
           {/* Config row */}
           <div className="flex items-center gap-2 pb-2">
             <button onClick={() => setShowBacktestParams(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors"
               style={{ backgroundColor: 'rgba(8,153,129,0.12)', color: '#089981' }}>
               <Award className="w-3 h-3" />
               Parameter Backtest
             </button>
             <button onClick={handleRunAlgoBacktest} disabled={isBacktesting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: '#089981', color: '#fff' }}>
               {isBacktesting ? "Running..." : "Jalankan"}
             </button>
-            <span className="text-[8px] font-mono font-medium uppercase tracking-wider" style={{ color: '#5d6080' }}>
+            <span className="text-label font-mono font-medium uppercase tracking-wider" style={{ color: '#5d6080' }}>
               {simulationMode === "algo" ? `Algo ${numStocks} ${simUniverse.toUpperCase()} ${backtestConfigType === "prod" ? "Config F" : "Config B"}` : `Single ${simTicker}`}
             </span>
           </div>
@@ -1429,7 +1429,7 @@ export function SimulationTab({
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-xs font-mono text-white tracking-widest uppercase animate-pulse">Running Quant Simulations...</p>
-                    <p className="text-[10px] text-white/30 font-mono">Iterating ticks day-by-day ({simStartDate} hingga {simEndDate})</p>
+                    <p className="text-caption text-white/30 font-mono">Iterating ticks day-by-day ({simStartDate} hingga {simEndDate})</p>
                   </div>
                   
                   {/* Progress bar */}
@@ -1441,7 +1441,7 @@ export function SimulationTab({
                       transition={{ duration: 0.1 }}
                     />
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold">{backtestProgress}% Complete</span>
+                  <span className="text-caption font-mono text-emerald-400 font-bold">{backtestProgress}% Complete</span>
                 </div>
               ) : backtestResult ? (
                 <div className="space-y-6">
@@ -1450,41 +1450,41 @@ export function SimulationTab({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
                     <div className="p-4 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Akhir Strategi</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Akhir Strategi</span>
                       <span className="text-base font-black font-mono text-emerald-400 block">
                         {formatRupiah(backtestResult.finalValue)}
                       </span>
-                      <span className="text-[10px] font-bold text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.5 rounded inline-block">
+                      <span className="text-caption font-bold text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.5 rounded inline-block">
                         +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Benchmark IHSG</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Benchmark IHSG</span>
                       <span className="text-sm font-semibold font-mono text-white/70 block">
                         {formatRupiah(backtestResult.ihsgFinalValue)}
                       </span>
-                      <span className={`text-[10px] font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                         {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
                         {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
-                      <span className="text-[10px] font-mono text-[#A0A0A0] block">
+                      <span className="text-caption font-mono text-[#A0A0A0] block">
                         Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Swaps &amp; Dividen</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Swaps &amp; Dividen</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
                         {backtestResult.totalTrades} Rebalances
                       </span>
-                      <span className="text-[9px] text-[#A0A0A0] block">
+                      <span className="text-label text-[#A0A0A0] block">
                         Dividen: +{formatRupiah(backtestResult.totalDividends)}
                       </span>
                     </div>
@@ -1495,35 +1495,35 @@ export function SimulationTab({
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
                       <span className="text-sm font-bold font-mono text-white block">
                         {backtestResult.cagr.toFixed(2)}%
                       </span>
-                      <span className="text-[9px] text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
+                      <span className="text-label text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
                       <span className="text-sm font-bold font-mono text-emerald-400 block">
                         S: {backtestResult.sharpe.toFixed(2)} / So: {backtestResult.sortino.toFixed(2)}
                       </span>
-                      <span className="text-[9px] text-white/40 block">Risko Terkoreksi (Rf=5%)</span>
+                      <span className="text-label text-white/40 block">Risko Terkoreksi (Rf=5%)</span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
                       <span className="text-sm font-bold font-mono text-rose-400 block">
                         V: {backtestResult.volatility.toFixed(1)}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
-                      <span className="text-[9px] text-[#A0A0A0] block">Max drawdown: -{backtestResult.maxDrawdown.toFixed(1)}%</span>
+                      <span className="text-label text-[#A0A0A0] block">Max drawdown: -{backtestResult.maxDrawdown.toFixed(1)}%</span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
                         W: {backtestResult.winRatePct.toFixed(1)}% / T: {backtestResult.turnoverPct.toFixed(1)}%
                       </span>
-                      <span className="text-[9px] text-white/40 block">Aktivitas Rotasi Portfolio</span>
+                      <span className="text-label text-white/40 block">Aktivitas Rotasi Portfolio</span>
                     </div>
 
                   </div>
@@ -1541,7 +1541,7 @@ export function SimulationTab({
                       </div>
                     </div>
                     {/* Comparative index list */}
-                    <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-white/40 font-mono">
+                    <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
                       <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> (+{backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
                       <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
                       <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
@@ -1550,7 +1550,7 @@ export function SimulationTab({
 
                   {/* Recharts chart */}
                   <div className="space-y-4">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
+                    <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
                     <div className="h-64 sm:h-72 w-full font-mono text-xs">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={backtestResult.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -1594,10 +1594,10 @@ export function SimulationTab({
                     <div className="space-y-4 border-t border-white/5 pt-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
+                          <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham ({simStartDate} hingga {simEndDate})
                           </span>
-                          <p className="text-[11px] text-white/40 leading-relaxed mt-1">
+                          <p className="text-body text-white/40 leading-relaxed mt-1">
                             Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.
                           </p>
                         </div>
@@ -1605,7 +1605,7 @@ export function SimulationTab({
 
                       {/* Stock Multi-Toggle Pill Buttons */}
                       <div className="flex flex-wrap gap-1.5 p-3 bg-[#080808] border border-white/5 rounded-xl">
-                        <span className="text-[9px] uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
+                        <span className="text-label uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
                         {visibleStocks.slice(0, 15).map((stk) => {
                           const ticker = stk.ticker;
                           const isSelected = activeRankTickers.includes(ticker);
@@ -1621,7 +1621,7 @@ export function SimulationTab({
                                   setActiveRankTickers([...activeRankTickers, ticker]);
                                 }
                               }}
-                              className={`px-2.5 py-1 text-[9px] font-bold rounded-md cursor-pointer transition-all flex items-center gap-1.5 border ${
+                              className={`px-2.5 py-1 text-label font-bold rounded-md cursor-pointer transition-all flex items-center gap-1.5 border ${
                                 isSelected
                                   ? "bg-white/10 text-white border-white/20"
                                   : "bg-transparent text-white/30 border-white/5 hover:border-white/10 hover:text-white/50"
@@ -1703,7 +1703,7 @@ export function SimulationTab({
                   {/* Trade Log Console terminal */}
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/50 flex items-center gap-1.5 font-sans">
+                      <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 flex items-center gap-1.5 font-sans">
                         <Clock className="w-3.5 h-3.5 text-emerald-400" /> Buku Jurnal Transaksi Algoritma Harian
                       </span>
                       <button
@@ -1714,13 +1714,13 @@ export function SimulationTab({
                         <Download className="w-3 h-3" /> Unduh Buku Jurnal (CSV)
                       </button>
                     </div>
-                    <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-[10px] border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
+                    <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-caption border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
                       
                       {backtestResult.logs.map((log: any, idx: number) => (
                         <div key={idx} className="border-b border-white/5 pb-2 last:border-0 hover:text-white/90">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                             <span className="text-white/40 block sm:inline">[{log.date}]</span>
-                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase font-sans tracking-wide shrink-0 ${
+                            <span className={`px-1.5 py-0.5 rounded text-label font-extrabold uppercase font-sans tracking-wide shrink-0 ${
                               log.type === "BUY" ? "bg-blue-500/20 text-blue-400" :
                               log.type === "CRASH_TRIGGER" ? "bg-red-500/25 text-red-400" :
                               log.type === "CRASH_RECOVERY" ? "bg-amber-500/20 text-amber-400" :
@@ -1741,7 +1741,7 @@ export function SimulationTab({
                 <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-2">
                   <span className="text-2xl">⚡</span>
                   <p className="text-xs text-white/50 font-sans">Belum ada hasil backtest.</p>
-                  <p className="text-[10px] text-white/35 max-w-xs leading-relaxed font-sans">Silakan klik tombol <strong className="text-emerald-400">JALANKAN QUANT BACKTEST</strong> untuk menghitung trajectory rotasi portofolio Anda.</p>
+                  <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Silakan klik tombol <strong className="text-emerald-400">JALANKAN QUANT BACKTEST</strong> untuk menghitung trajectory rotasi portofolio Anda.</p>
                 </div>
               )}
 

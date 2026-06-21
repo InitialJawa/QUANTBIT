@@ -60,8 +60,8 @@ export function AppSidebar({
 
           <div id="sidebar-news-panel" className="mx-2">
             <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
-              <Newspaper className="w-3 h-3 text-[#5d6080]" />
-              <span className="text-[9px] font-medium text-[#5d6080] uppercase tracking-wider">Berita</span>
+              <Newspaper className="w-3 h-3 text-tertiary" />
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Berita</span>
             </div>
             <div className="pt-1 space-y-0.5 max-h-[120px] overflow-y-auto scrollbar-thin">
               {idxNews.slice(0, 4).map((news, idx) => (
@@ -73,11 +73,11 @@ export function AppSidebar({
                   referrerPolicy="no-referrer"
                   className="block px-2 py-1.5 rounded hover:bg-white/[0.03] transition-colors text-left group"
                 >
-                  <div className="flex justify-between items-center text-[8px] text-[#5d6080] font-mono">
+                  <div className="flex justify-between items-center text-label text-tertiary font-mono">
                     <span>{news.portal}</span>
                     <span>{news.time}</span>
                   </div>
-                  <h4 className="text-[10px] text-[#787b86] group-hover:text-[#d1d4dc] leading-snug line-clamp-2 mt-0">
+                  <h4 className="text-caption text-secondary group-hover:text-primary leading-snug line-clamp-2 mt-0">
                     {news.title}
                   </h4>
                 </a>
@@ -87,39 +87,39 @@ export function AppSidebar({
 
           <div id="sidebar-macro-indicators-panel" className="mx-2">
             <div className="px-2 py-1.5 border-b border-white/[0.04]">
-              <span className="text-[9px] font-medium text-[#5d6080] uppercase tracking-wider">Makro</span>
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Makro</span>
             </div>
             <div className="px-2 py-2 space-y-2">
               <div className="flex items-center justify-between py-1">
-                <span className="text-[9px] text-[#5d6080]">Market</span>
-                <span className={`text-[10px] font-medium ${isIHSGInCrisis ? "text-[#f23645]" : RS.status === "SAFE" ? "text-[#089981]" : "text-[#f0a500]"}`}>
+                <span className="text-label text-tertiary">Market</span>
+                <span className={`text-caption font-medium ${isIHSGInCrisis ? "text-rose-400" : RS.status === "SAFE" ? "text-emerald-400" : "text-amber-400"}`}>
                   {isIHSGInCrisis ? "RISK OFF" : RS.status === "SAFE" ? "RISK ON" : "WARNING"}
                 </span>
               </div>
 
               <div className="space-y-1.5">
                 <div>
-                  <div className="flex justify-between text-[9px] text-[#5d6080] mb-0.5">
+                  <div className="flex justify-between text-label text-tertiary mb-0.5">
                     <span>Health</span>
-                    <span className="text-[#787b86]">{RS.market_health}%</span>
+                    <span className="text-secondary">{RS.market_health}%</span>
                   </div>
                   <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                     <div className="bg-[#d1d4dc] h-full rounded-full" style={{ width: `${RS.market_health}%` }} />
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between text-[9px] text-[#5d6080] mb-0.5">
+                  <div className="flex justify-between text-label text-tertiary mb-0.5">
                     <span>Opp.</span>
-                    <span className="text-[#787b86]">{RS.opportunity}%</span>
+                    <span className="text-secondary">{RS.opportunity}%</span>
                   </div>
                   <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                     <div className="bg-[#089981] h-full rounded-full" style={{ width: `${RS.opportunity}%` }} />
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between text-[9px] text-[#5d6080] mb-0.5">
+                  <div className="flex justify-between text-label text-tertiary mb-0.5">
                     <span>Risk</span>
-                    <span className="text-[#787b86]">{RS.risk}%</span>
+                    <span className="text-secondary">{RS.risk}%</span>
                   </div>
                   <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                     <div className="bg-[#f23645] h-full rounded-full" style={{ width: `${RS.risk}%` }} />
@@ -129,12 +129,12 @@ export function AppSidebar({
 
               <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-[9px] text-[#5d6080]">USD/IDR</span>
-                  <span className="text-[10px] text-[#787b86] font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
+                  <span className="text-label text-tertiary">USD/IDR</span>
+                  <span className="text-caption text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
                 </div>
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-[9px] text-[#5d6080]">Gold/gr</span>
-                  <span className="text-[10px] text-[#787b86] font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
+                  <span className="text-label text-tertiary">Gold/gr</span>
+                  <span className="text-caption text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
                 </div>
               </div>
             </div>

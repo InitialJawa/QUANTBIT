@@ -51,12 +51,12 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
   const getAssessmentBadge = (assessment: string) => {
     const text = assessment.toLowerCase();
     if (text.includes("healthy") || text.includes("strong") || text.includes("undervalued") || text.includes("underpriced") || text.includes("good")) {
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[11px]";
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-body";
     }
     if (text.includes("elevated") || text.includes("fairly") || text.includes("average")) {
-      return "bg-amber-500/10 text-amber-400 border-amber-500/20 text-[11px]";
+      return "bg-amber-500/10 text-amber-400 border-amber-500/20 text-body";
     }
-    return "bg-rose-500/10 text-rose-400 border-rose-500/20 text-[11px]";
+    return "bg-rose-500/10 text-rose-400 border-rose-500/20 text-body";
   };
 
   return (
@@ -77,7 +77,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           </p>
 
           <div className="space-y-3 mb-6 text-left max-w-md mx-auto">
-            <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest">
+            <label className="block text-caption font-bold text-white/40 uppercase tracking-widest">
               Tambahkan Fokus Analisis (Opsional)
             </label>
             <input
@@ -135,7 +135,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             {/* Recommendation Card */}
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
-                <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
+                <span className="text-label uppercase font-bold text-white/40 tracking-widest">
                   Analisis Skenario
                 </span>
                 <h4 className="text-sm font-semibold text-white/80 mt-1">Sikap Pasar</h4>
@@ -154,7 +154,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             {/* Fair Value Pricing */}
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
-                <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
+                <span className="text-label uppercase font-bold text-white/40 tracking-widest">
                   Valuasi Harga
                 </span>
                 <h4 className="text-sm font-semibold text-white/80 mt-1">Harga Wajar Saham</h4>
@@ -174,7 +174,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
                 </div>
               </div>
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
+                <span className="text-caption text-white/40 font-medium uppercase tracking-wider">
                   Status Valuasi:
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
@@ -192,7 +192,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             {/* Safety margin indicator */}
             <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col justify-between shadow-sm">
               <div>
-                <span className="text-[9px] uppercase font-bold text-white/40 tracking-widest">
+                <span className="text-label uppercase font-bold text-white/40 tracking-widest">
                   Margin Valuasi
                 </span>
                 <h4 className="text-sm font-semibold text-white/80 mt-1">Batas Aman Harga</h4>
@@ -227,7 +227,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
           {/* Core Analysis Paragraph */}
           <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
-            <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2.5">
+            <h4 className="text-caption uppercase font-bold text-white/40 tracking-widest mb-2.5">
               Rangkuman Laporan Singkat
             </h4>
             <div className="text-sm leading-relaxed text-[#E0E0E0]/80 whitespace-pre-line font-serif">
@@ -292,13 +292,13 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
           {/* Key ratio Audit Table */}
           <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm overflow-hidden">
-            <h4 className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-4">
+            <h4 className="text-caption uppercase font-bold text-white/40 tracking-widest mb-4">
               Rincian Rasio Valuasi Indikator
             </h4>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                  <tr className="border-b border-white/10 text-caption font-bold text-white/40 uppercase tracking-widest">
                     <th className="pb-3 pr-4">Nama Rasio/Indikator</th>
                     <th className="pb-3 px-4">Nilai Indikator (Hasil AI)</th>
                     <th className="pb-3 pl-4">Keputusan Analis AI</th>
@@ -310,7 +310,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
                       <td className="py-3 px-1 font-medium text-white/95">{ratio.label}</td>
                       <td className="py-3 px-4 font-mono font-bold text-emerald-400">{ratio.value}</td>
                       <td className="py-3 pl-4">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getAssessmentBadge(ratio.assessment)}`}>
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-body font-bold border ${getAssessmentBadge(ratio.assessment)}`}>
                           {ratio.assessment}
                         </span>
                       </td>

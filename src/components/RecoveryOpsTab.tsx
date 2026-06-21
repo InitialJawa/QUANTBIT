@@ -59,11 +59,11 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
       {/* 1. PERSPECTIVE INSIGHT HEADER */}
       <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 shadow-sm relative overflow-hidden">
         <div>
-          <h2 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+          <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
             <Flame className="w-4 h-4 text-white/40" />
             Peluang Pemulihan Saham (Turnaround)
           </h2>
-          <p className="text-[10px] text-zinc-500 mt-2 max-w-2xl leading-relaxed">
+          <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
             Menganalisis saham yang menunjukkan lonjakan kekuatan tren dan didukung rasio volume saat fase pemulihan.
           </p>
         </div>
@@ -88,7 +88,7 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-[10px] uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
+              className="text-caption uppercase tracking-widest font-bold px-3 py-2 bg-transparent outline-none text-white/70 appearance-none cursor-pointer"
             >
               <option value="recovery_from_60d_low" className="bg-[#0A0A0A] text-white">Recovery Low</option>
               <option value="rs_change_60d" className="bg-[#0A0A0A] text-white">RS Change</option>
@@ -132,7 +132,7 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
                   <div className="flex items-center gap-3">
                     <TickerLogo ticker={clean} size="md" fallbackColor={liveStk?.logoColor} />
                     <div>
-                      <span className="text-[9px] text-zinc-500 block font-mono font-bold uppercase tracking-widest">Kandidat {idx + 1}</span>
+                      <span className="text-label text-zinc-500 block font-mono font-bold uppercase tracking-widest">Kandidat {idx + 1}</span>
                       <h4 className={`text-base font-black tracking-widest mt-1 font-mono flex items-center gap-2 ${isInPorto ? "text-emerald-400" : "text-white/90"}`}>
                         {clean}
                         {isInPorto ? <BookmarkCheck className="w-4 h-4 text-emerald-400 shrink-0" /> : isInWatchlist ? <Bookmark className="w-4 h-4 text-white/30 shrink-0" /> : null}
@@ -142,14 +142,14 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
                 </div>
                 
                 <div className="flex flex-wrap gap-1.5 mb-5">
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded font-mono border ${
+                    <span className={`text-label font-bold px-2 py-0.5 rounded font-mono border ${
                       isContextMatched 
                         ? "text-emerald-400 border-emerald-500/20" 
                         : "text-zinc-500 border-white/[0.05]"
                     }`}>
                       POLA: {isContextMatched ? "OK" : "NO"}
                     </span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded font-mono border ${
+                    <span className={`text-label font-bold px-2 py-0.5 rounded font-mono border ${
                       isTransitionMatched 
                         ? "text-emerald-400 border-emerald-500/20" 
                         : "text-zinc-500 border-white/[0.05]"
@@ -161,22 +161,22 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
                 {/* Turnaround Statistics Block */}
                 <div className="grid grid-cols-3 gap-3 border-y border-white/[0.05] py-4 my-4">
                   <div>
-                    <span className="text-[8px] text-zinc-500 block uppercase tracking-widest font-bold">Drawdown</span>
+                    <span className="text-label text-zinc-500 block uppercase tracking-widest font-bold">Drawdown</span>
                     <span className="text-rose-400 font-mono font-bold text-xs block mt-1">{item.drawdown_252d}%</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-zinc-500 block uppercase tracking-widest font-bold">2M Rcvry</span>
+                    <span className="text-label text-zinc-500 block uppercase tracking-widest font-bold">2M Rcvry</span>
                     <span className="text-emerald-400 font-mono font-bold text-xs block mt-1">+{item.recovery_from_60d_low}%</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-zinc-500 block uppercase tracking-widest font-bold">Vol Spike</span>
+                    <span className="text-label text-zinc-500 block uppercase tracking-widest font-bold">Vol Spike</span>
                     <span className="text-white/80 font-mono font-bold text-xs block mt-1">+{item.volume_ratio}x</span>
                   </div>
                 </div>
               </div>
 
               {/* Bottom indicators */}
-              <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold pt-1">
+              <div className="flex justify-between items-center text-label uppercase tracking-widest font-bold pt-1">
                 <span className="text-zinc-500">RS (2M): <span className={`font-mono ${parseFloat(item.rs_change_60d) > 0 ? "text-emerald-400" : "text-rose-400"}`}>{item.rs_change_60d}%</span></span>
                 <span className="text-zinc-500">Volty: <span className="text-white/60 font-mono">{item.volatility_60d}%</span></span>
               </div>

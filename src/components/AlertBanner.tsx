@@ -46,7 +46,7 @@ export function AlertBanner({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
           </h4>
-          <p className="text-[11px] text-[#A0A0A0] leading-relaxed font-sans">
+          <p className="text-body text-[#A0A0A0] leading-relaxed font-sans">
             {isIHSGInCrisis ? (
               <>
                 IHSG turun <strong className="text-rose-400 font-mono">{MKT.ihsg.monthly.toFixed(2)}%</strong> dalam sebulan. Skenario defensif: hentikan pembelian baru, alokasi ke cash atau emas hingga konfirmasi pemulihan. Skenario agresif: akumulasi jika IHSG crossing di atas MA20/MA50.
@@ -64,7 +64,7 @@ export function AlertBanner({
         <button
           id="action-btn-go-ledger"
           onClick={onGoToLedger}
-          className="w-full md:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-xl font-sans uppercase tracking-widest transition-all shadow-md hover:scale-[1.02] cursor-pointer"
+          className="w-full md:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-caption rounded-xl font-sans uppercase tracking-widest transition-all shadow-md hover:scale-[1.02] cursor-pointer"
         >
           Buka Live Ledger &amp; Amankan Aset
         </button>

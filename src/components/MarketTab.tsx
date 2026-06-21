@@ -307,14 +307,14 @@ export function MarketTab({
           <div className="flex flex-col sm:flex-row flex-wrap gap-6 w-full xl:w-auto">
             {/* System Status (Status Pasar) */}
             <div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS PASAR (SISTEM)</span>
+              <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS PASAR (SISTEM)</span>
               <div className="flex items-center gap-3">
                 <span className={`text-sm tracking-widest bg-white/[0.02] text-white/80 font-bold px-3 py-1.5 rounded-lg border border-white/[0.05]`}>
                   {currentStatus === "SAFE" ? "RISK ON" : currentStatus === "RISK OFF" ? "RISK OFF" : currentStatus}
                 </span>
                 <div>
-                  <span className="text-[10px] text-[#E0E0E0]/60 leading-none block">Sikap Algoritma</span>
-                  <span className="text-[10px] font-semibold text-white/80 mt-1 block font-mono">
+                  <span className="text-caption text-[#E0E0E0]/60 leading-none block">Sikap Algoritma</span>
+                  <span className="text-caption font-semibold text-white/80 mt-1 block font-mono">
                     Alokasi Modal: <span className={isIHSGInCrisis ? "text-rose-400" : "text-white font-bold"}>{isIHSGInCrisis ? "0%" : `${RS.capital_deployment}%`}</span>
                   </span>
                 </div>
@@ -323,14 +323,14 @@ export function MarketTab({
 
             {/* User Portfolio Status (Status Anda / Statusku) */}
             <div className="border-t sm:border-t-0 sm:border-l border-white/[0.05] pt-4 sm:pt-0 sm:pl-6">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS ANDA (PORTOFOLIO)</span>
+              <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS ANDA (PORTOFOLIO)</span>
               <div className="flex items-center gap-3">
                 {portfolio.length === 0 ? (
-                  <span className="text-[10px] font-bold px-3 py-1.5 bg-white/5 border border-white/5 text-white/40 tracking-wider rounded-lg font-sans">
+                  <span className="text-caption font-bold px-3 py-1.5 bg-white/5 border border-white/5 text-white/40 tracking-wider rounded-lg font-sans">
                     KOSONG / BELU MADA SAHAM
                   </span>
                 ) : (
-                  <span className={`text-[11px] font-bold tracking-wider px-3 py-1.5 rounded-lg border font-mono ${
+                  <span className={`text-body font-bold tracking-wider px-3 py-1.5 rounded-lg border font-mono ${
                     myReturnPercent >= 0 
                       ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" 
                       : "text-rose-400 bg-rose-500/10 border-rose-500/20"
@@ -339,8 +339,8 @@ export function MarketTab({
                   </span>
                 )}
                 <div>
-                  <span className="text-[10px] text-[#E0E0E0]/60 leading-none block">Status Kesehatan</span>
-                  <span className="text-[10px] text-zinc-400 mt-1 block font-mono">
+                  <span className="text-caption text-[#E0E0E0]/60 leading-none block">Status Kesehatan</span>
+                  <span className="text-caption text-zinc-400 mt-1 block font-mono">
                     {portfolio.length} Emiten Aktif
                   </span>
                 </div>
@@ -350,13 +350,13 @@ export function MarketTab({
 
           <div className="flex flex-row flex-wrap gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
             <div className="p-3 bg-white/[0.01] border border-white/[0.03] rounded-xl flex-1 lg:w-44">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block mb-1">Tindakan</span>
-              <span className={`inline-block text-[11px] font-bold tracking-wider px-2 py-0.5 rounded-md border ${currentAction === "WAIT" ? "bg-white/[0.05] text-white/80 border-white/5" : actionClass}`}>
+              <span className="text-label uppercase font-bold tracking-widest text-white/30 block mb-1">Tindakan</span>
+              <span className={`inline-block text-body font-bold tracking-wider px-2 py-0.5 rounded-md border ${currentAction === "WAIT" ? "bg-white/[0.05] text-white/80 border-white/5" : actionClass}`}>
                 {currentAction === "WAIT" ? "WAIT / TUNGGU" : currentAction}
               </span>
             </div>
             <div className="p-3 bg-white/[0.01] border border-white/[0.03] rounded-xl flex-1 lg:w-44">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 block mb-1">Tren Momentum</span>
+              <span className="text-label uppercase font-bold tracking-widest text-white/30 block mb-1">Tren Momentum</span>
               <span className={`text-xs font-bold tracking-wide flex items-center gap-1.5 ${isIHSGInCrisis ? "text-rose-400" : "text-emerald-400/80"}`}>
                 {isIHSGInCrisis ? (
                   <>
@@ -375,28 +375,28 @@ export function MarketTab({
         {/* Hero Grid Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 text-center md:text-left">
           <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Kesehatan Pasar</span>
+            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Kesehatan Pasar</span>
             <span className="text-2xl font-bold font-mono text-white block">{RS.market_health}</span>
             <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
               <div className="bg-white/40 h-full" style={{ width: `${RS.market_health}%` }} />
             </div>
           </div>
           <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Peluang Cuan</span>
+            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Peluang Cuan</span>
             <span className="text-2xl font-bold font-mono text-white/90 block">{RS.opportunity}</span>
             <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
               <div className="bg-white/40 h-full" style={{ width: `${RS.opportunity}%` }} />
             </div>
           </div>
           <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Risiko Pasar</span>
+            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Risiko Pasar</span>
             <span className="text-2xl font-bold font-mono text-rose-400/80 block">{RS.risk}</span>
             <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
               <div className="bg-rose-500/50 h-full" style={{ width: `${RS.risk}%` }} />
             </div>
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Tingkat Keyakinan</span>
+            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Tingkat Keyakinan</span>
             <span className="text-2xl font-bold font-mono text-white block">{RS.confidence}</span>
             <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
               <div className="bg-white/40 h-full" style={{ width: `${RS.confidence}%` }} />
@@ -409,13 +409,13 @@ export function MarketTab({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-white/50" />
-              <span className="text-[11px] font-bold text-white/70 uppercase tracking-widest font-sans">
+              <span className="text-body font-bold text-white/70 uppercase tracking-widest font-sans">
                 Analisa AI Harian
               </span>
             </div>
             <button
               onClick={() => setIsBriefExpanded(!isBriefExpanded)}
-              className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold text-white/60 hover:text-white transition-colors cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] px-3 py-1.5 rounded-lg border border-white/[0.05]"
+              className="flex items-center gap-1.5 text-caption uppercase tracking-widest font-bold text-white/60 hover:text-white transition-colors cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] px-3 py-1.5 rounded-lg border border-white/[0.05]"
             >
               {isBriefExpanded ? (
                 <>
@@ -431,10 +431,10 @@ export function MarketTab({
 
           <div className="bg-white/[0.01] border border-white/[0.03] rounded-xl p-5">
             <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-              <strong className="text-white/60 flex items-center justify-between mb-2 font-mono text-[10px] uppercase tracking-wider w-full" id="jci-rationale-header">
+              <strong className="text-white/60 flex items-center justify-between mb-2 font-mono text-caption uppercase tracking-wider w-full" id="jci-rationale-header">
                 <span>Rangkuman Sistem:</span>
                 {isFetchingSummary && (
-                  <span className="text-[9px] animate-pulse text-white/40 lowercase font-sans font-bold tracking-widest bg-white/[0.02] border border-white/5 px-2 py-0.5 rounded">
+                  <span className="text-label animate-pulse text-white/40 lowercase font-sans font-bold tracking-widest bg-white/[0.02] border border-white/5 px-2 py-0.5 rounded">
                     menulis...
                   </span>
                 )}
@@ -451,10 +451,10 @@ export function MarketTab({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4 text-[11px] leading-relaxed text-zinc-400">
+                  <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4 text-body leading-relaxed text-zinc-400">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-2">
-                        <h4 className="font-bold text-white/70 text-[10px] uppercase tracking-widest font-mono">Faktor Pendukung Pasar</h4>
+                        <h4 className="font-bold text-white/70 text-caption uppercase tracking-widest font-mono">Faktor Pendukung Pasar</h4>
                         <ul className="list-disc pl-4 space-y-1.5 mt-2 text-zinc-400">
                           {marketSummary && marketSummary.bullishFactors && marketSummary.bullishFactors.length > 0 ? (
                             marketSummary.bullishFactors.map((f, i) => <li key={i}>{f}</li>)
@@ -468,7 +468,7 @@ export function MarketTab({
                         </ul>
                       </div>
                       <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-2">
-                        <h4 className="font-bold text-white/70 text-[10px] uppercase tracking-widest font-mono">Faktor Risiko Pantauan</h4>
+                        <h4 className="font-bold text-white/70 text-caption uppercase tracking-widest font-mono">Faktor Risiko Pantauan</h4>
                         <ul className="list-disc pl-4 space-y-1.5 mt-2 text-zinc-400">
                           {marketSummary && marketSummary.bearishFactors && marketSummary.bearishFactors.length > 0 ? (
                             marketSummary.bearishFactors.map((f, i) => <li key={i}>{f}</li>)
@@ -486,7 +486,7 @@ export function MarketTab({
                     <div className="p-4 bg-[#0a0a0a] border border-white/[0.05] rounded-xl flex items-start gap-3">
                       <Sparkles className="w-4 h-4 text-white/40 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-white/80 block text-[10px] uppercase tracking-widest font-mono">Formulasi Strategi Saham AI</span>
+                        <span className="font-bold text-white/80 block text-caption uppercase tracking-widest font-mono">Formulasi Strategi Saham AI</span>
                         <p className="mt-1.5 text-zinc-400 text-xs">
                           {marketSummary && marketSummary.scenarioAnalysis ? (
                             marketSummary.scenarioAnalysis
@@ -508,54 +508,54 @@ export function MarketTab({
       <DecisionAuditTrail />
 
       {/* 2. SNAPSHOT METRICS GRID */}
-      <h3 className="text-[10px] uppercase font-bold tracking-widest text-[#E0E0E0]/30 px-1 pt-2">Ringkasan Parameter Real-Time</h3>
+      <h3 className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 px-1 pt-2">Ringkasan Parameter Real-Time</h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
         {/* IHSG */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-white/30 block font-mono">IHSG (JCI)</span>
+          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">IHSG (JCI)</span>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-mono font-bold text-white/90">{MKT.ihsg.value.toLocaleString("id-ID")}</span>
-            <span className={`text-[10px] font-bold ${MKT.ihsg.daily >= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+            <span className={`text-caption font-bold ${MKT.ihsg.daily >= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
               {MKT.ihsg.daily >= 0 ? "+" : ""}{MKT.ihsg.daily}%
             </span>
           </div>
-          <span className="text-[10px] text-white/30 font-medium tracking-wide block">Bulanan: <span className="text-rose-400/80 font-bold">{MKT.ihsg.monthly}%</span></span>
+          <span className="text-caption text-white/30 font-medium tracking-wide block">Bulanan: <span className="text-rose-400/80 font-bold">{MKT.ihsg.monthly}%</span></span>
         </div>
 
         {/* Rupiah */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-white/30 block font-mono">USD / IDR</span>
+          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">USD / IDR</span>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-mono font-bold text-white/90">Rp {MKT.usdidr.value.toLocaleString("id-ID")}</span>
-            <span className={`text-[10px] font-bold flex items-center gap-0.5 ${MKT.usdidr.daily <= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+            <span className={`text-caption font-bold flex items-center gap-0.5 ${MKT.usdidr.daily <= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
               {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
               {MKT.usdidr.daily <= 0 ? "" : "+"}{MKT.usdidr.daily}%
             </span>
           </div>
-          <span className={`text-[10px] tracking-wide block font-bold ${MKT.usdidr.daily <= 0 ? "text-emerald-400/60" : "text-rose-400/60"}`}>
+          <span className={`text-caption tracking-wide block font-bold ${MKT.usdidr.daily <= 0 ? "text-emerald-400/60" : "text-rose-400/60"}`}>
             {MKT.usdidr.daily <= 0 ? "IDR MENGUAT" : "IDR MELEMAH"}
           </span>
         </div>
 
         {/* Score Gap */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-white/30 block font-mono">Quant Score Gap</span>
+          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Quant Score Gap</span>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.score_gap || "40.6"}</span>
-            <span className="text-[10px] font-bold tracking-widest uppercase text-white/20">Spread</span>
+            <span className="text-caption font-bold tracking-widest uppercase text-white/20">Spread</span>
           </div>
-          <span className="text-[10px] text-white/30 font-medium tracking-wide block">5D Change: <span className="text-white/50 font-bold uppercase">Stable</span></span>
+          <span className="text-caption text-white/30 font-medium tracking-wide block">5D Change: <span className="text-white/50 font-bold uppercase">Stable</span></span>
         </div>
 
         {/* Breadth */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-white/30 block font-mono">Breadth &gt;60</span>
+          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Breadth &gt;60</span>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.watchlist_count || 5}</span>
-            <span className="text-[10px] font-bold tracking-widest uppercase text-white/20">Assets</span>
+            <span className="text-caption font-bold tracking-widest uppercase text-white/20">Assets</span>
           </div>
-          <span className="text-[10px] text-emerald-400/60 block font-bold tracking-wide uppercase">Broad Market Support</span>
+          <span className="text-caption text-emerald-400/60 block font-bold tracking-wide uppercase">Broad Market Support</span>
         </div>
 
       </div>
@@ -565,7 +565,7 @@ export function MarketTab({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-5 py-4 border-b border-white/[0.05]">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-white/40" />
-            <h3 className="text-[11px] uppercase font-bold tracking-widest text-white/70 font-mono">
+            <h3 className="text-body uppercase font-bold tracking-widest text-white/70 font-mono">
               AI Co-Pilot &mdash; Analisis Saham
             </h3>
           </div>
@@ -590,7 +590,7 @@ export function MarketTab({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/[0.05] pb-4">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-4 h-4 text-white/40" />
-            <span className="text-[11px] uppercase font-bold tracking-widest text-white/80 block font-mono">Daftar Pantau Eksklusif</span>
+            <span className="text-body uppercase font-bold tracking-widest text-white/80 block font-mono">Daftar Pantau Eksklusif</span>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="w-full sm:w-56">
@@ -602,7 +602,7 @@ export function MarketTab({
             </div>
             <button
                onClick={() => onToggleWatchlist(watchlistTicker)}
-               className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0 border border-white/5"
+               className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-caption font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0 border border-white/5"
                disabled={watchlist.some(w => w.ticker === watchlistTicker)}
                title="Tambahkan ke Daftar Pantau"
              >
@@ -614,8 +614,8 @@ export function MarketTab({
         <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-6 relative overflow-hidden">
           {watchlist.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center gap-3 rounded-2xl bg-white/[0.01] border border-dashed border-white/[0.05]">
-              <span className="text-[11px] uppercase tracking-widest font-bold text-white/40">Daftar Kosong</span>
-              <p className="text-zinc-600 font-sans text-[11px] max-w-sm">Belum ada perusahaan dalam Daftar Pantau. Gunakan form di atas untuk menambahkannya agar AI memantau pergerakannya.</p>
+              <span className="text-body uppercase tracking-widest font-bold text-white/40">Daftar Kosong</span>
+              <p className="text-zinc-600 font-sans text-body max-w-sm">Belum ada perusahaan dalam Daftar Pantau. Gunakan form di atas untuk menambahkannya agar AI memantau pergerakannya.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -638,7 +638,7 @@ export function MarketTab({
                           <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
                           <DataBadge status={tickerStatus[item.ticker] ?? DataStatus.ESTIMATED} />
                         </button>
-                        <span className="text-[10px] text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
+                        <span className="text-caption text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
                       </div>
                     </div>
                     
@@ -647,7 +647,7 @@ export function MarketTab({
                         <span className="text-xs font-bold text-white/80 block font-mono">
                           {liveStock.currentPrice.toLocaleString()}
                         </span>
-                        <span className={`text-[10px] uppercase font-bold tracking-widest mt-0.5 inline-block ${isPos ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                        <span className={`text-caption uppercase font-bold tracking-widest mt-0.5 inline-block ${isPos ? "text-emerald-400/80" : "text-rose-400/80"}`}>
                           {isPos ? "+" : ""}{liveStock.change}%
                         </span>
                       </div>

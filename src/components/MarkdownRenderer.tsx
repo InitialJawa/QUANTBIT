@@ -21,7 +21,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         return (
           <code
             key={idx}
-            className="bg-white/10 px-1 py-0.5 rounded font-mono text-emerald-400 text-[10px]"
+            className="bg-white/10 px-1 py-0.5 rounded font-mono text-emerald-400 text-caption"
           >
             {part.slice(1, -1)}
           </code>
@@ -56,7 +56,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         key={`table-${key}`}
         className="my-3 overflow-x-auto w-full border border-white/10 rounded-xl bg-black/30 shadow-sm scrollbar-thin"
       >
-        <table className="min-w-full divide-y divide-white/10 text-[11px] sm:text-xs font-mono">
+        <table className="min-w-full divide-y divide-white/10 text-body sm:text-xs font-mono">
           <thead className="bg-white/[0.03]">
             <tr>
               {headerRow.map((cell, idx) => (
@@ -155,7 +155,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       blocks.push(
         <h4
           key={i}
-          className="text-[11px] sm:text-xs font-bold text-white/95 mt-3 mb-1.5 uppercase tracking-wider"
+          className="text-body sm:text-xs font-bold text-white/95 mt-3 mb-1.5 uppercase tracking-wider"
         >
           {parseInline(trimmed.slice(5))}
         </h4>

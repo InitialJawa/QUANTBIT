@@ -635,7 +635,7 @@ export function PortfolioTracker({
                   key={item.ticker}
                   className="flex items-center gap-2.5 p-2 bg-rose-500/5 rounded-lg border border-rose-500/10"
                 >
-                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-[10px] rounded border border-rose-500/20">
+                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-rose-500/20">
                     {item.ticker}
                   </div>
                   <span className="text-xs text-rose-300 font-semibold">
@@ -655,7 +655,7 @@ export function PortfolioTracker({
           <div className="flex-1 mr-2 relative z-10">
             <div className="flex items-center gap-2 mb-2 text-white/40">
               <Wallet className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase font-bold tracking-widest block font-sans">
+              <span className="text-caption uppercase font-bold tracking-widest block font-sans">
                 Likuiditas Kas (RDI)
               </span>
             </div>
@@ -667,7 +667,7 @@ export function PortfolioTracker({
                 {cash.toLocaleString("id-ID")}
               </h4>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-[9px] font-bold font-mono text-emerald-400 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20">
+                <span className="text-label font-bold font-mono text-emerald-400 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20">
                   Secure & Verified
                 </span>
               </div>
@@ -678,7 +678,7 @@ export function PortfolioTracker({
         {/* Card 2: Total Modal */}
         <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <FileSpreadsheet className="w-3.5 h-3.5" />
               Modal Investasi Saham
             </span>
@@ -691,7 +691,7 @@ export function PortfolioTracker({
               </span>
               {totalInvestment.toLocaleString("id-ID")}
             </h4>
-            <span className="text-[9px] font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
+            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
               Cost-Basis Value
             </span>
           </div>
@@ -700,7 +700,7 @@ export function PortfolioTracker({
         {/* Card 3: Nilai Saat Ini */}
         <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <Briefcase className="w-3.5 h-3.5" />
               Nilai Saham Saat Ini
             </span>
@@ -713,7 +713,7 @@ export function PortfolioTracker({
               </span>
               {totalCurrentValue.toLocaleString("id-ID")}
             </h4>
-            <span className="text-[9px] font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
+            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
               Market Live Pricing
             </span>
           </div>
@@ -722,7 +722,7 @@ export function PortfolioTracker({
         {/* Card 4: Total Return */}
         <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               {totalReturn >= 0 ? (
                 <TrendingUp className="w-3.5 h-3.5" />
               ) : (
@@ -744,10 +744,10 @@ export function PortfolioTracker({
               {totalReturn >= 0 ? "+" : ""}
               {totalReturn.toLocaleString("id-ID")}
             </h4>
-            <span className="text-[10px] font-bold font-mono block mt-2 uppercase tracking-widest flex items-center gap-1.5 text-white/50">
+            <span className="text-caption font-bold font-mono block mt-2 uppercase tracking-widest flex items-center gap-1.5 text-white/50">
               Return
               <span
-                className={`px-1.5 py-0.5 rounded text-[9px] font-black ${totalReturn >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}
+                className={`px-1.5 py-0.5 rounded text-label font-black ${totalReturn >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}
               >
                 {totalReturn >= 0 ? "+" : ""}
                 {totalReturnPercent.toFixed(2)}%
@@ -766,7 +766,7 @@ export function PortfolioTracker({
                 <FileSpreadsheet className="w-4 h-4 text-white/50" />
                 Holding Saham Aktif
               </h3>
-              <span className="text-[10px] font-bold font-mono text-white/40 bg-white/5 px-2 py-1 rounded">
+              <span className="text-caption font-bold font-mono text-white/40 bg-white/5 px-2 py-1 rounded">
                 {portfolio.length} Tickers
               </span>
             </div>
@@ -776,7 +776,7 @@ export function PortfolioTracker({
                 <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
                   Portofolio Kosong
                 </span>
-                <p className="text-white/30 text-[10px] font-sans max-w-sm">
+                <p className="text-white/30 text-caption font-sans max-w-sm">
                   Belum ada penyaluran dana ke aset saham. Gunakan sistem
                   Analisis di panel kanan untuk skenario akuisisi.
                 </p>
@@ -785,7 +785,7 @@ export function PortfolioTracker({
               <div className="overflow-x-auto">
                 <table className="w-full text-left min-w-max border-collapse">
                   <thead>
-                    <tr className="border-b border-white/[0.05] text-[9px] font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">
+                    <tr className="border-b border-white/[0.05] text-label font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">
                       <th className="pb-3 pr-3 font-sans">Emiten Saham</th>
                       <th className="pb-3 px-3 text-center font-sans">
                         Model Rank
@@ -802,7 +802,7 @@ export function PortfolioTracker({
                       <th className="pb-3 w-[110px]"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.05] text-[11px]">
+                  <tbody className="divide-y divide-white/[0.05] text-body">
                     {enrichedPortfolio.map((item, index) => {
                       const isPos = item.profitOrLoss >= 0;
                       return (
@@ -824,7 +824,7 @@ export function PortfolioTracker({
                                 >
                                   {item.ticker}
                                 </button>
-                                <span className="text-[10px] text-white/40 block truncate max-w-40 font-sans mt-0.5">
+                                <span className="text-caption text-white/40 block truncate max-w-40 font-sans mt-0.5">
                                   {item.companyName}
                                 </span>
                               </div>
@@ -832,7 +832,7 @@ export function PortfolioTracker({
                           </td>
                           <td className="py-3.5 px-3 text-center">
                             <span
-                              className={`px-2 py-1 inline-block rounded text-[9px] font-bold font-mono tracking-wider border ${
+                              className={`px-2 py-1 inline-block rounded text-label font-bold font-mono tracking-wider border ${
                                 item.rank <= engineConfig.topNCount
                                   ? "bg-white/10 border-white/20 text-white"
                                   : item.rank <= 15
@@ -844,7 +844,7 @@ export function PortfolioTracker({
                             >
                               Rank {item.rank}
                             </span>
-                            <span className="text-[9px] text-white/30 block mt-1.5 font-mono">
+                            <span className="text-label text-white/30 block mt-1.5 font-mono">
                               Skor {item.score}
                             </span>
                           </td>
@@ -855,7 +855,7 @@ export function PortfolioTracker({
                               : "lbr"}
                           </td>
                           <td className="py-3.5 px-3 text-right">
-                            <div className="font-mono text-[10px] text-white/40 font-semibold tracking-wider">
+                            <div className="font-mono text-caption text-white/40 font-semibold tracking-wider">
                               B: {item.buyPrice.toLocaleString()}
                             </div>
                             <div className="font-mono text-xs text-white mt-1 font-bold">
@@ -867,7 +867,7 @@ export function PortfolioTracker({
                               {item.valueNow.toLocaleString()}
                             </div>
                             <div
-                              className={`text-[10px] font-bold mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${
+                              className={`text-caption font-bold mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${
                                 isPos
                                   ? "bg-emerald-500/10 text-emerald-400"
                                   : "bg-rose-500/10 text-rose-400"
@@ -894,7 +894,7 @@ export function PortfolioTracker({
                                     }))
                                   }
                                   placeholder="Lbr"
-                                  className="w-16 sm:w-16 bg-transparent text-white text-[10px] px-2 py-1.5 outline-none text-right font-mono placeholder:text-white/20"
+                                  className="w-16 sm:w-16 bg-transparent text-white text-caption px-2 py-1.5 outline-none text-right font-mono placeholder:text-white/20"
                                 />
                                 <button
                                   onClick={() => {
@@ -909,7 +909,7 @@ export function PortfolioTracker({
                                       }));
                                     }
                                   }}
-                                  className="px-3 py-1.5 text-[9px] tracking-widest font-bold uppercase text-white bg-white/10 hover:bg-white/20 cursor-pointer transition-colors border-l border-white/[0.05]"
+                                  className="px-3 py-1.5 text-label tracking-widest font-bold uppercase text-white bg-white/10 hover:bg-white/20 cursor-pointer transition-colors border-l border-white/[0.05]"
                                   title="Jual"
                                 >
                                   Eks
@@ -944,7 +944,7 @@ export function PortfolioTracker({
                   <ArrowRightLeft className="w-4 h-4 text-white/50" />
                   Tambah Manual
                 </h4>
-                <span className="text-[9px] font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
+                <span className="text-label font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
                   Custom Trade
                 </span>
               </div>
@@ -955,7 +955,7 @@ export function PortfolioTracker({
               >
                 {/* Dropdown Saham Individual */}
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest block font-sans">
+                  <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
                     Sandi Saham (Ticker)
                   </label>
                   <SearchableSelect
@@ -972,7 +972,7 @@ export function PortfolioTracker({
                 <div className="grid grid-cols-2 gap-4">
                   {/* Volume Lembar (Shares) */}
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest block font-sans">
+                    <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
                       Jumlah (Lbr)
                     </label>
                     <div className="relative">
@@ -990,13 +990,13 @@ export function PortfolioTracker({
                   {/* Execution Price or Live Price */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest block font-sans">
+                      <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
                         Harga Beli
                       </label>
                       <button
                         type="button"
                         onClick={() => setCustomPriceStr("")}
-                        className="text-[9px] text-white/60 hover:text-white uppercase font-bold tracking-wider cursor-pointer font-sans"
+                        className="text-label text-white/60 hover:text-white uppercase font-bold tracking-wider cursor-pointer font-sans"
                       >
                         Set Live
                       </button>
@@ -1017,13 +1017,13 @@ export function PortfolioTracker({
                 <div className="flex justify-end pt-3 border-t border-white/[0.05]">
                   <button
                     type="submit"
-                    className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-[10px] px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
+                    className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
                   >
                     <Plus className="w-4 h-4 shrink-0" /> Eksekusi Beli Saham
                   </button>
                 </div>
               </form>
-              <p className="text-[9px] text-white/30 leading-normal text-right mt-2 italic">
+              <p className="text-label text-white/30 leading-normal text-right mt-2 italic">
                 * Fee broker 0.15% & spread bid/offer 0.05%.
               </p>
             </div>
@@ -1132,7 +1132,7 @@ export function PortfolioTracker({
                     document.body.removeChild(link);
                   }}
                   disabled={tradeLogs.length === 0}
-                  className="text-[9px] uppercase tracking-widest font-bold text-white/80 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-white/20 bg-white/5 px-3 py-1.5 rounded-lg font-sans"
+                  className="text-label uppercase tracking-widest font-bold text-white/80 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-white/20 bg-white/5 px-3 py-1.5 rounded-lg font-sans"
                   title="Unduh Laporan CSV"
                 >
                   <Download className="w-3 h-3" /> Ekspor (CSV)
@@ -1147,7 +1147,7 @@ export function PortfolioTracker({
                       setTimeout(() => setIsConfirmingClear(false), 3000); // reset after 3s
                     }
                   }}
-                  className={`text-[9px] uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-white"}`}
+                  className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-white"}`}
                 >
                   {isConfirmingClear ? "⚠️ Klik Konfirmasi" : "Bersihkan Entri"}
                 </button>
@@ -1156,7 +1156,7 @@ export function PortfolioTracker({
 
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin space-y-3">
               {tradeLogs.length === 0 ? (
-                <div className="p-6 text-center text-[10px] text-white/30 font-mono italic">
+                <div className="p-6 text-center text-caption text-white/30 font-mono italic">
                   Belum ada log transaksi teraudit yang dilakukan pada sesi ini.
                 </div>
               ) : (
@@ -1202,20 +1202,20 @@ export function PortfolioTracker({
                     return (
                       <div
                         key={log.id}
-                        className="p-3.5 bg-white/[0.01] border border-white/[0.03] rounded-xl text-[10px] font-mono space-y-3 transition-all hover:bg-white/[0.03]"
+                        className="p-3.5 bg-white/[0.01] border border-white/[0.03] rounded-xl text-caption font-mono space-y-3 transition-all hover:bg-white/[0.03]"
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
                             <span
-                              className={`text-[11px] font-black text-white px-2 py-1 bg-white/5 border border-white/5 rounded uppercase`}
+                              className={`text-body font-black text-white px-2 py-1 bg-white/5 border border-white/5 rounded uppercase`}
                             >
                               {typeLabel}
                             </span>
                             <div>
-                              <span className="font-bold text-white text-[11px]">
+                              <span className="font-bold text-white text-body">
                                 {log.ticker}
                               </span>
-                              <span className="text-white/30 text-[9px] block tracking-wide mt-0.5">
+                              <span className="text-white/30 text-label block tracking-wide mt-0.5">
                                 {new Date(log.timestamp).toLocaleDateString(
                                   "id-ID",
                                 )}{" "}
@@ -1231,11 +1231,11 @@ export function PortfolioTracker({
                           </div>
                           <div className="text-right">
                             <span
-                              className={`${textColor} font-bold text-[11px]`}
+                              className={`${textColor} font-bold text-body`}
                             >
                               {prefixSign} Rp {dt.net.toLocaleString("id-ID")}
                             </span>
-                            <span className="text-white/40 text-[9px] block font-semibold leading-none mt-1">
+                            <span className="text-white/40 text-label block font-semibold leading-none mt-1">
                               {log.ticker === "KAS"
                                 ? "Nilai Transaksi"
                                 : `Spot Rp ${log.price.toLocaleString("id-ID")}`}
@@ -1244,7 +1244,7 @@ export function PortfolioTracker({
                         </div>
 
                         {/* Transaction detailed breakdown */}
-                        <div className="grid grid-cols-4 gap-3 text-[9px] text-white/40 border-t border-white/[0.05] pt-3 leading-relaxed">
+                        <div className="grid grid-cols-4 gap-3 text-label text-white/40 border-t border-white/[0.05] pt-3 leading-relaxed">
                           <div>
                             <span className="block font-bold">
                               Kotor (Gross)
@@ -1285,7 +1285,7 @@ export function PortfolioTracker({
                               Net Value
                             </span>
                             <span
-                              className={`${textColor} font-extrabold text-[9px]`}
+                              className={`${textColor} font-extrabold text-label`}
                             >
                               Rp {Math.round(dt.net).toLocaleString("id-ID")}
                             </span>
@@ -1311,7 +1311,7 @@ export function PortfolioTracker({
               <button
                 type="button"
                 onClick={() => setIsSettingsLocked(!isSettingsLocked)}
-                className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 border ${
+                className={`text-label font-bold uppercase tracking-widest px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 border ${
                   isSettingsLocked
                     ? "bg-white/[0.02] border-white/[0.05] text-white/40 hover:text-white/60"
                     : "bg-white/10 border-white/20 text-white hover:bg-white/15"
@@ -1325,7 +1325,7 @@ export function PortfolioTracker({
             <div
               className={`space-y-3 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
             >
-              <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+              <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                 Mode Sistem
               </span>
               <div className="grid grid-cols-2 gap-3">
@@ -1333,14 +1333,14 @@ export function PortfolioTracker({
                   type="button"
                   disabled={isSettingsLocked}
                   onClick={() => updateConfigValue("simulationMode", "algo")}
-                  className={`py-3 px-3 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
+                  className={`py-3 px-3 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
                     engineConfig.simulationMode !== "single"
                       ? "bg-white/10 border-white/20 text-white"
                       : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
                   } disabled:cursor-not-allowed`}
                 >
                   <span>Algo Rebalancer</span>
-                  <span className="text-[8px] font-medium text-white/40 mt-1">
+                  <span className="text-label font-medium text-white/40 mt-1">
                     Rotasi Multisektor
                   </span>
                 </button>
@@ -1348,14 +1348,14 @@ export function PortfolioTracker({
                   type="button"
                   disabled={isSettingsLocked}
                   onClick={() => updateConfigValue("simulationMode", "single")}
-                  className={`py-3 px-3 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
+                  className={`py-3 px-3 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
                     engineConfig.simulationMode === "single"
                       ? "bg-white/10 border-white/20 text-white"
                       : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
                   } disabled:cursor-not-allowed`}
                 >
                   <span>Single/Focus</span>
-                  <span className="text-[8px] font-medium text-white/40 mt-1">
+                  <span className="text-label font-medium text-white/40 mt-1">
                     Fokus Saham Tunggal
                   </span>
                 </button>
@@ -1368,7 +1368,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+                  <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                     Target Emiten (Single Stock)
                   </span>
                   <SearchableSelect
@@ -1386,7 +1386,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <div className="flex justify-between items-center text-[10px]">
+                  <div className="flex justify-between items-center text-caption">
                     <span className="uppercase font-bold text-white/40 tracking-widest">
                       Jual Jika Turun (Cut Loss)
                     </span>
@@ -1415,7 +1415,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <div className="flex justify-between items-center text-[10px]">
+                  <div className="flex justify-between items-center text-caption">
                     <span className="uppercase font-bold text-white/40 tracking-widest">
                       Beli Jika Naik (Buy Stop)
                     </span>
@@ -1446,7 +1446,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-3 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+                  <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                     Model Konfigurasi
                   </span>
                   <div className="grid grid-cols-2 gap-3">
@@ -1454,14 +1454,14 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("activeConfig", "prod")}
-                      className={`py-3 px-3 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
+                      className={`py-3 px-3 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
                         engineConfig.activeConfig === "prod"
                           ? "bg-white/10 border-white/20 text-white"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
                       } disabled:cursor-not-allowed`}
                     >
                       <span>Config F</span>
-                      <span className="text-[8px] font-medium text-white/40 mt-1">
+                      <span className="text-label font-medium text-white/40 mt-1">
                         Capital Protection
                       </span>
                     </button>
@@ -1469,14 +1469,14 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("activeConfig", "res")}
-                      className={`py-3 px-3 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
+                      className={`py-3 px-3 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border flex flex-col items-center justify-center text-center ${
                         engineConfig.activeConfig === "res"
                           ? "bg-white/10 border-white/20 text-white"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
                       } disabled:cursor-not-allowed`}
                     >
                       <span>Config B</span>
-                      <span className="text-[8px] font-medium text-white/40 mt-1">
+                      <span className="text-label font-medium text-white/40 mt-1">
                         Alpha Recovery
                       </span>
                     </button>
@@ -1487,7 +1487,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+                  <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                     Universe Emiten Saham
                   </span>
                   <div className="flex gap-2">
@@ -1495,7 +1495,7 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("universe", "all")}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border ${
+                      className={`flex-1 py-2 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border ${
                         engineConfig.universe === "all"
                           ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
@@ -1507,7 +1507,7 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("universe", "idx80")}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border ${
+                      className={`flex-1 py-2 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border ${
                         engineConfig.universe === "idx80"
                           ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
@@ -1519,7 +1519,7 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("universe", "idx30")}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border ${
+                      className={`flex-1 py-2 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border ${
                         engineConfig.universe === "idx30"
                           ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
@@ -1531,7 +1531,7 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("universe", "lq45")}
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase transition-all tracking-widest cursor-pointer border ${
+                      className={`flex-1 py-2 rounded-xl text-caption font-bold uppercase transition-all tracking-widest cursor-pointer border ${
                         engineConfig.universe === "lq45"
                           ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
                           : "bg-white/[0.02] border-white/[0.03] text-white/40 hover:text-white"
@@ -1546,7 +1546,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <div className="flex justify-between items-center text-[10px]">
+                  <div className="flex justify-between items-center text-caption">
                     <span className="uppercase font-bold text-white/40 tracking-widest">
                       Hedging / Diversifikasi
                     </span>
@@ -1572,7 +1572,7 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+                  <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                     Rotasi Saham
                   </span>
                   <div className="flex gap-1 bg-white/[0.02] border border-white/[0.05] p-1 rounded-xl font-mono">
@@ -1580,7 +1580,7 @@ export function PortfolioTracker({
                       type="button"
                       disabled={isSettingsLocked}
                       onClick={() => updateConfigValue("enableCrossover", true)}
-                      className={`flex-1 py-1.5 text-[9px] uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
+                      className={`flex-1 py-1.5 text-label uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
                         engineConfig.enableCrossover !== false
                           ? "bg-white/10 text-white"
                           : "text-white/30 hover:text-white"
@@ -1594,7 +1594,7 @@ export function PortfolioTracker({
                       onClick={() =>
                         updateConfigValue("enableCrossover", false)
                       }
-                      className={`flex-1 py-1 text-[8px] uppercase font-bold rounded transition-all cursor-pointer ${
+                      className={`flex-1 py-1 text-label uppercase font-bold rounded transition-all cursor-pointer ${
                         engineConfig.enableCrossover === false
                           ? "bg-red-500/10 text-red-400"
                           : "text-white/40 hover:text-white"
@@ -1609,14 +1609,14 @@ export function PortfolioTracker({
                 <div
                   className={`space-y-4 pt-4 border-t border-white/[0.05] ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
                 >
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-white/40 block">
+                  <span className="text-caption uppercase tracking-widest font-bold text-white/40 block">
                     Fine-Tune Rasio Model Analisa (Total: 100%)
                   </span>
 
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                     {/* Quality Slider */}
                     <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-mono text-white/50">
+                      <div className="flex justify-between text-caption font-mono text-white/50">
                         <span>Quality (Q)</span>
                         <span className="text-white/80 font-bold">
                           {Math.round(engineConfig.qualityWeight * 100)}%
@@ -1640,7 +1640,7 @@ export function PortfolioTracker({
                     </div>
                     {/* Growth Slider */}
                     <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-mono text-white/50">
+                      <div className="flex justify-between text-caption font-mono text-white/50">
                         <span>Growth (G)</span>
                         <span className="text-white/80 font-bold">
                           {Math.round(engineConfig.growthWeight * 100)}%
@@ -1664,7 +1664,7 @@ export function PortfolioTracker({
                     </div>
                     {/* Value Slider */}
                     <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-mono text-white/50">
+                      <div className="flex justify-between text-caption font-mono text-white/50">
                         <span>Value (V)</span>
                         <span className="text-white/80 font-bold">
                           {Math.round(engineConfig.valueWeight * 100)}%
@@ -1688,7 +1688,7 @@ export function PortfolioTracker({
                     </div>
                     {/* Momentum Slider */}
                     <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-mono text-white/50">
+                      <div className="flex justify-between text-caption font-mono text-white/50">
                         <span>Momentum (M)</span>
                         <span className="text-white/80 font-bold">
                           {Math.round(engineConfig.momentumWeight * 100)}%
@@ -1720,14 +1720,14 @@ export function PortfolioTracker({
               className={`space-y-2 pt-2 border-t border-white/[0.05] ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
             >
               <div className="flex justify-between items-center">
-                <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest flex items-center gap-1.5">
+                <span className="text-caption uppercase font-bold text-white/40 tracking-widest flex items-center gap-1.5">
                   Safeguard Aktif Krisis
                   <HelpCircle
                     className="w-3.5 h-3.5 text-white/30"
                     title="Aset perlindungan otomatis."
                   />
                 </span>
-                <span className="text-[10px] font-mono font-bold text-white/90">
+                <span className="text-caption font-mono font-bold text-white/90">
                   {engineConfig.safeHavenAsset === "emas"
                     ? "Emas Fisik (LM)"
                     : "Kas Tunai RDI"}
@@ -1738,7 +1738,7 @@ export function PortfolioTracker({
                   type="button"
                   disabled={isSettingsLocked}
                   onClick={() => updateConfigValue("safeHavenAsset", "emas")}
-                  className={`flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
+                  className={`flex-1 py-1.5 text-caption uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
                     engineConfig.safeHavenAsset === "emas"
                       ? "bg-white/10 text-white"
                       : "text-white/30 hover:text-white"
@@ -1750,7 +1750,7 @@ export function PortfolioTracker({
                   type="button"
                   disabled={isSettingsLocked}
                   onClick={() => updateConfigValue("safeHavenAsset", "kas")}
-                  className={`flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
+                  className={`flex-1 py-1.5 text-caption uppercase font-bold rounded-lg transition-all cursor-pointer tracking-widest ${
                     engineConfig.safeHavenAsset === "kas"
                       ? "bg-white/10 text-white"
                       : "text-white/30 hover:text-white"
@@ -1765,7 +1765,7 @@ export function PortfolioTracker({
             <div
               className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
             >
-              <span className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+              <span className="text-caption uppercase font-bold text-white/40 block tracking-widest">
                 Proteksi Crash IHSG
               </span>
               <div className="flex gap-2">
@@ -1780,7 +1780,7 @@ export function PortfolioTracker({
                         : false,
                     )
                   }
-                  className={`px-3 py-2 text-[9px] uppercase font-bold tracking-widest rounded-xl cursor-pointer border transition-all ${
+                  className={`px-3 py-2 text-label uppercase font-bold tracking-widest rounded-xl cursor-pointer border transition-all ${
                     engineConfig.enableCrashProtection !== false
                       ? "bg-white/10 border-white/20 text-white"
                       : "bg-white/[0.02] border-white/[0.03] text-white/30"
@@ -1802,7 +1802,7 @@ export function PortfolioTracker({
                     isSettingsLocked ||
                     engineConfig.enableCrashProtection === false
                   }
-                  className="flex-1 text-[10px] tracking-widest px-3 bg-white/[0.02] border border-white/[0.05] text-white font-bold rounded-xl cursor-pointer disabled:opacity-30 outline-none font-mono"
+                  className="flex-1 text-caption tracking-widest px-3 bg-white/[0.02] border border-white/[0.05] text-white font-bold rounded-xl cursor-pointer disabled:opacity-30 outline-none font-mono"
                 >
                   <option value="3" className="bg-[#050505]">
                     High (Drop -3% in 5D)
@@ -1824,7 +1824,7 @@ export function PortfolioTracker({
             <div
               className={`space-y-2 ${isSettingsLocked ? "opacity-40 grayscale" : ""}`}
             >
-              <div className="flex justify-between items-center text-[10px]">
+              <div className="flex justify-between items-center text-caption">
                 <span className="uppercase font-bold text-white/40 tracking-widest font-sans">
                   Cadangan Tunai Bebas Risiko
                 </span>
@@ -1844,14 +1844,14 @@ export function PortfolioTracker({
                 }
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white disabled:cursor-not-allowed"
               />
-              <span className="text-[9px] text-white/30 block leading-tight pt-1">
+              <span className="text-label text-white/30 block leading-tight pt-1">
                 Persentase kas yang tidak akan disalurkan oleh rebalancer ke
                 bursa saham, guna berjaga-jaga pada pasar anjlok (dry powder).
               </span>
             </div>
 
             {/* Quick reset cash balance simulation */}
-            <div className="pt-4 border-t border-white/[0.05] flex justify-between items-center text-[10px] font-mono text-white/60">
+            <div className="pt-4 border-t border-white/[0.05] flex justify-between items-center text-caption font-mono text-white/60">
               <span className="uppercase font-bold tracking-widest text-[#E0E0E0]/30">
                 System Diagnostics
               </span>
@@ -1879,10 +1879,10 @@ export function PortfolioTracker({
               {activeAlerts.length === 0 ? (
                 <div className="p-6 text-center rounded-2xl bg-white/[0.02] border border-white/[0.03] flex flex-col items-center gap-3">
                   <CheckCircle2 className="w-6 h-6 text-white/50" />
-                  <span className="text-[11px] text-white font-extrabold uppercase tracking-widest">
+                  <span className="text-body text-white font-extrabold uppercase tracking-widest">
                     Portofolio Optimal
                   </span>
-                  <p className="text-[10px] text-white/40 leading-relaxed max-w-xs">
+                  <p className="text-caption text-white/40 leading-relaxed max-w-xs">
                     Distribusi alokasi modal saat ini selaras 100% dengan
                     parameter kebijakan investasi & analisa kuantitatif. Tidak
                     ada transaksi yang disarankan.
@@ -1899,18 +1899,18 @@ export function PortfolioTracker({
                       >
                         <div className="flex justify-between items-start gap-3">
                           <div>
-                            <span className="text-[9px] font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-white/5 text-white/80 border border-white/5">
+                            <span className="text-label font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-white/5 text-white/80 border border-white/5">
                               {alertItem.badge}
                             </span>
-                            <h4 className="text-[12px] font-black text-white mt-3 flex items-baseline gap-2">
+                            <h4 className="text-body font-black text-white mt-3 flex items-baseline gap-2">
                               {alertItem.ticker}
-                              <span className="text-[10px] font-medium text-white/40 truncate block max-w-[160px]">
+                              <span className="text-caption font-medium text-white/40 truncate block max-w-[160px]">
                                 {alertItem.name}
                               </span>
                             </h4>
                           </div>
                           <div className="text-right font-mono">
-                            <span className="text-[9px] text-white/40 block font-bold uppercase tracking-widest">
+                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">
                               Pricing Spot
                             </span>
                             <span className="text-xs font-bold text-white mt-1 block">
@@ -1919,13 +1919,13 @@ export function PortfolioTracker({
                           </div>
                         </div>
 
-                        <p className="text-[10px] text-white/50 leading-relaxed font-sans border-l-2 border-white/10 pl-3 italic">
+                        <p className="text-caption text-white/50 leading-relaxed font-sans border-l-2 border-white/10 pl-3 italic">
                           {alertItem.reason}
                         </p>
 
                         <div className="flex border-t border-white/[0.05] pt-3 items-center justify-between gap-4 mt-1">
                           <div className="font-mono">
-                            <span className="text-[9px] text-white/40 block uppercase font-bold tracking-widest">
+                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">
                               Volume Trading
                             </span>
                             <span className="text-xs font-black text-white mt-1 block">
@@ -1938,7 +1938,7 @@ export function PortfolioTracker({
                                 alertItem.ticker === "EMAS" ||
                                 alertItem.ticker === "GOLD"
                               ) && (
-                                <span className="text-[10px] text-white/40 font-semibold lowercase">
+                                <span className="text-caption text-white/40 font-semibold lowercase">
                                   {" "}
                                   ({Math.round(alertItem.shares / 100)} Lot)
                                 </span>
@@ -1976,7 +1976,7 @@ export function PortfolioTracker({
                                 );
                               }
                             }}
-                            className="px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all hover:scale-[1.02] bg-white text-black shadow-sm font-sans flex gap-2 items-center"
+                            className="px-4 py-2.5 rounded-xl text-caption font-bold uppercase tracking-widest cursor-pointer transition-all hover:scale-[1.02] bg-white text-black shadow-sm font-sans flex gap-2 items-center"
                           >
                             Setujui {isBuy ? "Akuisisi" : "Likuidasi"}
                           </button>
@@ -2052,7 +2052,7 @@ export function PortfolioTracker({
                         {liveStock.ticker}
                       </button>
                       <DataBadge status={liveStock.dataSources.price} />
-                      <span className="text-[10px] text-white/40 block truncate max-w-32 mt-0.5">
+                      <span className="text-caption text-white/40 block truncate max-w-32 mt-0.5">
                         {liveStock.name}
                       </span>
                     </div>
@@ -2064,7 +2064,7 @@ export function PortfolioTracker({
                         Rp {liveStock.currentPrice.toLocaleString()}
                       </span>
                       <span
-                        className={`text-[10px] font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}
+                        className={`text-caption font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}
                       >
                         {isPos ? "+" : ""}
                         {liveStock.change}%
@@ -2100,7 +2100,7 @@ export function PortfolioTracker({
             )}
           </div>
           <div className="flex-1 space-y-1">
-            <h5 className="text-[11px] font-extrabold uppercase tracking-widest text-white">
+            <h5 className="text-body font-extrabold uppercase tracking-widest text-white">
               {notification.type === "success"
                 ? "Transaksi Berhasil"
                 : notification.type === "error"

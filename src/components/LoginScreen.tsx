@@ -40,7 +40,7 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ backgroundColor: '#131722', color: '#d1d4dc' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ backgroundColor: '#0d0d0d', color: '#ffffff' }}>
       <div className="max-w-md w-full border border-white/[0.06] rounded-lg p-8 sm:p-10" style={{ backgroundColor: '#1e222d' }}>
         <div className="mb-8 flex flex-col items-center text-center w-full">
           <svg viewBox="0 0 115 100" className="w-16 h-16 mb-4" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -65,7 +65,7 @@ export function LoginScreen() {
             <label className="block text-[#787b86] text-xs font-medium mb-1.5">Email</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="w-4 h-4" style={{ color: '#5d6080' }} />
+                <Mail className="w-4 h-4" style={{ color: '#7a7a7a' }} />
               </div>
               <input
                 type="email"
@@ -73,7 +73,7 @@ export function LoginScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
-                style={{ backgroundColor: '#131722', border: '1px solid rgba(255,255,255,0.08)', color: '#d1d4dc' }}
+                style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
                 placeholder="name@email.com"
               />
             </div>
@@ -82,7 +82,7 @@ export function LoginScreen() {
             <label className="block text-[#787b86] text-xs font-medium mb-1.5">Password</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="w-4 h-4" style={{ color: '#5d6080' }} />
+                <Lock className="w-4 h-4" style={{ color: '#7a7a7a' }} />
               </div>
               <input
                 type="password"
@@ -91,7 +91,7 @@ export function LoginScreen() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
-                style={{ backgroundColor: '#131722', border: '1px solid rgba(255,255,255,0.08)', color: '#d1d4dc' }}
+                style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
                 placeholder="••••••••"
               />
             </div>
@@ -111,7 +111,7 @@ export function LoginScreen() {
             onClick={handleDemoMode}
             disabled={loading}
             className="w-full rounded py-2.5 text-xs transition-colors disabled:opacity-50"
-            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#787b86', border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#b0b0b0', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             <Bug className="w-3.5 h-3.5 inline mr-1.5" />Demo Mode (Offline)
           </button>

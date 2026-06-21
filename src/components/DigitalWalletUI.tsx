@@ -86,7 +86,7 @@ export function DigitalWalletUI({
       <div className="px-3 py-2 border-b border-white/[0.04] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Wallet className="w-3.5 h-3.5 text-white/40" />
-          <h2 className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Dompet</h2>
+          <h2 className="text-caption font-medium text-white/40 uppercase tracking-wider">Dompet</h2>
         </div>
         {isMobile && (
           <button onClick={onCloseMobile} className="p-1 text-white/30 hover:text-white/70 transition-colors">
@@ -96,9 +96,9 @@ export function DigitalWalletUI({
       </div>
 
       <div className="px-3 py-2 border-b border-white/[0.04] shrink-0">
-        <div className="text-[8px] text-white/30 uppercase tracking-wider mb-0.5">Total</div>
+        <div className="text-label text-white/30 uppercase tracking-wider mb-0.5">Total</div>
         <div className="text-sm font-medium text-white">Rp {totalBalance.toLocaleString("id-ID")}</div>
-        <div className="flex items-center gap-3 mt-1 text-[9px] font-mono">
+        <div className="flex items-center gap-3 mt-1 text-label font-mono">
           <span className="text-white/50">Kas: Rp {cash.toLocaleString("id-ID")}</span>
           <span className="text-white/50">Emas: {goldShares.toFixed(4)} gr</span>
         </div>
@@ -109,7 +109,7 @@ export function DigitalWalletUI({
           <button
             key={tab}
             onClick={() => { setActiveTab(tab); setNominalStr(""); }}
-            className={`flex-1 py-1.5 text-[8px] font-medium uppercase tracking-wider transition-all ${
+            className={`flex-1 py-1.5 text-label font-medium uppercase tracking-wider transition-all ${
               activeTab === tab ? "text-emerald-500 border-b border-emerald-500" : "text-white/30 hover:text-white/50"
             }`}
           >
@@ -135,7 +135,7 @@ export function DigitalWalletUI({
                 value={nominalStr}
                 onChange={(e) => setNominalStr(e.target.value)}
                 placeholder={activeTab === "rupiah" ? "Rp" : "Gram"}
-                className="w-full rounded px-2.5 py-1.5 text-[10px] font-mono outline-none transition-colors placeholder:text-white/30"
+                className="w-full rounded px-2.5 py-1.5 text-caption font-mono outline-none transition-colors placeholder:text-white/30"
                 style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
               />
 
@@ -144,27 +144,27 @@ export function DigitalWalletUI({
                   <>
                     {[100000, 1000000, 5000000].map((val) => (
                       <button key={val} onClick={() => setNominalStr(val.toString())}
-                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                        className="px-2 py-1 rounded text-label font-mono transition-colors text-white/40 hover:text-white/70"
                         style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
                       >+{val.toLocaleString("id-ID")}</button>
                     ))}
                     <button onClick={() => setNominalStr(cash.toString())}
-                      className="px-2 py-1 rounded text-[8px] font-mono ml-auto transition-colors"
+                      className="px-2 py-1 rounded text-label font-mono ml-auto transition-colors"
                       style={{ backgroundColor: 'rgba(8,153,129,0.15)', color: '#089981' }}>MAX</button>
                   </>
                 ) : (
                   <>
                     {[0.5, 1, 5].map((val) => (
                       <button key={val} onClick={() => setNominalStr(val.toString())}
-                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                        className="px-2 py-1 rounded text-label font-mono transition-colors text-white/40 hover:text-white/70"
                         style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
                       >+{val}</button>
                     ))}
                     <button onClick={() => setNominalStr((cash / MKT.gold.value).toFixed(4))}
-                      className="px-2 py-1 rounded text-[8px] font-mono transition-colors"
+                      className="px-2 py-1 rounded text-label font-mono transition-colors"
                       style={{ backgroundColor: 'rgba(8,153,129,0.15)', color: '#089981' }}>MAX BELI</button>
                     <button onClick={() => setNominalStr(goldShares.toString())}
-                      className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                      className="px-2 py-1 rounded text-label font-mono transition-colors text-white/40 hover:text-white/70"
                       style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>MAX JUAL</button>
                   </>
                 )}
@@ -174,26 +174,26 @@ export function DigitalWalletUI({
                 {activeTab === "rupiah" ? (
                   <>
                     <button onClick={() => handleAction("deposit")}
-                      className="py-1.5 rounded text-[8px] font-medium transition-opacity"
+                      className="py-1.5 rounded text-label font-medium transition-opacity"
                       style={{ backgroundColor: '#089981', color: '#fff' }}>Deposit</button>
                     <button onClick={() => handleAction("withdraw")}
-                      className="py-1.5 rounded text-[8px] font-medium transition-colors"
+                      className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Tarik</button>
                   </>
                 ) : (
                   <>
                     <button onClick={() => handleAction("buyGold")}
-                      className="py-1.5 rounded text-[8px] font-medium transition-opacity"
+                      className="py-1.5 rounded text-label font-medium transition-opacity"
                       style={{ backgroundColor: '#089981', color: '#fff' }}>Beli</button>
                     <button onClick={() => handleAction("sellGold")}
-                      className="py-1.5 rounded text-[8px] font-medium transition-colors"
+                      className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Jual</button>
                   </>
                 )}
               </div>
 
               {notification && (
-                <div className={`px-2 py-1.5 rounded text-[8px] font-medium ${notification.type === "success" ? "text-[#089981]" : "text-[#f23645]"}`}
+                <div className={`px-2 py-1.5 rounded text-label font-medium ${notification.type === "success" ? "text-[#089981]" : "text-[#f23645]"}`}
                   style={{ backgroundColor: notification.type === "success" ? 'rgba(8,153,129,0.1)' : 'rgba(242,54,69,0.1)' }}>
                   {notification.message}
                 </div>
@@ -206,13 +206,13 @@ export function DigitalWalletUI({
               {recentLogs.length > 0 ? recentLogs.map((log) => (
                 <div key={log.id} className="py-1.5 flex items-center justify-between border-b border-white/[0.02]">
                   <div>
-                    <div className="text-[8px] text-[#787b86] font-medium">{log.type === "DEPOSIT" ? "Deposit" : log.type === "WITHDRAWAL" ? "Withdraw" : log.type === "BUY_GOLD" ? "Beli Emas" : "Jual Emas"}</div>
-                    <div className="text-[7px] text-[#5d6080] font-mono">{new Date(log.timestamp).toLocaleString("id-ID", { day: "2-digit", month: "short" })}</div>
+                    <div className="text-label text-[#b0b0b0] font-medium">{log.type === "DEPOSIT" ? "Deposit" : log.type === "WITHDRAWAL" ? "Withdraw" : log.type === "BUY_GOLD" ? "Beli Emas" : "Jual Emas"}</div>
+                    <div className="text-label text-[#5d6080] font-mono">{new Date(log.timestamp).toLocaleString("id-ID", { day: "2-digit", month: "short" })}</div>
                   </div>
-                  <div className="text-[9px] font-mono text-[#787b86]">{log.type.includes("GOLD") ? `${log.shares.toFixed(4)} gr` : `Rp ${log.shares.toLocaleString("id-ID")}`}</div>
+                  <div className="text-label font-mono text-[#b0b0b0]">{log.type.includes("GOLD") ? `${log.shares.toFixed(4)} gr` : `Rp ${log.shares.toLocaleString("id-ID")}`}</div>
                 </div>
               )) : (
-                <div className="py-6 text-center text-[#5d6080] text-[8px]">Kosong</div>
+                <div className="py-6 text-center text-[#7a7a7a] text-label">Kosong</div>
               )}
             </motion.div>
           )}
