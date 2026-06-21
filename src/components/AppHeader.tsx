@@ -1,9 +1,10 @@
-import { useRef } from "react";
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Menu, X } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3 } from "lucide-react";
 
 interface AppHeaderProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
   dataFeed: string;
   userEmail: string | undefined;
   settingsRef: RefObject<HTMLDivElement | null>;
@@ -17,11 +18,17 @@ interface AppHeaderProps {
   setMobileMenuOpen: (open: boolean) => void;
   setDataFeed: (feed: "yahoo" | "goapi" | "simulated") => void;
   logout: () => void;
-  onToggleNav: () => void;
 }
 
+const TABS = [
+  { id: "market", icon: Activity, label: "Market" },
+  { id: "portfolio", icon: Briefcase, label: "Portfolio" },
+  { id: "analytics", icon: BarChart3, label: "Analitik" },
+] as const;
+
 export function AppHeader({
-  onToggleNav,
+  activeTab,
+  onTabChange,
   dataFeed,
   userEmail,
   settingsRef,
@@ -37,29 +44,36 @@ export function AppHeader({
   logout,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.06] px-3 py-1 shrink-0 flex items-center justify-between">
-      <button onClick={onToggleNav} className="flex items-center gap-2.5 cursor-pointer">
-        <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
-          <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-          <circle cx="98" cy="70" r="10" fill="#089981" />
-        </svg>
-        <span className="text-xs font-bold tracking-wide text-white/80 uppercase">Quantbit</span>
-      </button>
+    <header className="sticky top-0 z-40 border-b border-white/[0.06] px-3 py-1 shrink-0 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className="flex items-center gap-2.5 shrink-0">
+          <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
+            <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
+            <circle cx="98" cy="70" r="10" fill="#089981" />
+          </svg>
+          <span className="text-xs font-bold tracking-wide text-white/80 uppercase hidden sm:inline">Quantbit</span>
+        </span>
 
-      <div className="flex items-center gap-2 shrink-0 self-end md:self-center relative">
-
-        <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded text-[10px] text-white/35 font-mono">
-          <span className="w-1 h-1 rounded-full bg-white/40" />
-          {dataFeed === "yahoo" ? "Yahoo" : dataFeed === "goapi" ? "GoAPI" : "Simulasi"}
+        <div className="flex items-center gap-0.5 border-l border-white/[0.06] pl-3 ml-1">
+          {TABS.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => onTabChange(id)}
+              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
+                activeTab === id
+                  ? "text-emerald-400 bg-emerald-500/10"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+              }`}
+              title={label}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded text-[10px] text-white/40 font-medium">
-          <span className="w-4 h-4 rounded flex items-center justify-center bg-white/[0.06] text-[9px] font-bold uppercase">
-            {userEmail?.charAt(0) || "U"}
-          </span>
-          <span className="truncate max-w-[100px]">{userEmail}</span>
-        </div>
+      <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center relative">
 
         <div className="relative" ref={settingsRef}>
           <button
@@ -78,20 +92,23 @@ export function AppHeader({
                 transition={{ duration: 0.12 }}
                 className="absolute top-10 right-0 w-56 border border-white/[0.06] shadow-lg rounded-lg py-1.5 z-[60] flex flex-col text-xs overflow-y-auto settings-dropdown"
               >
-                <div className="px-3 py-2 border-b border-white/[0.05] mb-0.5">
+                <div className="px-3 py-2.5 border-b border-white/[0.05]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-emerald-400 text-[10px] font-bold uppercase bg-emerald-500/10">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 text-[11px] font-bold uppercase bg-emerald-500/10">
                       {userEmail?.charAt(0) || "U"}
                     </div>
                     <div className="flex flex-col leading-tight">
-                      <span className="text-white font-medium truncate max-w-[140px]">{userEmail}</span>
-                      <span className="text-[9px] text-white/30 font-medium">Signed in</span>
+                      <span className="text-white font-medium truncate max-w-[140px] text-[11px]">{userEmail}</span>
+                      <span className="text-[9px] text-white/30">Signed in</span>
+                      <span className="text-[8px] text-white/20 font-mono mt-0.5">
+                        {dataFeed === "yahoo" ? "Yahoo Finance" : dataFeed === "goapi" ? "GoAPI.io" : "Offline Sim"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="px-1.5 py-0.5">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-0.5 uppercase tracking-wider">Theme</div>
+                <div className="px-1.5 py-1">
+                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Theme</div>
                   {([
                     ["dark", Moon, "Dark"],
                     ["light", Sun, "Light"],
@@ -107,10 +124,10 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-white/[0.04] my-1" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
-                <div className="px-1.5 py-0.5">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-0.5 uppercase tracking-wider">Data Feed</div>
+                <div className="px-1.5 py-1">
+                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Data Feed</div>
                   {([
                     ["yahoo", "Yahoo Finance"],
                     ["goapi", "GoAPI.io"],
@@ -127,10 +144,10 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-white/[0.04] my-1" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
-                <div className="px-1.5 py-0.5">
-                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-0.5 uppercase tracking-wider">Config</div>
+                <div className="px-1.5 py-1">
+                  <div className="text-[9px] font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
                   {([
                     ["prod", "Config F"],
                     ["res", "Config B"],
@@ -146,9 +163,9 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-white/[0.04] my-1" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
-                <div className="px-1.5 py-0.5">
+                <div className="px-1.5 py-1">
                   <button
                     onClick={() => { setSettingsOpen(false); logout(); }}
                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"

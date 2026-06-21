@@ -82,25 +82,25 @@ export function DigitalWalletUI({
     .slice(0, 8);
 
   return (
-    <div className={`flex flex-col ${isMobile ? "fixed inset-0 z-[60]" : "w-full"}`} style={{ backgroundColor: '#1e222d' }}>
+    <div className={`flex flex-col ${isMobile ? "fixed inset-0 z-[60]" : "w-full"}`}>
       <div className="px-3 py-2 border-b border-white/[0.04] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <Wallet className="w-3.5 h-3.5 text-[#787b86]" />
-          <h2 className="text-[10px] font-medium text-[#787b86] uppercase tracking-wider">Dompet</h2>
+          <Wallet className="w-3.5 h-3.5 text-white/40" />
+          <h2 className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Dompet</h2>
         </div>
         {isMobile && (
-          <button onClick={onCloseMobile} className="p-1 text-[#5d6080] hover:text-[#d1d4dc] transition-colors">
+          <button onClick={onCloseMobile} className="p-1 text-white/30 hover:text-white/70 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
       <div className="px-3 py-2 border-b border-white/[0.04] shrink-0">
-        <div className="text-[8px] text-[#5d6080] uppercase tracking-wider mb-0.5">Total</div>
-        <div className="text-sm font-medium text-[#d1d4dc]">Rp {totalBalance.toLocaleString("id-ID")}</div>
+        <div className="text-[8px] text-white/30 uppercase tracking-wider mb-0.5">Total</div>
+        <div className="text-sm font-medium text-white">Rp {totalBalance.toLocaleString("id-ID")}</div>
         <div className="flex items-center gap-3 mt-1 text-[9px] font-mono">
-          <span className="text-[#787b86]">Kas: Rp {cash.toLocaleString("id-ID")}</span>
-          <span className="text-[#787b86]">Emas: {goldShares.toFixed(4)} gr</span>
+          <span className="text-white/50">Kas: Rp {cash.toLocaleString("id-ID")}</span>
+          <span className="text-white/50">Emas: {goldShares.toFixed(4)} gr</span>
         </div>
       </div>
 
@@ -110,7 +110,7 @@ export function DigitalWalletUI({
             key={tab}
             onClick={() => { setActiveTab(tab); setNominalStr(""); }}
             className={`flex-1 py-1.5 text-[8px] font-medium uppercase tracking-wider transition-all ${
-              activeTab === tab ? "text-[#089981] border-b border-[#089981]" : "text-[#5d6080] hover:text-[#787b86]"
+              activeTab === tab ? "text-emerald-500 border-b border-emerald-500" : "text-white/30 hover:text-white/50"
             }`}
           >
             {tab === "rupiah" && "Kas"}
@@ -135,8 +135,8 @@ export function DigitalWalletUI({
                 value={nominalStr}
                 onChange={(e) => setNominalStr(e.target.value)}
                 placeholder={activeTab === "rupiah" ? "Rp" : "Gram"}
-                className="w-full rounded px-2.5 py-1.5 text-[10px] font-mono outline-none transition-colors placeholder:text-[#5d6080]"
-                style={{ backgroundColor: '#131722', border: '1px solid rgba(255,255,255,0.08)', color: '#d1d4dc' }}
+                className="w-full rounded px-2.5 py-1.5 text-[10px] font-mono outline-none transition-colors placeholder:text-white/30"
+                style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
               />
 
               <div className="flex gap-1 flex-wrap">
@@ -144,8 +144,8 @@ export function DigitalWalletUI({
                   <>
                     {[100000, 1000000, 5000000].map((val) => (
                       <button key={val} onClick={() => setNominalStr(val.toString())}
-                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#787b86' }}
+                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
                       >+{val.toLocaleString("id-ID")}</button>
                     ))}
                     <button onClick={() => setNominalStr(cash.toString())}
@@ -156,16 +156,16 @@ export function DigitalWalletUI({
                   <>
                     {[0.5, 1, 5].map((val) => (
                       <button key={val} onClick={() => setNominalStr(val.toString())}
-                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#787b86' }}
+                        className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
                       >+{val}</button>
                     ))}
                     <button onClick={() => setNominalStr((cash / MKT.gold.value).toFixed(4))}
                       className="px-2 py-1 rounded text-[8px] font-mono transition-colors"
                       style={{ backgroundColor: 'rgba(8,153,129,0.15)', color: '#089981' }}>MAX BELI</button>
                     <button onClick={() => setNominalStr(goldShares.toString())}
-                      className="px-2 py-1 rounded text-[8px] font-mono transition-colors"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#787b86' }}>MAX JUAL</button>
+                      className="px-2 py-1 rounded text-[8px] font-mono transition-colors text-white/40 hover:text-white/70"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>MAX JUAL</button>
                   </>
                 )}
               </div>

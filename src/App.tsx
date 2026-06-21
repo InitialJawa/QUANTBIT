@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { STOCKS_DATA } from "./stocksData";
 import { MKT } from "./marketData";
 import type { StockData, AnalysisResult } from "./types";
@@ -7,7 +7,7 @@ import { StockDrawer } from "./components/StockDrawer";
 import { AppSidebar } from "./components/AppSidebar";
 import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
-import { NavDrawer } from "./components/NavDrawer";
+
 import { MarketTab } from "./components/MarketTab";
 import { PortfolioTracker } from "./components/PortfolioTracker";
 import { AnalyticsTab } from "./components/AnalyticsTab";
@@ -21,7 +21,6 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
-  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const df = useDataFeed();
   const ui = useUIState();
@@ -86,6 +85,8 @@ export default function App() {
       </AnimatePresence>
 
       <AppHeader
+        activeTab={ui.activeTab}
+        onTabChange={ui.setActiveTab}
         dataFeed={df.dataFeed}
         userEmail={user?.email}
         settingsRef={ui.settingsDropdownRef}
@@ -99,7 +100,6 @@ export default function App() {
         setMobileMenuOpen={ui.setIsMobileMenuOpen}
         setDataFeed={df.setDataFeed}
         logout={logout}
-        onToggleNav={() => setIsNavOpen(v => !v)}
       />
 
       <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
@@ -210,13 +210,6 @@ export default function App() {
         </main>
 
       </div>
-
-      <NavDrawer
-        open={isNavOpen}
-        activeTab={ui.activeTab}
-        onTabChange={ui.setActiveTab}
-        onClose={() => setIsNavOpen(false)}
-      />
 
       <StockDrawer
         isOpen={ui.isDrawerOpen}

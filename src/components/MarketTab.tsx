@@ -12,14 +12,11 @@ import {
   TrendingDown, 
   ChevronDown, 
   ChevronUp, 
-  Clock, 
-  Flame, 
   Newspaper, 
   ExternalLink, 
   MessageSquare, 
   Send, 
   Check, 
-  Layers, 
   Sparkles, 
   Globe, 
   BookOpen, 
@@ -563,167 +560,29 @@ export function MarketTab({
 
       </div>
 
-      {/* 3. DUAL-COLUMN WORKSPACE: LEFT (Order book, timeline) | RIGHT (AI chat agent) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-        
-        {/* LEFT COLUMN: REAL-TIME MARKET COND (8 CoL) */}
-        <div className="md:col-span-1 lg:col-span-7 space-y-6">
-          
-          {/* A. ACTIVE ORDER BOOK (With live ticker switcher dropdown) */}
-          <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-6 relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-white/[0.05] pb-4">
-              <div className="flex items-center gap-2.5">
-                  <Layers className="w-4 h-4 text-white/40" />
-                <h3 className="text-[11px] uppercase font-bold tracking-widest text-white/70 font-mono">
-                  Estimasi Spread (Order Book)
-                </h3>
-              </div>
-              
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <span className="text-[10px] text-white/30 font-mono uppercase tracking-widest shrink-0">Pilih Ticker:</span>
-                <div className="w-full sm:w-64">
-                  <SearchableSelect
-                    value={depthTicker}
-                    options={visibleStocks.map(stk => ({
-                      value: stk.ticker,
-                      label: `${stk.ticker} - ${stk.name}`,
-                      logoColor: stk.logoColor
-                    }))}
-                    onChange={(val) => {
-                      setDepthTicker(val);
-                      if (onChangeActiveTicker) {
-                        onChangeActiveTicker(val);
-                      }
-                    }}
-                  />
-                </div>
-                <span className="text-[10px] text-white/50 font-bold font-mono tracking-wider shrink-0 hidden sm:inline text-right min-w-[70px]">
-                  IDR {currentDepthStock.currentPrice.toLocaleString("id-ID")}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-px bg-white/[0.02] border border-white/[0.05] rounded-xl overflow-hidden text-[10px] font-mono">
-              
-              {/* BID SIDE (Buyers queue on Left) */}
-              <div className="bg-black/40 p-4 space-y-1">
-                <div className="grid grid-cols-3 text-white/30 font-bold uppercase pb-2.5 border-b border-white/[0.05] mb-2">
-                  <span>Count</span>
-                  <span className="text-right">Bid Vol</span>
-                  <span className="text-right text-emerald-400">Bid Prc</span>
-                </div>
-                {bids.map((b, i) => {
-                  const percentOfTotal = Math.min(100, Math.round((b.vol / totalBidVol) * 350));
-                  return (
-                    <div key={i} className="relative grid grid-cols-3 py-1.5 hover:bg-white/[0.03] transition-colors items-center select-none rounded p-1">
-                      <div className="absolute top-0 right-0 h-full bg-emerald-500/10 rounded-r -z-10" style={{ width: `${percentOfTotal}%` }} />
-                      <span className="text-white/30 text-[9px]">{b.count.toLocaleString()}</span>
-                      <span className="text-right text-white/70 font-bold">{b.vol.toLocaleString()}</span>
-                      <span className="text-right text-emerald-400 mt-0.5">Rp {b.price.toLocaleString("id-ID")}</span>
-                    </div>
-                  );
-                })}
-                <div className="grid grid-cols-3 font-bold border-t border-white/[0.05] mt-2 pt-3 uppercase text-white/40">
-                  <span>Total</span>
-                  <span className="text-right text-white/80">{totalBidVol.toLocaleString()}</span>
-                  <span className="text-right" />
-                </div>
-              </div>
-
-              {/* ASK SIDE (Sellers queue on Right) */}
-              <div className="bg-black/40 p-4 space-y-1">
-                <div className="grid grid-cols-3 text-white/30 font-bold uppercase pb-2.5 border-b border-white/[0.05] mb-2">
-                  <span className="text-rose-400 text-left">Ask Prc</span>
-                  <span className="text-right">Ask Vol</span>
-                  <span className="text-right">Count</span>
-                </div>
-                {asks.map((a, i) => {
-                  const percentOfTotal = Math.min(100, Math.round((a.vol / totalAskVol) * 350));
-                  return (
-                    <div key={i} className="relative grid grid-cols-3 py-1.5 hover:bg-white/[0.03] transition-colors items-center select-none rounded p-1">
-                      <div className="absolute top-0 left-0 h-full bg-rose-500/10 rounded-l -z-10" style={{ width: `${percentOfTotal}%` }} />
-                      <span className="text-left text-rose-400 mt-0.5">Rp {a.price.toLocaleString("id-ID")}</span>
-                      <span className="text-right text-white/70 font-bold">{a.vol.toLocaleString()}</span>
-                      <span className="text-right text-white/30 text-[9px]">{a.count.toLocaleString()}</span>
-                    </div>
-                  );
-                })}
-                <div className="grid grid-cols-3 font-bold border-t border-white/[0.05] mt-2 pt-3 uppercase text-white/40">
-                  <span className="text-left" />
-                  <span className="text-right text-white/80">{totalAskVol.toLocaleString()}</span>
-                  <span className="text-right text-white/40">Total</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* B. SYSTEM TIMELINE */}
-          <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-6 relative overflow-hidden">
-            <h3 className="text-[11px] uppercase font-bold tracking-widest text-[#E0E0E0]/70 mb-5 flex items-center gap-2 border-b border-white/[0.05] pb-4 font-mono">
-              <Clock className="w-4 h-4 text-white/40" />
-              Sinyal Timeline &amp; Log
+      {/* 3. AI ASSISTANT FULL WIDTH */}
+      <div className="bg-[#050505] border border-white/[0.03] rounded-2xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-5 py-4 border-b border-white/[0.05]">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-white/40" />
+            <h3 className="text-[11px] uppercase font-bold tracking-widest text-white/70 font-mono">
+              AI Co-Pilot &mdash; Analisis Saham
             </h3>
-
-            <div className="space-y-4 font-mono">
-              {RS.volume_details
-                .filter(vol => vol.includes("Lonjakan") || vol.includes("Penurunan"))
-                .map((vol, idx) => {
-                const isHighlight = vol.includes("Lonjakan") || vol.includes("Penurunan");
-                return (
-                  <div key={idx} className="flex items-start gap-4 pb-4 border-b border-white/[0.02] last:border-0 last:pb-0 text-[11px]">
-                    <div className={`w-1.5 h-1.5 rounded-full mt-2.5 ${isHighlight ? "bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "bg-white/20"}`} />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <span className="font-bold text-white/80 tracking-widest uppercase">
-                          {vol.split(":")[0]}
-                        </span>
-                        <span className="text-[9px] text-[#E0E0E0]/20 font-sans font-bold uppercase tracking-widest bg-white/[0.02] border border-white/[0.02] px-2 py-0.5 rounded">CACHED</span>
-                      </div>
-                      <p className="text-zinc-400 mt-1 font-sans leading-relaxed text-xs">
-                        {vol.split(":")[1] || vol}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
-
-        </div>
-
-        {/* RIGHT COLUMN: CHAT WITH AI AGENT (4 CoL) */}
-        <div className="md:col-span-1 lg:col-span-5 space-y-6 flex flex-col">
-          
-          {/* A. CHAT WITH AI AGENT INTEGRATION SPACE */}
-          <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-1 pb-4 relative overflow-hidden flex flex-col h-full">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 py-4 mb-2 border-b border-white/[0.05]">
-               <div className="flex items-center gap-2">
-                 <Sparkles className="w-4 h-4 text-white/40" />
-                 <h3 className="text-[11px] uppercase font-bold tracking-widest text-[#E0E0E0]/70 font-mono">
-                   AI Co-Pilot
-                 </h3>
-               </div>
-               <div className="w-full sm:w-auto min-w-[140px]">
-                 <SearchableSelect
-                   value={depthTicker}
-                   options={[
-                     { value: "WATCHLIST", label: "Daftar Pantau" },
-                     ...visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}` }))
-                   ]}
-                   onChange={(val) => {
-                     setDepthTicker(val);
-                   }}
-                 />
-               </div>
-            </div>
-            <div key={aiAssistantStock.ticker} className="flex-1 bg-black/50 m-2 rounded-xl border border-white/[0.02] overflow-hidden">
-              <AIAssistant stock={aiAssistantStock} />
-            </div>
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <SearchableSelect
+              value={depthTicker}
+              options={[
+                { value: "WATCHLIST", label: "Daftar Pantau" },
+                ...visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}` }))
+              ]}
+              onChange={(val) => { setDepthTicker(val); }}
+            />
           </div>
-
         </div>
-
+        <div key={aiAssistantStock.ticker} className="bg-black/50" style={{ minHeight: '420px' }}>
+          <AIAssistant stock={aiAssistantStock} />
+        </div>
       </div>
 
       {/* PORTFOLIO & WATCHLIST TRACKER TABLE GRID */}
