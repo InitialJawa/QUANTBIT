@@ -11,7 +11,7 @@ import { AppHeader } from "./components/AppHeader";
 import { MarketTab } from "./components/MarketTab";
 import { PortfolioTracker } from "./components/PortfolioTracker";
 import { AnalyticsTab } from "./components/AnalyticsTab";
-import { BacktestTab } from "./components/BacktestTab";
+import { SimulationTab } from "./components/SimulationTab";
 import { StockbitTab } from "./components/StockbitTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
@@ -196,8 +196,14 @@ export default function App() {
                   transition={{ duration: 0.15 }}
                   className="flex-1 flex flex-col"
                 >
-                  <BacktestTab
+                  <SimulationTab
+                    portfolio={pm.portfolio}
+                    onAddTransaction={pm.handleAddTransaction}
+                    onRemoveTransaction={pm.handleRemoveTransaction}
+                    onSellTransaction={pm.handleSellTransaction}
+                    onSelectTicker={ui.handleSelectTicker}
                     getDynamicStock={df.getDynamicStock}
+                    activeConfig={ui.activeConfig}
                   />
                 </motion.div>
               )}
