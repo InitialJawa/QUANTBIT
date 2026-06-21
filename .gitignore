@@ -31,3 +31,8 @@ firebase-config.json
 historical_market_data.json
 *.bak
 
+# Raw per-ticker OHLCV datasets (downloaded, not consumed by build/runtime)
+daily/
+hourly/
+minutes/
+
