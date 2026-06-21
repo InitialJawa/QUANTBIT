@@ -12,7 +12,6 @@ import { MarketTab } from "./components/MarketTab";
 import { PortfolioTracker } from "./components/PortfolioTracker";
 import { AnalyticsTab } from "./components/AnalyticsTab";
 import { SimulationTab } from "./components/SimulationTab";
-import { StockbitTab } from "./components/StockbitTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { useDataFeed } from "./hooks/useDataFeed";
@@ -204,24 +203,6 @@ export default function App() {
                     onSelectTicker={ui.handleSelectTicker}
                     getDynamicStock={df.getDynamicStock}
                     activeConfig={ui.activeConfig}
-                  />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "stockbit" && (
-                <motion.div
-                  key="stockbit"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <StockbitTab
-                    portfolio={pm.portfolio}
-                    watchlist={pm.watchlist}
-                    cash={pm.cash}
-                    getDynamicStock={df.getDynamicStock}
                   />
                 </motion.div>
               )}
