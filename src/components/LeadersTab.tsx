@@ -5,6 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
+import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 
 // Rotation tracking database helper to identify market shifts & top/bottom entries
@@ -144,6 +145,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
             <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <Sliders className="w-4 h-4 text-white/40" />
               {activeConfig === "prod" ? "Strategi Fundamental" : "Strategi Teknis Kuat"}
+              <ExplainButton label="Skor & Ranking Saham (final_score = quality·Wq + growth·Wg + value·Wv + momentum·Wm)" />
             </h2>
             <p className="text-label text-zinc-500 mt-2 uppercase tracking-widest font-bold">
               Kualitas: <span className="text-white/80">{(weights.quality * 100)}%</span> • Growth: <span className="text-white/80">{(weights.growth * 100)}%</span> • Value: <span className="text-white/80">{(weights.value * 100)}%</span> • Momentum: <span className="text-white/80">{(weights.momentum * 100)}%</span>

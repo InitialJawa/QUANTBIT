@@ -5,6 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck, Bookmark, TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "motion/react";
 import { TickerLogo } from "./TickerLogo";
+import { ExplainButton } from "./ExplainButton";
 
 interface CapitalProtectionTabProps {
   isIHSGInCrisis: boolean;
@@ -84,6 +85,7 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
             <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <ShieldAlert className="w-4 h-4 text-rose-500" />
               Sistem Manajemen Risiko
+              <ExplainButton label="Capital Deployment & Exit Rules (Risk score, capitalDeployment %)" />
             </h2>
             <p className="text-caption text-zinc-500 mt-2 max-w-xl leading-relaxed">
               Peringatan keluar otomatis berdasarkan momentum dan persilangan garis teknikal pelindung harga rata-rata. Modal teralokasi: <span className="text-emerald-400 font-bold">{RS.capital_deployment}%</span>.

@@ -5,6 +5,7 @@ import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { Search, Flame, ShieldAlert, CheckCircle, HelpCircle, BookmarkCheck, Bookmark, TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "motion/react";
 import { TickerLogo } from "./TickerLogo";
+import { ExplainButton } from "./ExplainButton";
 
 interface RecoveryOpsTabProps {
   isIHSGInCrisis: boolean;
@@ -62,6 +63,7 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
           <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
             <Flame className="w-4 h-4 text-white/40" />
             Peluang Pemulihan Saham (Turnaround)
+            <ExplainButton label="Recovery / Turnaround (RECOVERY_WATCH regime, momentum & volume)" />
           </h2>
           <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
             Menganalisis saham yang menunjukkan lonjakan kekuatan tren dan didukung rasio volume saat fase pemulihan.

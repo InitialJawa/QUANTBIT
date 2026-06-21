@@ -6,6 +6,7 @@ import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
+import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { EX, getProcessedLeaders, MKT } from "../marketData";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
@@ -530,8 +531,9 @@ export function PortfolioTracker({
           <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
           <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5 animate-pulse" />
-            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans">
+            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
               Peringatan Portofolio: Sinyal Keluar / Turun Peringkat
+              <ExplainButton label="Rebalancing & Exit Alerts (singleSellTrigger, reserveBufferPct, Exit Ops EXIT/EXIT RISK)" />
             </h3>
           </div>
           <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
