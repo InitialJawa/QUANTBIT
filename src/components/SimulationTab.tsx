@@ -225,6 +225,59 @@ const calcStdDev = (vals: number[]): number => {
   return Math.sqrt(variance);
 };
 
+function generateClientBacktestData(): BacktestDayData[] {
+  const tickers = STOCKS_DATA.map(s => s.ticker).filter(Boolean);
+  const startDate = new Date("2000-01-03");
+  const endDate = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const data: BacktestDayData[] = [];
+
+  let seed = 42;
+  const nextRandom = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+
+  const basePrices: Record<string, number> = {};
+  tickers.forEach(t => {
+    basePrices[t] = 500 + nextRandom() * 9500;
+  });
+
+  let ihsg = 500 + nextRandom() * 500;
+  let gold = 300000 + nextRandom() * 200000;
+
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    const dow = cursor.getDay();
+    if (dow !== 0 && dow !== 6) {
+      const dateStr = cursor.toISOString().slice(0, 10);
+      const stockPrices: Record<string, number> = {};
+      const stockRanks: Record<string, number> = {};
+
+      tickers.forEach(t => {
+        const change = (nextRandom() - 0.48) * 0.035;
+        basePrices[t] = Math.max(10, basePrices[t] * (1 + change));
+        stockPrices[t] = Math.round(basePrices[t] * 100) / 100;
+      });
+
+      const ranked = [...tickers].sort(() => nextRandom() - 0.5);
+      ranked.forEach((t, i) => { stockRanks[t] = i + 1; });
+
+      ihsg = Math.max(200, ihsg * (1 + (nextRandom() - 0.48) * 0.014));
+      gold = Math.max(100000, gold * (1 + (nextRandom() - 0.49) * 0.007));
+
+      data.push({
+        date: dateStr,
+        ihsgPrice: Math.round(ihsg * 100) / 100,
+        goldPrice: Math.round(gold),
+        stockPrices,
+        stockRanks,
+      });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return data;
+}
+
 export function SimulationTab({
   portfolio,
   onAddTransaction,
@@ -243,7 +296,9 @@ export function SimulationTab({
   useEffect(() => {
     api.get<{ success: boolean; data: any[] }>("/api/backtest-data?configType=prod")
       .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
-      .catch(() => {});
+      .catch(() => {
+        setHistoricalData(generateClientBacktestData());
+      });
   }, []);
 
 
@@ -482,7 +537,7 @@ export function SimulationTab({
         }
       } catch (err) {
         console.warn("Backtest backend error, fallback to client data: ", err);
-        rawData = [...historicalData];
+        rawData = historicalData.length > 0 ? [...historicalData] : generateClientBacktestData();
       }
 
       setBacktestProgress(85);

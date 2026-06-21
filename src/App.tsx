@@ -15,6 +15,7 @@ import { SimulationTab } from "./components/SimulationTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { BacktestProvider } from "./contexts/BacktestContext";
+import { EngineConfigProvider } from "./contexts/EngineConfigContext";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
@@ -105,6 +106,7 @@ export default function App() {
           logout={logout}
         />
 
+        <EngineConfigProvider>
         <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
 
           <AppSidebar
@@ -237,6 +239,7 @@ export default function App() {
         </main>
 
       </div>
+      </EngineConfigProvider>
 
       </BacktestProvider>
 
