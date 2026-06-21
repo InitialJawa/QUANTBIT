@@ -787,39 +787,42 @@ export function AppSidebar({
       </AnimatePresence>
 
       <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex fixed inset-y-0 left-0 w-[85%] max-w-sm z-50 shadow-2xl' : 'hidden'} md:flex w-full md:static ${collapsed ? 'md:w-12' : 'md:w-56 lg:w-64'} md:border-r border-white/[0.06] shrink-0 flex-col md:overflow-hidden relative transition-all duration-200`}>
-        <div className="flex flex-col flex-1 overflow-y-auto md:overflow-y-auto py-2 gap-2 scrollbar-thin">
-          {collapsed ? (
-            <div className="flex flex-col items-center gap-2 px-1">
-              <button
-                onClick={() => setCollapsed(false)}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors cursor-pointer"
-                title="Expand sidebar"
-              >
-                <PanelLeftOpen className="w-4 h-4" />
-              </button>
-              <div className="w-full h-px bg-white/[0.04]" />
-              <div className="flex flex-col items-center gap-1 text-label text-tertiary">
-                <Wallet className="w-4 h-4" />
-                <span className="mt-1">Q</span>
-              </div>
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-2 py-2 px-1">
+            <button
+              onClick={() => setCollapsed(false)}
+              className="w-8 h-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors cursor-pointer"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
+            <div className="w-full h-px bg-white/[0.04]" />
+            <div className="flex flex-col items-center gap-1 text-label text-tertiary">
+              <Wallet className="w-4 h-4" />
+              <span className="mt-1">Q</span>
             </div>
-          ) : (
-            <>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.04] shrink-0">
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">
+                {activeTab === "market" ? "Pasar" : activeTab === "portfolio" ? "Portofolio" : activeTab === "analytics" ? "Analitik" : "Backtest"}
+              </span>
+              <button
+                onClick={() => setCollapsed(true)}
+                className="w-5 h-5 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors cursor-pointer"
+                title="Collapse sidebar"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="flex flex-col flex-1 overflow-y-auto md:overflow-y-auto py-2 gap-2 scrollbar-thin">
               {activeTab === "market" && renderMarketContent()}
               {activeTab === "portfolio" && renderPortfolioContent()}
               {activeTab === "analytics" && renderAnalyticsContent()}
               {activeTab === "backtest" && renderBacktestContent()}
-            </>
-          )}
-        </div>
-        {!collapsed && (
-          <button
-            onClick={() => setCollapsed(true)}
-            className="hidden md:flex absolute right-1.5 top-1.5 w-5 h-5 rounded bg-white/[0.04] border border-white/[0.06] items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.08] transition-colors cursor-pointer z-10"
-            title="Collapse sidebar"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
+            </div>
+          </>
         )}
       </aside>
     </>
