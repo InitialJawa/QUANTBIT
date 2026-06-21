@@ -25,6 +25,7 @@ import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
+import { BacktestParamsModal } from "./BacktestParamsModal";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -296,6 +297,7 @@ export function SimulationTab({
   const [isBacktesting, setIsBacktesting] = useState(false);
   const [backtestProgress, setBacktestProgress] = useState(0);
   const [backtestResult, setBacktestResult] = useState<any>(null);
+  const [showBacktestParams, setShowBacktestParams] = useState(false);
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
 
   const rankChartData = useMemo(() => {
@@ -1400,369 +1402,24 @@ export function SimulationTab({
           </div>
 
           {/* Config row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Control Column */}
-            <div className="space-y-5 md:col-span-1 bg-[#050505] p-5 border border-white/5 rounded-xl">
-              <h4 className="text-xs uppercase font-extrabold tracking-wider text-white flex items-center gap-1.5 pb-2 border-b border-white/5">
-                ⚙️ Parameter Backtest
-              </h4>
-              
-              {/* Mode Simulasi */}
-              <div className="space-y-2">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Mode Simulasi</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSimulationMode("algo")}
-                    className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                      simulationMode === "algo" 
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                    }`}
-                  >
-                    Algo Rebalancer
-                  </button>
-                  <button
-                    onClick={() => setSimulationMode("single")}
-                    className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                      simulationMode === "single" 
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                    }`}
-                  >
-                    Single Stock
-                  </button>
-                </div>
-              </div>
+          <div className="flex items-center gap-2 pb-2">
+            <button onClick={() => setShowBacktestParams(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium transition-colors"
+              style={{ backgroundColor: 'rgba(8,153,129,0.12)', color: '#089981' }}>
+              <Award className="w-3 h-3" />
+              Parameter Backtest
+            </button>
+            <button onClick={handleRunAlgoBacktest} disabled={isBacktesting}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium transition-colors disabled:opacity-50"
+              style={{ backgroundColor: '#089981', color: '#fff' }}>
+              {isBacktesting ? "Running..." : "Jalankan"}
+            </button>
+            <span className="text-[8px] font-mono font-medium uppercase tracking-wider" style={{ color: '#5d6080' }}>
+              {simulationMode === "algo" ? `Algo ${numStocks} ${simUniverse.toUpperCase()} ${backtestConfigType === "prod" ? "Config F" : "Config B"}` : `Single ${simTicker}`}
+            </span>
+          </div>
 
-              {simulationMode === "algo" ? (
-                <>
-                  {/* Jumlah Saham Dibeli */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Jumlah Saham Dibeli</span>
-                    <div className="flex gap-2">
-                      {[1, 3, 5].map((num) => (
-                        <button
-                          key={num}
-                          onClick={() => setNumStocks(num as 1 | 3 | 5)}
-                          className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                            numStocks === num 
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                              : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                          }`}
-                        >
-                          Top {num}
-                        </button>
-                      ))}
-                    </div>
-                    <span className="text-[9px] text-[#A0A0A0]/80 block leading-tight">
-                      Beli {numStocks} saham terbaik berdasarkan skor faktor setiap hari.
-                    </span>
-                  </div>
-
-                  {/* Universe Saham */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Universe Seleksi Saham</span>
-                    <div className="flex gap-2 text-[10px]">
-                      <button
-                        onClick={() => setSimUniverse("all")}
-                        className={`flex-1 font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          simUniverse === "all"
-                            ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        Semua Saham
-                      </button>
-                      <button
-                        onClick={() => setSimUniverse("idx80")}
-                        className={`flex-1 font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          simUniverse === "idx80"
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        IDX80
-                      </button>
-                      <button
-                        onClick={() => setSimUniverse("idx30")}
-                        className={`flex-1 font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          simUniverse === "idx30"
-                            ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        IDX30
-                      </button>
-                      <button
-                        onClick={() => setSimUniverse("lq45")}
-                        className={`flex-1 font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          simUniverse === "lq45"
-                            ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        LQ45
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Strategy Configuration Selector */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Pilih Strategi Faktor</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setBacktestConfigType("prod")}
-                        className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          backtestConfigType === "prod" 
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        Config F
-                      </button>
-                      <button
-                        onClick={() => setBacktestConfigType("res")}
-                        className={`flex-1 text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all ${
-                          backtestConfigType === "res" 
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                            : "bg-[#0A0A0A] border-white/5 text-white/40 hover:text-white/60"
-                        }`}
-                      >
-                        Config B
-                      </button>
-                    </div>
-                    <span className="text-[9px] text-[#A0A0A0]/80 block leading-tight">
-                      {backtestConfigType === "prod" 
-                        ? "⚖️ Menguji Config F: Fundamental Focus (Kualitas & Value diunggulkan)." 
-                        : "⚡ Menguji Config B: Backtest Optimized (Growth & Momentum agresif)."}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Stock Selector */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Pilih Saham</span>
-                    <SearchableSelect
-                      options={visibleStocks.map(stk => ({ value: stk.ticker, label: `${stk.ticker} - ${stk.name}` }))}
-                      value={simTicker}
-                      onChange={(val) => setSimTicker(val)}
-                      theme="emerald"
-                    />
-                  </div>
-                  
-                  {/* Sell/Buy Triggers */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Jual Jika Turun (-{singleSellTrigger}% default)</span>
-                    <input 
-                      type="range" 
-                      min="1" max="25" 
-                      value={singleSellTrigger}
-                      onChange={(e) => setSingleSellTrigger(Number(e.target.value))}
-                      className="w-full accent-emerald-500" 
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/40 uppercase block font-mono">Beli Kembali Jika Naik (+{singleBuyTrigger}% default)</span>
-                    <input 
-                      type="range" 
-                      min="1" max="25" 
-                      value={singleBuyTrigger}
-                      onChange={(e) => setSingleBuyTrigger(Number(e.target.value))}
-                      className="w-full accent-emerald-500" 
-                    />
-                  </div>
-                  
-                </>
-              )}
-
-              {/* Date Pickers */}
-              <div className="space-y-4 pt-4 border-t border-white/5 mt-4">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Rentang Waktu Backtest</span>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[9px] uppercase font-bold text-white/30 block mb-1 font-mono">Mulai Dari</label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={simStartDate}
-                        min="2000-01-03"
-                        max={simEndDate}
-                        onChange={(e) => setSimStartDate(e.target.value)}
-                        className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-bold rounded-lg font-mono cursor-pointer block"
-                      />
-                      {(() => {
-                        const status = isMarketClosedDate(simStartDate);
-                        if (status === "weekend") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
-                        if (status === "holiday") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
-                        return null;
-                      })()}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[9px] uppercase font-bold text-white/30 block mb-1 font-mono">Sampai Dengan</label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={simEndDate}
-                        min={simStartDate}
-                        max={todayWIBStr}
-                        onChange={(e) => setSimEndDate(e.target.value)}
-                        className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-bold rounded-lg font-mono cursor-pointer block"
-                      />
-                      {(() => {
-                        const status = isMarketClosedDate(simEndDate);
-                        if (status === "weekend") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
-                        if (status === "holiday") return <span className="text-[8px] text-emerald-450 text-emerald-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
-                        return null;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Capital input */}
-              <div className="space-y-1">
-                <label className="text-[10px] text-white/40 uppercase block font-mono">Modal Awal Simulasi (IDR)</label>
-                <input
-                  type="text"
-                  value={algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                  onChange={(e) => {
-                    const numbers = e.target.value.replace(/[^0-9]/g, "");
-                    setAlgoCapital(numbers);
-                  }}
-                  className="w-full text-xs p-2.5 bg-black border border-white/10 focus:border-emerald-500 outline-none text-white font-mono font-bold rounded-lg block"
-                />
-              </div>
-
-              {/* Slider for Reserve Buffer */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-[10px] text-white/40 uppercase font-mono">Sisakan Saldo Kas (Buffer)</span>
-                  <span className="text-emerald-400 font-bold font-mono">{reserveBufferPct}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="30"
-                  step="5"
-                  value={reserveBufferPct}
-                  onChange={(e) => setReserveBufferPct(Number(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-                <span className="text-[9px] text-[#A0A0A0] block">Kas cadangan darurat yang tidak dibelanjakan saham.</span>
-              </div>
-
-              {/* Rebalancing Rule toggle */}
-              <div className="space-y-2">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Faktor Rotasi Saham Jelek</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEnableCrossover(true)}
-                    className={`flex-1 text-[11px] font-semibold py-2 rounded-lg cursor-pointer border transition-all ${
-                      enableCrossover 
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40"
-                    }`}
-                  >
-                    Rule Rank &lt; 7 Aktif
-                  </button>
-                  <button
-                    onClick={() => setEnableCrossover(false)}
-                    className={`flex-1 text-[11px] font-semibold py-2 rounded-lg cursor-pointer border transition-all ${
-                      !enableCrossover 
-                        ? "bg-red-500/10 border-red-500/30 text-red-400" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40"
-                    }`}
-                  >
-                    Tanpa Rebalance
-                  </button>
-                </div>
-                <p className="text-[9px] text-[#A0A0A0]">Jika saham turun ke peringkat 7, jual semua shares dan pindahkan ke emiten yang lebih unggul.</p>
-              </div>
-
-              {/* Crash Sensitivity trigger */}
-              <div className="space-y-2">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Antisipasi IHSG Crash</span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setEnableCrashProtection(!enableCrashProtection)}
-                    className={`px-3 py-1.5 text-[10px] uppercase font-bold rounded-md cursor-pointer border transition-all ${
-                      enableCrashProtection 
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-extrabold" 
-                        : "bg-white/5 border-white/10 text-white/30"
-                    }`}
-                  >
-                    {enableCrashProtection ? "PROTEKSI NYALA" : "OFF"}
-                  </button>
-                  <select
-                    value={crashSensitivity}
-                    onChange={(e) => setCrashSensitivity(Number(e.target.value))}
-                    disabled={!enableCrashProtection}
-                    className="flex-1 text-[11px] p-2 bg-black border border-white/10 text-white font-bold rounded-lg cursor-pointer disabled:opacity-40"
-                  >
-                    <option value="3">Sensitif (Turun 3% dlm 5 hari)</option>
-                    <option value="5">Normal (Turun 5% dlm 5 hari)</option>
-                    <option value="8">Moderat (Turun 8% dlm 5 hari)</option>
-                    <option value="10">Konservatif (Turun 10% dlm 5 hari)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Safe Haven Destination */}
-              <div className="space-y-2">
-                <span className="text-[10px] text-white/40 uppercase block font-mono">Aset Pelarian Pas Crash</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setSafeHavenAsset("emas")}
-                    disabled={!enableCrashProtection}
-                    className={`text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all disabled:opacity-40 ${
-                      safeHavenAsset === "emas" 
-                        ? "bg-amber-400/10 border-amber-400/30 text-amber-300 font-extrabold" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40"
-                    }`}
-                  >
-                    🪙 Emas Fisik
-                  </button>
-                  <button
-                    onClick={() => setSafeHavenAsset("kas")}
-                    disabled={!enableCrashProtection}
-                    className={`text-[10px] font-bold py-2 rounded-lg cursor-pointer border transition-all disabled:opacity-40 ${
-                      safeHavenAsset === "kas" 
-                        ? "bg-blue-500/10 border-blue-500/30 text-blue-400 font-extrabold" 
-                        : "bg-[#0A0A0A] border-white/5 text-white/40"
-                    }`}
-                  >
-                    💵 Kas Tunai (IDR)
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={handleRunAlgoBacktest}
-                disabled={isBacktesting}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 border-none rounded-xl text-black font-extrabold text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
-              >
-                {isBacktesting ? "Sedang Backtesting..." : "JALANKAN QUANT BACKTEST"}
-              </button>
-
-              <button
-                onClick={handleDownloadCSV}
-                className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-white font-bold text-xs cursor-pointer flex items-center justify-center gap-2 transition-all"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                Unduh Data Historis (.CSV)
-              </button>
-              <p className="text-[10px] text-white/30 text-center leading-normal">
-                Gunakan tombol unduh di atas untuk menyimpan seluruh data mentah harian ({simStartDate} hingga {simEndDate}) dalam format file <b>CSV / Excel</b>.
-              </p>
-
-            </div>
-
-            {/* Results Column */}
-            <div className="md:col-span-2 space-y-5">
+          <div className="space-y-5">
               
               {isBacktesting ? (
                 <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-24 space-y-4 shadow-inner">
@@ -2090,12 +1747,50 @@ export function SimulationTab({
 
             </div>
 
-          </div>
+          <BacktestParamsModal
+            open={showBacktestParams}
+            onClose={() => setShowBacktestParams(false)}
+            simulationMode={simulationMode}
+            setSimulationMode={setSimulationMode}
+            numStocks={numStocks}
+            setNumStocks={setNumStocks}
+            simUniverse={simUniverse}
+            setSimUniverse={setSimUniverse}
+            backtestConfigType={backtestConfigType}
+            setBacktestConfigType={setBacktestConfigType}
+            simTicker={simTicker}
+            setSimTicker={setSimTicker}
+            visibleStocks={visibleStocks}
+            singleSellTrigger={singleSellTrigger}
+            setSingleSellTrigger={setSingleSellTrigger}
+            singleBuyTrigger={singleBuyTrigger}
+            setSingleBuyTrigger={setSingleBuyTrigger}
+            simStartDate={simStartDate}
+            setSimStartDate={setSimStartDate}
+            simEndDate={simEndDate}
+            setSimEndDate={setSimEndDate}
+            todayWIBStr={todayWIBStr}
+            isMarketClosedDate={isMarketClosedDate}
+            algoCapital={algoCapital}
+            setAlgoCapital={setAlgoCapital}
+            formatRupiah={formatRupiah}
+            reserveBufferPct={reserveBufferPct}
+            setReserveBufferPct={setReserveBufferPct}
+            enableCrossover={enableCrossover}
+            setEnableCrossover={setEnableCrossover}
+            enableCrashProtection={enableCrashProtection}
+            setEnableCrashProtection={setEnableCrashProtection}
+            crashSensitivity={crashSensitivity}
+            setCrashSensitivity={setCrashSensitivity}
+            safeHavenAsset={safeHavenAsset}
+            setSafeHavenAsset={setSafeHavenAsset}
+            isBacktesting={isBacktesting}
+            handleRunAlgoBacktest={handleRunAlgoBacktest}
+            handleDownloadCSV={handleDownloadCSV}
+          />
 
         </section>
       )}
-
-      
 
     </div>
   );

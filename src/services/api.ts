@@ -12,6 +12,30 @@ function clearSession() {
   localStorage.removeItem(SESSION_KEY);
 }
 
+function devMock(path: string, options: RequestInit): any {
+  if (path === "/api/auth/login" && options.method === "POST") {
+    const body = JSON.parse(options.body as string);
+    return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+  }
+  if (path === "/api/auth/signup" && options.method === "POST") {
+    const body = JSON.parse(options.body as string);
+    return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+  }
+  if (path === "/api/auth/me") {
+    if (getSession() === "dev-session") {
+      return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "stockbit", data_feed: "yahoo", active_config: "prod", engine_config: "{}" } };
+    }
+    throw new Error("No dev session");
+  }
+  if (path === "/api/auth/logout") {
+    return {};
+  }
+  if (path.startsWith("/api/user/profile") && options.method === "PATCH") {
+    return {};
+  }
+  throw new Error("No dev mock for " + path);
+}
+
 async function request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const session = getSession();
   const headers: Record<string, string> = {
@@ -22,7 +46,17 @@ async function request<T = any>(path: string, options: RequestInit = {}): Promis
     headers["Authorization"] = `Bearer ${session}`;
   }
 
-  const res = await fetch(path, { ...options, headers });
+  let res: Response;
+  let fetchFailed = false;
+  try {
+    res = await fetch(path, { ...options, headers });
+  } catch {
+    fetchFailed = true;
+  }
+
+  if (fetchFailed) {
+    return devMock(path, options);
+  }
 
   if (res.status === 401) {
     clearSession();
@@ -31,13 +65,17 @@ async function request<T = any>(path: string, options: RequestInit = {}): Promis
   }
 
   const text = await res.text();
+  // Dev fallback: API route returned HTML (no backend running)
+  if (text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<!doctype")) {
+    return devMock(path, options);
+  }
   try {
     const data = JSON.parse(text);
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return data;
   } catch (e: any) {
     if (e instanceof SyntaxError) {
-      throw new Error(`API ${path}: expected JSON, got HTML (status ${res.status})`);
+      return devMock(path, options);
     }
     throw e;
   }

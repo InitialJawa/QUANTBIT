@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Bug } from 'lucide-react';
 
 export function LoginScreen() {
   const { login, signup } = useAuth();
@@ -10,7 +10,7 @@ export function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -27,51 +27,62 @@ export function LoginScreen() {
     }
   };
 
+  const handleDemoMode = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await login('demo@quantbit.local', 'demo123');
+    } catch {
+      setError('Demo mode gagal.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-[#121212] border border-white/10 rounded-2xl p-8 sm:p-10 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ backgroundColor: '#131722', color: '#d1d4dc' }}>
+      <div className="max-w-md w-full border border-white/[0.06] rounded-lg p-8 sm:p-10" style={{ backgroundColor: '#1e222d' }}>
         <div className="mb-8 flex flex-col items-center text-center w-full">
-          <div className="relative flex items-center justify-center mb-4">
-            <svg viewBox="0 0 115 100" className="w-20 h-20 text-white transition-colors duration-300 dark:text-white" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
-              <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-              <circle cx="98" cy="70" r="10" className="fill-emerald-400" />
-            </svg>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.2em] text-white">
-            QUANT<span className="text-emerald-400 font-medium">BIT</span>
+          <svg viewBox="0 0 115 100" className="w-16 h-16 mb-4" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="48" cy="45" r="28" stroke="#d1d4dc" strokeWidth="16" />
+            <path d="M 61 58 L 81 78" stroke="#d1d4dc" strokeWidth="16" strokeLinecap="square" />
+            <circle cx="98" cy="70" r="10" fill="#089981" />
+          </svg>
+          <h1 className="text-xl font-bold tracking-wider text-[#d1d4dc]">
+            QUANT<span className="text-[#089981]">BIT</span>
           </h1>
-          <p className="text-sm text-white/50 mt-2">{isLogin ? 'Sign in' : 'Create account'}</p>
+          <p className="text-xs text-[#787b86] mt-2">{isLogin ? 'Sign in to continue' : 'Create an account'}</p>
         </div>
 
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-lg mb-6 text-sm font-medium">
+          <div className="mb-5 p-3 rounded text-sm" style={{ backgroundColor: 'rgba(242,54,69,0.1)', border: '1px solid rgba(242,54,69,0.2)', color: '#f23645' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-white/70 text-sm font-medium mb-2">Email Address</label>
+            <label className="block text-[#787b86] text-xs font-medium mb-1.5">Email</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-white/40" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="w-4 h-4" style={{ color: '#5d6080' }} />
               </div>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-white/20"
-                placeholder="nama@email.com"
+                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
+                style={{ backgroundColor: '#131722', border: '1px solid rgba(255,255,255,0.08)', color: '#d1d4dc' }}
+                placeholder="name@email.com"
               />
             </div>
           </div>
           <div>
-            <label className="block text-white/70 text-sm font-medium mb-2">Password</label>
+            <label className="block text-[#787b86] text-xs font-medium mb-1.5">Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-white/40" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="w-4 h-4" style={{ color: '#5d6080' }} />
               </div>
               <input
                 type="password"
@@ -79,7 +90,8 @@ export function LoginScreen() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-white/20"
+                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
+                style={{ backgroundColor: '#131722', border: '1px solid rgba(255,255,255,0.08)', color: '#d1d4dc' }}
                 placeholder="••••••••"
               />
             </div>
@@ -88,19 +100,31 @@ export function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white hover:bg-gray-200 disabled:opacity-50 text-black font-semibold py-3.5 rounded-xl transition-all mt-6"
+            className="w-full rounded py-2.5 text-xs font-medium transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: '#089981', color: '#fff' }}
           >
             {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
           </button>
+
+          <button
+            type="button"
+            onClick={handleDemoMode}
+            disabled={loading}
+            className="w-full rounded py-2.5 text-xs transition-colors disabled:opacity-50"
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#787b86', border: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <Bug className="w-3.5 h-3.5 inline mr-1.5" />Demo Mode (Offline)
+          </button>
         </form>
 
-        <div className="mt-6 flex flex-col items-start gap-1">
-          <p className="text-sm text-white/50">
+        <div className="mt-5 text-center">
+          <p className="text-xs text-[#787b86]">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
             <button
               type="button"
               onClick={() => { setIsLogin(!isLogin); setError(null); }}
-              className="text-white font-medium hover:text-emerald-400 transition-colors"
+              className="font-medium transition-colors hover:underline"
+              style={{ color: '#089981' }}
             >
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>

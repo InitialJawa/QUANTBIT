@@ -20,7 +20,7 @@ export function DiagnosticsTab({ activeStock, availableStocks, onSelectStock }: 
     setSyncStatus("syncing");
     setSyncMessage("Menghubungi server & mengunduh harga harian real dari Yahoo Finance API (2020 - hari ini)...");
     try {
-      const data = await api.post<{ success: boolean }>("/api/market/sync");
+      const data = await api.post<{ success: boolean; error?: string }>("/api/market/sync");
       if (data.success) {
         setSyncStatus("success");
         setSyncMessage("Sinkronisasi selesai! Seluruh database lokal (IHSG, Emas, & 30 Saham) telah dimutakhirkan dengan data real time harian terbaru.");

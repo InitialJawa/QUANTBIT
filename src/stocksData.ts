@@ -204,8 +204,8 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
     dividendYield,
     metrics,
     dataSources: {
-      price: scanStock?.currentPrice > 0 ? DataStatus.LIVE : (exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED),
-      fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : (fundamentals?.pe_ratio ? DataStatus.CACHED : DataStatus.ESTIMATED)),
+      price: scanStock?.currentPrice > 0 ? DataStatus.LIVE : DataStatus.ESTIMATED,
+      fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : DataStatus.ESTIMATED),
       charts: DataStatus.ESTIMATED,
       description: scanStock?.longBusinessSummary ? DataStatus.LIVE : (PF[ticker]?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED),
     },
@@ -214,7 +214,7 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
     chartDataMonthly
   };
 
-  return applyRealFundamentals(stock, cleanTicker);
+  return applyRealFundamentals(stock, ticker);
 });
 
 function applyRealFundamentals(stock: StockData, ticker: string): StockData {
