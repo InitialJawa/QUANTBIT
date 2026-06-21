@@ -548,38 +548,42 @@ export function SimulationTab({
         initialTop = [bt.simTicker];
       }
       
-      const allocationPerStock = cash / initialTop.length;
-      
       // Total trade volume accumulator for turnover
       let totalTransactionVolume = 0;
       
       // Track last rebalance month
       let lastRebalanceMonth = -1;
       
+      // Track pending tickers that couldn't be bought on day0 (pre-IPO, no data)
+      const pendingTickers: { ticker: string; capital: number }[] = [];
+
       initialTop.forEach((ticker) => {
         const rawPrice = day0.stockPrices[ticker];
-        
-        // Loud Validation Layer
-        if (!rawPrice || rawPrice <= 0) {
-          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade #${ticker} on ${day0.date}, but has no active price feed! Stock is either pre-IPO, suspended, or delisted.`);
-        }
-        
+
         if (ticker === "GOTO" && day0.date < "2022-04-11") {
-          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade GOTO on ${day0.date}, which is before its real IPO date (2022-04-11)! Backtest failed.`);
+          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          return;
         }
         
         if (ticker === "AMMN" && day0.date < "2023-07-07") {
-          throw new Error(`CRITICAL PIPELINE ERROR: Attempted to trade AMMN on ${day0.date}, which is before its real IPO date (2023-07-07)! Backtest failed.`);
+          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          return;
+        }
+        
+        if (!rawPrice || rawPrice <= 0) {
+          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          return;
         }
         
         const entryPrice = rawPrice * (1 + SLIPPAGE);
         const costPerShareWithFee = entryPrice * (1 + BUY_FEE);
         
+        const allocationPerStock = cash / initialTop.length;
+        
         // 1 LOT = 100 SHARES constraint & Liquidity constraint max 5% daily volume
         let maxLots = Math.floor(allocationPerStock / (costPerShareWithFee * 100));
         let sharesToBuy = maxLots * 100;
         
-        // Capping to prevent Execution Bias (Assumes we can't buy more than 5% of trading volume without driving price radically)
         const day0Any = day0 as any;
         const dailyVol = day0Any.stockVolumes && day0Any.stockVolumes[ticker] ? day0Any.stockVolumes[ticker] : 10000000;
         const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
@@ -596,11 +600,15 @@ export function SimulationTab({
       });
 
       const configName = bt.backtestConfigType === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)";
-      const tickerMsg = bt.simulationMode === "algo" ? `Membeli Top ${initialTop.length} pembuka: ${initialTop.map(t => `#${t}`).join(", ")}.` : `Membeli saham: #${initialTop[0]}.`;
+      const boughtTickers = initialTop.filter(t => !pendingTickers.some(p => p.ticker === t));
+      const pendingNames = pendingTickers.map(p => p.ticker).join(", ");
+      const tickerMsg = boughtTickers.length > 0
+        ? (bt.simulationMode === "algo" ? `Membeli Top ${boughtTickers.length} pembuka: ${boughtTickers.map(t => `#${t}`).join(", ")}.` : `Membeli saham: #${boughtTickers[0]}.`)
+        : "Menunggu ketersediaan data saham...";
       logs.push({
         date: day0.date,
         type: "BUY",
-        message: `Backtest diinisiasi dengan modal Rp ${cap.toLocaleString("id-ID")} menggunakan strategi ${configName}. Menyisakan kas buffer ${reservePct}% (Rp ${bufferCash.toLocaleString("id-ID")}). ${tickerMsg}`
+        message: `Backtest diinisiasi dengan modal Rp ${cap.toLocaleString("id-ID")} menggunakan strategi ${configName}. Menyisakan kas buffer ${reservePct}% (Rp ${bufferCash.toLocaleString("id-ID")}). ${tickerMsg}` + (pendingTickers.length > 0 ? ` ${pendingNames} ditunda (data belum tersedia).` : "")
       });
 
       let maxVal = cap;
@@ -622,6 +630,28 @@ export function SimulationTab({
         const dateObj = new Date(day.date);
         const currentYear = dateObj.getFullYear();
         const currentMonth = dateObj.getMonth();
+
+        // 0. Execute pending ticker buys once their price data becomes available
+        if (pendingTickers.length > 0) {
+          for (let pi = pendingTickers.length - 1; pi >= 0; pi--) {
+            const pt = pendingTickers[pi];
+            const availPrice = day.stockPrices?.[pt.ticker];
+            if (availPrice && availPrice > 0) {
+              const entryPrice = availPrice * (1 + SLIPPAGE);
+              const costPerShare = entryPrice * (1 + BUY_FEE);
+              let maxLots = Math.floor(pt.capital / (costPerShare * 100));
+              let sharesToBuy = maxLots * 100;
+              if (sharesToBuy > 0) {
+                positions[pt.ticker] = sharesToBuy;
+                const costSpent = sharesToBuy * costPerShare;
+                cash -= costSpent;
+                totalTransactionVolume += sharesToBuy * entryPrice;
+                logs.push({ date: day.date, type: "BUY", message: `Eksekusi pembelian ditunda #${pt.ticker} pada harga Rp ${availPrice.toLocaleString("id-ID")} (data baru tersedia).` });
+              }
+              pendingTickers.splice(pi, 1);
+            }
+          }
+        }
 
         // 1. Calculate Active Positions Value
         let stocksValue = 0;
