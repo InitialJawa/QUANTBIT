@@ -505,15 +505,11 @@ export function AppSidebar({
                 style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
               </button>
-              <select value={engineConfig.crashSensitivity ?? 10}
-                onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
+              <input type="number" min="1" max="99" value={engineConfig.crashSensitivity ?? 10}
+                onChange={e => updateConfigValue("crashSensitivity", Math.max(1, Math.min(99, Number(e.target.value) || 10)))}
                 disabled={engineConfig.enableCrashProtection === false}
-                className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40">
-                <option value={3}>-3% / 5D</option>
-                <option value={5}>-5% / 5D</option>
-                <option value={8}>-8% / 5D</option>
-                <option value={10}>-10% / 5D</option>
-              </select>
+                className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
+              <span className="text-caption text-tertiary ml-1">%</span>
             </div>
           </div>
           <div>
@@ -715,14 +711,11 @@ export function AppSidebar({
                   style={{ backgroundColor: bt.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   {bt.enableCrashProtection ? "ON" : "OFF"}
                 </button>
-                <select value={bt.crashSensitivity} onChange={e => bt.setCrashSensitivity(Number(e.target.value))}
+                <input type="number" min="1" max="99" value={bt.crashSensitivity}
+                  onChange={e => bt.setCrashSensitivity(Math.max(1, Math.min(99, Number(e.target.value) || 5)))}
                   disabled={!bt.enableCrashProtection}
-                  className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40">
-                  <option value="3">Sensitif (3%)</option>
-                  <option value="5">Normal (5%)</option>
-                  <option value="8">Moderat (8%)</option>
-                  <option value="10">Konservatif (10%)</option>
-                </select>
+                  className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
+                <span className="text-caption text-tertiary ml-1">%</span>
               </div>
             </div>
 

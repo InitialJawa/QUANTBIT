@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
-import { setActiveUniverse, setActiveConfig, refreshRSFromRegime } from "../marketRegimeEngine";
+import { setActiveUniverse, setActiveConfig, setCrashSensitivity, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -97,8 +97,9 @@ export function PortfolioTracker({
   useEffect(() => {
     setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
     setActiveConfig(engineConfig.activeConfig as "prod" | "res");
+    setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
     refreshRSFromRegime();
-  }, [engineConfig.universe, engineConfig.activeConfig]);
+  }, [engineConfig.universe, engineConfig.activeConfig, engineConfig.crashSensitivity]);
 
   // Persist full state to backend when engine config changes
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -153,9 +154,11 @@ export function PortfolioTracker({
     }
   };
 
+  const ihsgDrawdown60 = getIhsgDrawdown60();
   const isIHSGInCrisis =
     engineConfig.enableCrashProtection !== false &&
-    MKT.ihsg.monthly <= -(engineConfig.crashSensitivity ?? 10);
+    ihsgDrawdown60 !== null &&
+    ihsgDrawdown60 <= -(engineConfig.crashSensitivity ?? 10);
 
   const currentSelectedStock =
     visibleStocks.find((s) => s.ticker === selectedTicker) || visibleStocks[0];
@@ -323,7 +326,7 @@ export function PortfolioTracker({
           name: stock ? stock.name : item.ticker,
           price,
           shares: item.shares,
-          reason: `Fase Krisis Hack/Crash Aktif (Drawdown IHSG ${MKT.ihsg.monthly.toFixed(1)}%). Segera lakukan proteksi kapital.`,
+          reason: `Fase Krisis Aktif (IHSG -${Math.abs(ihsgDrawdown60 ?? 0).toFixed(1)}% dari puncak 60 hari). Segera lakukan proteksi kapital.`,
           badge: "LIQUIDATE / CASH OUT",
         });
       });

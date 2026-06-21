@@ -45,6 +45,7 @@ export interface RegimeOutput {
 let _lastIhsgData: { close: number; date: string }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeConfig: "prod" | "res" = "prod";
+let _crashSensitivity = 10;
 
 export function setIhsgHistory(data: { close: number; date: string }[]) {
   _lastIhsgData = data;
@@ -56,6 +57,19 @@ export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
 
 export function setActiveConfig(c: "prod" | "res") {
   _activeConfig = c;
+}
+
+export function setCrashSensitivity(n: number) {
+  _crashSensitivity = n;
+}
+
+export function getIhsgDrawdown60(): number | null {
+  if (_lastIhsgData.length < 2) return null;
+  const closes = _lastIhsgData.map(d => d.close);
+  const window = closes.slice(-60);
+  const peak = Math.max(...window);
+  const current = closes[closes.length - 1];
+  return ((current - peak) / peak) * 100;
 }
 
 function filterTickersForUniverse(tickers: string[]): string[] {
@@ -111,7 +125,7 @@ export function computeMarketRegime(): RegimeOutput {
   const healthyCount = universeEX.filter(e => e.exit_state === "HEALTHY").length;
   const totalEx = universeEX.length || 1;
 
-  const crisisThreshold = ihsgMonthly < -10;
+  const crisisThreshold = ihsgMonthly < -_crashSensitivity;
   const bearishTrend = !aboveMa20 && !aboveMa50;
   const bullishTrend = aboveMa20 && aboveMa50;
   const recoveringTrend = aboveMa20 && !aboveMa50;
@@ -126,11 +140,11 @@ export function computeMarketRegime(): RegimeOutput {
   if (crisisThreshold && bearishTrend) {
     regime = "GOLD_DEFENSE";
     decision = "HOLD_GOLD";
-    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% melebihi threshold krisis. Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
+    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% melebihi threshold krisis (${_crashSensitivity}%). Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
   } else if (crisisThreshold) {
     regime = "CASH_DEFENSE";
     decision = "HOLD_CASH";
-    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% dalam zona krisis, namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
+    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
   } else if (bearishTrend && highExitRisk) {
     regime = "RISK_OFF";
     decision = "WAIT_RECOVERY";
@@ -285,7 +299,7 @@ export function getAuditTrail(): AuditTrailEntry {
     regime.regime === "GOLD_DEFENSE"
       ? "IHSG harus kembali di atas MA20 dan MA50. Minimal 20% kandidat saham harus lolos score >=60. Tidak ada exit risk dominan."
       : regime.regime === "CASH_DEFENSE"
-        ? "Konfirmasi pemulihan IHSG bulanan > -10% + MA20 crossing."
+        ? `Konfirmasi pemulihan IHSG bulanan > -${_crashSensitivity}% + MA20 crossing.`
         : regime.regime === "RISK_OFF"
           ? "IHSG crossing di atas MA50 + breadth membaik (>=20% saham score >=60)."
           : regime.regime === "RECOVERY_WATCH"
