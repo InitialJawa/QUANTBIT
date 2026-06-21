@@ -1,14 +1,14 @@
 import { Play, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
 
-interface SimulasiTabProps {
+interface StockbitTabProps {
   portfolio?: PortfolioItem[] | null;
   watchlist?: WatchlistItem[] | null;
   cash?: number | null;
   getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
-export function SimulasiTab({ portfolio, watchlist, cash, getDynamicStock }: SimulasiTabProps) {
+export function StockbitTab({ portfolio, watchlist, cash, getDynamicStock }: StockbitTabProps) {
   const safeCash = typeof cash === "number" && !isNaN(cash) ? cash : 0;
   const safePortfolio: PortfolioItem[] = Array.isArray(portfolio) ? portfolio : [];
   const totalInvested = safePortfolio.reduce((sum, p) => sum + (p.totalCost || 0), 0);
@@ -24,7 +24,7 @@ export function SimulasiTab({ portfolio, watchlist, cash, getDynamicStock }: Sim
     <div className="p-5 space-y-6">
       <div className="flex items-center gap-2 mb-2">
         <Play className="w-4 h-4 text-emerald-400" />
-        <h2 className="text-sm font-bold text-white uppercase tracking-wider">Simulasi Portfolio</h2>
+        <h2 className="text-sm font-bold text-white uppercase tracking-wider">Stockbit Portfolio</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
