@@ -76,7 +76,7 @@ export function AppHeader({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-10 right-0 w-56 border border-white/[0.06] shadow-lg rounded-lg py-1.5 z-[60] flex flex-col text-xs overflow-y-auto"
+                className="absolute top-10 right-0 w-56 border border-white/[0.06] shadow-lg rounded-lg py-1.5 z-[60] flex flex-col text-xs overflow-y-auto settings-dropdown"
               >
                 <div className="px-3 py-2 border-b border-white/[0.05] mb-0.5">
                   <div className="flex items-center gap-2.5">

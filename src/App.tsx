@@ -10,11 +10,7 @@ import { AppHeader } from "./components/AppHeader";
 import { NavDrawer } from "./components/NavDrawer";
 import { MarketTab } from "./components/MarketTab";
 import { PortfolioTracker } from "./components/PortfolioTracker";
-import { LeadersTab } from "./components/LeadersTab";
-import { RecoveryOpsTab } from "./components/RecoveryOpsTab";
-import { CapitalProtectionTab } from "./components/CapitalProtectionTab";
-import { SimulationTab } from "./components/SimulationTab";
-import { DiagnosticsTab } from "./components/DiagnosticsTab";
+import { AnalyticsTab } from "./components/AnalyticsTab";
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { useDataFeed } from "./hooks/useDataFeed";
@@ -56,7 +52,7 @@ export default function App() {
   const handleGenerateAIReport = (customFocus?: string) => pm.handleGenerateAIReport(activeStock, customFocus);
 
   if (authLoading) {
-    return       <div className="min-h-screen flex items-center justify-center text-[#d1d4dc]" style={{ backgroundColor: '#131722' }}>Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0d0d0d', color: '#e0e0e0' }}>Loading...</div>;
   }
 
   if (!user) {
@@ -130,7 +126,7 @@ export default function App() {
               portfolio={pm.portfolio}
               onDismiss={() => ui.setHideAlertBanner(true)}
               onGoToLedger={() => {
-                ui.setActiveTab("ledger");
+                ui.setActiveTab("portfolio");
                 setTimeout(() => {
                   const element = document.getElementById("tab-ledger");
                   if (element) element.scrollIntoView({ behavior: 'smooth' });
@@ -142,7 +138,7 @@ export default function App() {
 
               {ui.activeTab === "market" && (
                 <motion.div
-                  key="market-perspective"
+                  key="market"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
@@ -163,61 +159,9 @@ export default function App() {
                 </motion.div>
               )}
 
-              {ui.activeTab === "leaders" && (
-                <LeadersTab activeConfig={ui.activeConfig} onSelectTicker={ui.handleSelectTicker} portfolio={pm.portfolio} watchlist={pm.watchlist} getDynamicStock={df.getDynamicStock} />
-              )}
-
-              {ui.activeTab === "turnaround" && (
+              {ui.activeTab === "portfolio" && (
                 <motion.div
-                  key="turnaround-perspective"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <RecoveryOpsTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={ui.handleSelectTicker} portfolio={pm.portfolio} watchlist={pm.watchlist} getDynamicStock={df.getDynamicStock} />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "exit" && (
-                <motion.div
-                  key="exit-perspective"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <CapitalProtectionTab isIHSGInCrisis={isIHSGInCrisis} onSelectTicker={ui.handleSelectTicker} portfolio={pm.portfolio} watchlist={pm.watchlist} getDynamicStock={df.getDynamicStock} />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "simulation" && (
-                <motion.div
-                  key="simulation-perspective"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <SimulationTab
-                    portfolio={pm.portfolio}
-                    onAddTransaction={pm.handleAddTransaction}
-                    onRemoveTransaction={pm.handleRemoveTransaction}
-                    onSellTransaction={pm.handleSellTransaction}
-                    onSelectTicker={ui.handleSelectTicker}
-                    getDynamicStock={df.getDynamicStock}
-                    theme={ui.getChartTheme()}
-                    activeConfig={ui.activeConfig}
-                    defaultSubTab="past"
-                  />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "ledger" && (
-                <motion.div
-                  key="ledger-perspective"
+                  key="portfolio"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
@@ -241,18 +185,22 @@ export default function App() {
                 </motion.div>
               )}
 
-              {ui.activeTab === "diagnostics" && (
+              {ui.activeTab === "analytics" && (
                 <motion.div
-                  key="diagnostics-perspective"
+                  key="analytics"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.15 }}
+                  className="flex-1 flex flex-col"
                 >
-                  <DiagnosticsTab
-                    activeStock={activeStock}
-                    availableStocks={activeUniverseStocks.map(s => df.getDynamicStock(s.ticker) || s)}
-                    onSelectStock={ui.handleChangeActiveTicker}
+                  <AnalyticsTab
+                    activeConfig={ui.activeConfig}
+                    onSelectTicker={ui.handleSelectTicker}
+                    portfolio={pm.portfolio}
+                    watchlist={pm.watchlist}
+                    getDynamicStock={df.getDynamicStock}
+                    isIHSGInCrisis={isIHSGInCrisis}
                   />
                 </motion.div>
               )}

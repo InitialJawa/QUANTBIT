@@ -1,14 +1,10 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Activity, Briefcase, SlidersHorizontal, Flame, ShieldAlert, Award, Cpu, X } from "lucide-react";
+import { Activity, Briefcase, BarChart3, X } from "lucide-react";
 
 const NAV_TABS = [
   { id: "market", icon: Activity, label: "Market" },
-  { id: "ledger", icon: Briefcase, label: "Portfolio" },
-  { id: "leaders", icon: SlidersHorizontal, label: "Leaders" },
-  { id: "turnaround", icon: Flame, label: "Recovery" },
-  { id: "exit", icon: ShieldAlert, label: "Risiko" },
-  { id: "simulation", icon: Award, label: "Simulasi" },
-  { id: "diagnostics", icon: Cpu, label: "Sistem" },
+  { id: "portfolio", icon: Briefcase, label: "Portfolio" },
+  { id: "analytics", icon: BarChart3, label: "Analitik" },
 ] as const;
 
 interface NavDrawerProps {

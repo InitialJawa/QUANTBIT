@@ -429,6 +429,11 @@
   background-color: #fca5a5 !important;
 }
 
+[data-theme] .settings-dropdown,
+[data-theme] .drawer-panel {
+  background: var(--bg-surface) !important;
+}
+
 /* ==========================================================================
    SCROLLBARS
    ========================================================================== */

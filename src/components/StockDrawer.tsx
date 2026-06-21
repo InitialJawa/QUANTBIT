@@ -77,7 +77,7 @@ export function StockDrawer({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-2xl border-l border-white/[0.06] h-full flex flex-col justify-between shadow-2xl z-10"
+            className="relative w-full max-w-2xl border-l border-white/[0.06] h-full flex flex-col justify-between shadow-2xl z-10 drawer-panel"
           >
             <div className="flex-1 flex flex-col min-h-0">
 
