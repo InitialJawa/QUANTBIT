@@ -19,6 +19,8 @@ import { EngineConfigProvider } from "./contexts/EngineConfigContext";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
+import { AICockpit } from "./components/AICockpit";
+import { AICockpitProvider } from "./contexts/AICockpitContext";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -107,6 +109,7 @@ export default function App() {
         />
 
         <EngineConfigProvider>
+        <AICockpitProvider>
         <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
 
           <AppSidebar
@@ -239,7 +242,18 @@ export default function App() {
           </div>
         </main>
 
+        {/* AI Cockpit — rail kanan (TradingView-style 3rd column). Aditif:
+            hanya tampil di layar xl+; AI lama tetap utuh di layar kecil. */}
+        <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-white/[0.06] p-3 overflow-hidden">
+          <AICockpit
+            selectedStock={activeStock}
+            portfolio={pm.portfolio}
+            cash={pm.cash}
+          />
+        </aside>
+
       </div>
+      </AICockpitProvider>
       </EngineConfigProvider>
 
       </BacktestProvider>

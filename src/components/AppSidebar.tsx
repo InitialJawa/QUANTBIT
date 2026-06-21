@@ -6,6 +6,7 @@ import type { PortfolioItem, StockData } from "../types";
 import { useState } from "react";
 import { useBacktest } from "../contexts/BacktestContext";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
+import { ExplainButton } from "./ExplainButton";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -95,8 +96,9 @@ export function AppSidebar({
       </div>
 
       <div id="sidebar-macro-indicators-panel" className="mx-2">
-        <div className="px-2 py-1.5 border-b border-white/[0.04]">
+        <div className="px-2 py-1.5 border-b border-white/[0.04] flex items-center justify-between">
           <span className="text-label font-medium text-tertiary uppercase tracking-wider">Makro</span>
+          <ExplainButton label="Regime Status (Health / Opportunity / Risk)" />
         </div>
         <div className="px-2 py-2 space-y-2">
           <div className="flex items-center justify-between py-1">
