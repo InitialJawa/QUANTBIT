@@ -64,7 +64,7 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" data-theme={ui.theme} className={`min-h-screen font-sans antialiased flex flex-col ${ui.theme === 'dark' ? 'text-[#d1d4dc]' : 'text-[#131722]'}`} style={{ backgroundColor: ui.theme === 'dark' ? '#131722' : '#FFFFFF' }}>
+    <div id="applet-main-canvas" data-theme={ui.theme} className="min-h-screen font-sans antialiased flex flex-col">
 
       <AnimatePresence>
         {ui.appNotification && (

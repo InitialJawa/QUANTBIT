@@ -14,14 +14,14 @@
 
 :root,
 [data-theme="dark"] {
-  --bg-primary: #131722;
-  --bg-surface: #1e222d;
-  --bg-surface-alt: #2a2e39;
-  --bg-header: #131722;
-  --bg-elevated: #363a45;
-  --text-primary: #d1d4dc;
-  --text-secondary: #787b86;
-  --text-muted: #5d6080;
+  --bg-primary: #0d0d0d;
+  --bg-surface: #1a1a1a;
+  --bg-surface-alt: #242424;
+  --bg-header: #0d0d0d;
+  --bg-elevated: #2a2a2a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
   --border-default: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.10);
   --accent-green: #089981;
