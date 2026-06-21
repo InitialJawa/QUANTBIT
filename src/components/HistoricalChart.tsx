@@ -34,7 +34,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
   const isLight = theme === "light";
 
   return (
-    <div id="historical-chart-container" className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
+    <div id="historical-chart-container" className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 id="chart-title" className="text-caption font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-2">

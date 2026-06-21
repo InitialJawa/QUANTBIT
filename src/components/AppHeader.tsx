@@ -46,7 +46,7 @@ export function AppHeader({
   logout,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.06] px-3 py-1 shrink-0 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-header-gradient px-3 py-1 shrink-0 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-2.5 shrink-0">
           <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -64,7 +64,7 @@ export function AppHeader({
               onClick={() => onTabChange(id)}
               className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
                 activeTab === id
-                  ? "text-emerald-400 bg-emerald-500/10"
+                  ? "text-emerald-400 bg-emerald-500/10 shadow-[0_0_12px_rgba(0,201,165,0.15)]"
                   : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               }`}
               title={label}

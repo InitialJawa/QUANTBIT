@@ -651,7 +651,7 @@ export function PortfolioTracker({
       {/* Top Summary Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Saldo Kas */}
-        <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden group">
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden group">
           <div className="flex-1 mr-2 relative z-10">
             <div className="flex items-center gap-2 mb-2 text-white/40">
               <Wallet className="w-3.5 h-3.5" />
@@ -676,7 +676,7 @@ export function PortfolioTracker({
         </div>
 
         {/* Card 2: Total Modal */}
-        <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
             <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -698,7 +698,7 @@ export function PortfolioTracker({
         </div>
 
         {/* Card 3: Nilai Saat Ini */}
-        <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
             <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <Briefcase className="w-3.5 h-3.5" />
@@ -720,7 +720,7 @@ export function PortfolioTracker({
         </div>
 
         {/* Card 4: Total Return */}
-        <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
             <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               {totalReturn >= 0 ? (
@@ -938,7 +938,7 @@ export function PortfolioTracker({
           {/* Form and Chart Container */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* TRANSAKSI MANDIRI (PILIHAN SAHAM INDIVIDUAL) */}
-            <div className="bg-[#050505] p-5 rounded-2xl border border-white/[0.03] space-y-4 flex flex-col">
+            <div className="bg-[#050505] bg-card-gradient p-5 rounded-2xl border border-white/[0.03] space-y-4 flex flex-col">
               <div className="flex justify-between items-center pb-3 border-b border-white/[0.05]">
                 <h4 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                   <ArrowRightLeft className="w-4 h-4 text-white/50" />
@@ -1029,7 +1029,7 @@ export function PortfolioTracker({
             </div>
 
             {/* Moved Sector Allocation Card */}
-            <div className="bg-[#050505] p-5 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
+            <div className="bg-[#050505] bg-card-gradient p-5 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
               <div className="flex items-center gap-2 pb-3 border-b border-white/[0.05]">
                 <PieChart className="w-4 h-4 text-white/50" />
                 <h4 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
@@ -1082,7 +1082,7 @@ export function PortfolioTracker({
           </div>
 
           {/* HISTORICAL TRADE LOG DATABASE */}
-          <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 flex flex-col flex-1 min-h-[400px]">
+          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex flex-col max-h-[420px]">
             <div className="flex justify-between items-center pb-3 mb-4 border-b border-white/[0.05] shrink-0">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-white/50" />
@@ -1302,7 +1302,7 @@ export function PortfolioTracker({
 
         {/* RIGHT COLUMN: INTEGRATED PERSISTENT QUANT ENGINE COGNITIVE CONSOLE */}
         <div className="md:col-span-1 xl:col-span-4 space-y-6 flex flex-col">
-          <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 space-y-5">
+          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 space-y-5">
             <div className="flex justify-between items-center pb-3 border-b border-white/[0.05]">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                 <Settings className="w-4 h-4 text-white/50" />
@@ -1869,7 +1869,7 @@ export function PortfolioTracker({
           </div>
 
           {/* DYNAMIC PENDING REBALANCING SIGNAL ALERTS (Direct Transaction Instruction) */}
-          <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-5 space-y-4">
+          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 space-y-4">
             <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-white/50" />
               Instruksi Ledger Cerdas
@@ -1992,7 +1992,7 @@ export function PortfolioTracker({
       </div>
 
       {/* Watchlist Strip */}
-      <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
+      <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">
             <Eye className="w-4 h-4 text-emerald-450 text-emerald-400" />

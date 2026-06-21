@@ -611,7 +611,7 @@ export function MarketTab({
           </div>
         </div>
         
-        <div className="bg-[#050505] rounded-2xl border border-white/[0.03] p-6 relative overflow-hidden">
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-6 relative overflow-hidden">
           {watchlist.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center gap-3 rounded-2xl bg-white/[0.01] border border-dashed border-white/[0.05]">
               <span className="text-body uppercase tracking-widest font-bold text-white/40">Daftar Kosong</span>

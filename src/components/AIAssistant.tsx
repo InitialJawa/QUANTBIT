@@ -77,7 +77,7 @@ Apa yang ingin Anda tanyakan tentang **PT ${stock.name} (${stock.ticker})** hari
   };
 
   return (
-    <div id="ai-assistant-card" className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 flex flex-col h-[550px] shadow-sm">
+    <div id="ai-assistant-card" className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 flex flex-col h-[550px] shadow-sm">
       {/* Header */}
       <div id="ai-assistant-heading" className="flex items-center gap-3 pb-4 border-b border-white/5 mb-4">
         {isWatchlist ? (

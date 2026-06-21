@@ -66,7 +66,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#070707] rounded-2xl border border-white/5 p-6 md:p-8 text-center max-w-2xl mx-auto"
+          className="bg-[#070707] bg-card-gradient rounded-2xl border border-white/5 p-6 md:p-8 text-center max-w-2xl mx-auto"
         >
           <div className="w-12 h-12 bg-white/5 text-emerald-400 rounded-xl flex items-center justify-center mx-auto mb-4 border border-white/10">
             <TickerLogo ticker={stock.ticker.replace(".JK", "")} size="lg" fallbackColor={stock.logoColor} />
@@ -107,7 +107,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
       {/* Generating Loader */}
       {isGenerating && (
-        <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-12 text-center flex flex-col items-center justify-center space-y-4">
+        <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-12 text-center flex flex-col items-center justify-center space-y-4">
           <div className="relative">
             <div className="w-12 h-12 border-4 border-white/10 border-t-emerald-500 rounded-full animate-spin"></div>
             <Sparkles className="w-6 h-6 text-emerald-400 absolute top-3 left-3 animate-pulse" />
@@ -226,7 +226,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           </div>
 
           {/* Core Analysis Paragraph */}
-          <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm">
+          <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
             <h4 className="text-caption uppercase font-bold text-white/40 tracking-widest mb-2.5">
               Rangkuman Laporan Singkat
             </h4>
@@ -291,7 +291,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           </div>
 
           {/* Key ratio Audit Table */}
-          <div className="bg-[#0A0A0A] rounded-2xl border border-white/10 p-6 shadow-sm overflow-hidden">
+          <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm overflow-hidden">
             <h4 className="text-caption uppercase font-bold text-white/40 tracking-widest mb-4">
               Rincian Rasio Valuasi Indikator
             </h4>
@@ -322,7 +322,7 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
           </div>
 
           {/* Growth Outlook box */}
-          <div className="bg-gradient-to-br from-[#0F0F0F] to-[#050505] border border-white/10 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/[0.06] text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
             <div className="absolute right-0 bottom-0 opacity-5 translate-x-12 translate-y-12">
               <Target className="w-72 h-72" />
             </div>
