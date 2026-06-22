@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, History } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, History, Search } from "lucide-react";
 
 interface AppHeaderProps {
   activeTab: string;
@@ -18,6 +18,9 @@ interface AppHeaderProps {
   setMobileMenuOpen: (open: boolean) => void;
   setDataFeed: (feed: "yahoo" | "goapi" | "simulated") => void;
   logout: () => void;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  onSearchSubmit?: (q: string) => void;
 }
 
 const TABS = [
@@ -44,15 +47,18 @@ export function AppHeader({
   setMobileMenuOpen,
   setDataFeed,
   logout,
+  searchQuery,
+  onSearchChange,
+  onSearchSubmit,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 bg-header-gradient px-3 py-1 shrink-0 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-header-gradient px-2 py-0.5 shrink-0 flex items-center justify-between gap-2">
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-2.5 shrink-0">
           <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
             <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-            <circle cx="98" cy="70" r="10" fill="#089981" />
+            <circle cx="98" cy="70" r="10" fill="#00c9a5" />
           </svg>
           <span className="text-xs font-bold tracking-wide text-white/80 uppercase hidden sm:inline">Quantbit</span>
         </span>
@@ -62,20 +68,32 @@ export function AppHeader({
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 h-7 rounded text-caption font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === id
-                  ? "text-emerald-400 bg-emerald-500/10 shadow-[0_0_12px_rgba(0,201,165,0.15)]"
+                  ? "text-[#00c9a5] bg-[#00c9a5]/10"
                   : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               }`}
-              title={label}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
+              <span>{label}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center relative">
+        
+        {/* Search */}
+        <div className="relative hidden sm:block">
+          <Search className="w-3 h-3 text-white/30 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && onSearchSubmit) onSearchSubmit(searchQuery); }}
+            placeholder="Cari saham..."
+            className="w-36 h-7 pl-7 pr-2 text-caption bg-white/[0.04] border border-white/[0.06] outline-none text-white/70 placeholder:text-white/20 transition-colors focus:border-white/20 focus:text-white"
+          />
+        </div>
 
         <div className="relative" ref={settingsRef}>
           <button

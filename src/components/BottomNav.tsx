@@ -27,7 +27,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             title={label}
             className={`flex flex-col items-center gap-0 px-2 py-1 text-label font-medium transition-colors cursor-pointer rounded min-w-0 ${
               activeTab === id
-                ? "text-[#089981]"
+                ? "text-[#00c9a5]"
                 : "text-[#5d6080] hover:text-[#d1d4dc]"
             }`}
           >

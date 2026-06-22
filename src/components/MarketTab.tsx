@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
-import { AIAssistant } from "./AIAssistant";
-import { DecisionAuditTrail } from "./DecisionAuditTrail";
+import { getAuditTrail } from "../marketRegimeEngine";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
@@ -25,7 +24,6 @@ import {
   Eye,
   Trash2
 } from "lucide-react";
-import { DataBadge } from "./DataBadge";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
 
@@ -40,6 +38,7 @@ interface MarketTabProps {
   onSellTransaction: (ticker: string, shares: number) => void;
   onToggleWatchlist: (ticker: string) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
+  filteredStocks?: (StockData | undefined)[];
 }
 
 export function MarketTab({ 
@@ -52,17 +51,18 @@ export function MarketTab({
   onRemoveTransaction,
   onSellTransaction,
   onToggleWatchlist,
-  getDynamicStock
+  getDynamicStock,
+  filteredStocks
 }: MarketTabProps) {
+  const [marketSubTab, setMarketSubTab] = useState<"overview" | "watchlist" | "all">("overview");
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
+  const trail = getAuditTrail();
   const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);
   const [watchlistTicker, setWatchlistTicker] = useState<string>(activeStock.ticker);
 
-  // State to hold DataStatus per ticker in watchlist
   const [tickerStatus, setTickerStatus] = useState<Record<string, DataStatus>>({});
 
-  // States for live AI summary and rationale syncing
   const [marketSummary, setMarketSummary] = useState<{
     rationale: string;
     bullishFactors: string[];
@@ -73,7 +73,6 @@ export function MarketTab({
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const lastFetchTimeRef = React.useRef<number>(0);
 
-  // Derive dynamic stock prices to trigger updates
   const stocksWithPrices = STOCKS_DATA.map(st => {
     const live = getDynamicStock(st.ticker) || st;
     return {
@@ -83,7 +82,6 @@ export function MarketTab({
     };
   });
 
-  // Load DataStatus for each watchlist ticker
   React.useEffect(() => {
     let isMounted = true;
     async function loadStatuses() {
@@ -103,7 +101,6 @@ export function MarketTab({
 
   React.useEffect(() => {
     const now = Date.now();
-    // Throttle to minimum 12 seconds to prevent rapid nested triggers while ticks are fast
     if (now - lastFetchTimeRef.current < 12000) {
       return;
     }
@@ -135,7 +132,6 @@ export function MarketTab({
             })
           })
         });
-        // Use responseData as the original response
         const response = { json: async () => responseData } as any;
 
         if (!response.ok) {
@@ -153,7 +149,6 @@ export function MarketTab({
       } catch (err: any) {
         console.warn("Live daily market summary fetch failed, fallback active:", err);
         if (isMounted) {
-          // Provide a graceful static fallback when Gemini rate limits/fails
           setMarketSummary({
              rationale: "IHSG berfluktuasi didorong oleh dinamika makro global dan pergerakan teknis emiten blue-chip.",
              bullishFactors: ["Ekspektasi moderasi suku bunga", "Rotasi masuk ke sektor pertahanan dan perbankan", "Valuasi atraktif di beberapa emiten Top Tier"],
@@ -176,7 +171,6 @@ export function MarketTab({
     };
   }, [priceValuesString]);
 
-  // Portfolio performance calculations for My Status comparison
   let totalCost = 0;
   let totalValueNow = 0;
   portfolio.forEach(item => {
@@ -187,47 +181,12 @@ export function MarketTab({
   });
   const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
-  // Synchronize when active stock changes from elsewhere
   React.useEffect(() => {
     setDepthTicker(activeStock.ticker);
   }, [activeStock.ticker]);
 
   const currentDepthStock = visibleStocks.find(s => s.ticker === depthTicker) || activeStock;
 
-  // Synthesize a special stock object if watching the whole watchlist
-  const isWatchlistAi = depthTicker === "WATCHLIST";
-  const aiAssistantStock: StockData = isWatchlistAi
-    ? {
-        ticker: "WATCHLIST",
-        name: "Daftar Pantauan Saham",
-        sector: "Multiple",
-        subSector: "",
-        currentPrice: 0,
-        change: 0,
-        peRatio: 0,
-        pbRatio: 0,
-        roe: 0,
-        der: 0,
-        dividendYield: 0,
-        description: watchlist.length > 0
-          ? `Kumpulan saham dalam daftar pantau: ${watchlist.map(w => w.ticker).join(", ")}. Analisis tren, risiko, dan korelasi antar saham-saham ini.`
-          : "Daftar pantau masih kosong.",
-        logoColor: "bg-blue-600",
-        marketCap: 0,
-        metrics: [],
-        dataSources: {
-          price: DataStatus.ESTIMATED,
-          fundamentals: DataStatus.ESTIMATED,
-          charts: DataStatus.ESTIMATED,
-          description: DataStatus.CACHED,
-        },
-        chartDataDaily: [],
-        chartDataWeekly: [],
-        chartDataMonthly: [],
-      }
-    : currentDepthStock;
-
-  // Tick size generator for Indonesian stock exchange order book
   const getIdXTickSize = (price: number) => {
     if (price < 200) return 1;
     if (price < 500) return 2;
@@ -236,8 +195,6 @@ export function MarketTab({
     return 25;
   };
 
-  // Deterministic spread estimation (not live order book data)
-  // Uses ticker hash to generate a stable pseudo-random seed per stock
   const getSpreadSeed = (ticker: string): number => {
     let seed = 0;
     for (let i = 0; i < ticker.length; i++) {
@@ -270,7 +227,6 @@ export function MarketTab({
   const totalBidVol = bids.reduce((acc, b) => acc + b.vol, 0);
   const totalAskVol = asks.reduce((acc, a) => acc + a.vol, 0);
 
-  // Parsing styling status
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
   const currentStatus = isIHSGInCrisis ? "RISK OFF" : RS.status;
   const currentAction = isIHSGInCrisis ? "LIQUIDATE / CASH OUT" : RS.action;
@@ -294,23 +250,40 @@ export function MarketTab({
       : "bg-rose-500/10 text-rose-400 border-rose-500/20");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
-      {/* 1. HERO REGIME STATUS CARD */}
+      {/* Sub-tab bar */}
+      <div className="flex border-b border-white/[0.04] -mt-1">
+        {(["overview", "watchlist", "all"] as const).map((id) => (
+          <button
+            key={id}
+            onClick={() => setMarketSubTab(id)}
+            className={`flex-1 py-1.5 text-caption font-medium tracking-wide transition-colors cursor-pointer ${
+              marketSubTab === id
+                ? "text-[#00c9a5] border-b-2 border-[#00c9a5]"
+                : "text-white/30 hover:text-white/60"
+            }`}
+          >
+            {id === "overview" ? "Overview" : id === "watchlist" ? "Watchlist" : "All Stocks"}
+          </button>
+        ))}
+      </div>
+
+      {marketSubTab === "overview" && (
+      <>
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative bg-[#050505] border border-white/[0.03] rounded-2xl p-6 overflow-hidden`}
+        className="relative bg-[#050505] border border-white/[0.03] rounded-2xl p-6 overflow-hidden"
       >
         <div className={`absolute top-0 right-0 w-48 h-48 ${isIHSGInCrisis ? "bg-rose-500/5 animate-pulse" : "bg-white/[0.02]"} rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none`} />
         
         <div className="flex flex-col md:flex-row flex-wrap justify-between items-start gap-6 pb-6 border-b border-white/[0.05] w-full">
           <div className="flex flex-col sm:flex-row flex-wrap gap-6 w-full xl:w-auto">
-            {/* System Status (Status Pasar) */}
             <div>
               <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS PASAR (SISTEM)</span>
               <div className="flex items-center gap-3">
-                <span className={`text-sm tracking-widest bg-white/[0.02] text-white/80 font-bold px-3 py-1.5 rounded-lg border border-white/[0.05]`}>
+                <span className="text-sm tracking-widest bg-white/[0.02] text-white/80 font-bold px-3 py-1.5 rounded-lg border border-white/[0.05]">
                   {currentStatus === "SAFE" ? "RISK ON" : currentStatus === "RISK OFF" ? "RISK OFF" : currentStatus}
                 </span>
                 <div>
@@ -322,13 +295,12 @@ export function MarketTab({
               </div>
             </div>
 
-            {/* User Portfolio Status (Status Anda / Statusku) */}
             <div className="border-t sm:border-t-0 sm:border-l border-white/[0.05] pt-4 sm:pt-0 sm:pl-6">
               <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS ANDA (PORTOFOLIO)</span>
               <div className="flex items-center gap-3">
                 {portfolio.length === 0 ? (
                   <span className="text-caption font-bold px-3 py-1.5 bg-white/5 border border-white/5 text-white/40 tracking-wider rounded-lg font-sans">
-                    KOSONG / BELU MADA SAHAM
+                    KOSONG / BELUM ADA SAHAM
                   </span>
                 ) : (
                   <span className={`text-body font-bold tracking-wider px-3 py-1.5 rounded-lg border font-mono ${
@@ -373,7 +345,6 @@ export function MarketTab({
           </div>
         </div>
 
-        {/* Hero Grid Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 text-center md:text-left">
           <div className="border-r border-white/[0.05] last:border-0 pr-6">
             <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Kesehatan Pasar</span>
@@ -405,7 +376,6 @@ export function MarketTab({
           </div>
         </div>
 
-        {/* Daily Summary / Analisa AI Harian */}
         <div className="mt-6 pt-5 border-t border-white/[0.05] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -501,18 +471,102 @@ export function MarketTab({
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-caption uppercase font-bold tracking-widest text-white/50 font-mono">Decision Audit Trail</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-body">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Keputusan Saat Ini</span>
+                    <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                      trail.decision === "BUY_STOCKS" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                      trail.decision === "HOLD_GOLD" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                      trail.decision === "HOLD_CASH" ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                      "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                    }`}>
+                      {trail.decision === "BUY_STOCKS" ? "BELI SAHAM" :
+                       trail.decision === "HOLD_GOLD" ? "PEGANG EMAS" :
+                       trail.decision === "HOLD_CASH" ? "PEGANG CASH" :
+                       "TUNGGU PEMULIHAN"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Rezim Pasar</span>
+                    <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                      trail.regime === "RISK_ON" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                      trail.regime === "RISK_OFF" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                      trail.regime === "GOLD_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
+                      trail.regime === "CASH_DEFENSE" ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                      "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                    }`}>
+                      {trail.regime === "RISK_ON" ? "RISK ON" :
+                       trail.regime === "RISK_OFF" ? "RISK OFF" :
+                       trail.regime === "GOLD_DEFENSE" ? "GOLD DEFENSE" :
+                       trail.regime === "CASH_DEFENSE" ? "CASH DEFENSE" :
+                       "RECOVERY WATCH"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Posisi</span>
+                    <span className="text-white font-bold">{trail.position}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">IHSG vs MA</span>
+                    <div className="flex gap-3">
+                      <span className={`text-xs font-bold ${trail.ihsgMa20Above ? "text-emerald-400" : "text-rose-400"}`}>
+                        MA20: {trail.ihsgMa20Above ? "DI ATAS" : "DI BAWAH"}
+                      </span>
+                      <span className={`text-xs font-bold ${trail.ihsgMa50Above ? "text-emerald-400" : "text-rose-400"}`}>
+                        MA50: {trail.ihsgMa50Above ? "DI ATAS" : "DI BAWAH"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Breadth (Score &ge;60)</span>
+                    <span className="text-white font-bold">{trail.breadthPercent}</span>
+                  </div>
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Exit Risk</span>
+                    <span className="text-white font-bold">{trail.exitRiskPercent}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-white/[0.05] space-y-2">
+                <div>
+                  <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Alasan</span>
+                  <p className="text-zinc-400 text-xs leading-relaxed">{trail.reason}</p>
+                </div>
+                {trail.noBuyReasons.length > 0 && (
+                  <div>
+                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Kenapa Belum Beli Saham?</span>
+                    <ul className="space-y-1">
+                      {trail.noBuyReasons.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-zinc-500">
+                          <span className="text-rose-400/70 mt-0.5 shrink-0">&bull;</span>
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div>
+                  <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Syarat Masuk Kembali</span>
+                  <p className="text-zinc-400 text-xs leading-relaxed">{trail.reentryCondition}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* 1b. DECISION AUDIT TRAIL */}
-      <DecisionAuditTrail />
-
-      {/* 2. SNAPSHOT METRICS GRID */}
       <h3 className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 px-1 pt-2 flex items-center gap-1.5">Ringkasan Parameter Real-Time<ExplainButton label="Ringkasan Parameter Real-Time (regime, breadth, exit, IHSG vs MA20/MA50)" /></h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
-        {/* IHSG */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
           <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">IHSG (JCI)</span>
           <div className="flex items-baseline gap-2">
@@ -524,7 +578,6 @@ export function MarketTab({
           <span className="text-caption text-white/30 font-medium tracking-wide block">Bulanan: <span className="text-rose-400/80 font-bold">{MKT.ihsg.monthly}%</span></span>
         </div>
 
-        {/* Rupiah */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
           <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">USD / IDR</span>
           <div className="flex items-baseline gap-2">
@@ -539,7 +592,6 @@ export function MarketTab({
           </span>
         </div>
 
-        {/* Score Gap */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
           <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Quant Score Gap</span>
           <div className="flex items-baseline gap-2">
@@ -549,7 +601,6 @@ export function MarketTab({
           <span className="text-caption text-white/30 font-medium tracking-wide block">5D Change: <span className="text-white/50 font-bold uppercase">Stable</span></span>
         </div>
 
-        {/* Breadth */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
           <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Breadth &gt;60</span>
           <div className="flex items-baseline gap-2">
@@ -560,34 +611,11 @@ export function MarketTab({
         </div>
 
       </div>
+      </>
+      )}
 
-      {/* 3. AI ASSISTANT FULL WIDTH */}
-      <div className="bg-[#050505] border border-white/[0.03] rounded-2xl relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-5 py-4 border-b border-white/[0.05]">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-white/40" />
-            <h3 className="text-body uppercase font-bold tracking-widest text-white/70 font-mono">
-              AI Co-Pilot &mdash; Analisis Saham
-            </h3>
-          </div>
-          <div className="w-full sm:w-auto min-w-[140px]">
-            <SearchableSelect
-              value={depthTicker}
-              options={[
-                { value: "WATCHLIST", label: "Daftar Pantau" },
-                ...visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}` }))
-              ]}
-              onChange={(val) => { setDepthTicker(val); }}
-            />
-          </div>
-        </div>
-        <div key={aiAssistantStock.ticker} className="bg-black/50" style={{ minHeight: '420px' }}>
-          <AIAssistant stock={aiAssistantStock} />
-        </div>
-      </div>
-
-      {/* PORTFOLIO & WATCHLIST TRACKER TABLE GRID */}
-      <div className="mt-8 pt-8 border-t border-white/[0.05] space-y-6">
+      {marketSubTab === "watchlist" && (
+      <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/[0.05] pb-4">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-4 h-4 text-white/40" />
@@ -607,8 +635,8 @@ export function MarketTab({
                disabled={watchlist.some(w => w.ticker === watchlistTicker)}
                title="Tambahkan ke Daftar Pantau"
              >
-               Tambah
-            </button>
+                Tambah
+             </button>
           </div>
         </div>
         
@@ -637,7 +665,7 @@ export function MarketTab({
                           className="flex items-center gap-2 group"
                         >
                           <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
-                          <DataBadge status={tickerStatus[item.ticker] ?? DataStatus.ESTIMATED} />
+                          
                         </button>
                         <span className="text-caption text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
                       </div>
@@ -667,7 +695,28 @@ export function MarketTab({
           )}
         </div>
       </div>
+      )}
+
+      {marketSubTab === "all" && (
+        <div className="space-y-4">
+          {(filteredStocks || visibleStocks).map((s) => s ? (
+            <div key={s.ticker} className="flex items-center justify-between px-3 py-2 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-body font-bold text-white/90 w-16">{s.ticker}</span>
+                <span className="text-caption text-zinc-500 truncate max-w-[200px]">{s.name}</span>
+              </div>
+              <div className="flex items-center gap-4 text-right">
+                <span className="text-body font-mono font-medium text-white/80">{s.currentPrice.toLocaleString()}</span>
+                <span className={`text-caption font-bold w-16 ${s.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {s.change >= 0 ? "+" : ""}{s.change}%
+                </span>
+              </div>
+            </div>
+          ) : null)}
+        </div>
+      )}
 
     </div>
   );
 }
+

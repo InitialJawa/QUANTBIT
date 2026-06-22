@@ -14,7 +14,7 @@ export function useUIState() {
 
   const [selectedTicker, setSelectedTicker] = useState("BBCA");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "gemini-ai" | "forecast">("chart");
+  const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "forecast">("chart");
   const [drawerLots, setDrawerLots] = useState<number | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

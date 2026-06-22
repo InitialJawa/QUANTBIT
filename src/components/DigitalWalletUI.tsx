@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   Wallet,
   ArrowUpRight,
@@ -109,7 +109,7 @@ export function DigitalWalletUI({
           <button
             key={tab}
             onClick={() => { setActiveTab(tab); setNominalStr(""); }}
-            className={`flex-1 py-1.5 text-label font-medium uppercase tracking-wider transition-all ${
+            className={`flex-1 py-1.5 text-caption font-medium uppercase tracking-wider transition-all ${
               activeTab === tab ? "text-emerald-500 border-b border-emerald-500" : "text-white/30 hover:text-white/50"
             }`}
           >
@@ -150,7 +150,7 @@ export function DigitalWalletUI({
                     ))}
                     <button onClick={() => setNominalStr(cash.toString())}
                       className="px-2 py-1 rounded text-label font-mono ml-auto transition-colors"
-                      style={{ backgroundColor: 'rgba(8,153,129,0.15)', color: '#089981' }}>MAX</button>
+                      style={{ backgroundColor: 'rgba(0,201,165,0.15)', color: '#00c9a5' }}>MAX</button>
                   </>
                 ) : (
                   <>
@@ -162,7 +162,7 @@ export function DigitalWalletUI({
                     ))}
                     <button onClick={() => setNominalStr((cash / MKT.gold.value).toFixed(4))}
                       className="px-2 py-1 rounded text-label font-mono transition-colors"
-                      style={{ backgroundColor: 'rgba(8,153,129,0.15)', color: '#089981' }}>MAX BELI</button>
+                      style={{ backgroundColor: 'rgba(0,201,165,0.15)', color: '#00c9a5' }}>MAX BELI</button>
                     <button onClick={() => setNominalStr(goldShares.toString())}
                       className="px-2 py-1 rounded text-label font-mono transition-colors text-white/40 hover:text-white/70"
                       style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>MAX JUAL</button>
@@ -175,7 +175,7 @@ export function DigitalWalletUI({
                   <>
                     <button onClick={() => handleAction("deposit")}
                       className="py-1.5 rounded text-label font-medium transition-opacity"
-                      style={{ backgroundColor: '#089981', color: '#fff' }}>Deposit</button>
+                      style={{ backgroundColor: '#00c9a5', color: '#fff' }}>Deposit</button>
                     <button onClick={() => handleAction("withdraw")}
                       className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Tarik</button>
@@ -184,7 +184,7 @@ export function DigitalWalletUI({
                   <>
                     <button onClick={() => handleAction("buyGold")}
                       className="py-1.5 rounded text-label font-medium transition-opacity"
-                      style={{ backgroundColor: '#089981', color: '#fff' }}>Beli</button>
+                      style={{ backgroundColor: '#00c9a5', color: '#fff' }}>Beli</button>
                     <button onClick={() => handleAction("sellGold")}
                       className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Jual</button>
@@ -193,8 +193,8 @@ export function DigitalWalletUI({
               </div>
 
               {notification && (
-                <div className={`px-2 py-1.5 rounded text-label font-medium ${notification.type === "success" ? "text-[#089981]" : "text-[#f23645]"}`}
-                  style={{ backgroundColor: notification.type === "success" ? 'rgba(8,153,129,0.1)' : 'rgba(242,54,69,0.1)' }}>
+                <div className={`px-2 py-1.5 rounded text-label font-medium ${notification.type === "success" ? "text-[#00c9a5]" : "text-[#f23645]"}`}
+                  style={{ backgroundColor: notification.type === "success" ? 'rgba(0,201,165,0.1)' : 'rgba(242,54,69,0.1)' }}>
                   {notification.message}
                 </div>
               )}
@@ -243,3 +243,4 @@ function ShoppingBag(props: any) {
     </svg>
   );
 }
+

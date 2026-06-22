@@ -41,7 +41,7 @@ export function NavDrawer({ open, activeTab, onTabChange, onClose }: NavDrawerPr
                 <svg viewBox="0 0 115 100" className="w-5 h-5 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
                   <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-                  <circle cx="98" cy="70" r="10" fill="#089981" />
+                  <circle cx="98" cy="70" r="10" fill="#00c9a5" />
                 </svg>
                 <span className="text-body font-bold tracking-wide" >Quantbit</span>
               </div>
@@ -57,8 +57,8 @@ export function NavDrawer({ open, activeTab, onTabChange, onClose }: NavDrawerPr
                   className="w-full flex items-center gap-3 px-3 py-2 text-body font-medium transition-colors"
                   style={{
                     backgroundColor: activeTab === id ? 'rgba(8,153,129,0.12)' : 'transparent',
-                    color: activeTab === id ? '#089981' : '#787b86',
-                    borderLeft: activeTab === id ? '2px solid #089981' : '2px solid transparent'
+                    color: activeTab === id ? '#00c9a5' : '#787b86',
+                    borderLeft: activeTab === id ? '2px solid #00c9a5' : '2px solid transparent'
                   }}
                 >
                   <Icon className="w-4 h-4 stroke-[1.5]" />

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { STOCKS_DATA } from "./stocksData";
 import { MKT } from "./marketData";
-import type { StockData, AnalysisResult } from "./types";
+import type { StockData } from "./types";
 import { api } from "./services/api";
 import { StockDrawer } from "./components/StockDrawer";
 import { AppSidebar } from "./components/AppSidebar";
@@ -19,7 +19,7 @@ import { EngineConfigProvider } from "./contexts/EngineConfigContext";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
-import { AICockpit } from "./components/AICockpit";
+import { FloatingAIChat } from "./components/FloatingAIChat";
 import { AICockpitProvider } from "./contexts/AICockpitContext";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -33,30 +33,74 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    api.get<{ user: any }>("/api/auth/me").then(d => {
-      if (d.user.data_feed) df.setDataFeed(d.user.data_feed);
-      if (d.user.active_config) ui.setActiveConfig(d.user.active_config);
-    }).catch(() => {});
+    api
+      .get<{ user: any }>("/api/auth/me")
+      .then((d) => {
+        if (d.user.data_feed) df.setDataFeed(d.user.data_feed);
+        if (d.user.active_config) ui.setActiveConfig(d.user.active_config);
+      })
+      .catch(() => {});
   }, [user]);
 
   useEffect(() => {
     if (!user || !pm.isDbLoaded) return;
-    api.patch("/api/user/profile", { cash: pm.cash, theme: ui.theme, dataFeed: df.dataFeed, activeConfig: ui.activeConfig }).catch(() => {});
+    api
+      .patch("/api/user/profile", {
+        cash: pm.cash,
+        theme: ui.theme,
+        dataFeed: df.dataFeed,
+        activeConfig: ui.activeConfig,
+      })
+      .catch(() => {});
   }, [ui.theme, df.dataFeed, ui.activeConfig, pm.cash]);
 
   const activeStock = df.getDynamicStock(ui.selectedTicker) || STOCKS_DATA[0];
-  const activeReport = pm.cachedReports[activeStock.ticker] || null;
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
   const activeUniverseStocks = STOCKS_DATA;
-  const filteredStocks = activeUniverseStocks.filter(s => {
+  const filteredStocks = activeUniverseStocks.filter((s) => {
     const q = ui.searchQuery.toLowerCase();
-    return s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.sector.toLowerCase().includes(q);
-  }).map(s => df.getDynamicStock(s.ticker));
+    return (
+      s.ticker.toLowerCase().includes(q) ||
+      s.name.toLowerCase().includes(q) ||
+      s.sector.toLowerCase().includes(q)
+    );
+  }).map((s) => df.getDynamicStock(s.ticker));
 
-  const handleGenerateAIReport = (customFocus?: string) => pm.handleGenerateAIReport(activeStock, customFocus);
+  const handleSearchSubmit = (q: string) => {
+    const query = q.toLowerCase().trim();
+    if (!query) return;
+    const tabMatch: Record<string, string> = {
+      backtest: "backtest",
+      portfolio: "portfolio",
+      market: "market",
+      analitik: "analytics",
+    };
+    if (tabMatch[query]) {
+      ui.setActiveTab(tabMatch[query]);
+      ui.setSearchQuery("");
+      return;
+    }
+    const stock = STOCKS_DATA.find((s) => {
+      const t = s.ticker.toLowerCase();
+      const n = s.name.toLowerCase();
+      return t === query || t.includes(query) || n.includes(query);
+    });
+    if (stock) {
+      ui.handleSelectTicker(stock.ticker);
+      ui.setIsDrawerOpen(true);
+      ui.setSearchQuery("");
+    }
+  };
 
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0d0d0d', color: '#e0e0e0' }}>Loading...</div>;
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0d0d0d", color: "#e0e0e0" }}
+      >
+        Loading...
+      </div>
+    );
   }
 
   if (!user) {
@@ -64,8 +108,11 @@ export default function App() {
   }
 
   return (
-    <div id="applet-main-canvas" data-theme={ui.theme} className="min-h-screen font-sans antialiased flex flex-col">
-
+    <div
+      id="applet-main-canvas"
+      data-theme={ui.theme}
+      className="min-h-screen font-sans antialiased flex flex-col"
+    >
       <AnimatePresence>
         {ui.appNotification && (
           <motion.div
@@ -73,16 +120,25 @@ export default function App() {
             animate={{ opacity: 1, y: 20, x: "-50%" }}
             exit={{ opacity: 0, y: -20, x: "-50%" }}
             className={`fixed top-4 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 ${
-              ui.appNotification.type === "success" ? "bg-emerald-600 border-emerald-400 text-black" :
-              ui.appNotification.type === "error" ? "bg-rose-600 border-rose-400 text-white" :
-              "bg-blue-600 border-blue-400 text-white"
+              ui.appNotification.type === "success"
+                ? "bg-emerald-600 border-emerald-400 text-black"
+                : ui.appNotification.type === "error"
+                ? "bg-rose-600 border-rose-4 text-white"
+                : "bg-blue-600 border-blue-4 text-white"
             }`}
           >
-            <div className={`w-2 h-2 rounded-full animate-pulse ${
-              ui.appNotification.type === "success" ? "bg-black" : "bg-white"
-            }`} />
-            <span className="text-sm font-black uppercase tracking-tight">{ui.appNotification.message}</span>
-            <button onClick={() => ui.setAppNotification(null)} className="ml-2 hover:opacity-50">
+            <div
+              className={`w-2 h-2 rounded-full animate-pulse ${
+                ui.appNotification.type === "success" ? "bg-black" : "bg-white"
+              }`}
+            />
+            <span className="text-sm font-black uppercase tracking-tight">
+              {ui.appNotification.message}
+            </span>
+            <button
+              onClick={() => ui.setAppNotification(null)}
+              className="ml-2 hover:opacity-50"
+            >
               <X className="w-4 h-4" />
             </button>
           </motion.div>
@@ -106,156 +162,147 @@ export default function App() {
           setMobileMenuOpen={ui.setIsMobileMenuOpen}
           setDataFeed={df.setDataFeed}
           logout={logout}
+          searchQuery={ui.searchQuery}
+          onSearchChange={ui.setSearchQuery}
+          onSearchSubmit={handleSearchSubmit}
         />
-
         <EngineConfigProvider>
-        <AICockpitProvider>
-        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
+          <AICockpitProvider>
+            <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
+              <AppSidebar
+                activeTab={ui.activeTab}
+                isMobileMenuOpen={ui.isMobileMenuOpen}
+                onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
+                cash={pm.cash}
+                goldShares={pm.getEmasShares()}
+                tradeLogs={pm.tradeLogs}
+                portfolio={pm.portfolio}
+                onDeposit={pm.handleDepositCash}
+                onWithdraw={pm.handleWithdrawCash}
+                onMoveToGold={pm.handleMoveToGold}
+                onSellGold={pm.handleSellGoldToCashInput}
+                onClearPortfolio={pm.handleClearPortfolio}
+                getDynamicStock={df.getDynamicStock}
+              />
 
-          <AppSidebar
-            activeTab={ui.activeTab}
-            isMobileMenuOpen={ui.isMobileMenuOpen}
-            onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
-            cash={pm.cash}
-            goldShares={pm.getEmasShares()}
-            tradeLogs={pm.tradeLogs}
-            portfolio={pm.portfolio}
-            onDeposit={pm.handleDepositCash}
-            onWithdraw={pm.handleWithdrawCash}
-            onMoveToGold={pm.handleMoveToGold}
-            onSellGold={pm.handleSellGoldToCashInput}
-            onClearPortfolio={pm.handleClearPortfolio}
-            getDynamicStock={df.getDynamicStock}
-          />
-
-          <main id="main-workspace" className="flex-1 overflow-visible md:overflow-y-auto flex flex-col px-3">
-
-          <div className="space-y-2 flex-1 flex flex-col w-full h-full">
-
-            <AlertBanner
-              isIHSGInCrisis={isIHSGInCrisis}
-              hideAlertBanner={ui.hideAlertBanner}
-              portfolio={pm.portfolio}
-              onDismiss={() => ui.setHideAlertBanner(true)}
-              onGoToLedger={() => {
-                ui.setActiveTab("portfolio");
-                setTimeout(() => {
-                  const element = document.getElementById("tab-ledger");
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                }, 50);
-              }}
-            />
-
-            <AnimatePresence mode="wait">
-
-              {ui.activeTab === "market" && (
-                <motion.div
-                  key="market"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <MarketTab
-                    onSelectTicker={ui.handleSelectTicker}
-                    onChangeActiveTicker={ui.handleChangeActiveTicker}
-                    activeStock={activeStock}
-                    portfolio={pm.portfolio}
-                    watchlist={pm.watchlist}
-                    onAddTransaction={pm.handleAddTransaction}
-                    onRemoveTransaction={pm.handleRemoveTransaction}
-                    onSellTransaction={pm.handleSellTransaction}
-                    onToggleWatchlist={pm.handleToggleWatchlist}
-                    getDynamicStock={df.getDynamicStock}
-                  />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "portfolio" && (
-                <motion.div
-                  key="portfolio"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <PortfolioTracker
-                    portfolio={pm.portfolio}
-                    watchlist={pm.watchlist}
-                    onAddTransaction={pm.handleAddTransaction}
-                    onRemoveTransaction={pm.handleRemoveTransaction}
-                    onSellTransaction={pm.handleSellTransaction}
-                    onSelectStock={ui.handleSelectTicker}
-                    onToggleWatchlist={pm.handleToggleWatchlist}
-                    getDynamicStock={df.getDynamicStock}
-                    activeConfig={ui.activeConfig}
-                    cash={pm.cash}
-                    setCash={pm.setCash}
-                    tradeLogs={pm.tradeLogs}
-                    setTradeLogs={pm.customSetTradeLogs}
-                  />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "backtest" && (
-                <motion.div
-                  key="backtest"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <SimulationTab
-                    portfolio={pm.portfolio}
-                    onAddTransaction={pm.handleAddTransaction}
-                    onRemoveTransaction={pm.handleRemoveTransaction}
-                    onSellTransaction={pm.handleSellTransaction}
-                    onSelectTicker={ui.handleSelectTicker}
-                    getDynamicStock={df.getDynamicStock}
-                    activeConfig={ui.activeConfig}
-                  />
-                </motion.div>
-              )}
-
-              {ui.activeTab === "analytics" && (
-                <motion.div
-                  key="analytics"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <AnalyticsTab
-                    activeConfig={ui.activeConfig}
-                    onSelectTicker={ui.handleSelectTicker}
-                    portfolio={pm.portfolio}
-                    watchlist={pm.watchlist}
-                    getDynamicStock={df.getDynamicStock}
+              <main
+                id="main-workspace"
+                className="flex-1 overflow-visible md:overflow-y-auto flex flex-col px-2"
+              >
+                <div className="space-y-2 flex-1 flex flex-col w-full h-full">
+                  <AlertBanner
                     isIHSGInCrisis={isIHSGInCrisis}
+                    hideAlertBanner={ui.hideAlertBanner}
+                    portfolio={pm.portfolio}
+                    onDismiss={() => ui.setHideAlertBanner(true)}
+                    onGoToLedger={() => {
+                      ui.setActiveTab("portfolio");
+                      setTimeout(() => {
+                        const element = document.getElementById("tab-ledger");
+                        if (element) element.scrollIntoView({ behavior: "smooth" });
+                      }, 50);
+                    }}
                   />
-                </motion.div>
-              )}
+                  <AnimatePresence mode="wait">
+                    {ui.activeTab === "market" && (
+                      <motion.div
+                        key="market"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-1 flex flex-col"
+                      >
+                        <MarketTab
+                          onSelectTicker={ui.handleSelectTicker}
+                          onChangeActiveTicker={ui.handleChangeActiveTicker}
+                          activeStock={activeStock}
+                          portfolio={pm.portfolio}
+                          watchlist={pm.watchlist}
+                          onAddTransaction={pm.handleAddTransaction}
+                          onRemoveTransaction={pm.handleRemoveTransaction}
+                          onSellTransaction={pm.handleSellTransaction}
+                          onToggleWatchlist={pm.handleToggleWatchlist}
+                          getDynamicStock={df.getDynamicStock}
+                          filteredStocks={filteredStocks}
+                        />
+                      </motion.div>
+                    )}
 
-            </AnimatePresence>
-          </div>
-        </main>
+                    {ui.activeTab === "portfolio" && (
+                      <motion.div
+                        key="portfolio"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <PortfolioTracker
+                          portfolio={pm.portfolio}
+                          watchlist={pm.watchlist}
+                          onAddTransaction={pm.handleAddTransaction}
+                          onRemoveTransaction={pm.handleRemoveTransaction}
+                          onSellTransaction={pm.handleSellTransaction}
+                          onSelectStock={ui.handleSelectTicker}
+                          onToggleWatchlist={pm.handleToggleWatchlist}
+                          getDynamicStock={df.getDynamicStock}
+                          activeConfig={ui.activeConfig}
+                          cash={pm.cash}
+                          setCash={pm.setCash}
+                          tradeLogs={pm.tradeLogs}
+                          setTradeLogs={pm.customSetTradeLogs}
+                        />
+                      </motion.div>
+                    )}
 
-        {/* AI Cockpit — rail kanan (TradingView-style 3rd column). Aditif:
-            hanya tampil di layar xl+; AI lama tetap utuh di layar kecil. */}
-        <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-white/[0.06] p-3 overflow-hidden">
-          <AICockpit
-            selectedStock={activeStock}
-            portfolio={pm.portfolio}
-            cash={pm.cash}
-          />
-        </aside>
+                    {ui.activeTab === "backtest" && (
+                      <motion.div
+                        key="backtest"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-1 flex flex-col"
+                      >
+                        <SimulationTab
+                          portfolio={pm.portfolio}
+                          onAddTransaction={pm.handleAddTransaction}
+                          onRemoveTransaction={pm.handleRemoveTransaction}
+                          onSellTransaction={pm.handleSellTransaction}
+                          onSelectTicker={ui.handleSelectTicker}
+                          getDynamicStock={df.getDynamicStock}
+                          activeConfig={ui.activeConfig}
+                        />
+                      </motion.div>
+                    )}
 
-      </div>
-      </AICockpitProvider>
-      </EngineConfigProvider>
-
+                    {ui.activeTab === "analytics" && (
+                      <motion.div
+                        key="analytics"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-1 flex flex-col"
+                      >
+                        <AnalyticsTab
+                          activeConfig={ui.activeConfig}
+                          onSelectTicker={ui.handleSelectTicker}
+                          portfolio={pm.portfolio}
+                          watchlist={pm.watchlist}
+                          getDynamicStock={df.getDynamicStock}
+                          isIHSGInCrisis={isIHSGInCrisis}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </main>
+            </div>
+          
+<FloatingAIChat />
+</AICockpitProvider>
+        </EngineConfigProvider>
       </BacktestProvider>
 
       <StockDrawer
@@ -268,17 +315,14 @@ export default function App() {
         onTabChange={ui.setDrawerTab}
         drawerLots={ui.drawerLots}
         onLotsChange={ui.setDrawerLots}
-        onBuy={pm.handleAddTransaction}
-        onSell={pm.handleSellTransaction}
-        onRemove={pm.handleRemoveTransaction}
+        onBuy={(ticker, shares, price) =>
+          pm.handleAddTransaction(ticker, shares, price)
+        }
+        onSell={(ticker, shares) => pm.handleSellTransaction(ticker, shares)}
+        onRemove={(ticker) => pm.handleRemoveTransaction(ticker)}
         onToggleWatchlist={pm.handleToggleWatchlist}
-        onGenerateReport={handleGenerateAIReport}
-        isGenerating={pm.isGenerating}
-        generationError={pm.generationError}
-        activeReport={activeReport}
         chartTheme={ui.getChartTheme()}
       />
-
     </div>
   );
 }

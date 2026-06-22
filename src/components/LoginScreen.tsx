@@ -46,10 +46,10 @@ export function LoginScreen() {
           <svg viewBox="0 0 115 100" className="w-16 h-16 mb-4" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="48" cy="45" r="28" stroke="#d1d4dc" strokeWidth="16" />
             <path d="M 61 58 L 81 78" stroke="#d1d4dc" strokeWidth="16" strokeLinecap="square" />
-            <circle cx="98" cy="70" r="10" fill="#089981" />
+            <circle cx="98" cy="70" r="10" fill="#00c9a5" />
           </svg>
           <h1 className="text-xl font-bold tracking-wider text-[#d1d4dc]">
-            QUANT<span className="text-[#089981]">BIT</span>
+            QUANT<span className="text-[#00c9a5]">BIT</span>
           </h1>
           <p className="text-xs text-[#787b86] mt-2">{isLogin ? 'Sign in to continue' : 'Create an account'}</p>
         </div>
@@ -101,7 +101,7 @@ export function LoginScreen() {
             type="submit"
             disabled={loading}
             className="w-full rounded py-2.5 text-xs font-medium transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: '#089981', color: '#fff' }}
+            style={{ backgroundColor: '#00c9a5', color: '#fff' }}
           >
             {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
           </button>
@@ -124,7 +124,7 @@ export function LoginScreen() {
               type="button"
               onClick={() => { setIsLogin(!isLogin); setError(null); }}
               className="font-medium transition-colors hover:underline"
-              style={{ color: '#089981' }}
+              style={{ color: '#00c9a5' }}
             >
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>

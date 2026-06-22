@@ -76,7 +76,7 @@ const STOCK_FACTORS: Record<string, [number, number, number, number]> = {
 
 const TICKER_COLORS: Record<string, string> = {
   BBCA: "#3b82f6", // Royal Blue
-  BBRI: "#06b6d4", // Cyan
+  BBRI: "#00c9a5",
   BMRI: "#6366f1", // Indigo
   TLKM: "#f43f5e", // Rose Red
   ASII: "#94a3b8", // Slate Gray
@@ -298,7 +298,7 @@ export function SimulationTab({
   getDynamicStock,
   theme,
   activeConfig = "prod",
-  defaultSubTab = "past",
+  defaultSubTab = "algo",
   hideTabs = false
 }: SimulationTabProps) {
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
@@ -605,7 +605,7 @@ export function SimulationTab({
       const BUY_FEE = 0.0015; // 0.15%
       const SELL_FEE = 0.0025; // 0.25%
       const TAX = 0.0010; // 0.10%
-      const SLIPPAGE = 0.0075; // 0.75% slippage on entry and exit prices (Impact cost due to low liquidity / algos)
+      const SLIPPAGE = 0.0025; // 0.25% slippage on entry and exit prices (Impact cost due to low liquidity / algos)
       
       let initialTop: string[] = [];
       if (bt.simulationMode === "algo") {
@@ -623,31 +623,32 @@ export function SimulationTab({
       // Track pending tickers that couldn't be bought on day0 (pre-IPO, no data)
       const pendingTickers: { ticker: string; capital: number }[] = [];
 
+      // Calculate per-stock allocation once before loop (fixes sequential cash depletion)
+      const perStockAlloc = initialInvestable / initialTop.length;
+      let day0Spent = 0;
       initialTop.forEach((ticker) => {
         const rawPrice = day0.stockPrices[ticker];
 
         if (ticker === "GOTO" && day0.date < "2022-04-11") {
-          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          pendingTickers.push({ ticker, capital: perStockAlloc });
           return;
         }
         
         if (ticker === "AMMN" && day0.date < "2023-07-07") {
-          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          pendingTickers.push({ ticker, capital: perStockAlloc });
           return;
         }
         
         if (!rawPrice || rawPrice <= 0) {
-          pendingTickers.push({ ticker, capital: cash / initialTop.length });
+          pendingTickers.push({ ticker, capital: perStockAlloc });
           return;
         }
         
         const entryPrice = rawPrice * (1 + SLIPPAGE);
         const costPerShareWithFee = entryPrice * (1 + BUY_FEE);
         
-        const allocationPerStock = cash / initialTop.length;
-        
         // 1 LOT = 100 SHARES constraint & Liquidity constraint max 5% daily volume
-        let maxLots = Math.floor(allocationPerStock / (costPerShareWithFee * 100));
+        let maxLots = Math.floor(perStockAlloc / (costPerShareWithFee * 100));
         let sharesToBuy = maxLots * 100;
         
         const day0Any = day0 as any;
@@ -661,6 +662,7 @@ export function SimulationTab({
           positions[ticker] = sharesToBuy;
           const costSpent = sharesToBuy * costPerShareWithFee;
           cash -= costSpent;
+          day0Spent += costSpent;
           totalTransactionVolume += sharesToBuy * entryPrice;
         }
       });
@@ -682,8 +684,8 @@ export function SimulationTab({
       let totalSwaps = 0;
       let totalDividendsEarned = 0;
       
-      let singleStockPeak = day0.stockPrices[bt.simTicker] || 1000;
       let singleStockTrough = day0.stockPrices[bt.simTicker] || 1000;
+      let singlePriceWindow: number[] = [day0.stockPrices[bt.simTicker] || 1000];
       
       let lastJulyYear = 2019; // Track annual ex-date dividends
       
@@ -788,9 +790,10 @@ export function SimulationTab({
             // Condition A: Sharp Drop from peak
             const fastCrash = ihsgPctDrop <= -bt.crashSensitivity;
             
-            // Condition B: Long-term Slow/Grinding Bear Market (catches the 2024-2026 slow decline)
-            // Triggers when IHSG is consistently below its 50-day average by a safe margin and the short-term trend is bearish (SMA20 < SMA50)
-            const slowGrind = day.ihsgPrice < sma50 * 0.975 && sma20 < sma50 * 0.99;
+            // Condition B: Slow grind — threshold derived from crashSensitivity
+            const grindPriceRatio = 1 - (bt.crashSensitivity * 0.5 / 100);
+            const grindSmaRatio = 1 - (bt.crashSensitivity * 0.2 / 100);
+            const slowGrind = day.ihsgPrice < sma50 * grindPriceRatio && sma20 < sma50 * grindSmaRatio;
             
             if (fastCrash || slowGrind) {
               crashSignaled = true;
@@ -803,11 +806,14 @@ export function SimulationTab({
           } else {
             if (!inCrashState) {
               const currentStockPrice = day.stockPrices[bt.simTicker] || 100;
-              singleStockPeak = Math.max(singleStockPeak, currentStockPrice);
-              const dropFromPeak = ((currentStockPrice - singleStockPeak) / singleStockPeak) * 100;
+              // Use trailing 20-day high instead of all-time peak
+              singlePriceWindow.push(currentStockPrice);
+              if (singlePriceWindow.length > 20) singlePriceWindow.shift();
+              const trailingHigh = Math.max(...singlePriceWindow);
+              const dropFromPeak = ((currentStockPrice - trailingHigh) / trailingHigh) * 100;
               if (dropFromPeak <= -bt.singleSellTrigger) {
                 crashSignaled = true;
-                crashReason = `Saham #${bt.simTicker} turun ${Math.abs(dropFromPeak).toFixed(1)}% dari puncak sejak beli`;
+                crashReason = `Saham #${bt.simTicker} turun ${Math.abs(dropFromPeak).toFixed(1)}% dari puncak 20 hari`;
               }
             }
           }
@@ -815,9 +821,12 @@ export function SimulationTab({
 
         if (crashSignaled && !inCrashState && crashCooldown <= 0) {
           inCrashState = true;
-          if (bt.simulationMode === "single") singleStockTrough = day.stockPrices[bt.simTicker] || 100;
+          if (bt.simulationMode === "single") {
+            singleStockTrough = day.stockPrices[bt.simTicker] || 100;
+            singlePriceWindow = [singleStockTrough];
+          }
           
-          // Liquidate holdings with exit charges and 0.05% slippage
+          // Liquidate holdings with exit charges and slippage
           let liquidationProceeds = 0;
           Object.entries(positions).forEach(([ticker, shares]) => {
             const rawPrice = day.stockPrices[ticker] || 100;
@@ -830,14 +839,14 @@ export function SimulationTab({
           cash += liquidationProceeds;
 
           if (bt.safeHavenAsset === "emas") {
-            // Buy gold with 2% buy-spread premium
-            const goldBuyPrice = day.goldPrice * 1.02;
+            // Buy gold with 1% buy-spread premium
+            const goldBuyPrice = day.goldPrice * 1.01;
             goldGrams = cash / goldBuyPrice;
             cash = 0;
             logs.push({
               date: day.date,
               type: "CRASH_TRIGGER",
-              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem mengamankan aset: Likuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett dan memindahkan dana ke Emas Fisik (${goldGrams.toFixed(2)} gram) dengan 2% spread.`
+              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem mengamankan aset: Likuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett dan memindahkan dana ke Emas Fisik (${goldGrams.toFixed(2)} gram) dengan 1% spread.`
             });
           } else {
             logs.push({
@@ -857,22 +866,20 @@ export function SimulationTab({
           if (bt.simulationMode === "algo") {
             const window20 = rawData.slice(Math.max(0, stepIndex - 20), stepIndex + 1);
             const sma20 = window20.reduce((sum, d) => sum + d.ihsgPrice, 0) / window20.length;
-            const window50 = rawData.slice(Math.max(0, stepIndex - 50), stepIndex + 1);
-            const sma50 = window50.reduce((sum, d) => sum + d.ihsgPrice, 0) / window50.length;
             
             const ihsgPrev = rawData[Math.max(0, stepIndex - 5)].ihsgPrice;
             const ihsg5dReturn = ((day.ihsgPrice - ihsgPrev) / ihsgPrev) * 100;
 
-            // Trend & momentum recovery: require robust crossing above MA20 and solid stabilization, or a strong bounce clearing MA20
-            const trendRecovery = day.ihsgPrice > sma20 && sma20 > sma50 * 0.998;
-            const momentumRecovery = ihsg5dReturn >= 3.5 && day.ihsgPrice > sma20;
+            // Recovery: IHSG crossing above SMA20 is sufficient to confirm trend reversal
+            const trendRecovery = day.ihsgPrice > sma20;
+            const momentumRecovery = ihsg5dReturn >= 2.5 && day.ihsgPrice > sma20;
 
             if (trendRecovery || momentumRecovery) {
               recoverySignaled = true;
               if (trendRecovery) {
                 recoveryReason = "Trend bullish kembali terkonfirmasi (IHSG melampaui MA20)";
               } else {
-                recoveryReason = `Rebound kuat terdeteksi (+${ihsg5dReturn.toFixed(1)}% dlm 5 hari)`;
+                recoveryReason = `Rebound terdeteksi (+${ihsg5dReturn.toFixed(1)}% dlm 5 hari)`;
               }
             }
           } else {
@@ -883,17 +890,17 @@ export function SimulationTab({
             if (riseFromTrough >= bt.singleBuyTrigger) {
               recoverySignaled = true;
               recoveryReason = `Saham #${bt.simTicker} naik ${riseFromTrough.toFixed(1)}% dari dasar`;
-              singleStockPeak = currentStockPrice;
+              singlePriceWindow = [currentStockPrice];
             }
           }
 
           if (recoverySignaled) {
             inCrashState = false;
             
-            // Sell gold back with 2% sell penalty spread
+            // Sell gold back with 1% sell penalty spread
             let recoveryCash = cash;
             if (goldGrams > 0) {
-              const goldSellPrice = day.goldPrice * 0.98;
+              const goldSellPrice = day.goldPrice * 0.99;
               recoveryCash += goldGrams * goldSellPrice;
               goldGrams = 0;
             }
@@ -1228,14 +1235,6 @@ export function SimulationTab({
         {!hideTabs && (
           <div className="flex bg-[#050505] p-1 border border-white/[0.05] rounded-xl self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto">
             <button
-              onClick={() => setActiveSubTab("past")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
-                activeSubTab === "past" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
-              }`}
-            >
-              <Coins className="w-3.5 h-3.5" /> Simulasi
-            </button>
-            <button
               onClick={() => {
                 setActiveSubTab("algo");
                 if (!bt.backtestResult) {
@@ -1247,6 +1246,14 @@ export function SimulationTab({
               }`}
             >
               <Briefcase className="w-3.5 h-3.5" /> Backtester
+            </button>
+            <button
+              onClick={() => setActiveSubTab("past")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
+                activeSubTab === "past" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
+              }`}
+            >
+              <Coins className="w-3.5 h-3.5" /> Simulasi
             </button>
           </div>
         )}
@@ -1489,13 +1496,13 @@ export function SimulationTab({
           <div className="flex items-center gap-2 pb-2">
             <button onClick={() => bt.triggerBacktest()}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors"
-              style={{ backgroundColor: 'rgba(8,153,129,0.12)', color: '#089981' }}>
+              style={{ backgroundColor: 'rgba(0,201,165,0.12)', color: '#00c9a5' }}>
               <Award className="w-3 h-3" />
               Parameter Backtest
             </button>
             <button onClick={handleRunAlgoBacktest} disabled={bt.isBacktesting}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#089981', color: '#fff' }}>
+              style={{ backgroundColor: '#00c9a5', color: '#fff' }}>
               {bt.isBacktesting ? "Running..." : "Jalankan"}
             </button>
             <span className="text-label font-mono font-medium uppercase tracking-wider" style={{ color: '#5d6080' }}>

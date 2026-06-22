@@ -1,12 +1,11 @@
-import { motion, AnimatePresence } from "motion/react";
+﻿import { motion, AnimatePresence } from "motion/react";
 import {
   X, Plus, Minus, Trash2, Bookmark, BookmarkCheck,
   LineChart, BookOpen, Sparkles, Coins
 } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
-import { DataSourcesRow } from "./SourceBadge";
 import { HistoricalChart } from "./HistoricalChart";
-import { DeepReport } from "./DeepReport";
+import { ExplainButton } from "./ExplainButton";
 import { ForwardDividendsForecast } from "./ForwardDividendsForecast";
 import type { StockData, PortfolioItem, WatchlistItem, AnalysisResult } from "../types";
 
@@ -24,17 +23,12 @@ interface StockDrawerProps {
   onSell: (ticker: string, shares: number) => void;
   onRemove: (ticker: string) => void;
   onToggleWatchlist: (ticker: string) => void;
-  onGenerateReport: (customFocus?: string) => Promise<void>;
-  isGenerating: boolean;
-  generationError: string | null;
-  activeReport: AnalysisResult | null;
   chartTheme: "dark" | "light";
 }
 
 const DRAWER_TABS = [
   { id: "chart" as const, icon: LineChart, label: "Chart" },
   { id: "sheets" as const, icon: BookOpen, label: "Financials" },
-  { id: "gemini-ai" as const, icon: Sparkles, label: "AI Intel" },
   { id: "forecast" as const, icon: Coins, label: "Dividend" },
 ];
 
@@ -52,10 +46,6 @@ export function StockDrawer({
   onSell,
   onRemove,
   onToggleWatchlist,
-  onGenerateReport,
-  isGenerating,
-  generationError,
-  activeReport,
   chartTheme,
 }: StockDrawerProps) {
   const inPorto = portfolio.find(p => p.ticker === activeStock.ticker);
@@ -91,7 +81,6 @@ export function StockDrawer({
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-label text-white/30 uppercase">{activeStock.sector}</span>
-                      <DataSourcesRow dataSources={activeStock.dataSources} />
                     </div>
                   </div>
                 </div>
@@ -161,6 +150,7 @@ export function StockDrawer({
                 >
                   {watchlist.some(w => w.ticker === activeStock.ticker) ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
                 </button>
+                <ExplainButton label={`AI analysis untuk ${activeStock.ticker}`} />
               </div>
 
               <div className="flex border-b border-white/[0.04]">
@@ -247,23 +237,6 @@ export function StockDrawer({
                     </motion.div>
                   )}
 
-                  {drawerTab === "gemini-ai" && (
-                    <motion.div
-                      key="drawer-gemini-ai"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <DeepReport
-                        stock={activeStock}
-                        report={activeReport}
-                        onGenerateReport={onGenerateReport}
-                        isGenerating={isGenerating}
-                        error={generationError}
-                      />
-                    </motion.div>
-                  )}
-
                   {drawerTab === "forecast" && (
                     <motion.div
                       key="drawer-forecast"
@@ -295,3 +268,4 @@ export function StockDrawer({
     </AnimatePresence>
   );
 }
+
