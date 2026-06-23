@@ -1,10 +1,30 @@
 {
   "last_update": "2026-06-23",
-  "market_last_update": "2026-06-23 17:00:00 WIB",
-  "ihsg": { "value": 6101, "daily": -0.26, "weekly": 1.55, "monthly": 3.65 },
-  "usdidr": { "value": 17840, "daily": 0.26, "weekly": 0.33, "monthly": -0.45 },
-  "gold": { "value": 2376240, "daily": -0.67, "weekly": -1.02, "monthly": 2.14 },
-  "oil": { "value": 88, "daily": -3.68, "weekly": -5.0, "monthly": -10.3 },
+  "market_last_update": "2026-06-23T10:10:45.480Z",
+  "ihsg": {
+    "value": 6101,
+    "daily": 0.0,
+    "weekly": 0,
+    "monthly": 0
+  },
+  "usdidr": {
+    "value": 17840,
+    "daily": 0.0,
+    "weekly": 0,
+    "monthly": 0
+  },
+  "gold": {
+    "value": 2371593,
+    "daily": -0.2,
+    "weekly": 0,
+    "monthly": 0
+  },
+  "oil": {
+    "value": 88,
+    "daily": 0,
+    "weekly": 0,
+    "monthly": 0
+  },
   "stock_prices": {
     "BBCA": 6125,
     "BBRI": 2910,

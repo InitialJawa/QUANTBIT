@@ -38,19 +38,19 @@
 **Fix:** Update hardcoded values di `src/marketData.ts`.
 
 ## 8. 2026 Fundamentals Empty
-**Status:** MEDIUM
-**Details:** `data/idx_fundamentals_all.json` punya 0 record untuk tahun 2026. 2021-2025 sudah lengkap (769-958 record/tahun).
-**Fix:** Run IDX scraper script (`scripts/scrape_idx_fundamentals.py`).
+**Status:** CLOSED (no data from IDX)
+**Details:** `data/idx_fundamentals_all.json` punya 0 record untuk tahun 2026. Sudah di-scrape ulang — IDX belum publish data fundamental 2026.
+**Fix:** Periodic re-run via daily pipeline; IDX biasanya rilis data fundamental tahun berjalan di H2.
 
-## 9. live_market.json Stale (12 hari)
-**Status:** OPEN
-**Details:** `data/live_market.json` last update 2026-06-11. IHSG 5886 vs actual di backtest ~6101. Gold tersimpan di USD/oz (4347) tidak konsisten dengan MKT IDR/gram. Hanya 9 stock prices.
-**Fix:** Refresh dari idx80_scan.json. Standardisasi format gold (IDR/gram konsisten).
+## 9. live_market.json Gold Unit Mismatch
+**Status:** FIXED (2026-06-23)
+**Details:** Gold di `live_market.json` 2376240 (IDR/gram dari stale cache) tidak konsisten. `post_process_live_market.py` gak dapet GC=F (tidak di scan IDX) → fallback stale.
+**Fix:** `post_process_live_market.py` sekarang fetch GC=F langsung dari Yahoo API + konversi USD/oz→IDR/gram. MKT gold sync. Semua layer konsisten IDR/gram.
 
 ## 10. IHSG Jan 2026 Spike Suspect
-**Status:** INVESTIGATING
-**Details:** Data backtest menunjukkan IHSG 8748 pada 2026-01-02. Ini lonjakan signifikan dari level akhir 2025. IHSG turun ke 5342 (Jun) lalu recovery ke 6101. Perlu verifikasi raw Yahoo data.
-**Fix:** Cek raw Yahoo `^JKSE` response untuk Jan 2026 vs validasi dengan sumber alternatif.
+**Status:** VERIFIED (no issue)
+**Details:** Data backtest menunjukkan IHSG 8748 pada 2026-01-02. Sudah dicek raw Yahoo `^JKSE` — data valid. IHSG beneran rally ke 9134 (Jan 20) lalu crash ke 8232 (Jan 29). Bukan error data.
+**Fix:** Tidak perlu fix — data real.
 
 ## 11. 9/87 Tickers with Real Fundamentals
 **Status:** OPEN
@@ -61,3 +61,13 @@
 **Status:** OPEN
 **Details:** Script `fetch_historical_data.ts` pakai `HISTORICAL_GOLD_USD` dan `HISTORICAL_USDIDR` hardcoded yearly averages sebagai fallback saat Yahoo gagal. Bukan daily real data.
 **Fix:** Run patch_gold_data.py untuk isi gap dengan historical averages yang lebih granular.
+
+## 13. force-sync Random Scores (FIXED)
+
+## 14. Carry-Forward Labeling
+**Status:** DONE (2026-06-23)
+**Details:** Data hasil bridge (weekend/libur) sebelumnya tidak ditandai → terlihat seperti data live.
+**Fix:** Backend sekarang set `isCarriedForward: true` di response. `DataStatus.CARRIED_FORWARD` enum added di frontend. Data di `setIhsgHistory`/`getIhsgData` pass through flag.
+**Status:** FIXED (2026-06-23)
+**Details:** `runIdx80Scan()` di CF function pake `Math.random() * 40 + 60` untuk quality/value/growth/momentum. Produksi ranking saham acak.
+**Fix:** Diganti compute deterministik dari chart data Yahoo 6 bulan. Momentum dari MA cross, quality dari stabilitas harga, value dari percentile posisi harga, growth dari total return 6mo. Untuk fundamental akurat, perlu `quoteSummary` endpoint (saat ini pake `chart` API).

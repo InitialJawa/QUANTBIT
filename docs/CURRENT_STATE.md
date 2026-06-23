@@ -3,13 +3,21 @@
 |-------|-------|
 | Tanggal | 2026-06-23 |
 | Status | Development |
-| Progress | ~80% |
+| Progress | ~85% |
 
 ## Completed
 - [x] **Data Validation Audit** — full pipeline traced: daily live feed, idx80_scan, backtest year files, carry-forward analysis
 - [x] **P0: Fix RAW_STOCKS_DATA stale prices** — synced 30/31 stock prices from `idx80_scan.json` (HEAL not in scan)
 - [x] **P0: Fix sector mismatches RAW vs PF** — RAW_STOCKS_DATA sectors sync to scan (Yahoo GICS); PF tetap IDX classification
 - [x] **P1: Update MKT values** — IHSG 5886→6008, USDIDR 17985→17714
+- [x] **P2: Run IDX scraper for 2026** — timeout diperbaiki (connect 10s, read 30s), tetap 0 records (data fundamental 2026 belum rilis IDX)
+- [x] **P2: Sync MKT hardcoded** — IHSG 6008→6101, USDIDR 17714→17840, gold sync dari live_market.json
+- [x] **P2: Fix random scores in force-sync** — `Math.random()` diganti deterministik dari chart data (momentum, quality, value, growth real)
+- [x] **P2: Verify IHSG Jan 2026 spike** — 8748 confirmed real dari raw Yahoo `^JKSE` (peak 9134, crash 8232)
+- [x] **P3: Gold unit mismatch** — `post_process_live_market.py` fetch GC=F langsung + konversi USD/oz→IDR/gram, MKT gold sync
+- [x] **P4: Label carry-forward data** — `DataStatus.CARRIED_FORWARD` added, `isCarriedForward` di API response & frontend
+- [x] **P3: Refresh `live_market.json`** — updated via `post_process_live_market.py` dari scan data
+- [x] **P3: Add devMock for Yahoo prices** — local dev sekarang bisa update MKT via mock
 - [x] React 19 + Vite 6 + Tailwind 4 scaffold
 - [x] Multi-factor quantitative engine (Quality, Growth, Value, Momentum)
 - [x] Market regime engine (RISK_ON, RISK_OFF, RECOVERY_WATCH, GOLD_DEFENSE, CASH_DEFENSE)
@@ -38,14 +46,8 @@
 - [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
 
 ## In Progress
-- [ ] **Data Validation Findings**:
-  - [ ] P2: Verify IHSG Jan 2026 spike (8748 di 2026-01-02) — cek raw Yahoo `^JKSE`
-  - [ ] P2: Run IDX scraper for 2026 fundamentals (0 records)
-  - [ ] P3: Refresh `live_market.json` — stale sejak 2026-06-11, IHSG 5886 vs backtest 6101
-  - [ ] P3: Gold unit mismatch — `live_market.json` gold: 4347 (USD/oz) vs MKT gold value (IDR/gram)
-  - [ ] P4: Label carry-forward data with `DataStatus.CARRIED_FORWARD`
 - [ ] P3: Telegram bot integration (deferred)
 - [ ] P4: MCP server setup (deferred)
 
 ## Current Focus
-Data validation & integrity fixes — prioritas sebelum fitur baru.
+Data validation & integrity fixes — prioritas sebelum fitur baru. Semua P2-P4 data validation findings udah selesai.

@@ -42,12 +42,12 @@ export interface RegimeOutput {
   };
 }
 
-let _lastIhsgData: { close: number; date: string }[] = [];
+let _lastIhsgData: { close: number; date: string; isCarriedForward?: boolean }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeConfig: "prod" | "res" = "prod";
 let _crashSensitivity = 10;
 
-export function setIhsgHistory(data: { close: number; date: string }[]) {
+export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
   _lastIhsgData = data;
 }
 
@@ -63,7 +63,7 @@ export function setCrashSensitivity(n: number) {
   _crashSensitivity = n;
 }
 
-export function getIhsgData(): { close: number; date: string }[] {
+export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {
   return _lastIhsgData;
 }
 

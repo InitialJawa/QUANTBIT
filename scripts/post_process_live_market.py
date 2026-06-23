@@ -53,9 +53,23 @@ def main():
     if existing_live:
         usdidr_prev = existing_live.get("usdidr", {}).get("value")
 
-    # --- Gold from GC=F ticker ---
+    # --- Gold from GC=F ticker (USD/oz, convert to IDR/gram) ---
     gold_ticker = stock_map.get("GC", {}) or stock_map.get("GC=F", {})
-    gold_price = gold_ticker.get("currentPrice", 2376240)
+    gold_usd_per_oz = gold_ticker.get("currentPrice", None)
+    if gold_usd_per_oz is None:
+        try:
+            import urllib.request
+            gurl = "https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?range=1d&interval=1d"
+            gresp = urllib.request.urlopen(urllib.request.Request(gurl, headers={"User-Agent": "Mozilla/5.0"}), timeout=10)
+            gdata = json.loads(gresp.read())
+            gmeta = gdata.get("chart", {}).get("result", [{}])[0].get("meta", {})
+            gold_usd_per_oz = gmeta.get("regularMarketPrice", None)
+        except Exception as e:
+            print(f"  Warning: could not fetch gold from Yahoo: {e}")
+    if gold_usd_per_oz is not None:
+        gold_price = round((gold_usd_per_oz * usdidr_price) / 31.1035)
+    else:
+        gold_price = existing_live.get("gold", {}).get("value", 2493304) if existing_live else 2493304
     gold_prev = None
     if existing_live:
         gold_prev = existing_live.get("gold", {}).get("value")

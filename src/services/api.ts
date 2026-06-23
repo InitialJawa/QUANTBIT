@@ -35,9 +35,42 @@ function devMock(path: string, options: RequestInit): any {
   }
   if (path === "/api/ai/chat") {
     return {
-      content: "🔌 AI belum aktif di mode dev lokal. AI live butuh Cloudflare Functions + GEMINI_API_KEY (atau GROQ/OPENROUTER). Jalankan via `npm start` setelah build, atau deploy ke Pages.",
+      content: "📊 Mode dev lokal — data dari file statis. Untuk live data, deploy ke Cloudflare Pages atau jalankan Express server.",
       provider: "dev-mock",
     };
+  }
+  if (path === "/api/yahoo/live-prices") {
+    return {
+      success: true,
+      prices: {
+        "IHSG": { close: 6101, change: -15.89, pct: -0.26 },
+        "USDIDR": { close: 17840, change: 46.38, pct: 0.26 },
+        "GOLD": { close: 4135, change: -8.28, pct: -0.2 },
+        "BBCA": { close: 6125, change: 25, pct: 0.41 },
+        "BBRI": { close: 2910, change: -10, pct: -0.34 },
+        "BMRI": { close: 4120, change: 20, pct: 0.49 },
+        "TLKM": { close: 2540, change: -15, pct: -0.59 },
+        "ASII": { close: 4680, change: 30, pct: 0.64 },
+        "ADRO": { close: 2290, change: -5, pct: -0.22 },
+        "PTBA": { close: 2480, change: 10, pct: 0.40 },
+        "ESSA": { close: 660, change: 0, pct: 0 },
+        "GOTO": { close: 50, change: -2, pct: -3.85 },
+      },
+      source: "Dev Mock",
+    };
+  }
+  if (path === "/api/fundamentals") {
+    return { success: true, data: [], count: 0 };
+  }
+  if (path === "/api/engine/idx80") {
+    const stocks = [
+      { ticker: "BBCA.JK", quality: 82, growth: 65, value: 45, momentum: 72, currentPrice: 6125, changePercent: 0.41, peRatio: 18.5, pbRatio: 2.8, marketCap: 1200000 },
+      { ticker: "BBRI.JK", quality: 75, growth: 55, value: 50, momentum: 68, currentPrice: 2910, changePercent: -0.34, peRatio: 12.3, pbRatio: 1.5, marketCap: 850000 },
+      { ticker: "BMRI.JK", quality: 78, growth: 60, value: 48, momentum: 70, currentPrice: 4120, changePercent: 0.49, peRatio: 14.1, pbRatio: 1.8, marketCap: 920000 },
+      { ticker: "TLKM.JK", quality: 70, growth: 35, value: 55, momentum: 40, currentPrice: 2540, changePercent: -0.59, peRatio: 15.2, pbRatio: 2.1, marketCap: 650000 },
+      { ticker: "ASII.JK", quality: 68, growth: 40, value: 52, momentum: 55, currentPrice: 4680, changePercent: 0.64, peRatio: 10.8, pbRatio: 1.2, marketCap: 580000 },
+    ];
+    return { success: true, stocks, lastUpdated: new Date().toISOString() };
   }
   throw new Error("No dev mock for " + path);
 }

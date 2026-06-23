@@ -318,6 +318,7 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
         stockPrices: day.stockAdjPrices, stockAdjPrices: day.stockAdjPrices,
         stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
         stockRanksProd: day.stockRanksProd, stockRanksRes: day.stockRanksRes,
+        isCarriedForward: day.isCarriedForward || false,
       }));
       const weights = configType === "prod"
         ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
@@ -645,6 +646,47 @@ async function handleYahooPrices(env: Env): Promise<Response> {
 
 // ── IDX80 Scanner ──────────────────────────────────────────
 
+function computeMomentum(closes: number[]): number {
+  const valid = closes.filter(c => typeof c === "number" && c > 0);
+  if (valid.length < 5) return 50;
+  const recent = valid.slice(-5);
+  const older = valid.slice(0, Math.min(15, valid.length - 5));
+  const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+  if (olderAvg === 0) return 50;
+  const pctDiff = ((recentAvg - olderAvg) / olderAvg) * 100;
+  return Math.min(100, Math.max(1, Math.round(50 + pctDiff * 7)));
+}
+
+function computeQualityFromStats(closes: number[], volume: number[]): number {
+  const validCloses = closes.filter(c => typeof c === "number" && c > 0);
+  if (validCloses.length < 10) return 50;
+  const sorted = [...validCloses].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const latest = validCloses[validCloses.length - 1];
+  const stability = 1 - Math.abs(latest - median) / median;
+  return Math.min(100, Math.max(1, Math.round(50 + stability * 30)));
+}
+
+function computeValue(closes: number[]): number {
+  const valid = closes.filter(c => typeof c === "number" && c > 0);
+  if (valid.length < 5) return 50;
+  const maxP = Math.max(...valid);
+  const minP = Math.min(...valid);
+  const current = valid[valid.length - 1];
+  const percentile = maxP !== minP ? (current - minP) / (maxP - minP) : 0.5;
+  return Math.min(100, Math.max(1, Math.round((1 - percentile) * 60 + 20)));
+}
+
+function computeGrowth(closes: number[]): number {
+  const valid = closes.filter(c => typeof c === "number" && c > 0);
+  if (valid.length < 20) return 50;
+  const first = valid[0];
+  const last = valid[valid.length - 1];
+  const totalReturn = first > 0 ? ((last - first) / first) * 100 : 0;
+  return Math.min(100, Math.max(1, Math.round(50 + totalReturn * 2)));
+}
+
 async function runIdx80Scan(env: Env): Promise<any[]> {
   const tickers = [
     "ADRO.JK", "AKRA.JK", "AMRT.JK", "ANTM.JK", "ARTO.JK", "ASII.JK", "ASRI.JK",
@@ -670,13 +712,17 @@ async function runIdx80Scan(env: Env): Promise<any[]> {
       if (!ticker) break;
       try {
         const qResp = await fetch(
-          `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=6mo&interval=1wk`,
           { headers: { "User-Agent": "Mozilla/5.0" } }
         );
         if (!qResp.ok) continue;
         const qData: any = await qResp.json();
-        const meta = qData?.chart?.result?.[0]?.meta;
+        const result = qData?.chart?.result?.[0];
+        const meta = result?.meta;
         if (!meta) continue;
+
+        const closes: number[] = result?.indicators?.quote?.[0]?.close || [];
+        const volumes: number[] = result?.indicators?.quote?.[0]?.volume || [];
 
         const symbol = (meta.symbol || ticker).replace(".JK", "");
         results.push({
@@ -686,10 +732,10 @@ async function runIdx80Scan(env: Env): Promise<any[]> {
             ? ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100 : 0,
           lastUpdated: new Date().toISOString(),
           companyName: symbol,
-          quality: Math.random() * 40 + 60,
-          value: Math.random() * 40 + 60,
-          growth: Math.random() * 40 + 60,
-          momentum: Math.random() * 40 + 60,
+          quality: computeQualityFromStats(closes, volumes),
+          value: computeValue(closes),
+          growth: computeGrowth(closes),
+          momentum: computeMomentum(closes),
         });
       } catch { /* skip ticker */ }
     }
@@ -722,7 +768,7 @@ function bridgeHistoricalData(rawData: any[]): any[] {
     const dow = curr.getDay();
     if (dow !== 0 && dow !== 6) {
       const ds = curr.toISOString().slice(0, 10);
-      if (ds <= todayStr) bridged.push({ ...last, date: ds });
+      if (ds <= todayStr) bridged.push({ ...last, date: ds, isCarriedForward: true });
     }
     curr.setDate(curr.getDate() + 1);
   }

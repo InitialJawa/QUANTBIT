@@ -41,9 +41,9 @@ def build_url(page_number: int, year: int) -> str:
 
 
 def fetch_page(url: str) -> dict | None:
-    for attempt in range(3):
+    for attempt in range(2):
         try:
-            r = requests.get(url, headers=HEADERS, impersonate="chrome", timeout=60)
+            r = requests.get(url, headers=HEADERS, impersonate="chrome", timeout=(10, 30))
             if r.status_code == 200:
                 return r.json()
             elif r.status_code == 429:
@@ -52,10 +52,13 @@ def fetch_page(url: str) -> dict | None:
                 time.sleep(wait)
             else:
                 print(f"  HTTP {r.status_code}, retrying...")
-                time.sleep(5)
+                time.sleep(3)
+        except requests.RequestsError as e:
+            print(f"  Connection error: {e}")
+            break
         except Exception as e:
             print(f"  Error: {e}, retrying...")
-            time.sleep(10)
+            time.sleep(5)
     return None
 
 

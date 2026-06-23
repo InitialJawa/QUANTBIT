@@ -56,3 +56,23 @@
 - ⚠️ 2026 fundamentals: 0 records
 - ⚠️ 78/87 ticker pakai hash fallback untuk fundamental
 **Docs updated:** CURRENT_STATE, ACTIVE_TASK, NEXT_ACTION, KNOWN_ISSUES
+
+## 2026-06-23 — IDX Scraper + force-sync Fix + Local Dev Mock
+**Masalah:**
+- IDX scraper timeout 60s bikin stuck di "Scraping..."
+- MKT hardcoded IHSG 6008 padahal live 6101
+- Local dev (`npm run dev`) gak bisa update MKT karena `/api/yahoo/live-prices` gak di-proxy → silent error
+- `runIdx80Scan()` di CF function pake `Math.random()` — ranking saham acak di production
+
+**Fix:**
+1. IDX scraper: timeout dipisah (connect 10s, read 30s), retry 3→2
+2. MKT hardcoded: sync ke `live_market.json` (IHSG 6101, USDIDR 17840, gold 2376240)
+3. devMock: tambah handler `/api/yahoo/live-prices`, `/api/fundamentals`, `/api/engine/idx80`
+4. `runIdx80Scan()`: ganti `Math.random()` dengan compute deterministik dari chart data 6 bulan:
+   - `computeMomentum()` — MA cross (recent 5wk vs older)
+   - `computeQualityFromStats()` — stabilitas harga vs median
+   - `computeValue()` — percentile posisi di rentang 6mo
+   - `computeGrowth()` — total return 6mo
+5. Range chart: `1mo&interval=1d` → `6mo&interval=1wk` untuk data lebih akurat
+
+**Docs updated:** CURRENT_STATE, ACTIVE_TASK, NEXT_ACTION, KNOWN_ISSUES

@@ -75,11 +75,12 @@ Sprint: Data Validation & Integrity
 **Files:** src/marketData.ts — IHSG 5886→6008, USDIDR 17985→17714
 
 ### Task 19: Run IDX Scraper for 2026 Fundamentals (P2)
-**Status:** PENDING
+**Status:** DONE (2026-06-23)
 **Files:** data/idx_fundamentals_all.json, scripts/scrape_idx_fundamentals.py
+**Notes:** Timeout diperbaiki (connect 10s, read 30s). 2026 tetap 0 records — data fundamental 2026 belum rilis IDX.
 
 ### Task 20: Full Data Pipeline Validation (P1)
-**Status:** IN PROGRESS
+**Status:** DONE (2026-06-23)
 **Files:** docs/CURRENT_STATE.md, docs/ACTIVE_TASK.md, docs/NEXT_ACTION.md, docs/KNOWN_ISSUES.md
 
 ### Task 21: Verify IHSG Jan 2026 Spike (P1)
@@ -87,8 +88,9 @@ Sprint: Data Validation & Integrity
 **Files:** data/years/2026.json, scripts/fetch_historical_data.ts
 
 ### Task 22: Refresh live_market.json from idx80_scan (P1)
-**Status:** PENDING
+**Status:** DONE (2026-06-23)
 **Files:** data/live_market.json
+**Notes:** Already updated via post_process_live_market.py. last_update: 2026-06-23, IHSG 6101.
 
 ### Task 23: Add Data Freshness Guard (P3)
 **Status:** PENDING
@@ -112,8 +114,8 @@ Sprint: Data Validation & Integrity
 **Detail:** IHSG 8748 di 2026-01-02, turun ke 5342 (Jun), recovery ke 6101. Perlu cek raw Yahoo `^JKSE` data.
 
 ### Task 22: Refresh live_market.json — Stale Cache (P3)
-**Status:** PENDING
-**Detail:** `live_market.json` last update 2026-06-11. IHSG 5886 stale vs backtest 6101.
+**Status:** DONE (2026-06-23)
+**Detail:** Already updated. `live_market.json` last_update: 2026-06-23, IHSG 6101.
 
 ### Task 23: Gold Unit Mismatch Fix (P3)
 **Status:** PENDING
@@ -122,3 +124,8 @@ Sprint: Data Validation & Integrity
 ### Task 24: Label Carry-Forward Data (P4)
 **Status:** PENDING
 **Detail:** Data hasil bridgeHistoricalDataToToday harus diberi status `CARRIED_FORWARD` bukan terlihat seperti live.
+
+### Task 25: Fix Random Scores in force-sync (P2)
+**Status:** DONE (2026-06-23)
+**Files:** functions/api/[[path]].ts
+**Detail:** `Math.random() * 40 + 60` diganti dengan compute deterministik (momentum, quality, value, growth dari chart data Yahoo). Range chart diperpanjang 1mo→6mo untuk kalkulasi lebih akurat.

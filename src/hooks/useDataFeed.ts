@@ -47,7 +47,7 @@ export function useDataFeed() {
       api.get<{ success: boolean; data: any[] }>("/api/backtest-data")
         .then(apiRes => {
           if (apiRes.success && Array.isArray(apiRes.data)) {
-            setIhsgHistory(apiRes.data.map((d: any) => ({ close: d.ihsgPrice, date: d.date })));
+            setIhsgHistory(apiRes.data.map((d: any) => ({ close: d.ihsgPrice, date: d.date, isCarriedForward: d.isCarriedForward || false })));
           }
           refreshRSFromRegime();
         })
