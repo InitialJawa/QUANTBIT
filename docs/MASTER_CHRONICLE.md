@@ -76,3 +76,16 @@
 5. Range chart: `1mo&interval=1d` → `6mo&interval=1wk` untuk data lebih akurat
 
 **Docs updated:** CURRENT_STATE, ACTIVE_TASK, NEXT_ACTION, KNOWN_ISSUES
+
+## 2026-06-23 — CI/CD Pipeline Auto-Aktif + Fix Deploy Strategy
+**Masalah:** Workflow `daily-data-pipeline.yml` belum pernah jalan otomatis. Secrets CF tidak diset, step `fetch_historical_data.ts` bakal fail (rate limit Yahoo 93 request), `scrape_idx_fundamentals.py` terlalu berat (27 tahun scraping).
+
+**Fix:**
+1. Ganti strategi deploy dari `wrangler-action` (butuh CF API token) → **git push + CF Pages auto-build** (no extra secrets needed)
+2. `fetch_historical_data.ts` → jadi manual-trigger-only via `workflow_dispatch.inputs.run_fetch`
+3. `scrape_idx_fundamentals.py` → jadi manual-trigger-only via `workflow_dispatch.inputs.run_fundamentals`
+4. Daily pipeline cuma: `post_process_live_market.py` → `npm run build` (verify) → `git commit && git push`
+5. `[skip ci]` di commit message biar gak infinite loop
+6. Permissions: `contents: write` untuk push ke main
+
+**Docs updated:** CURRENT_STATE, NEXT_ACTION, KNOWN_ISSUES, MASTER_CHRONICLE

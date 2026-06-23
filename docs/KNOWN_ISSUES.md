@@ -64,7 +64,17 @@
 
 ## 13. force-sync Random Scores (FIXED)
 
-## 14. Carry-Forward Labeling
+## 14. Carry-Forward Labeling (FIXED)
+
+## 15. Daily Data Pipeline Belum Pernah Jalan
+**Status:** FIXED (2026-06-23)
+**Details:** Workflow `daily-data-pipeline.yml` ditambah di commit 00538d8 tapi belum pernah triggered. Penyebab: secrets CF tidak diset, step `fetch_historical_data.ts` bakal fail (rate limit Yahoo), dan `scrape_idx_fundamentals.py` terlalu berat buat daily CI.
+**Fix:** 
+- Hapus `fetch_historical_data.ts` dari daily pipeline (jadi manual-trigger-only via `workflow_dispatch`)
+- Hapus `scrape_idx_fundamentals.py` dari daily pipeline (manual-trigger-only)
+- Ganti strategi deploy: commit & push ke main → CF Pages auto-build dari git (no CF secrets needed)
+- `post_process_live_market.py` tetep jalan tiap hari buat update gold price
+- `[skip ci]` di commit message biar gak infinite loop
 **Status:** DONE (2026-06-23)
 **Details:** Data hasil bridge (weekend/libur) sebelumnya tidak ditandai → terlihat seperti data live.
 **Fix:** Backend sekarang set `isCarriedForward: true` di response. `DataStatus.CARRIED_FORWARD` enum added di frontend. Data di `setIhsgHistory`/`getIhsgData` pass through flag.

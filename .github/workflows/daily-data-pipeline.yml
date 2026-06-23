@@ -4,6 +4,17 @@ on:
   schedule:
     - cron: '0 14 * * 1-5'
   workflow_dispatch:
+    inputs:
+      run_fetch:
+        description: 'Full historical data fetch (Yahoo, 93 tickers)'
+        required: false
+        default: false
+        type: boolean
+      run_fundamentals:
+        description: 'Scrape IDX fundamentals (27 years)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: daily-pipeline
@@ -12,8 +23,12 @@ concurrency:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -28,24 +43,31 @@ jobs:
 
       - run: pip install curl-cffi
 
-      - name: Fetch historical market data (Yahoo Finance)
-        run: npx tsx scripts/fetch_historical_data.ts
-        timeout-minutes: 30
-
-      - name: Scrape IDX fundamentals
-        run: python scripts/scrape_idx_fundamentals.py
-        timeout-minutes: 15
-
-      - name: Generate live_market.json from scan data
+      - name: Generate live_market.json
         run: python scripts/post_process_live_market.py
         timeout-minutes: 5
 
-      - name: Build SQLite DB + split data + Vite build + CF deploy artifacts
+      - name: Scrape IDX fundamentals (manual only)
+        if: inputs.run_fundamentals
+        run: python scripts/scrape_idx_fundamentals.py
+        timeout-minutes: 30
+
+      - name: Fetch historical data (manual only)
+        if: inputs.run_fetch
+        run: npx tsx scripts/fetch_historical_data.ts
+        timeout-minutes: 30
+
+      - name: Build (verify)
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=quantbit-terminal
+      - name: Commit & push updated data
+        run: |
+          git config user.name "QuantBot"
+          git config user.email "bot@quantbit.app"
+          git add data/live_market.json data/idx_fundamentals_all.json data/regime_history.json data/years/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: daily data update [skip ci]"
+            git push
+          fi

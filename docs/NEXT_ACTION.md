@@ -21,9 +21,21 @@
 - **IHSG Jan 2026 spike verified** — 8748 confirmed real dari raw Yahoo data (peak 9134, crash 8232)
 - **Gold unit mismatch fixed** — `post_process_live_market.py` sekarang fetch GC=F langsung + konversi USD/oz→IDR/gram
 - **Carry-forward labeled** — `DataStatus.CARRIED_FORWARD` added, bridged data ditandai `isCarriedForward` di API response
+- **CI/CD Pipeline fixed** — workflow di-refactor: fetch_historical_data & scrape fundamentals jadi manual-trigger-only, daily pipeline cuma jalankan `post_process_live_market.py` → build → commit & push ke main (CF Pages auto-deploy dari git)
 
 ## Setelah Selesai
 1. Update CURRENT_STATE.md ✅
 2. Update ACTIVE_TASK.md ✅
 3. Update KNOWN_ISSUES.md ✅
 4. Buat handover baru
+
+## Priority Queue
+### P2 — CI/CD & Data Pipeline
+- **Trigger manual pertama** — jalankan workflow via `workflow_dispatch` untuk verifikasi semua step OK
+- **Pantau schedule run** — cek besok jam 21:00 WIB workflow jalan otomatis
+- **CF Pages build config** — verify build command di dashboard CF sesuai (`npm ci && npm run build`)
+
+### P3 — Backtest Integrity
+- Jakarta holiday calendar-aware gap detection (current: all weekdays bridged)
+
+### P4 — Telegram Bot / MCP Server (Deferred)

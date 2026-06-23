@@ -44,10 +44,11 @@
 - [x] **Market Tab Charts** — new "Charts" sub-tab with IHSM+Gold indexed chart + SMA20/SMA50 overlay + regime indicator panel; removed "All Stocks" sub-tab
 - [x] **Sidebar Market Enhancements** — expanded berita (no max-height, all items), added Top Movers section (2-col gainers/losers with RSI coloring + histogram bars), added Technical Stats section (RSI, MACD histogram, SMA20, SMA50, market breadth, score gap)
 - [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
+- [x] **CI/CD Pipeline auto-aktif** — fix workflow: hapus bootstrap scripts (fetch_historical_data, scrape fundamentals) dari daily run, ganti strategi deploy via git push + CF Pages auto-build, setup conditional manual trigger
 
 ## In Progress
 - [ ] P3: Telegram bot integration (deferred)
 - [ ] P4: MCP server setup (deferred)
 
 ## Current Focus
-Data validation & integrity fixes — prioritas sebelum fitur baru. Semua P2-P4 data validation findings udah selesai.
+CI/CD pipeline automation — daily data update live_market.json otomatis tiap jam 21:00 WIB.
