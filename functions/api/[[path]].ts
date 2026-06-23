@@ -495,22 +495,49 @@ async function chatGemini(system: string, messages: ChatMsg[], key: string): Pro
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: { role: "user", parts: [{ text: system }] },
-      }),
+  const body = JSON.stringify({
+    contents,
+    systemInstruction: { role: "user", parts: [{ text: system }] },
+  });
+  let lastErr: Error | null = null;
+
+  // Try 1: REST endpoint (primary)
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body }
+    );
+    if (resp.ok) {
+      const data: any = await resp.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+      lastErr = new Error("Gemini returned empty response");
+    } else {
+      lastErr = new Error(`Gemini ${resp.status}: ${await resp.text()}`);
     }
-  );
-  if (!resp.ok) throw new Error(`Gemini ${resp.status}: ${await resp.text()}`);
-  const data: any = await resp.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Gemini returned empty response");
-  return text;
+  } catch (e: any) { lastErr = e; }
+
+  // Try 2: OpenAI-compatible endpoint (uses Bearer token, different code path
+  // that may work from some edge locations where the REST endpoint is blocked)
+  if (lastErr) {
+    const oaiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+    try {
+      const resp = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model: "gemini-2.5-flash", messages: [{ role: "system", content: system }, ...oaiMessages] }),
+        }
+      );
+      if (resp.ok) {
+        const data: any = await resp.json();
+        const text = data?.choices?.[0]?.message?.content;
+        if (text) return text;
+      }
+    } catch { /* lastErr already set from try 1 */ }
+  }
+  throw lastErr || new Error("Gemini all endpoints failed");
 }
 
 // OpenAI-compatible caller (Groq & OpenRouter share this shape).
@@ -550,40 +577,63 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
 
     const system = buildSystemPrompt(body.context);
     const errors: string[] = [];
+    const tryProvider = async (name: string, fn: () => Promise<string>): Promise<string | null> => {
+      try { return await fn(); } catch (e: any) { errors.push(`${name}: ${e.message}`); return null; }
+    };
 
-    // 1) Gemini (primary)
-    if (env.GEMINI_API_KEY) {
-      try {
-        const content = await chatGemini(system, messages, env.GEMINI_API_KEY);
-        return json({ content, provider: "gemini" });
-      } catch (e: any) { errors.push(`gemini: ${e.message}`); }
-    }
-    // 2) Groq (fallback)
-    if (env.GROQ_API_KEY) {
-      try {
-        const content = await chatOpenAICompatible(
-          "https://api.groq.com/openai/v1/chat/completions",
-          "llama-3.3-70b-versatile",
-          env.GROQ_API_KEY, system, messages
-        );
-        return json({ content, provider: "groq" });
-      } catch (e: any) { errors.push(`groq: ${e.message}`); }
-    }
-    // 3) OpenRouter (last resort)
+    // Weighted provider order: prefer OpenRouter (bypasses Gemini geo-restriction),
+    // then Gemini direct, then Groq.
+    // Providers that need no extra key or have better edge availability rank higher.
+    const providers: { name: string; key: string | undefined; run: () => Promise<string> }[] = [];
+
+    // 1) OpenRouter → Gemini 2.0 Flash (best geo availability, free tier)
     if (env.OPENROUTER_API_KEY) {
-      try {
-        const content = await chatOpenAICompatible(
+      providers.push({
+        name: "openrouter", key: env.OPENROUTER_API_KEY,
+        run: () => chatOpenAICompatible(
           "https://openrouter.ai/api/v1/chat/completions",
           "google/gemini-2.0-flash-exp:free",
-          env.OPENROUTER_API_KEY, system, messages,
+          env.OPENROUTER_API_KEY!, system, messages,
           { "HTTP-Referer": "https://quantbit.pages.dev", "X-Title": "Quantbit" }
-        );
-        return json({ content, provider: "openrouter" });
-      } catch (e: any) { errors.push(`openrouter: ${e.message}`); }
+        ),
+      });
+    }
+    // 2) Groq (Llama 3.3 — fast, no geo restriction)
+    if (env.GROQ_API_KEY) {
+      providers.push({
+        name: "groq", key: env.GROQ_API_KEY,
+        run: () => chatOpenAICompatible(
+          "https://api.groq.com/openai/v1/chat/completions",
+          "llama-3.3-70b-versatile",
+          env.GROQ_API_KEY!, system, messages
+        ),
+      });
+    }
+    // 3) Gemini direct (primary if no OpenRouter/Groq, but often geo-restricted from CF edge)
+    if (env.GEMINI_API_KEY) {
+      providers.push({
+        name: "gemini", key: env.GEMINI_API_KEY,
+        run: () => chatGemini(system, messages, env.GEMINI_API_KEY!),
+      });
     }
 
-    const reason = errors.length ? errors.join(" | ") : "No AI provider configured (set GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY)";
-    return json({ content: `Maaf, AI sedang tidak tersedia. (${reason})`, provider: "none" }, 200);
+    for (const p of providers) {
+      const content = await tryProvider(p.name, p.run);
+      if (content) return json({ content, provider: p.name });
+    }
+
+    const reason = errors.length ? errors.join(" | ") : "No AI provider configured (set GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY di Cloudflare dashboard)";
+    return json({
+      content: `Maaf, AI sedang tidak tersedia. Penyebab: Gemini API tidak mendukung lokasi server Cloudflare. 
+
+**Solusi:** Tambah API key alternatif di Cloudflare Dashboard → \`quantbit-terminal\` → Settings → Environment Variables:
+
+- **OPENROUTER_API_KEY** (rekomendasi) — daftar gratis di https://openrouter.ai/keys, lalu create key. Ini akan proxy ke Gemini tanpa kendala lokasi.
+- **GROQ_API_KEY** — daftar gratis di https://console.groq.com/keys, model \`llama-3.3-70b-versatile\`.
+
+Setelah key ditambah, AI akan otomatis pakai provider yang tersedia. (${reason})`,
+      provider: "none"
+    }, 200);
   } catch (e: any) {
     return json({ content: `Maaf, terjadi kendala: ${e.message}`, provider: "error" }, 200);
   }
