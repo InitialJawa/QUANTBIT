@@ -141,7 +141,7 @@ export function AppSidebar({
                 <span>{news.portal}</span>
                 <span>{news.time}</span>
               </div>
-              <h4 className="text-caption text-secondary group-hover:text-primary leading-snug line-clamp-2 mt-0">
+              <h4 className="text-caption text-muted-foreground group-hover:text-primary leading-snug line-clamp-2 mt-0">
                 {news.title}
               </h4>
             </a>
