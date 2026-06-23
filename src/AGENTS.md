@@ -29,7 +29,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/hooks/` — Custom React hooks
 - `src/ai/` — AI client and system knowledge
 - `src/engine/` — Sync engine
-- `src/data/` — Data fetching (Yahoo, Kaggle)
+- `src/data/` — Data fetching (Yahoo Finance)
 - `src/services/` — API client
 - `src/server/` — Express API handlers
 - `src/utils/` — Utility functions

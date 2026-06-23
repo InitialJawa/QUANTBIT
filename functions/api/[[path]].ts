@@ -586,13 +586,13 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
     // Providers that need no extra key or have better edge availability rank higher.
     const providers: { name: string; key: string | undefined; run: () => Promise<string> }[] = [];
 
-    // 1) OpenRouter → Gemini 2.0 Flash (best geo availability, free tier)
+    // 1) OpenRouter → free model (bypasses Gemini geo-restriction)
     if (env.OPENROUTER_API_KEY) {
       providers.push({
         name: "openrouter", key: env.OPENROUTER_API_KEY,
         run: () => chatOpenAICompatible(
           "https://openrouter.ai/api/v1/chat/completions",
-          "google/gemini-2.0-flash-exp:free",
+          "qwen/qwen3-next-80b-a3b-instruct:free",
           env.OPENROUTER_API_KEY!, system, messages,
           { "HTTP-Referer": "https://quantbit.pages.dev", "X-Title": "Quantbit" }
         ),
