@@ -84,7 +84,7 @@ export function AlertBanner({
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 80, scale: 0.95 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-6 right-6 z-[100] w-[340px]"
+          className="fixed top-6 right-6 z-[100] w-[340px]"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
