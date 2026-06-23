@@ -370,8 +370,16 @@ export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod
       };
     }
 
-    // No scan data and not in L — skip this stock
-    return null;
+    // No scan data and not in L — assign neutral score so stock still visible
+    return {
+      rank: String(idx + 1),
+      ticker: normTicker + ".JK",
+      quality: "50.00",
+      growth: "50.00",
+      value: "50.00",
+      momentum: "50.00",
+      final_score: "50",
+    };
   }).filter(Boolean);
 
   const computeScore = (stock: typeof L[0]) => {
