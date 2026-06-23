@@ -1,0 +1,51 @@
+name: Daily Data Pipeline
+
+on:
+  schedule:
+    - cron: '0 14 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: npm ci
+
+      - run: pip install curl-cffi
+
+      - name: Fetch historical market data (Yahoo Finance)
+        run: npx tsx scripts/fetch_historical_data.ts
+        timeout-minutes: 30
+
+      - name: Scrape IDX fundamentals
+        run: python scripts/scrape_idx_fundamentals.py
+        timeout-minutes: 15
+
+      - name: Generate live_market.json from scan data
+        run: python scripts/post_process_live_market.py
+        timeout-minutes: 5
+
+      - name: Build SQLite DB + split data + Vite build + CF deploy artifacts
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=quantbit-terminal
