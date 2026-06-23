@@ -45,3 +45,14 @@
 - Synced 30/31 stock prices from `idx80_scan.json` scan data (HEAL not in scan — kept as-is)
 - RAW_STOCKS_DATA sectors sync ke scan (Yahoo GICS classification)
 - MKT.ihsg 5886→6008, MKT.usdidr 17985→17714
+
+## 2026-06-23 — Full Data Pipeline Validation
+**Masalah:** Belum ada audit komprehensif validasi data harian dan backtest.
+**Temuan:**
+- ✅ Backtest 2000-2026: 27 tahun data lengkap, carry-forward rendah (6%)
+- ✅ idx80_scan.json: fresh 2026-06-23, 87 stocks real data
+- ⚠️ live_market.json: stale 12 hari, gold unit mismatch
+- ⚠️ IHSG Jan 2026 spike 8748 — perlu verifikasi
+- ⚠️ 2026 fundamentals: 0 records
+- ⚠️ 78/87 ticker pakai hash fallback untuk fundamental
+**Docs updated:** CURRENT_STATE, ACTIVE_TASK, NEXT_ACTION, KNOWN_ISSUES

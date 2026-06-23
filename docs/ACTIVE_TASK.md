@@ -1,6 +1,6 @@
 # ACTIVE TASK
 ## Current Sprint
-Sprint: UI Overhaul & Cleanup
+Sprint: Data Validation & Integrity
 
 ### Task 1: Initialize DOX + Context Persistence
 **Status:** DONE
@@ -77,3 +77,48 @@ Sprint: UI Overhaul & Cleanup
 ### Task 19: Run IDX Scraper for 2026 Fundamentals (P2)
 **Status:** PENDING
 **Files:** data/idx_fundamentals_all.json, scripts/scrape_idx_fundamentals.py
+
+### Task 20: Full Data Pipeline Validation (P1)
+**Status:** IN PROGRESS
+**Files:** docs/CURRENT_STATE.md, docs/ACTIVE_TASK.md, docs/NEXT_ACTION.md, docs/KNOWN_ISSUES.md
+
+### Task 21: Verify IHSG Jan 2026 Spike (P1)
+**Status:** PENDING
+**Files:** data/years/2026.json, scripts/fetch_historical_data.ts
+
+### Task 22: Refresh live_market.json from idx80_scan (P1)
+**Status:** PENDING
+**Files:** data/live_market.json
+
+### Task 23: Add Data Freshness Guard (P3)
+**Status:** PENDING
+**Files:** src/hooks/useDataFeed.ts, src/marketData.ts
+
+### Task 24: Label Carry-Forward with DataStatus (P3)
+**Status:** PENDING
+**Files:** src/stocksData.ts, src/types/DataStatus.ts
+
+### Task 20: Data Validation Audit — Full Pipeline Trace
+**Status:** DONE (2026-06-23)
+**Findings:**
+- `idx80_scan.json` — VALID, fresh 2026-06-23, 87 stocks from Yahoo
+- Backtest year files (2000-2026) — VALID, 27 years complete
+- Stock prices konsisten antara backtest dan scan
+- Carry-forward ratio rendah (6% di 2026)
+- See `docs/AUDIT_DATA_SINTETIS.md` + `docs/DATA_AUDIT_NOTES.md` for full report
+
+### Task 21: Verify IHSG Jan 2026 Spike (P2)
+**Status:** PENDING
+**Detail:** IHSG 8748 di 2026-01-02, turun ke 5342 (Jun), recovery ke 6101. Perlu cek raw Yahoo `^JKSE` data.
+
+### Task 22: Refresh live_market.json — Stale Cache (P3)
+**Status:** PENDING
+**Detail:** `live_market.json` last update 2026-06-11. IHSG 5886 stale vs backtest 6101.
+
+### Task 23: Gold Unit Mismatch Fix (P3)
+**Status:** PENDING
+**Detail:** `live_market.json` gold: 4347 (USD/oz) tapi MKT gold value pakai IDR/gram. Perlu rekonsiliasi satuan.
+
+### Task 24: Label Carry-Forward Data (P4)
+**Status:** PENDING
+**Detail:** Data hasil bridgeHistoricalDataToToday harus diberi status `CARRIED_FORWARD` bukan terlihat seperti live.

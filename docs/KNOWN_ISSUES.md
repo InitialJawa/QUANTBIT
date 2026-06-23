@@ -41,3 +41,23 @@
 **Status:** MEDIUM
 **Details:** `data/idx_fundamentals_all.json` punya 0 record untuk tahun 2026. 2021-2025 sudah lengkap (769-958 record/tahun).
 **Fix:** Run IDX scraper script (`scripts/scrape_idx_fundamentals.py`).
+
+## 9. live_market.json Stale (12 hari)
+**Status:** OPEN
+**Details:** `data/live_market.json` last update 2026-06-11. IHSG 5886 vs actual di backtest ~6101. Gold tersimpan di USD/oz (4347) tidak konsisten dengan MKT IDR/gram. Hanya 9 stock prices.
+**Fix:** Refresh dari idx80_scan.json. Standardisasi format gold (IDR/gram konsisten).
+
+## 10. IHSG Jan 2026 Spike Suspect
+**Status:** INVESTIGATING
+**Details:** Data backtest menunjukkan IHSG 8748 pada 2026-01-02. Ini lonjakan signifikan dari level akhir 2025. IHSG turun ke 5342 (Jun) lalu recovery ke 6101. Perlu verifikasi raw Yahoo data.
+**Fix:** Cek raw Yahoo `^JKSE` response untuk Jan 2026 vs validasi dengan sumber alternatif.
+
+## 11. 9/87 Tickers with Real Fundamentals
+**Status:** OPEN
+**Details:** Hanya 9 ticker (BBCA, BBRI, BMRI, TLKM, ASII, ADRO, PTBA, ESSA, GOTO) punya hardcoded fundamental snapshots. 78 ticker lainnya pakai deterministic hash fallback.
+**Fix:** Tambah hardcoded snapshots dari real data atau integrasi API fundamental (EODHD/Sectors.app).
+
+## 12. Gold/USDIDR Historical Fallback — Yearly Averages
+**Status:** OPEN
+**Details:** Script `fetch_historical_data.ts` pakai `HISTORICAL_GOLD_USD` dan `HISTORICAL_USDIDR` hardcoded yearly averages sebagai fallback saat Yahoo gagal. Bukan daily real data.
+**Fix:** Run patch_gold_data.py untuk isi gap dengan historical averages yang lebih granular.

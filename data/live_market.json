@@ -1,19 +1,19 @@
 {
-  "last_update": "2026-06-11",
-  "market_last_update": "2026-06-11 20:04:16 WIB",
-  "ihsg": { "value": 5886.03, "daily": -0.28, "weekly": 5.21, "monthly": -17.96 },
-  "usdidr": { "value": 17985.0, "daily": -0.26, "weekly": 0.16, "monthly": 2.77 },
-  "gold": { "value": 4347, "daily": 0.05, "weekly": -3.4, "monthly": -4.9 },
+  "last_update": "2026-06-23",
+  "market_last_update": "2026-06-23 17:00:00 WIB",
+  "ihsg": { "value": 6101, "daily": -0.26, "weekly": 1.55, "monthly": 3.65 },
+  "usdidr": { "value": 17840, "daily": 0.26, "weekly": 0.33, "monthly": -0.45 },
+  "gold": { "value": 2376240, "daily": -0.67, "weekly": -1.02, "monthly": 2.14 },
   "oil": { "value": 88, "daily": -3.68, "weekly": -5.0, "monthly": -10.3 },
   "stock_prices": {
-    "BBCA": 5825,
-    "BBRI": 2850,
-    "BMRI": 4250,
-    "TLKM": 2870,
-    "ASII": 4700,
-    "ADRO": 2250,
-    "PTBA": 2630,
-    "ESSA": 605,
+    "BBCA": 6125,
+    "BBRI": 2910,
+    "BMRI": 4120,
+    "TLKM": 2540,
+    "ASII": 4680,
+    "ADRO": 2290,
+    "PTBA": 2480,
+    "ESSA": 660,
     "GOTO": 50
   }
 }
