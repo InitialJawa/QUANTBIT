@@ -109,8 +109,8 @@ export function AlertBanner({
                     onClick={onGoToLedger}
                     className={`text-label font-bold uppercase tracking-widest px-3 py-1 rounded font-sans transition-all cursor-pointer ${
                       isCrash
-                        ? "bg-[#f23645] hover:bg-[#d42d3d] text-white"
-                        : "bg-[#089981] hover:bg-[#077f71] text-white"
+                        ? "bg-[#f23645] hover:bg-[#d42d3d] text-foreground"
+                        : "bg-[#089981] hover:bg-[#077f71] text-foreground"
                     }`}
                   >
                     Buka Ledger

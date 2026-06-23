@@ -43,7 +43,7 @@ export function FloatingWallet({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-[998] bg-black/40"
+              className="fixed inset-0 z-[998] bg-background/40"
               onClick={onToggle}
             />
             <motion.div
@@ -51,17 +51,16 @@ export function FloatingWallet({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="fixed top-0 right-0 z-[999] h-full w-[380px] border-l border-white/10 shadow-2xl overflow-y-auto"
-              style={{ backgroundColor: "#0a0a0a" }}
+              className="fixed top-0 right-0 z-[999] h-full w-[380px] border-l border-foreground-10 shadow-2xl overflow-y-auto bg-card"
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/5" style={{ backgroundColor: "#0a0a0a" }}>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-foreground-5 bg-card">
                 <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-cyan-400" />
                   <h3 className="text-body font-bold text-white">Dompet</h3>
                 </div>
                 <button
                   onClick={onToggle}
-                  className="p-1 hover:bg-white/5 rounded-lg transition-colors cursor-pointer text-white/50 hover:text-white"
+                  className="p-1 hover:bg-foreground-5 rounded-lg transition-colors cursor-pointer text-foreground/50 hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>

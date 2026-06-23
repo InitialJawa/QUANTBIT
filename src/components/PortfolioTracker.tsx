@@ -527,7 +527,7 @@ export function PortfolioTracker({
       {/* Portfolio Tracker Content Layout */}
 
       {portfolioWarnings.length > 0 && (
-        <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+        <div className="bg-muted border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
           <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5 animate-pulse" />
@@ -575,7 +575,7 @@ export function PortfolioTracker({
                   key={item.ticker}
                   className="flex items-center gap-2.5 p-2 bg-rose-500/5 rounded-lg border border-rose-500/10"
                 >
-                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-rose-500/20">
+                  <div className="px-2.5 py-1 bg-foreground-60 text-foreground font-mono font-bold text-caption rounded border border-rose-500/20">
                     {item.ticker}
                   </div>
                   <span className="text-xs text-rose-300 font-semibold">
@@ -591,17 +591,17 @@ export function PortfolioTracker({
       {/* Top Summary Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Card 1: Saldo Kas */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden group">
+        <div className="bg-card bg-card-gradient rounded-2xl border border-foreground-3 p-5 flex items-center justify-between relative overflow-hidden group">
           <div className="flex-1 mr-2 relative z-10">
-            <div className="flex items-center gap-2 mb-2 text-white/40">
+            <div className="flex items-center gap-2 mb-2 text-foreground/40">
               <Wallet className="w-3.5 h-3.5" />
               <span className="text-caption uppercase font-bold tracking-widest block font-sans">
                 Likuiditas Kas (RDI)
               </span>
             </div>
             <div>
-              <h4 className="text-2xl font-black text-white font-mono flex items-baseline gap-2">
-                <span className="text-xs text-white/30 font-semibold uppercase">
+              <h4 className="text-2xl font-black text-foreground font-mono flex items-baseline gap-2">
+                <span className="text-xs text-foreground/30 font-semibold uppercase">
                   IDR
                 </span>
                 {cash.toLocaleString("id-ID")}
@@ -616,53 +616,53 @@ export function PortfolioTracker({
         </div>
 
         {/* Card 2: Total Modal */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-card bg-card-gradient rounded-2xl border border-foreground-3 p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-foreground/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <FileSpreadsheet className="w-3.5 h-3.5" />
               Modal Investasi Saham
             </span>
             <h4
               id="portfolio-total-cost"
-              className="text-2xl font-bold text-white font-mono flex items-baseline gap-2"
+              className="text-2xl font-bold text-foreground font-mono flex items-baseline gap-2"
             >
-              <span className="text-xs text-white/30 font-semibold uppercase">
+              <span className="text-xs text-foreground/30 font-semibold uppercase">
                 IDR
               </span>
               {totalInvestment.toLocaleString("id-ID")}
             </h4>
-            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
+            <span className="text-label font-bold font-mono text-foreground/50 block mt-2 uppercase tracking-widest">
               Cost-Basis Value
             </span>
           </div>
         </div>
 
         {/* Card 3: Nilai Saat Ini */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-card bg-card-gradient rounded-2xl border border-foreground-3 p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-foreground/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               <Briefcase className="w-3.5 h-3.5" />
               Nilai Saham Saat Ini
             </span>
             <h4
               id="portfolio-current-value"
-              className="text-2xl font-bold text-white font-mono flex items-baseline gap-2"
+              className="text-2xl font-bold text-foreground font-mono flex items-baseline gap-2"
             >
-              <span className="text-xs text-white/30 font-semibold uppercase">
+              <span className="text-xs text-foreground/30 font-semibold uppercase">
                 IDR
               </span>
               {totalCurrentValue.toLocaleString("id-ID")}
             </h4>
-            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
+            <span className="text-label font-bold font-mono text-foreground/50 block mt-2 uppercase tracking-widest">
               Market Live Pricing
             </span>
           </div>
         </div>
 
         {/* Card 4: Total Return */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
+        <div className="bg-card bg-card-gradient rounded-2xl border border-foreground-3 p-5 flex items-center justify-between relative overflow-hidden gap-4">
           <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
+            <span className="text-caption uppercase font-bold text-foreground/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
               {totalReturn >= 0 ? (
                 <TrendingUp className="w-3.5 h-3.5" />
               ) : (
@@ -684,7 +684,7 @@ export function PortfolioTracker({
               {totalReturn >= 0 ? "+" : ""}
               {totalReturn.toLocaleString("id-ID")}
             </h4>
-            <span className="text-caption font-bold font-mono block mt-2 uppercase tracking-widest flex items-center gap-1.5 text-white/50">
+            <span className="text-caption font-bold font-mono block mt-2 uppercase tracking-widest flex items-center gap-1.5 text-foreground/50">
               Return
               <span
                 className={`px-1.5 py-0.5 rounded text-label font-black ${totalReturn >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}
@@ -698,27 +698,27 @@ export function PortfolioTracker({
       </div>
 
       {/* MERGED PORTFOLIO + INSTRUCTION CARD */}
-      <div className="bg-[#050505] rounded-2xl border border-white/[0.03]">
-        <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-white/[0.05]">
+      <div className="bg-card rounded-2xl border border-foreground-3">
+        <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-foreground-5">
 
           {/* LEFT: HOLDING SAHAM AKTIF */}
           <div className="flex-1 min-w-0 p-4 space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.05]">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-white/50" />
+            <div className="flex items-center justify-between pb-3 border-b border-foreground-5">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-widest font-sans flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-foreground/50" />
                 Holding Saham Aktif
               </h3>
-              <span className="text-caption font-bold font-mono text-white/40 bg-white/5 px-2 py-1 rounded">
+              <span className="text-caption font-bold font-mono text-foreground/40 bg-foreground-5 px-2 py-1 rounded">
                 {portfolio.length} Tickers
               </span>
             </div>
 
             {enrichedPortfolio.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl bg-white/[0.01] border justify-center border-dashed border-white/5 flex flex-col items-center gap-3">
-                <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+              <div className="p-12 text-center rounded-2xl bg-foreground-2 border justify-center border-dashed border-foreground-5 flex flex-col items-center gap-3">
+                <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest">
                   Portofolio Kosong
                 </span>
-                <p className="text-white/30 text-caption font-sans max-w-sm">
+                <p className="text-foreground/30 text-caption font-sans max-w-sm">
                   Belum ada penyaluran dana ke aset saham. Gunakan sistem
                   Analisis di panel kanan untuk skenario akuisisi.
                 </p>
@@ -727,7 +727,7 @@ export function PortfolioTracker({
               <div className="overflow-x-auto">
                 <table className="w-full text-left min-w-max border-collapse">
                   <thead>
-                    <tr className="border-b border-white/[0.05] text-label font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">
+                    <tr className="border-b border-foreground-5 text-label font-bold text-foreground/30 uppercase tracking-widest whitespace-nowrap">
                       <th className="pb-3 pr-3 font-sans">Emiten Saham</th>
                       <th className="pb-3 px-3 text-center font-sans">Model Rank</th>
                       <th className="pb-3 px-3 text-right font-sans">Volume (Lembar)</th>
@@ -736,20 +736,20 @@ export function PortfolioTracker({
                       <th className="pb-3 w-[110px]"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.05] text-body">
+                  <tbody className="divide-y divide-foreground-5 text-body">
                     {enrichedPortfolio.map((item, index) => {
                       const isPos = item.profitOrLoss >= 0;
                       return (
-                        <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
+                        <tr key={index} className="hover:bg-foreground-2 transition-colors group">
                           <td className="py-3.5 pr-3">
                             <div className="flex items-center gap-3">
                               <TickerLogo ticker={item.ticker} size="sm" fallbackColor={item.logoColor} />
                               <div>
                                 <button onClick={() => onSelectStock(item.ticker)}
-                                  className="font-bold text-white hover:text-white/70 block text-left font-sans cursor-pointer flex items-center gap-1.5 group-hover:underline text-xs">
+                                  className="font-bold text-foreground hover:text-foreground/70 block text-left font-sans cursor-pointer flex items-center gap-1.5 group-hover:underline text-xs">
                                   {item.ticker}
                                 </button>
-                                <span className="text-caption text-white/40 block truncate max-w-40 font-sans mt-0.5">
+                                <span className="text-caption text-foreground/40 block truncate max-w-40 font-sans mt-0.5">
                                   {item.companyName}
                                 </span>
                               </div>
@@ -758,24 +758,24 @@ export function PortfolioTracker({
                           <td className="py-3.5 px-3 text-center">
                             <span className={`px-2 py-1 inline-block rounded text-label font-bold font-mono tracking-wider border ${
                               item.rank <= engineConfig.topNCount
-                                ? "bg-white/10 border-white/20 text-white"
+                                ? "bg-foreground-10 border-foreground-20 text-foreground"
                                 : item.rank <= 15
-                                  ? "bg-white/[0.05] border-white/10 text-white/80"
+                                  ? "bg-foreground-5 border-foreground-10 text-foreground/80"
                                   : item.rank >= 40
                                     ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                                    : "bg-white/[0.02] border-white/5 text-white/50"
+                                    : "bg-foreground-2 border-foreground-5 text-foreground/50"
                             }`}>Rank {item.rank}</span>
-                            <span className="text-label text-white/30 block mt-1.5 font-mono">Skor {item.score}</span>
+                            <span className="text-label text-foreground/30 block mt-1.5 font-mono">Skor {item.score}</span>
                           </td>
-                          <td className="py-3.5 px-3 text-right font-medium text-white/90 font-mono text-xs">
+                          <td className="py-3.5 px-3 text-right font-medium text-foreground/90 font-mono text-xs">
                             {item.shares.toLocaleString()} {item.ticker === "EMAS" || item.ticker === "GOLD" ? "gr" : "lbr"}
                           </td>
                           <td className="py-3.5 px-3 text-right">
-                            <div className="font-mono text-caption text-white/40 font-semibold tracking-wider">B: {item.buyPrice.toLocaleString()}</div>
-                            <div className="font-mono text-xs text-white mt-1 font-bold">L: {item.currentPrice.toLocaleString()}</div>
+                            <div className="font-mono text-caption text-foreground/40 font-semibold tracking-wider">B: {item.buyPrice.toLocaleString()}</div>
+                            <div className="font-mono text-xs text-foreground mt-1 font-bold">L: {item.currentPrice.toLocaleString()}</div>
                           </td>
                           <td className="py-3.5 pl-3 text-right">
-                            <div className="font-bold text-white text-xs font-mono">{item.valueNow.toLocaleString()}</div>
+                            <div className="font-bold text-foreground text-xs font-mono">{item.valueNow.toLocaleString()}</div>
                             <div className={`text-caption font-bold mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${
                               isPos ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
                             }`}>
@@ -784,11 +784,11 @@ export function PortfolioTracker({
                           </td>
                           <td className="py-3.5 pl-2 text-right">
                             <div className="flex flex-col sm:flex-row items-end sm:items-center justify-end gap-2 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="flex items-center bg-white/[0.02] border border-white/[0.05] rounded-lg overflow-hidden">
+                              <div className="flex items-center bg-foreground-2 border border-foreground-5 rounded-lg overflow-hidden">
                                 <input type="number" min="1" max={item.shares} value={sellInputs[item.ticker] || ""}
                                   onChange={(e) => setSellInputs((prev) => ({ ...prev, [item.ticker]: e.target.value }))}
                                   placeholder="Lbr"
-                                  className="w-16 sm:w-16 bg-transparent text-white text-caption px-2 py-1.5 outline-none text-right font-mono placeholder:text-white/20" />
+                                  className="w-16 sm:w-16 bg-transparent text-foreground text-caption px-2 py-1.5 outline-none text-right font-mono placeholder:text-foreground/20" />
                                 <button onClick={() => {
                                     const toSell = parseInt(sellInputs[item.ticker] || "0");
                                     if (toSell > 0 && toSell <= item.shares) {
@@ -796,11 +796,11 @@ export function PortfolioTracker({
                                       setSellInputs((prev) => ({ ...prev, [item.ticker]: "" }));
                                     }
                                   }}
-                                  className="px-3 py-1.5 text-label tracking-widest font-bold uppercase text-white bg-white/10 hover:bg-white/20 cursor-pointer transition-colors border-l border-white/[0.05]"
+                                  className="px-3 py-1.5 text-label tracking-widest font-bold uppercase text-foreground bg-foreground-10 hover:bg-foreground-20 cursor-pointer transition-colors border-l border-foreground-5"
                                   title="Jual">Eks</button>
                               </div>
                               <button onClick={() => onRemoveTransaction(item.ticker)}
-                                className="p-1.5 text-white/40 hover:text-white hover:bg-rose-600 rounded-lg bg-white/5 cursor-pointer border border-white/[0.05] hover:border-rose-500 transition-all flex items-center justify-center shrink-0"
+                                className="p-1.5 text-foreground/40 hover:text-foreground hover:bg-rose-600 rounded-lg bg-foreground-5 cursor-pointer border border-foreground-5 hover:border-rose-500 transition-all flex items-center justify-center shrink-0"
                                 title="Likuidasi Penuh / Hapus">
                                 <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               </button>
@@ -817,17 +817,17 @@ export function PortfolioTracker({
 
           {/* RIGHT: INSTRUKSI LEDGER CERDAS */}
           <div className="w-full lg:w-80 xl:w-96 shrink-0 p-4 space-y-3 flex flex-col">
-            <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-white/50" />
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-foreground/50" />
               Instruksi Ledger Cerdas
             </h3>
 
             <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin flex-1">
               {activeAlerts.length === 0 ? (
-                <div className="p-6 text-center rounded-2xl bg-white/[0.02] border border-white/[0.03] flex flex-col items-center gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-white/50" />
-                  <span className="text-body text-white font-extrabold uppercase tracking-widest">Portofolio Optimal</span>
-                  <p className="text-caption text-white/40 leading-relaxed max-w-xs">
+                <div className="p-6 text-center rounded-2xl bg-foreground-2 border border-foreground-3 flex flex-col items-center gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-foreground/50" />
+                  <span className="text-body text-foreground font-extrabold uppercase tracking-widest">Portofolio Optimal</span>
+                  <p className="text-caption text-foreground/40 leading-relaxed max-w-xs">
                     Distribusi alokasi modal saat ini selaras 100% dengan
                     parameter kebijakan investasi & analisa kuantitatif. Tidak
                     ada transaksi yang disarankan.
@@ -839,35 +839,35 @@ export function PortfolioTracker({
                     const isBuy = alertItem.type === "BUY";
                     return (
                       <div key={alertItem.id}
-                        className="p-4 rounded-xl relative flex flex-col justify-between gap-4 text-left transition-all bg-white/[0.01] border hover:bg-white/[0.03] border-white/[0.03]">
+                        className="p-4 rounded-xl relative flex flex-col justify-between gap-4 text-left transition-all bg-foreground-2 border hover:bg-foreground-3 border-foreground-3">
                         <div className="flex justify-between items-start gap-3">
                           <div>
-                            <span className="text-label font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-white/5 text-white/80 border border-white/5">
+                            <span className="text-label font-black font-mono tracking-widest px-2 py-1 rounded uppercase bg-foreground-5 text-foreground/80 border border-foreground-5">
                               {alertItem.badge}
                             </span>
-                            <h4 className="text-body font-black text-white mt-3 flex items-baseline gap-2">
+                            <h4 className="text-body font-black text-foreground mt-3 flex items-baseline gap-2">
                               {alertItem.ticker}
-                              <span className="text-caption font-medium text-white/40 truncate block max-w-[160px]">{alertItem.name}</span>
+                              <span className="text-caption font-medium text-foreground/40 truncate block max-w-[160px]">{alertItem.name}</span>
                             </h4>
                           </div>
                           <div className="text-right font-mono">
-                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">Pricing Spot</span>
-                            <span className="text-xs font-bold text-white mt-1 block">Rp {alertItem.price.toLocaleString()}</span>
+                            <span className="text-label text-foreground/40 block font-bold uppercase tracking-widest">Pricing Spot</span>
+                            <span className="text-xs font-bold text-foreground mt-1 block">Rp {alertItem.price.toLocaleString()}</span>
                           </div>
                         </div>
 
-                        <p className="text-caption text-white/50 leading-relaxed font-sans border-l-2 border-white/10 pl-3 italic">
+                        <p className="text-caption text-foreground/50 leading-relaxed font-sans border-l-2 border-foreground-10 pl-3 italic">
                           {alertItem.reason}
                         </p>
 
-                        <div className="flex border-t border-white/[0.05] pt-3 items-center justify-between gap-4 mt-1">
+                        <div className="flex border-t border-foreground-5 pt-3 items-center justify-between gap-4 mt-1">
                           <div className="font-mono">
-                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">Volume Trading</span>
-                            <span className="text-xs font-black text-white mt-1 block">
+                            <span className="text-label text-foreground/40 block uppercase font-bold tracking-widest">Volume Trading</span>
+                            <span className="text-xs font-black text-foreground mt-1 block">
                               {alertItem.shares.toLocaleString()}{" "}
                               {alertItem.ticker === "EMAS" || alertItem.ticker === "GOLD" ? "Gram" : "Lembar"}
                               {!(alertItem.ticker === "EMAS" || alertItem.ticker === "GOLD") && (
-                                <span className="text-caption text-white/40 font-semibold lowercase"> ({Math.round(alertItem.shares / 100)} Lot)</span>
+                                <span className="text-caption text-foreground/40 font-semibold lowercase"> ({Math.round(alertItem.shares / 100)} Lot)</span>
                               )}
                             </span>
                           </div>
@@ -905,13 +905,13 @@ export function PortfolioTracker({
 {/* Form and Chart Container */}
           <div className="space-y-3">
             {/* TRANSAKSI MANDIRI (PILIHAN SAHAM INDIVIDUAL) */}
-            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-3">
-              <div className="flex justify-between items-center pb-3 border-b border-white/[0.05]">
-                <h4 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4 text-white/50" />
+            <div className="bg-card bg-card-gradient p-4 rounded-2xl border border-foreground-3 space-y-3">
+              <div className="flex justify-between items-center pb-3 border-b border-foreground-5">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                  <ArrowRightLeft className="w-4 h-4 text-foreground/50" />
                   Tambah Manual
                 </h4>
-                <span className="text-label font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
+                <span className="text-label font-mono px-2 py-1 bg-foreground-5 border border-foreground-5 text-foreground/50 rounded uppercase font-bold tracking-widest">
                   Custom Trade
                 </span>
               </div>
@@ -922,7 +922,7 @@ export function PortfolioTracker({
               >
                 {/* Dropdown Saham Individual */}
                 <div className="space-y-2">
-                  <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                  <label className="text-caption uppercase font-bold text-foreground/40 tracking-widest block font-sans">
                     Sandi Saham (Ticker)
                   </label>
                   <SearchableSelect
@@ -939,7 +939,7 @@ export function PortfolioTracker({
                 <div className="grid grid-cols-2 gap-4">
                   {/* Volume Lembar (Shares) */}
                   <div className="space-y-2">
-                    <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                    <label className="text-caption uppercase font-bold text-foreground/40 tracking-widest block font-sans">
                       Jumlah (Lbr)
                     </label>
                     <div className="relative">
@@ -949,7 +949,7 @@ export function PortfolioTracker({
                         step="100"
                         value={sharesStr}
                         onChange={(e) => setSharesStr(e.target.value)}
-                        className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
+                        className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-foreground-5 outline-none focus:border-foreground-20 bg-foreground-2 text-foreground transition-colors"
                       />
                     </div>
                   </div>
@@ -957,13 +957,13 @@ export function PortfolioTracker({
                   {/* Execution Price or Live Price */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                      <label className="text-caption uppercase font-bold text-foreground/40 tracking-widest block font-sans">
                         Harga Beli
                       </label>
                       <button
                         type="button"
                         onClick={() => setCustomPriceStr("")}
-                        className="text-label text-white/60 hover:text-white uppercase font-bold tracking-wider cursor-pointer font-sans"
+                        className="text-label text-foreground/60 hover:text-foreground uppercase font-bold tracking-wider cursor-pointer font-sans"
                       >
                         Set Live
                       </button>
@@ -973,31 +973,31 @@ export function PortfolioTracker({
                       placeholder={`Live: Rp ${currentSelectedStock.currentPrice.toLocaleString()}`}
                       value={customPriceStr}
                       onChange={(e) => setCustomPriceStr(e.target.value)}
-                      className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
+                      className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-foreground-5 outline-none focus:border-foreground-20 bg-foreground-2 text-foreground transition-colors"
                     />
                   </div>
                 </div>
 
                 {/* Submit Button */}
-                <div className="flex justify-end pt-3 border-t border-white/[0.05]">
+                <div className="flex justify-end pt-3 border-t border-foreground-5">
                   <button
                     type="submit"
-                    className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
+                    className="w-full bg-foreground-10 hover:bg-foreground-15 text-foreground font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
                   >
                     <Plus className="w-4 h-4 shrink-0" /> Eksekusi Beli Saham
                   </button>
                 </div>
               </form>
-              <p className="text-label text-white/30 leading-normal text-right mt-2 italic">
+              <p className="text-label text-foreground/30 leading-normal text-right mt-2 italic">
                 * Fee broker 0.15% & spread bid/offer 0.05%.
               </p>
             </div>
 
             {/* Moved Sector Allocation Card */}
-            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
-              <div className="flex items-center gap-2 pb-3 border-b border-white/[0.05]">
-                <PieChart className="w-4 h-4 text-white/50" />
-                <h4 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
+            <div className="bg-card bg-card-gradient p-4 rounded-2xl border border-foreground-3 flex flex-col justify-between">
+              <div className="flex items-center gap-2 pb-3 border-b border-foreground-5">
+                <PieChart className="w-4 h-4 text-foreground/50" />
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-widest font-sans flex items-center gap-2">
                   Alokasi Sektor (Exposure)
                 </h4>
               </div>
@@ -1038,7 +1038,7 @@ export function PortfolioTracker({
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <span className="text-white/20 text-xs uppercase tracking-widest">
+                  <span className="text-foreground/20 text-xs uppercase tracking-widest">
                     Kosong
                   </span>
                 )}
@@ -1047,10 +1047,10 @@ export function PortfolioTracker({
           </div>
 
           {/* HISTORICAL TRADE LOG DATABASE */}
-          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-4 flex flex-col max-h-[420px]">
-            <div className="flex justify-between items-center pb-3 mb-3 border-b border-white/[0.05] shrink-0">
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-white/50" />
+          <div className="bg-card bg-card-gradient rounded-2xl border border-foreground-3 p-4 flex flex-col max-h-[420px]">
+            <div className="flex justify-between items-center pb-3 mb-3 border-b border-foreground-5 shrink-0">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-widest font-sans flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-foreground/50" />
                 Ledger Statement Audit
               </h3>
               <div className="flex items-center gap-3">
@@ -1097,7 +1097,7 @@ export function PortfolioTracker({
                     document.body.removeChild(link);
                   }}
                   disabled={tradeLogs.length === 0}
-                  className="text-label uppercase tracking-widest font-bold text-white/80 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-white/20 bg-white/5 px-3 py-1.5 rounded-lg font-sans"
+                  className="text-label uppercase tracking-widest font-bold text-foreground/80 hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-foreground-20 bg-foreground-5 px-3 py-1.5 rounded-lg font-sans"
                   title="Unduh Laporan CSV"
                 >
                   <Download className="w-3 h-3" /> Ekspor (CSV)
@@ -1112,7 +1112,7 @@ export function PortfolioTracker({
                       setTimeout(() => setIsConfirmingClear(false), 3000); // reset after 3s
                     }
                   }}
-                  className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-white"}`}
+                  className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-foreground bg-rose-600 px-3 py-1.5 rounded-lg" : "text-foreground/40 hover:text-foreground"}`}
                 >
                   {isConfirmingClear ? "⚠️ Klik Konfirmasi" : "Bersihkan Entri"}
                 </button>
@@ -1121,7 +1121,7 @@ export function PortfolioTracker({
 
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin space-y-3">
               {tradeLogs.length === 0 ? (
-                <div className="p-6 text-center text-caption text-white/30 font-mono italic">
+                <div className="p-6 text-center text-caption text-foreground/30 font-mono italic">
                   Belum ada log transaksi teraudit yang dilakukan pada sesi ini.
                 </div>
               ) : (
@@ -1143,44 +1143,44 @@ export function PortfolioTracker({
                     );
 
                     let typeLabel = isB ? "AKUISISI" : "LIKUIDASI";
-                    let textColor = isB ? "text-white" : "text-white/60";
+                    let textColor = isB ? "text-foreground" : "text-foreground/60";
                     let prefixSign = isB ? "+" : "-";
 
                     if (log.type === "DEPOSIT") {
                       typeLabel = "TOP-UP DANA";
-                      textColor = "text-white";
+                      textColor = "text-foreground";
                       prefixSign = "+";
                     } else if (log.type === "WITHDRAWAL") {
                       typeLabel = "PENARIKAN DANA";
-                      textColor = "text-white/60";
+                      textColor = "text-foreground/60";
                       prefixSign = "-";
                     } else if (log.type === "BUY_GOLD") {
                       typeLabel = "AKUISISI EMAS";
-                      textColor = "text-white";
+                      textColor = "text-foreground";
                       prefixSign = "+";
                     } else if (log.type === "SELL_GOLD") {
                       typeLabel = "LIKUIDASI EMAS";
-                      textColor = "text-white/60";
+                      textColor = "text-foreground/60";
                       prefixSign = "-";
                     }
 
                     return (
                       <div
                         key={log.id}
-                        className="p-3.5 bg-white/[0.01] border border-white/[0.03] rounded-xl text-caption font-mono space-y-3 transition-all hover:bg-white/[0.03]"
+                        className="p-3.5 bg-foreground-2 border border-foreground-3 rounded-xl text-caption font-mono space-y-3 transition-all hover:bg-foreground-3"
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
                             <span
-                              className={`text-body font-black text-white px-2 py-1 bg-white/5 border border-white/5 rounded uppercase`}
+                              className={`text-body font-black text-foreground px-2 py-1 bg-foreground-5 border border-foreground-5 rounded uppercase`}
                             >
                               {typeLabel}
                             </span>
                             <div>
-                              <span className="font-bold text-white text-body">
+                              <span className="font-bold text-foreground text-body">
                                 {log.ticker}
                               </span>
-                              <span className="text-white/30 text-label block tracking-wide mt-0.5">
+                              <span className="text-foreground/30 text-label block tracking-wide mt-0.5">
                                 {new Date(log.timestamp).toLocaleDateString(
                                   "id-ID",
                                 )}{" "}
@@ -1200,7 +1200,7 @@ export function PortfolioTracker({
                             >
                               {prefixSign} Rp {dt.net.toLocaleString("id-ID")}
                             </span>
-                            <span className="text-white/40 text-label block font-semibold leading-none mt-1">
+                            <span className="text-foreground/40 text-label block font-semibold leading-none mt-1">
                               {log.ticker === "KAS"
                                 ? "Nilai Transaksi"
                                 : `Spot Rp ${log.price.toLocaleString("id-ID")}`}
@@ -1209,12 +1209,12 @@ export function PortfolioTracker({
                         </div>
 
                         {/* Transaction detailed breakdown */}
-                        <div className="grid grid-cols-4 gap-3 text-label text-white/40 border-t border-white/[0.05] pt-3 leading-relaxed">
+                        <div className="grid grid-cols-4 gap-3 text-label text-foreground/40 border-t border-foreground-5 pt-3 leading-relaxed">
                           <div>
                             <span className="block font-bold">
                               Kotor (Gross)
                             </span>
-                            <span className="text-white/70 font-bold">
+                            <span className="text-foreground/70 font-bold">
                               Rp {Math.round(dt.gross).toLocaleString("id-ID")}
                             </span>
                           </div>
@@ -1227,7 +1227,7 @@ export function PortfolioTracker({
                                   ? "0.15%"
                                   : "0.25%"}
                             </span>
-                            <span className="text-white/70">
+                            <span className="text-foreground/70">
                               Rp {Math.round(dt.fee).toLocaleString("id-ID")}
                             </span>
                           </div>
@@ -1240,7 +1240,7 @@ export function PortfolioTracker({
                                   ? "0%"
                                   : "0.05%"}
                             </span>
-                            <span className="text-white/70 font-semibold">
+                            <span className="text-foreground/70 font-semibold">
                               Rp{" "}
                               {Math.round(dt.slippage).toLocaleString("id-ID")}
                             </span>
@@ -1265,9 +1265,9 @@ export function PortfolioTracker({
           </div>
 
       {/* Watchlist Strip */}
-      <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
+      <div className="bg-muted bg-card-gradient-alt rounded-2xl border border-foreground-10 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">
+          <h3 className="text-xs font-semibold text-foreground/85 uppercase tracking-widest flex items-center gap-2">
             <Eye className="w-4 h-4 text-emerald-450 text-emerald-400" />
             Daftar Pantau
           </h3>
@@ -1283,7 +1283,7 @@ export function PortfolioTracker({
             />
             <button
               onClick={() => onToggleWatchlist(watchlistTicker)}
-              className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0"
+              className="bg-foreground-10 hover:bg-foreground-20 text-foreground px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0"
               disabled={watchlist.some((w) => w.ticker === watchlistTicker)}
             >
               Tambah
@@ -1292,8 +1292,8 @@ export function PortfolioTracker({
         </div>
 
         {watchlist.length === 0 ? (
-          <div className="p-8 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10">
-            <p className="text-white/40 text-xs">
+          <div className="p-8 text-center rounded-xl bg-foreground-2 border border-dashed border-foreground-10">
+            <p className="text-foreground/40 text-xs">
               Belum ada perusahaan dalam Daftar Pantau. Klik ikon mata pada
               saham untuk menambahkannya.
             </p>
@@ -1309,7 +1309,7 @@ export function PortfolioTracker({
               return (
                 <div
                   key={item.ticker}
-                  className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/20 hover:shadow-xs transition-all flex items-center justify-between group"
+                  className="p-4 rounded-xl border border-foreground-5 bg-foreground-2 hover:bg-foreground-5 hover:border-emerald-500/20 hover:shadow-xs transition-all flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
                     <TickerLogo
@@ -1320,12 +1320,12 @@ export function PortfolioTracker({
                     <div>
                       <button
                         onClick={() => onSelectStock(liveStock.ticker)}
-                        className="font-bold text-white hover:text-emerald-400 cursor-pointer block text-left"
+                        className="font-bold text-foreground hover:text-emerald-400 cursor-pointer block text-left"
                       >
                         {liveStock.ticker}
                       </button>
                       <DataBadge status={liveStock.dataSources.price} />
-                      <span className="text-caption text-white/40 block truncate max-w-32 mt-0.5">
+                      <span className="text-caption text-foreground/40 block truncate max-w-32 mt-0.5">
                         {liveStock.name}
                       </span>
                     </div>
@@ -1333,7 +1333,7 @@ export function PortfolioTracker({
 
                   <div className="text-right flex items-center gap-3">
                     <div>
-                      <span className="text-xs font-bold text-white block font-mono">
+                      <span className="text-xs font-bold text-foreground block font-mono">
                         Rp {liveStock.currentPrice.toLocaleString()}
                       </span>
                       <span
@@ -1345,7 +1345,7 @@ export function PortfolioTracker({
                     </div>
                     <button
                       onClick={() => onToggleWatchlist(liveStock.ticker)}
-                      className="p-1 text-white/30 hover:text-rose-400 rounded cursor-pointer transition-colors"
+                      className="p-1 text-foreground/30 hover:text-rose-400 rounded cursor-pointer transition-colors"
                       title="Hapus Dari Daftar Pantau"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -1360,7 +1360,7 @@ export function PortfolioTracker({
 
       {/* Floating Custom Notification Toast */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-[#0d0d0d]/95 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex gap-3 items-start transition-all duration-300">
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-card backdrop-blur-md border border-foreground-10 rounded-xl p-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex gap-3 items-start transition-all duration-300">
           <div className="mt-0.5 flex-shrink-0">
             {notification.type === "success" && (
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -1373,20 +1373,20 @@ export function PortfolioTracker({
             )}
           </div>
           <div className="flex-1 space-y-1">
-            <h5 className="text-body font-extrabold uppercase tracking-widest text-white">
+            <h5 className="text-body font-extrabold uppercase tracking-widest text-foreground">
               {notification.type === "success"
                 ? "Transaksi Berhasil"
                 : notification.type === "error"
                   ? "Peringatan Transaksi"
                   : "Informasi"}
             </h5>
-            <p className="text-[10.5px] text-white/70 font-semibold leading-relaxed">
+            <p className="text-[10.5px] text-foreground/70 font-semibold leading-relaxed">
               {notification.message}
             </p>
           </div>
           <button
             onClick={() => setNotification(null)}
-            className="text-white/40 hover:text-white transition-colors cursor-pointer text-xs font-bold leading-none p-1"
+            className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer text-xs font-bold leading-none p-1"
           >
             &times;
           </button>
