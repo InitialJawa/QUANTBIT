@@ -60,10 +60,10 @@ export function AppHeader({
             <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
             <circle cx="98" cy="70" r="10" fill="#00c9a5" />
           </svg>
-          <span className="text-xs font-bold tracking-wide text-foreground/80 uppercase hidden sm:inline">Quantbit</span>
+          <span className="text-xs font-bold tracking-wide text-white/80 uppercase hidden sm:inline">Quantbit</span>
         </span>
 
-        <div className="flex items-center gap-0.5 border-l border-foreground-6 pl-3 ml-1">
+        <div className="flex items-center gap-0.5 border-l border-white/[0.06] pl-3 ml-1">
           {TABS.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
@@ -71,7 +71,7 @@ export function AppHeader({
               className={`flex items-center gap-1.5 px-2.5 h-7 rounded text-caption font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === id
                   ? "text-[#00c9a5] bg-[#00c9a5]/10"
-                  : "text-foreground/30 hover:text-foreground/60 hover:bg-foreground-4"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -85,22 +85,22 @@ export function AppHeader({
         
         {/* Search */}
         <div className="relative hidden sm:block">
-          <Search className="w-3 h-3 text-foreground/30 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3 h-3 text-white/30 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && onSearchSubmit) onSearchSubmit(searchQuery); }}
             placeholder="Cari saham..."
-            className="w-36 h-7 pl-7 pr-2 text-caption bg-foreground-4 border border-foreground-6 outline-none text-foreground/70 placeholder:text-foreground/20 transition-colors focus:border-white/20 focus:text-foreground"
+            className="w-36 h-7 pl-7 pr-2 text-caption bg-white/[0.04] border border-white/[0.06] outline-none text-white/70 placeholder:text-white/20 transition-colors focus:border-white/20 focus:text-white"
           />
         </div>
 
         <div className="relative" ref={settingsRef}>
           <button
             onClick={() => setSettingsOpen(!isSettingsOpen)}
-            className="w-7 h-7 rounded-md hover:bg-foreground-6 flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-md hover:bg-white/[0.06] flex items-center justify-center transition-colors"
           >
-            <Settings className="w-3.5 h-3.5 text-foreground/50" />
+            <Settings className="w-3.5 h-3.5 text-white/50" />
           </button>
 
           <AnimatePresence>
@@ -110,17 +110,17 @@ export function AppHeader({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-10 right-0 w-56 border border-foreground-6 shadow-lg rounded-lg py-1.5 z-[60] flex flex-col text-xs overflow-y-auto settings-dropdown"
+                className="absolute top-10 right-0 w-56 border border-white/[0.06] shadow-lg rounded-lg py-1.5 z-[60] flex flex-col text-xs overflow-y-auto settings-dropdown"
               >
-                <div className="px-3 py-2.5 border-b border-foreground-5">
+                <div className="px-3 py-2.5 border-b border-white/[0.05]">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 text-body font-bold uppercase bg-emerald-500/10">
                       {userEmail?.charAt(0) || "U"}
                     </div>
                     <div className="flex flex-col leading-tight">
-                      <span className="text-foreground font-medium truncate max-w-[140px] text-body">{userEmail}</span>
-                      <span className="text-label text-foreground/30">Signed in</span>
-                      <span className="text-label text-foreground/20 font-mono mt-0.5">
+                      <span className="text-white font-medium truncate max-w-[140px] text-body">{userEmail}</span>
+                      <span className="text-label text-white/30">Signed in</span>
+                      <span className="text-label text-white/20 font-mono mt-0.5">
                         {dataFeed === "yahoo" ? "Yahoo Finance" : dataFeed === "goapi" ? "GoAPI.io" : "Offline Sim"}
                       </span>
                     </div>
@@ -128,7 +128,7 @@ export function AppHeader({
                 </div>
 
                 <div className="px-1.5 py-1">
-                  <div className="text-label font-medium text-foreground/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Theme</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Theme</div>
                   {([
                     ["dark", Moon, "Dark"],
                     ["light", Sun, "Light"],
@@ -136,7 +136,7 @@ export function AppHeader({
                     <button
                       key={t}
                       onClick={() => setTheme(t)}
-                      className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors ${theme === t ? "text-foreground bg-foreground-6" : "text-foreground/50 hover:text-foreground/80 hover:bg-foreground-3"}`}
+                      className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors ${theme === t ? "text-white bg-white/[0.06]" : "text-white/50 hover:text-white/80 hover:bg-white/[0.03]"}`}
                     >
                       <Icon className="w-3.5 h-3.5" /> {label}
                       {theme === t && <span className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
@@ -144,10 +144,10 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-foreground-4 my-0.5" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
-                  <div className="text-label font-medium text-foreground/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Data Feed</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Data Feed</div>
                   {([
                     ["yahoo", "Yahoo Finance"],
                     ["goapi", "GoAPI.io"],
@@ -156,7 +156,7 @@ export function AppHeader({
                     <button
                       key={f}
                       onClick={() => setDataFeed(f)}
-                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-foreground/50 hover:text-foreground/80 hover:bg-foreground-3 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
                     >
                       {label}
                       {dataFeed === f && <span className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
@@ -164,10 +164,10 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-foreground-4 my-0.5" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
-                  <div className="text-label font-medium text-foreground/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
                   {([
                     ["prod", "Config F"],
                     ["res", "Config B"],
@@ -175,7 +175,7 @@ export function AppHeader({
                     <button
                       key={c}
                       onClick={() => setActiveConfig(c)}
-                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-foreground/50 hover:text-foreground/80 hover:bg-foreground-3 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
                     >
                       <Sliders className="w-3.5 h-3.5" /> {label}
                       {activeConfig === c && <span className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
@@ -183,7 +183,7 @@ export function AppHeader({
                   ))}
                 </div>
 
-                <div className="h-px bg-foreground-4 my-0.5" />
+                <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
                   <button
@@ -199,7 +199,7 @@ export function AppHeader({
         </div>
 
         <button
-          className="md:hidden w-7 h-7 rounded-md hover:bg-foreground-6 flex items-center justify-center text-foreground/50 transition-colors"
+          className="md:hidden w-7 h-7 rounded-md hover:bg-white/[0.06] flex items-center justify-center text-white/50 transition-colors"
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}

@@ -107,10 +107,10 @@ export function AppSidebar({
   }
 
   function rsiBgBar(rsi: number | null): string {
-    if (rsi === null) return "bg-foreground/[0.06]";
+    if (rsi === null) return "bg-white/[0.06]";
     if (rsi >= 70) return "bg-emerald-400/30";
     if (rsi <= 30) return "bg-rose-400/30";
-    return "bg-foreground/[0.10]";
+    return "bg-white/[0.10]";
   }
 
   const maxAbsChange = useMemo(() => {
@@ -123,7 +123,7 @@ export function AppSidebar({
   const renderMarketContent = () => (
     <>
       <div id="sidebar-news-panel" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <Newspaper className="w-3 h-3 text-tertiary" />
           <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Berita</span>
         </div>
@@ -135,7 +135,7 @@ export function AppSidebar({
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
-              className="block px-2 py-1.5 rounded hover:bg-foreground/[0.03] transition-colors text-left group"
+              className="block px-2 py-1.5 rounded hover:bg-white/[0.03] transition-colors text-left group"
             >
               <div className="flex justify-between items-center text-label text-tertiary font-mono">
                 <span>{news.portal}</span>
@@ -150,7 +150,7 @@ export function AppSidebar({
       </div>
 
       <div id="sidebar-macro-indicators-panel" className="mx-2">
-        <div className="px-2 py-1 border-b border-foreground/[0.04] flex items-center justify-between">
+        <div className="px-2 py-1 border-b border-white/[0.04] flex items-center justify-between">
           <span className="text-label font-medium text-tertiary uppercase tracking-wider">Makro</span>
           <ExplainButton label="Regime Status (Health / Opportunity / Risk)" />
         </div>
@@ -168,7 +168,7 @@ export function AppSidebar({
                 <span>Health</span>
                 <span className="text-secondary">{RS.market_health}%</span>
               </div>
-              <div className="h-0.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                 <div className="bg-[#d1d4dc] h-full rounded-full" style={{ width: `${RS.market_health}%` }} />
               </div>
             </div>
@@ -177,7 +177,7 @@ export function AppSidebar({
                 <span>Opp.</span>
                 <span className="text-secondary">{RS.opportunity}%</span>
               </div>
-              <div className="h-0.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                 <div className="bg-[#00c9a5] h-full rounded-full" style={{ width: `${RS.opportunity}%` }} />
               </div>
             </div>
@@ -186,13 +186,13 @@ export function AppSidebar({
                 <span>Risk</span>
                 <span className="text-secondary">{RS.risk}%</span>
               </div>
-              <div className="h-0.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                 <div className="bg-[#f23645] h-full rounded-full" style={{ width: `${RS.risk}%` }} />
               </div>
             </div>
           </div>
 
-          <div className="border-t border-foreground/[0.04] pt-2 space-y-1.5">
+          <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">USD/IDR</span>
               <span className="text-body text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
@@ -206,7 +206,7 @@ export function AppSidebar({
       </div>
 
       <div id="sidebar-top-movers" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <TrendingUp className="w-3 h-3 text-tertiary" />
           <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Movers</span>
           <span className="ml-auto"><ExplainButton label="Top Gainers &amp; Losers — sparkline 20 hari, volume terakhir, RSI (Hijau ≥70, Abu 30-70, Merah ≤30)" /></span>
@@ -232,7 +232,7 @@ export function AppSidebar({
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
-                        <div className="flex-1 h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
+                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
                             style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
@@ -269,7 +269,7 @@ export function AppSidebar({
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
-                        <div className="flex-1 h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
+                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
                             style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
@@ -290,7 +290,7 @@ export function AppSidebar({
       </div>
 
       <div id="sidebar-technical-stats" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <BarChart3 className="w-3 h-3 text-tertiary" />
           <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Teknikal</span>
           <span className="ml-auto"><ExplainButton label="Indikator teknikal IHSG: RSI, MACD, SMA, Market Breadth, Score Gap" /></span>
@@ -313,7 +313,7 @@ export function AppSidebar({
                   <span className={`text-caption font-mono ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                     {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
                   </span>
-                  <div className="flex-1 h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
+                  <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full ${macdResult.histogram >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
                       style={{ width: `${Math.min(Math.abs(macdResult.histogram) * 10, 100)}%` }}
@@ -337,7 +337,7 @@ export function AppSidebar({
               </span>
             </div>
           </div>
-          <div className="border-t border-foreground/[0.04] pt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
+          <div className="border-t border-white/[0.04] pt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
             <div>
               <span className="text-label text-tertiary block">Breadth</span>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -374,7 +374,7 @@ export function AppSidebar({
     return (
       <>
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Wallet className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Ringkasan</span>
           </div>
@@ -405,7 +405,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <PieChart className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Sektor</span>
             <span className="ml-auto"><ExplainButton label="Alokasi Sektor (bobot nilai portfolio per sektor)" /></span>
@@ -420,7 +420,7 @@ export function AppSidebar({
                     <span>{sector}</span>
                     <span className="text-secondary font-mono">{formatRupiah(value)}</span>
                   </div>
-                  <div className="h-0.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+                  <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-emerald-400/60"
                       style={{ width: `${(value / (totalCurrentValue || 1)) * 100}%` }}
@@ -433,7 +433,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Layers className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Posisi Terbuka</span>
           </div>
@@ -446,7 +446,7 @@ export function AppSidebar({
                 const currentPrice = stock?.currentPrice || p.buyPrice;
                 const gainPct = ((currentPrice - p.buyPrice) / p.buyPrice) * 100;
                 return (
-                  <div key={p.ticker} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-foreground/[0.02] transition-colors">
+                  <div key={p.ticker} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-body font-bold text-primary">{p.ticker}</span>
                       <span className="text-label text-tertiary">{p.shares} lbr</span>
@@ -463,7 +463,7 @@ export function AppSidebar({
 
         {/* Mobile-friendly config section header - only in sidebar */}
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Settings className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Mesin Kuantitatif</span>
             <span className="ml-auto"><ExplainButton label="Mesin Kuantitatif (topNCount, reserveBufferPct, crashSensitivity, single triggers, bobot Q/G/V/M)" /></span>
@@ -485,7 +485,7 @@ export function AppSidebar({
     return (
       <>
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <BarChart3 className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Analitik</span>
           </div>
@@ -509,7 +509,7 @@ export function AppSidebar({
             {totalStocks > 0 && (
               <button
                 onClick={onClearPortfolio}
-                className="w-full mt-1 py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-foreground/[0.03] hover:bg-rose-900/20 rounded-lg border border-foreground/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
+                className="w-full mt-1 py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-white/[0.03] hover:bg-rose-900/20 rounded-lg border border-white/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
               >
                 Hapus Semua
               </button>
@@ -518,7 +518,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <TrendingUp className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Market Context</span>
           </div>
@@ -547,7 +547,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Clock className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Quick Filters</span>
           </div>
@@ -570,8 +570,8 @@ export function AppSidebar({
           <button onClick={() => setIsSettingsLocked(!isSettingsLocked)}
             className={`text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
               isSettingsLocked
-                ? "bg-foreground/[0.04] text-tertiary"
-                : "bg-foreground/10 text-primary"
+                ? "bg-white/[0.04] text-tertiary"
+                : "bg-white/10 text-primary"
             }`}>
             {isSettingsLocked ? "Terkunci" : "Terbuka"}
           </button>
@@ -582,12 +582,12 @@ export function AppSidebar({
           <div className="flex gap-1">
             <button onClick={() => updateConfigValue("simulationMode", "algo")}
               className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-              style={{ backgroundColor: engineConfig.simulationMode !== "single" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.simulationMode !== "single" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+              style={{ backgroundColor: engineConfig.simulationMode !== "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode !== "single" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
               Algo
             </button>
             <button onClick={() => updateConfigValue("simulationMode", "single")}
               className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-              style={{ backgroundColor: engineConfig.simulationMode === "single" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.simulationMode === "single" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+              style={{ backgroundColor: engineConfig.simulationMode === "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === "single" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
               Single
             </button>
           </div>
@@ -598,7 +598,7 @@ export function AppSidebar({
             <span className="text-label text-tertiary block">Saham</span>
             <input type="text" value={engineConfig.singleTicker || "BBCA"}
               onChange={e => updateConfigValue("singleTicker", e.target.value.toUpperCase())}
-              className="w-full text-caption p-1 bg-background border border-foreground/[0.08] rounded outline-none text-foreground font-mono" />
+              className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
             <div>
               <div className="flex justify-between text-label mb-0.5">
                 <span className="text-tertiary">Jual Turun</span>
@@ -625,12 +625,12 @@ export function AppSidebar({
               <div className="flex gap-1">
                 <button onClick={() => updateConfigValue("activeConfig", "prod")}
                   className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.activeConfig === "prod" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.activeConfig === "prod" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: engineConfig.activeConfig === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeConfig === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Config F
                 </button>
                 <button onClick={() => updateConfigValue("activeConfig", "res")}
                   className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.activeConfig === "res" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.activeConfig === "res" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: engineConfig.activeConfig === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeConfig === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Config B
                 </button>
               </div>
@@ -641,7 +641,7 @@ export function AppSidebar({
                 {([["all","All"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
                   <button key={k} onClick={() => updateConfigValue("universe", k)}
                     className="flex-1 py-0.5 text-caption font-medium rounded transition-colors cursor-pointer"
-                    style={{ backgroundColor: engineConfig.universe === k ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.universe === k ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                    style={{ backgroundColor: engineConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                     {label}
                   </button>
                 ))}
@@ -661,17 +661,17 @@ export function AppSidebar({
               <div className="flex gap-1">
                 <button onClick={() => updateConfigValue("enableCrossover", true)}
                   className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.enableCrossover !== false ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.enableCrossover !== false ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: engineConfig.enableCrossover !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrossover !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Aktif
                 </button>
                 <button onClick={() => updateConfigValue("enableCrossover", false)}
                   className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.enableCrossover === false ? 'color-mix(in srgb, var(--accent-red) 15%, transparent)' : 'var(--foreground)', color: engineConfig.enableCrossover === false ? '#f23645' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: engineConfig.enableCrossover === false ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrossover === false ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Tanpa
                 </button>
               </div>
             </div>
-            <div className="border-t border-foreground/[0.04] pt-2">
+            <div className="border-t border-white/[0.04] pt-2">
               <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
               {[
                 ["qualityWeight", "Quality (Q)", engineConfig.qualityWeight * 100],
@@ -694,18 +694,18 @@ export function AppSidebar({
           </div>
         )}
 
-        <div className={`border-t border-foreground/[0.04] pt-2 space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
+        <div className={`border-t border-white/[0.04] pt-2 space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
           <div>
             <span className="text-label text-tertiary block mb-1">Safeguard</span>
             <div className="flex gap-1">
               <button onClick={() => updateConfigValue("safeHavenAsset", "emas")}
                 className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.safeHavenAsset === "emas" ? 'color-mix(in srgb, #f0a500 15%, transparent)' : 'var(--foreground)', color: engineConfig.safeHavenAsset === "emas" ? '#f0a500' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: engineConfig.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 Emas
               </button>
               <button onClick={() => updateConfigValue("safeHavenAsset", "kas")}
                 className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.safeHavenAsset === "kas" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.safeHavenAsset === "kas" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: engineConfig.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 Kas
               </button>
             </div>
@@ -715,13 +715,13 @@ export function AppSidebar({
             <div className="flex gap-1 items-center">
               <button onClick={() => updateConfigValue("enableCrashProtection", engineConfig.enableCrashProtection === false ? true : false)}
                 className="px-2 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
               </button>
               <input type="number" min="1" max="99" value={engineConfig.crashSensitivity ?? 10}
                 onChange={e => updateConfigValue("crashSensitivity", Math.max(1, Math.min(99, Number(e.target.value) || 10)))}
                 disabled={engineConfig.enableCrashProtection === false}
-                className="flex-1 text-caption p-1 bg-background border border-foreground/[0.08] rounded outline-none text-foreground disabled:opacity-40 text-center" />
+                className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
               <span className="text-caption text-tertiary ml-1">%</span>
             </div>
           </div>
@@ -744,7 +744,7 @@ export function AppSidebar({
     return (
       <>
         <div className="mx-2">
-          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Clock className="w-3 h-3 text-tertiary" />
             <span className="text-label font-medium text-primary uppercase tracking-wider">Mode</span>
           </div>
@@ -752,12 +752,12 @@ export function AppSidebar({
             <div className="flex gap-1">
               <button onClick={() => bt.setSimulationMode("algo")}
                 className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.simulationMode === "algo" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.simulationMode === "algo" ? '#00c9a5' : 'var(--muted-foreground)', border: bt.simulationMode === "algo" ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: bt.simulationMode === "algo" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "algo" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "algo" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                 Algo
               </button>
               <button onClick={() => bt.setSimulationMode("single")}
                 className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.simulationMode === "single" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.simulationMode === "single" ? '#00c9a5' : 'var(--muted-foreground)', border: bt.simulationMode === "single" ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: bt.simulationMode === "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "single" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "single" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                 Single
               </button>
             </div>
@@ -767,7 +767,7 @@ export function AppSidebar({
         {bt.simulationMode === "algo" ? (
           <>
             <div className="mx-2">
-              <div className="px-2 py-1 border-b border-foreground/[0.04]">
+              <div className="px-2 py-1 border-b border-white/[0.04]">
                 <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Jumlah Saham</span>
               </div>
               <div className="px-2 py-2">
@@ -775,7 +775,7 @@ export function AppSidebar({
                   {[1, 3, 5].map((n) => (
                     <button key={n} onClick={() => bt.setNumStocks(n as 1|3|5)}
                       className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: bt.numStocks === n ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.numStocks === n ? '#00c9a5' : 'var(--muted-foreground)', border: bt.numStocks === n ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                      style={{ backgroundColor: bt.numStocks === n ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.numStocks === n ? '#00c9a5' : '#7a7a7a', border: bt.numStocks === n ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                       Top {n}
                     </button>
                   ))}
@@ -784,7 +784,7 @@ export function AppSidebar({
             </div>
 
             <div className="mx-2">
-              <div className="px-2 py-1 border-b border-foreground/[0.04]">
+              <div className="px-2 py-1 border-b border-white/[0.04]">
                 <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Universe</span>
               </div>
               <div className="px-2 py-2">
@@ -792,7 +792,7 @@ export function AppSidebar({
                   {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
                     <button key={k} onClick={() => bt.setSimUniverse(k)}
                       className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: bt.simUniverse === k ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.simUniverse === k ? '#00c9a5' : 'var(--muted-foreground)', border: bt.simUniverse === k ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                      style={{ backgroundColor: bt.simUniverse === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simUniverse === k ? '#00c9a5' : '#7a7a7a', border: bt.simUniverse === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                       {label}
                     </button>
                   ))}
@@ -801,19 +801,19 @@ export function AppSidebar({
             </div>
 
             <div className="mx-2">
-              <div className="px-2 py-1 border-b border-foreground/[0.04]">
+              <div className="px-2 py-1 border-b border-white/[0.04]">
                 <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Konfigurasi</span>
               </div>
               <div className="px-2 py-2">
                 <div className="flex gap-1">
                   <button onClick={() => bt.setBacktestConfigType("prod")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : 'var(--muted-foreground)', border: bt.backtestConfigType === "prod" ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                    style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                     Config F
                   </button>
                   <button onClick={() => bt.setBacktestConfigType("res")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: bt.backtestConfigType === "res" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.backtestConfigType === "res" ? '#00c9a5' : 'var(--muted-foreground)', border: bt.backtestConfigType === "res" ? '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' : '1px solid var(--border-default)' }}>
+                    style={{ backgroundColor: bt.backtestConfigType === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "res" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                     Config B
                   </button>
                 </div>
@@ -822,14 +822,14 @@ export function AppSidebar({
           </>
         ) : (
           <div className="mx-2">
-            <div className="px-2 py-1.5 border-b border-foreground/[0.04]">
+            <div className="px-2 py-1.5 border-b border-white/[0.04]">
               <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
             </div>
             <div className="px-2 py-1.5 space-y-1.5">
               <input type="text" value={bt.simTicker}
                 onChange={e => bt.setSimTicker(e.target.value.toUpperCase())}
                 placeholder="BBCA"
-                className="w-full text-caption p-1.5 bg-background border border-foreground/[0.08] rounded-md outline-none text-foreground font-mono" />
+                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
               <div>
                 <div className="flex justify-between text-label mb-1">
                   <span className="text-tertiary">Jual Turun</span>
@@ -853,7 +853,7 @@ export function AppSidebar({
         )}
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Calendar className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Waktu & Modal</span>
           </div>
@@ -863,13 +863,13 @@ export function AppSidebar({
                 <label className="text-label text-tertiary block mb-0.5">Mulai</label>
                 <input type="date" value={bt.simStartDate} min="2000-01-03" max={bt.simEndDate}
                   onChange={e => bt.setSimStartDate(e.target.value)}
-                  className="w-full text-caption p-1 bg-background border border-foreground/[0.08] rounded outline-none text-foreground font-mono" />
+                  className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               </div>
               <div>
                 <label className="text-label text-tertiary block mb-0.5">Sampai</label>
                 <input type="date" value={bt.simEndDate} min={bt.simStartDate} max={bt.todayWIBStr}
                   onChange={e => bt.setSimEndDate(e.target.value)}
-                  className="w-full text-caption p-1 bg-background border border-foreground/[0.08] rounded outline-none text-foreground font-mono" />
+                  className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               </div>
             </div>
             <div>
@@ -877,14 +877,14 @@ export function AppSidebar({
               <input type="text" value={bt.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
                 onChange={e => bt.setAlgoCapital(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="Rp 100.000.000"
-                className="w-full text-caption p-1.5 bg-background border border-foreground/[0.08] rounded outline-none text-foreground font-mono" />
+                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               <div className="flex gap-1 mt-1">
                 {["10000000", "50000000", "100000000"].map((preset) => (
                   <button key={preset} onClick={() => bt.setAlgoCapital(preset)}
                     className={`text-label px-1.5 py-0.5 font-medium rounded transition-colors cursor-pointer ${
                       bt.algoCapital === preset
                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        : "bg-foreground/5 border border-foreground/[0.06] text-tertiary hover:text-secondary"
+                        : "bg-white/5 border border-white/[0.06] text-tertiary hover:text-secondary"
                     }`}>
                     Rp {(parseInt(preset) / 1000000).toLocaleString("id-ID")}Jt
                   </button>
@@ -895,7 +895,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Layers className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Strategi</span>
           </div>
@@ -905,12 +905,12 @@ export function AppSidebar({
               <div className="flex gap-1">
                 <button onClick={() => bt.setEnableCrossover(true)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: bt.enableCrossover ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.enableCrossover ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: bt.enableCrossover ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrossover ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Rank &lt; 7
                 </button>
                 <button onClick={() => bt.setEnableCrossover(false)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: !bt.enableCrossover ? 'color-mix(in srgb, var(--accent-red) 15%, transparent)' : 'var(--foreground)', color: !bt.enableCrossover ? '#f23645' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: !bt.enableCrossover ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: !bt.enableCrossover ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Tanpa
                 </button>
               </div>
@@ -921,13 +921,13 @@ export function AppSidebar({
               <div className="flex gap-1 items-center">
                 <button onClick={() => bt.setEnableCrashProtection(!bt.enableCrashProtection)}
                   className="px-2 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: bt.enableCrashProtection ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.enableCrashProtection ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: bt.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   {bt.enableCrashProtection ? "ON" : "OFF"}
                 </button>
                 <input type="number" min="1" max="99" value={bt.crashSensitivity}
                   onChange={e => bt.setCrashSensitivity(Math.max(1, Math.min(99, Number(e.target.value) || 5)))}
                   disabled={!bt.enableCrashProtection}
-                  className="flex-1 text-caption p-1 bg-background border border-foreground/[0.08] rounded outline-none text-foreground disabled:opacity-40 text-center" />
+                  className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
                 <span className="text-caption text-tertiary ml-1">%</span>
               </div>
             </div>
@@ -937,12 +937,12 @@ export function AppSidebar({
               <div className="flex gap-1">
                 <button onClick={() => bt.setSafeHavenAsset("emas")} disabled={!bt.enableCrashProtection}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: bt.safeHavenAsset === "emas" ? 'color-mix(in srgb, #f0a500 15%, transparent)' : 'var(--foreground)', color: bt.safeHavenAsset === "emas" ? '#f0a500' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: bt.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Emas
                 </button>
                 <button onClick={() => bt.setSafeHavenAsset("kas")} disabled={!bt.enableCrashProtection}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: bt.safeHavenAsset === "kas" ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--foreground)', color: bt.safeHavenAsset === "kas" ? '#00c9a5' : 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                  style={{ backgroundColor: bt.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Kas
                 </button>
               </div>
@@ -961,7 +961,7 @@ export function AppSidebar({
         </div>
 
         <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-foreground/[0.04]">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Play className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Eksekusi</span>
           </div>
@@ -969,13 +969,13 @@ export function AppSidebar({
             <button onClick={() => bt.triggerBacktest()}
               disabled={bt.isBacktesting}
               className="w-full py-1.5 text-caption font-bold rounded-md transition-opacity cursor-pointer disabled:opacity-50"
-              style={{ backgroundColor: 'var(--accent)', color: 'var(--background)' }}>
+              style={{ backgroundColor: '#00c9a5', color: '#000' }}>
               {bt.isBacktesting ? "Memproses..." : "Jalankan Backtest"}
             </button>
             {bt.backtestResult && (
               <button onClick={() => document.dispatchEvent(new CustomEvent("download-csv-backtest"))}
                 className="w-full py-1.5 text-caption font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                style={{ backgroundColor: 'var(--foreground)', color: 'var(--muted-foreground)', border: '1px solid var(--border-default)' }}>
+                style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#b0b0b0', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Download className="w-3 h-3 text-accent" />
                 Unduh CSV
               </button>
@@ -996,23 +996,23 @@ export function AppSidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/60 z-40 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
             onClick={onCloseMobile}
           />
         )}
       </AnimatePresence>
 
-      <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex fixed inset-y-0 left-0 w-[85%] max-w-sm z-50 shadow-2xl' : 'hidden'} md:flex w-full md:static ${collapsed ? 'md:w-12' : 'md:w-64'} md:border-r border-foreground/[0.06] shrink-0 flex-col md:overflow-hidden relative transition-all duration-200`}>
+      <aside id="main-sidebar" className={`${isMobileMenuOpen ? 'flex fixed inset-y-0 left-0 w-[85%] max-w-sm z-50 shadow-2xl' : 'hidden'} md:flex w-full md:static ${collapsed ? 'md:w-12' : 'md:w-64'} md:border-r border-white/[0.06] shrink-0 flex-col md:overflow-hidden relative transition-all duration-200`}>
         {collapsed ? (
           <div className="flex flex-col items-center gap-2 py-2 px-1">
             <button
               onClick={() => setCollapsed(false)}
-              className="w-8 h-8 rounded-md flex items-center justify-center text-foreground/30 hover:text-foreground/60 hover:bg-foreground/[0.04] transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors cursor-pointer"
               title="Expand sidebar"
             >
               <PanelLeftOpen className="w-4 h-4" />
             </button>
-            <div className="w-full h-px bg-foreground/[0.04]" />
+            <div className="w-full h-px bg-white/[0.04]" />
             <div className="flex flex-col items-center gap-1 text-label text-tertiary">
               <Wallet className="w-4 h-4" />
               <span className="mt-1">Q</span>
@@ -1020,13 +1020,13 @@ export function AppSidebar({
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-foreground/[0.04] shrink-0">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.04] shrink-0">
               <span className="text-label font-medium text-tertiary uppercase tracking-wider">
                 {activeTab === "market" ? "Pasar" : activeTab === "portfolio" ? "Portofolio" : activeTab === "analytics" ? "Analitik" : "Backtest"}
               </span>
               <button
                 onClick={() => setCollapsed(true)}
-                className="w-5 h-5 rounded flex items-center justify-center text-foreground/30 hover:text-foreground/60 hover:bg-foreground/[0.06] transition-colors cursor-pointer"
+                className="w-5 h-5 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors cursor-pointer"
                 title="Collapse sidebar"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />

@@ -67,34 +67,34 @@ export function StockDrawer({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-2xl border-l border-foreground-6 h-full flex flex-col justify-between shadow-2xl z-10 drawer-panel"
+            className="relative w-full max-w-2xl border-l border-white/[0.06] h-full flex flex-col justify-between shadow-2xl z-10 drawer-panel"
           >
             <div className="flex-1 flex flex-col min-h-0">
 
-              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-foreground-4">
+              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2.5">
                   <TickerLogo ticker={activeStock.ticker} size="lg" fallbackColor={activeStock.logoColor || "bg-[#3b82f6]"} />
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-medium text-foreground">{activeStock.ticker}</h3>
-                      <span className="text-body text-foreground/50">{activeStock.name}</span>
+                      <h3 className="text-sm font-medium text-white">{activeStock.ticker}</h3>
+                      <span className="text-body text-white/50">{activeStock.name}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-label text-foreground/30 uppercase">{activeStock.sector}</span>
+                      <span className="text-label text-white/30 uppercase">{activeStock.sector}</span>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1 rounded hover:bg-foreground-6 text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
+                  className="p-1 rounded hover:bg-white/[0.06] text-white/40 hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="px-5 py-3 border-b border-foreground-4 flex items-center gap-2 flex-wrap">
+              <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2 flex-wrap">
                 {inPorto && (
-                  <span className="text-body text-foreground/50 mr-1">
+                  <span className="text-body text-white/50 mr-1">
                     Held: <strong className="text-emerald-500 font-medium">{(inPorto.shares / 100).toLocaleString('id-ID')} Lot</strong>
                   </span>
                 )}
@@ -104,7 +104,7 @@ export function StockDrawer({
                   value={drawerLots}
                   onChange={(e) => onLotsChange(e.target.value ? parseInt(e.target.value) : "")}
                   placeholder="Lots"
-                  className="w-16 px-2 py-1 bg-foreground-4 border border-foreground-8 focus:border-emerald-500/50 outline-none text-foreground text-body font-mono rounded text-center"
+                  className="w-16 px-2 py-1 bg-white/[0.04] border border-white/[0.08] focus:border-emerald-500/50 outline-none text-white text-body font-mono rounded text-center"
                 />
                 <button
                   onClick={() => {
@@ -113,7 +113,7 @@ export function StockDrawer({
                       onLotsChange("");
                     }
                   }}
-                  className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-emerald-500 hover:bg-emerald-600 text-foreground cursor-pointer" : "bg-foreground-4 text-foreground/20 cursor-not-allowed"}`}
+                  className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
                 >
                   <Plus className="w-3 h-3 inline mr-1" />Buy
                 </button>
@@ -126,7 +126,7 @@ export function StockDrawer({
                           onLotsChange("");
                         }
                       }}
-                      className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-rose-500 hover:bg-rose-600 text-foreground cursor-pointer" : "bg-foreground-4 text-foreground/20 cursor-not-allowed"}`}
+                      className={`px-3 py-1 text-body font-medium rounded transition-colors ${drawerLots && drawerLots > 0 ? "bg-rose-500 hover:bg-rose-600 text-white cursor-pointer" : "bg-white/[0.04] text-white/20 cursor-not-allowed"}`}
                     >
                       <Minus className="w-3 h-3 inline mr-1" />Sell
                     </button>
@@ -144,7 +144,7 @@ export function StockDrawer({
                   className={`p-1.5 rounded transition-colors ${
                     watchlist.some(w => w.ticker === activeStock.ticker)
                       ? "text-amber-500 hover:bg-amber-500/10"
-                      : "text-foreground/30 hover:text-foreground/60 hover:bg-foreground-4"
+                      : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
                   }`}
                   title="Toggle watchlist"
                 >
@@ -153,7 +153,7 @@ export function StockDrawer({
                 <ExplainButton label={`AI analysis untuk ${activeStock.ticker}`} />
               </div>
 
-              <div className="flex border-b border-foreground-4">
+              <div className="flex border-b border-white/[0.04]">
                 {DRAWER_TABS.map(({ id, icon: Icon, label }) => (
                   <button
                     key={id}
@@ -161,7 +161,7 @@ export function StockDrawer({
                     className={`flex-1 py-2 text-caption font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
                       drawerTab === id
                         ? "text-emerald-500 border-b-2 border-emerald-500"
-                        : "text-foreground/30 hover:text-foreground/60"
+                        : "text-white/30 hover:text-white/60"
                     }`}
                   >
                     <Icon className="w-3 h-3" /> {label}
@@ -178,8 +178,8 @@ export function StockDrawer({
                     ["Div Yield", `${activeStock.dividendYield}%`],
                   ].map(([label, val]) => (
                     <div key={label as string} className="text-center">
-                      <span className="text-label text-foreground/30 block">{label}</span>
-                      <span className="text-sm font-medium text-foreground block mt-0.5">{val}</span>
+                      <span className="text-label text-white/30 block">{label}</span>
+                      <span className="text-sm font-medium text-white block mt-0.5">{val}</span>
                     </div>
                   ))}
                 </div>
@@ -203,11 +203,11 @@ export function StockDrawer({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                     >
-                      <div className="border border-foreground-6 rounded-lg p-4">
-                        <span className="text-caption text-foreground/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
+                      <div className="border border-white/[0.06] rounded-lg p-4">
+                        <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
                         <table className="w-full text-left mt-3 text-body">
                           <thead>
-                            <tr className="border-b border-foreground-4 text-foreground/25 text-label tracking-wide uppercase">
+                            <tr className="border-b border-white/[0.04] text-white/25 text-label tracking-wide uppercase">
                               <th className="pb-2 font-medium">Metric</th>
                               {activeStock.metrics.map(m => (
                                 <th key={m.year} className="pb-2 text-right font-medium">FY {m.year}</th>
@@ -222,10 +222,10 @@ export function StockDrawer({
                               ["Liabilities", activeStock.metrics.map(m => m.totalLiabilities), false],
                               ["Equity", activeStock.metrics.map(m => m.totalEquity), false],
                             ].map(([label, values, isGreen]) => (
-                              <tr key={label as string} className="hover:bg-foreground-2">
-                                <td className={`py-2 text-foreground/70 ${isGreen ? "text-emerald-500" : ""}`}>{label}</td>
+                              <tr key={label as string} className="hover:bg-white/[0.02]">
+                                <td className={`py-2 text-white/70 ${isGreen ? "text-emerald-500" : ""}`}>{label}</td>
                                 {(values as number[]).map((v, i) => (
-                                  <td key={i} className={`py-2 text-right ${isGreen ? "text-emerald-500 font-medium" : "text-foreground"}`}>
+                                  <td key={i} className={`py-2 text-right ${isGreen ? "text-emerald-500 font-medium" : "text-white"}`}>
                                     Rp{v.toLocaleString()} B
                                   </td>
                                 ))}
@@ -252,14 +252,14 @@ export function StockDrawer({
                   )}
                 </AnimatePresence>
 
-                <div className="border-t border-foreground-4 pt-4">
-                  <span className="text-label text-foreground/25 uppercase tracking-wider font-medium">Profile</span>
-                  <p className="text-body text-foreground/60 mt-1.5 leading-relaxed">{activeStock.description}</p>
+                <div className="border-t border-white/[0.04] pt-4">
+                  <span className="text-label text-white/25 uppercase tracking-wider font-medium">Profile</span>
+                  <p className="text-body text-white/60 mt-1.5 leading-relaxed">{activeStock.description}</p>
                 </div>
               </div>
             </div>
 
-            <div className="py-3 border-t border-foreground-4 text-label text-foreground/20 text-center shrink-0">
+            <div className="py-3 border-t border-white/[0.04] text-label text-white/20 text-center shrink-0">
               Click outside to close
             </div>
           </motion.div>
