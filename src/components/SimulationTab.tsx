@@ -248,7 +248,7 @@ function generateClientBacktestData(): BacktestDayData[] {
   });
 
   let ihsg = 500 + nextRandom() * 500;
-  let gold = 300000 + nextRandom() * 200000;
+  let gold = 60000 + nextRandom() * 40000;
 
   const cursor = new Date(startDate);
   while (cursor <= endDate) {
@@ -274,7 +274,7 @@ function generateClientBacktestData(): BacktestDayData[] {
       scores.forEach((s, i) => { stockRanks[s.ticker] = i + 1; });
 
       ihsg = Math.max(200, ihsg * (1 + (nextRandom() - 0.48) * 0.014));
-      gold = Math.max(100000, gold * (1 + (nextRandom() - 0.49) * 0.007));
+      gold = Math.max(50000, gold * (1 + (nextRandom() - 0.49) * 0.054));
 
       data.push({
         date: dateStr,

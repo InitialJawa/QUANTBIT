@@ -5,6 +5,11 @@
 **Alasan:** Library `yahoo-finance2` membutuhkan Node.js runtime dan tidak bisa jalan di browser. Server terpisah menghindari CORS dan SSR complexity.
 **Konsekuensi:** Perlu menjalankan 2 server (`npm run dev` + `npm run serve-api`) untuk development lokal.
 
+## 2026-06-23 — Backtest-Data API + Gold Price Fix
+**Keputusan:** Menambahkan handler `/api/backtest-data` di Express server (`server.ts`) yang membaca data dari `data/years/*.json` langsung, plus Vite proxy untuk forwarding. Memperbaiki `generateClientBacktestData()` gold starting price (300K→75K) dan drift multiplier (0.007→0.054) biar realistik. Update `MKT.gold.value` stale (1.35Jt→2.47Jt) sesuai data historis.
+**Alasan:** Sebelumnya backtest di local dev mode pake data PRNG palsu dengan gold starting 300K-500K vs harusnya 75K, menyebabkan IHSG sering > gold di chart. Juga MKT.gold.value di sidebar/portfolio 45% di bawah harga sebenarnya.
+**Konsekuensi:** User perlu run `npm run serve-api` atau `npm run dev:full` untuk API data. Tanpa server, fallback PRNG sekarang lebih realistis.
+
 ## 2026-06-21 — Deterministic Engine (No AI for Math)
 **Keputusan:** Semua kalkulasi keuangan dieksekusi secara deterministik. AI hanya digunakan di presentation layer untuk narrative summarization.
 **Alasan:** Mencegah AI hallucination pada angka finansial yang bisa menyebabkan keputusan investasi salah.

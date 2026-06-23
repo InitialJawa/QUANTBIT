@@ -18,6 +18,7 @@ export function useUIState() {
   const [drawerLots, setDrawerLots] = useState<number | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
 
   const [theme, setTheme] = useState<Theme>("dark");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -63,6 +64,7 @@ export function useUIState() {
     drawerLots, setDrawerLots,
     searchQuery, setSearchQuery,
     isMobileMenuOpen, setIsMobileMenuOpen,
+    isWalletOpen, setIsWalletOpen,
     theme, setTheme,
     isSettingsOpen, setIsSettingsOpen,
     settingsDropdownRef,

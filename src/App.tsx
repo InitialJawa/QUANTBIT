@@ -20,6 +20,7 @@ import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
 import { FloatingAIChat } from "./components/FloatingAIChat";
+import { FloatingWallet } from "./components/FloatingWallet";
 import { AICockpitProvider } from "./contexts/AICockpitContext";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -174,13 +175,7 @@ export default function App() {
                 isMobileMenuOpen={ui.isMobileMenuOpen}
                 onCloseMobile={() => ui.setIsMobileMenuOpen(false)}
                 cash={pm.cash}
-                goldShares={pm.getEmasShares()}
-                tradeLogs={pm.tradeLogs}
                 portfolio={pm.portfolio}
-                onDeposit={pm.handleDepositCash}
-                onWithdraw={pm.handleWithdrawCash}
-                onMoveToGold={pm.handleMoveToGold}
-                onSellGold={pm.handleSellGoldToCashInput}
                 onClearPortfolio={pm.handleClearPortfolio}
                 getDynamicStock={df.getDynamicStock}
               />
@@ -300,11 +295,18 @@ export default function App() {
               </main>
             </div>
           
+<FloatingWallet
+        isOpen={ui.isWalletOpen}
+        onToggle={() => ui.setIsWalletOpen(!ui.isWalletOpen)}
+        cash={pm.cash}
+        goldShares={pm.getEmasShares()}
+        tradeLogs={pm.tradeLogs}
+        onDeposit={pm.handleDepositCash}
+        onWithdraw={pm.handleWithdrawCash}
+        onMoveToGold={pm.handleMoveToGold}
+        onSellGold={pm.handleSellGoldToCashInput}
+      />
 <FloatingAIChat />
-</AICockpitProvider>
-        </EngineConfigProvider>
-      </BacktestProvider>
-
       <StockDrawer
         isOpen={ui.isDrawerOpen}
         onClose={() => ui.setIsDrawerOpen(false)}
@@ -323,6 +325,9 @@ export default function App() {
         onToggleWatchlist={pm.handleToggleWatchlist}
         chartTheme={ui.getChartTheme()}
       />
+</AICockpitProvider>
+        </EngineConfigProvider>
+      </BacktestProvider>
     </div>
   );
 }

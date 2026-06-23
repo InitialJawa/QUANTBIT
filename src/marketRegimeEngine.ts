@@ -63,6 +63,65 @@ export function setCrashSensitivity(n: number) {
   _crashSensitivity = n;
 }
 
+export function getIhsgData(): { close: number; date: string }[] {
+  return _lastIhsgData;
+}
+
+export function computeRSI(data: number[], period: number = 14): number | null {
+  if (data.length < period + 1) return null;
+  const closes = data.slice(-period - 1);
+  let gains = 0, losses = 0;
+  for (let i = 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    if (diff >= 0) gains += diff;
+    else losses -= diff;
+  }
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  if (avgLoss === 0) return 100;
+  for (let i = closes.length; i < data.length; i++) {
+    const diff = data[i] - data[i - 1];
+    avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
+  }
+  const rs = avgGain / avgLoss;
+  return Math.round((100 - 100 / (1 + rs)) * 10) / 10;
+}
+
+function computeEMA(data: number[], period: number): number | null {
+  if (data.length < period) return null;
+  const multiplier = 2 / (period + 1);
+  let ema = data.slice(0, period).reduce((s, v) => s + v, 0) / period;
+  for (let i = period; i < data.length; i++) {
+    ema = (data[i] - ema) * multiplier + ema;
+  }
+  return Math.round(ema * 10) / 10;
+}
+
+export function computeMACD(data: number[]): { macd: number; signal: number; histogram: number } | null {
+  if (data.length < 35) return null;
+  const ema12 = computeEMA(data, 12);
+  const ema26 = computeEMA(data, 26);
+  if (ema12 === null || ema26 === null) return null;
+  const macdLine = Math.round((ema12 - ema26) * 10) / 10;
+
+  const macdValues: number[] = [];
+  for (let i = 25; i < data.length; i++) {
+    const e12 = computeEMA(data.slice(0, i + 1), 12);
+    const e26 = computeEMA(data.slice(0, i + 1), 26);
+    if (e12 !== null && e26 !== null) {
+      macdValues.push(e12 - e26);
+    }
+  }
+  if (macdValues.length < 9) return { macd: macdLine, signal: 0, histogram: macdLine };
+
+  const signalLine = computeEMA(macdValues, 9);
+  if (signalLine === null) return { macd: macdLine, signal: 0, histogram: macdLine };
+
+  const histogram = Math.round((macdLine - signalLine) * 10) / 10;
+  return { macd: macdLine, signal: Math.round(signalLine * 10) / 10, histogram };
+}
+
 export function getIhsgDrawdown60(): number | null {
   if (_lastIhsgData.length < 2) return null;
   const closes = _lastIhsgData.map(d => d.close);

@@ -34,10 +34,30 @@ Sprint: UI Overhaul & Cleanup
 **Status:** DONE
 **Files:** src/components/StockDrawer.tsx, src/components/MarketTab.tsx
 
-### Task 9: Telegram Bot
+### Task 9: Fix AICockpitProvider Error
+**Status:** DONE
+**Files:** src/App.tsx — moved StockDrawer inside AICockpitProvider
+
+### Task 10: Floating Wallet (pisah dari sidebar)
+**Status:** DONE
+**Files:** src/components/FloatingWallet.tsx (new), src/App.tsx, src/hooks/useUIState.ts, src/components/AppSidebar.tsx
+
+### Task 11: Market Tab — Charts sub-tab
+**Status:** DONE
+**Files:** src/components/MarketOverviewCharts.tsx (new), src/components/MarketTab.tsx (add Charts, remove All Stocks)
+
+### Task 12: Sidebar Market Enhancements
+**Status:** DONE
+**Files:** src/components/AppSidebar.tsx — expanded berita, added Top Movers (2-col gainers/losers with RSI/histogram), added Teknikal section (RSI/MACD/SMA/breadth/score gap)
+
+### Task 13: Market Regime Engine — Export Helpers
+**Status:** DONE
+**Files:** src/marketRegimeEngine.ts — added getIhsgData, computeRSI, computeMACD exports
+
+### Task 14: Telegram Bot
 **Status:** PENDING
 **Files:** TBD
 
-### Task 10: MCP Server
+### Task 15: MCP Server
 **Status:** PENDING
 **Files:** TBD

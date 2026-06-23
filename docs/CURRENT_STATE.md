@@ -27,6 +27,11 @@
 - [x] **Sidebar widened** — md:w-56→w-72, font sizes bumped (text-caption→text-body for data values)
 - [x] **Wallet refresh** — added Coins (emas) + CreditCard (kas) icons, text-display for balance, fixed rgba bug
 - [x] **Removed DataSourcesRow badges** — deleted price/fundamentals/charts/description badges from StockDrawer and MarketTab
+- [x] **Fixed AICockpit Provider Error** — moved `<StockDrawer />` inside `<AICockpitProvider>` to fix ExplainButton crash
+- [x] **Floating Wallet** — extracted DigitalWalletUI from sidebar into floating toggle button (above AI Chat) with slide-in panel from right
+- [x] **Market Tab Charts** — new "Charts" sub-tab with IHSM+Gold indexed chart + SMA20/SMA50 overlay + regime indicator panel; removed "All Stocks" sub-tab
+- [x] **Sidebar Market Enhancements** — expanded berita (no max-height, all items), added Top Movers section (2-col gainers/losers with RSI coloring + histogram bars), added Technical Stats section (RSI, MACD histogram, SMA20, SMA50, market breadth, score gap)
+- [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
 
 ## In Progress
 - [ ] Telegram bot integration

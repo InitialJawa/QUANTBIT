@@ -113,7 +113,7 @@ export const MKT = {
   market_last_update: "2026-06-11 20:04:16 WIB",
   ihsg: { value: 5886.03, daily: -0.28, daily_pct: -0.28, weekly: 5.21, monthly: -17.96 },
   usdidr: { value: 17985.0, daily: -0.26, weekly: 0.16, monthly: 2.77 },
-  gold: { value: 1350000, daily: 0.05, weekly: -3.4, monthly: -4.9 },
+  gold: { value: 2466698, daily: 0.05, weekly: -3.4, monthly: -4.9 },
   oil: { value: 88, daily: -3.68, weekly: -5.0, monthly: -10.3 }
 };
 

@@ -16,7 +16,6 @@
 **Fix:** Dihapus. Semua styling glass-morphism menggunakan Tailwind arbitrary class.
 
 ## 4. Persistent AICockpit Provider Error
-**Status:** OPEN
-**Description:** Clicking on ticker or using ExplainButton still throws "useAICockpit must be used within AICockpitProvider" despite StockDrawer and FloatingAIChat being wrapped.
-**Root Cause:** Some components (e.g., StockDrawer rendered outside provider) remain outside the AICockpitProvider hierarchy.
-**Workaround:** Ensure all UI components that import `useAICockpit` are children of `<AICockpitProvider>`. Verify placement in `src/App.tsx` and move any stray `<StockDrawer />` etc. inside the provider.
+**Status:** FIXED (2026-06-23)
+**Root Cause:** `<StockDrawer />` rendered outside `<AICockpitProvider>` in `src/App.tsx`, but its `<ExplainButton>` calls `useAICockpit()`.
+**Fix:** Moved `<StockDrawer />` inside `<AICockpitProvider>` — right before `</AICockpitProvider>` closure.

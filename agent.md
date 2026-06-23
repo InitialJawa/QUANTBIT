@@ -1,14 +1,14 @@
-# Agent Update – 2026‑06‑21
+# Agent Update – 2026‑06‑23
 
-## 📢 Ringkasan Perubahan Terbaru
+## Perubahan Terbaru
 
 | No | Perubahan | Detail |
 |----|-----------|--------|
-| **1** | **Server API Yahoo Finance** | • Dibuat **`server.ts`** sebagai entry‑point Express. <br>• Ditambahkan handler **`src/server/yahooApi.ts`** yang memanggil `fetchYahooData` dan mengembalikan JSON. <br>• Skrip npm **`serve-api`** (`tsx server.ts`) ditambahkan ke `package.json`. |
-| **2** | **Pembersihan CSS** | • Selector lama `.bg-[#0A0A0A]` yang menyebabkan warning Vite dihapus. <br>• Selector duplikat `.bg-[#0a0a0a]` dihapus. <br>• Komentar penjelas menandai bahwa Tailwind‑Arbitrary class `bg-[#0A0A0A]` kini menangani styling. |
-| **3** | **Commit & Push** | Semua perubahan (API server, skrip, pembersihan CSS) telah **commit** dan **push** ke branch `main` di GitHub: <https://github.com/InitialJawa/QUANTBIT>. |
-| **4** | **Build Sukses** | `npm run build` selesai tanpa error, menghasilkan bundle di `dist/` (ukuran > 500 KB, peringatan chunk size dapat di‑optimalkan nanti). |
-| **5** | **README Badge Update** | Badge untuk **Express** ditambahkan pada `README.md`. |
+| **1** | **Fix AICockpitProvider Error** | Moved `<StockDrawer />` inside `<AICockpitProvider>` di `src/App.tsx`. Memperbaiki error "useAICockpit must be used within AICockpitProvider" saat klik ticker. |
+| **2** | **Floating Wallet (pisah dari sidebar)** | • Dibuat `src/components/FloatingWallet.tsx` — tombol floating `bottom-24 right-6` di atas AI Chat, slide-in panel dari kanan. <br>• `DigitalWalletUI` dipindah dari `AppSidebar` ke modal floating. <br>• Sidebar jadi lebih bersih, wallet bisa diakses dari tab mana pun. |
+| **3** | **Market Tab Charts** | • Dibuat `src/components/MarketOverviewCharts.tsx` — chart IHSG+Gold indexed to 100 + SMA20/SMA50 overlay + regime coloring + panel indikator. <br>• MarketTab: tambah sub-tab "Charts", hapus "All Stocks". <br>• Data dari `/api/backtest-data`, timeframe selector 1M/6M/1Y/5Y/MAX. |
+| **4** | **Sidebar Market Enhancements** | • Berita expanded (no max-height). <br>• Top Movers section (2-col gainers/losers + RSI coloring + histogram bars). <br>• Technical Stats section (RSI, MACD, SMA20/50, breadth, score gap). <br>• Helper functions: `computeRSI`, `computeMACD`, `getIhsgData` di `marketRegimeEngine.ts`. |
+| **5** | **Fix Backtest Data Palsu + Gold** | • `server.ts`: tambah handler `/api/backtest-data` baca dari `data/years/*.json` (real data, no PRNG). <br>• `vite.config.ts`: proxy `/api/backtest-data` & `/api/yahoo` → localhost:3001. <br>• `npm run dev:full` — jalanin API server + Vite bersamaan. <br>• `generateClientBacktestData()`: gold mulai 75K (dari 300K), drift 0.054 (dari 0.007). <br>• `MKT.gold.value`: 1.350.000 → 2.466.698 (latest). |
 
 ## 🚀 Cara Menjalankan Proyek
 

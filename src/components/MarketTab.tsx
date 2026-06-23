@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
+import { MarketOverviewCharts } from "./MarketOverviewCharts";
 
 interface MarketTabProps {
   onSelectTicker: (ticker: string) => void;
@@ -54,7 +55,7 @@ export function MarketTab({
   getDynamicStock,
   filteredStocks
 }: MarketTabProps) {
-  const [marketSubTab, setMarketSubTab] = useState<"overview" | "watchlist" | "all">("overview");
+  const [marketSubTab, setMarketSubTab] = useState<"overview" | "charts" | "watchlist">("overview");
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
@@ -254,19 +255,19 @@ export function MarketTab({
       
       {/* Sub-tab bar */}
       <div className="flex border-b border-white/[0.04] -mt-1">
-        {(["overview", "watchlist", "all"] as const).map((id) => (
-          <button
-            key={id}
-            onClick={() => setMarketSubTab(id)}
-            className={`flex-1 py-1.5 text-caption font-medium tracking-wide transition-colors cursor-pointer ${
-              marketSubTab === id
-                ? "text-[#00c9a5] border-b-2 border-[#00c9a5]"
-                : "text-white/30 hover:text-white/60"
-            }`}
-          >
-            {id === "overview" ? "Overview" : id === "watchlist" ? "Watchlist" : "All Stocks"}
-          </button>
-        ))}
+        {(["overview", "charts", "watchlist"] as const).map((id) => (
+            <button
+              key={id}
+              onClick={() => setMarketSubTab(id)}
+              className={`px-2.5 py-1.5 text-caption font-medium rounded-lg transition-colors cursor-pointer ${
+                marketSubTab === id
+                  ? "text-[#00c9a5] bg-[#00c9a5]/10"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+              }`}
+            >
+              {id === "overview" ? "Overview" : id === "charts" ? "Charts" : "Watchlist"}
+            </button>
+          ))}
       </div>
 
       {marketSubTab === "overview" && (
@@ -697,22 +698,9 @@ export function MarketTab({
       </div>
       )}
 
-      {marketSubTab === "all" && (
+      {marketSubTab === "charts" && (
         <div className="space-y-4">
-          {(filteredStocks || visibleStocks).map((s) => s ? (
-            <div key={s.ticker} className="flex items-center justify-between px-3 py-2 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-              <div className="flex items-center gap-3">
-                <span className="text-body font-bold text-white/90 w-16">{s.ticker}</span>
-                <span className="text-caption text-zinc-500 truncate max-w-[200px]">{s.name}</span>
-              </div>
-              <div className="flex items-center gap-4 text-right">
-                <span className="text-body font-mono font-medium text-white/80">{s.currentPrice.toLocaleString()}</span>
-                <span className={`text-caption font-bold w-16 ${s.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {s.change >= 0 ? "+" : ""}{s.change}%
-                </span>
-              </div>
-            </div>
-          ) : null)}
+          <MarketOverviewCharts />
         </div>
       )}
 

@@ -14,6 +14,10 @@ export default defineConfig(() => {
     server: {
       port: 5173,
       host: true,
+      proxy: {
+        '/api/backtest-data': 'http://localhost:3001',
+        '/api/yahoo': 'http://localhost:3001',
+      },
     },
     build: {
       chunkSizeWarningLimit: 1000,

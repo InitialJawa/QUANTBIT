@@ -1,9 +1,10 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings } from "lucide-react";
-import { DigitalWalletUI } from "./DigitalWalletUI";
 import { idxNews, MKT, RS } from "../marketData";
+import { STOCKS_DATA } from "../stocksData";
+import { getIhsgData, computeRSI, computeMACD } from "../marketRegimeEngine";
 import type { PortfolioItem, StockData } from "../types";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useBacktest } from "../contexts/BacktestContext";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { ExplainButton } from "./ExplainButton";
@@ -13,13 +14,7 @@ interface AppSidebarProps {
   isMobileMenuOpen: boolean;
   onCloseMobile: () => void;
   cash: number;
-  goldShares: number;
-  tradeLogs: any[];
   portfolio: PortfolioItem[];
-  onDeposit: (amount: number) => void;
-  onWithdraw: (amount: number) => void;
-  onMoveToGold: (amount: number) => void;
-  onSellGold: (shares: number) => void;
   onClearPortfolio?: () => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
 }
@@ -33,13 +28,7 @@ export function AppSidebar({
   isMobileMenuOpen,
   onCloseMobile,
   cash,
-  goldShares,
-  tradeLogs,
   portfolio,
-  onDeposit,
-  onWithdraw,
-  onMoveToGold,
-  onSellGold,
   onClearPortfolio,
   getDynamicStock,
 }: AppSidebarProps) {
@@ -53,28 +42,64 @@ export function AppSidebar({
   const totalReturn = totalCurrentValue - totalInvestment;
   const totalReturnPct = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
+  const ihsgData = useMemo(() => getIhsgData(), []);
+  const ihsgCloses = useMemo(() => ihsgData.map(d => d.close), [ihsgData]);
+  const rsiIHSG = useMemo(() => computeRSI(ihsgCloses, 14), [ihsgCloses]);
+  const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);
+
+  function stockRSI(stock: StockData): number | null {
+    const prices = stock.chartDataDaily?.map(d => d.price);
+    if (!prices || prices.length < 15) return null;
+    return computeRSI(prices, 14);
+  }
+
+  const topMovers = useMemo(() => {
+    const sorted = [...STOCKS_DATA].sort((a, b) => b.change - a.change);
+    return {
+      gainers: sorted.slice(0, 5),
+      losers: sorted.slice(-5).reverse(),
+    };
+  }, []);
+
+  const gainersWithRSI = useMemo(() => topMovers.gainers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
+  const losersWithRSI = useMemo(() => topMovers.losers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
+
+  const breadth = useMemo(() => {
+    const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
+    const decliners = STOCKS_DATA.filter(s => s.change < 0).length;
+    return { advancers, decliners, total: STOCKS_DATA.length };
+  }, []);
+
+  function rsiColorClass(rsi: number | null): string {
+    if (rsi === null) return "text-tertiary";
+    if (rsi >= 70) return "text-emerald-400";
+    if (rsi <= 30) return "text-rose-400";
+    return "text-tertiary";
+  }
+
+  function rsiBgBar(rsi: number | null): string {
+    if (rsi === null) return "bg-white/[0.06]";
+    if (rsi >= 70) return "bg-emerald-400/30";
+    if (rsi <= 30) return "bg-rose-400/30";
+    return "bg-white/[0.10]";
+  }
+
+  const maxAbsChange = useMemo(() => {
+    return Math.max(
+      ...STOCKS_DATA.map(s => Math.abs(s.change)),
+      1
+    );
+  }, []);
+
   const renderMarketContent = () => (
     <>
-      <div id="rdi-digital-wallet-container" className="mx-2">
-        <DigitalWalletUI
-          cash={cash}
-          goldShares={goldShares}
-          tradeLogs={tradeLogs}
-          onDeposit={onDeposit}
-          onWithdraw={onWithdraw}
-          onMoveToGold={onMoveToGold}
-          onSellGold={onSellGold}
-          onCloseMobile={onCloseMobile}
-        />
-      </div>
-
       <div id="sidebar-news-panel" className="mx-2">
         <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <Newspaper className="w-3 h-3 text-tertiary" />
           <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Berita</span>
         </div>
-        <div className="pt-0.5 space-y-0 max-h-[120px] overflow-y-auto scrollbar-thin">
-          {idxNews.slice(0, 4).map((news, idx) => (
+        <div className="pt-0.5 space-y-0 scrollbar-thin">
+          {idxNews.map((news, idx) => (
             <a
               key={idx}
               href={news.url}
@@ -146,6 +171,149 @@ export function AppSidebar({
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">Gold/gr</span>
               <span className="text-body text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sidebar-top-movers" className="mx-2">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <TrendingUp className="w-3 h-3 text-tertiary" />
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Movers</span>
+          <span className="ml-auto"><ExplainButton label="Top Gainers &amp; Losers dengan indikasi RSI (Hijau ≥70, Abu 30-70, Merah ≤30)" /></span>
+        </div>
+        <div className="grid grid-cols-2 gap-1 px-2 py-1.5">
+          <div>
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
+              <span className="text-caption font-medium text-emerald-400">Gainers</span>
+            </div>
+            <div className="space-y-1">
+              {gainersWithRSI.map(({ stock, rsi }) => (
+                <div key={stock.ticker} className="flex items-center gap-1.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
+                      <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
+                          style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
+                        {rsi !== null ? rsi.toFixed(0) : "--"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingDown className="w-2.5 h-2.5 text-rose-400" />
+              <span className="text-caption font-medium text-rose-400">Losers</span>
+            </div>
+            <div className="space-y-1">
+              {losersWithRSI.map(({ stock, rsi }) => (
+                <div key={stock.ticker} className="flex items-center gap-1.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
+                      <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
+                          style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
+                        {rsi !== null ? rsi.toFixed(0) : "--"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sidebar-technical-stats" className="mx-2">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <BarChart3 className="w-3 h-3 text-tertiary" />
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Teknikal</span>
+          <span className="ml-auto"><ExplainButton label="Indikator teknikal IHSG: RSI, MACD, SMA, Market Breadth, Score Gap" /></span>
+        </div>
+        <div className="px-2 py-1.5 space-y-1.5">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <div>
+              <span className="text-label text-tertiary block">RSI(14)</span>
+              <span className={`text-body font-mono font-bold ${rsiColorClass(rsiIHSG)}`}>
+                {rsiIHSG !== null ? rsiIHSG.toFixed(1) : "--"}
+              </span>
+            </div>
+            <div>
+              <span className="text-label text-tertiary block">MACD</span>
+              <span className="text-body font-mono font-bold text-secondary">
+                {macdResult !== null ? macdResult.macd.toFixed(1) : "--"}
+              </span>
+              {macdResult !== null && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className={`text-caption font-mono ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
+                  </span>
+                  <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${macdResult.histogram >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
+                      style={{ width: `${Math.min(Math.abs(macdResult.histogram) * 10, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <div>
+              <span className="text-label text-tertiary block">SMA20</span>
+              <span className="text-caption font-mono text-secondary">
+                {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
+              </span>
+            </div>
+            <div>
+              <span className="text-label text-tertiary block">SMA50</span>
+              <span className="text-caption font-mono text-secondary">
+                {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
+              </span>
+            </div>
+          </div>
+          <div className="border-t border-white/[0.04] pt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
+            <div>
+              <span className="text-label text-tertiary block">Breadth</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-caption text-emerald-400 font-mono">{breadth.advancers}</span>
+                <span className="text-label text-tertiary">/</span>
+                <span className="text-caption text-rose-400 font-mono">{breadth.decliners}</span>
+                <span className="text-label text-tertiary">/</span>
+                <span className="text-caption text-tertiary font-mono">{breadth.total}</span>
+              </div>
+            </div>
+            <div>
+              <span className="text-label text-tertiary block">Score Gap</span>
+              <span className="text-body font-mono font-bold text-secondary">
+                {RS.radar_context?.score_gap !== undefined
+                  ? RS.radar_context.score_gap.toFixed(1)
+                  : "--"}
+              </span>
             </div>
           </div>
         </div>
