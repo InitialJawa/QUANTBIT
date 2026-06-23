@@ -141,7 +141,7 @@ export function AlertBanner({
                   </div>
 
                   {isCrash ? (
-                    <p className="text-[11px] text-white/50 leading-relaxed">
+                    <p className="text-[11px] text-white/35 leading-relaxed">
                       IHSG turun{" "}
                       <strong className="text-[#f23645] font-mono">
                         {MKT.ihsg.monthly.toFixed(2)}%
@@ -150,7 +150,7 @@ export function AlertBanner({
                       crossing MA.
                     </p>
                   ) : (
-                    <p className="text-[11px] text-white/50 leading-relaxed">
+                    <p className="text-[11px] text-white/35 leading-relaxed">
                       Aset{" "}
                       <strong className="text-[#089981]">{crashTickers}</strong>{" "}
                       memicu kriteria keluar.
