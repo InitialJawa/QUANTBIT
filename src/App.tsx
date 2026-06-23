@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { STOCKS_DATA } from "./stocksData";
 import { MKT } from "./marketData";
 import type { StockData } from "./types";
@@ -9,9 +9,9 @@ import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
 
 import { MarketTab } from "./components/MarketTab";
-import { PortfolioTracker } from "./components/PortfolioTracker";
-import { AnalyticsTab } from "./components/AnalyticsTab";
-import { SimulationTab } from "./components/SimulationTab";
+const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
+const AnalyticsTab = lazy(() => import("./components/AnalyticsTab").then(m => ({ default: m.AnalyticsTab })));
+const SimulationTab = lazy(() => import("./components/SimulationTab").then(m => ({ default: m.SimulationTab })));
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { BacktestProvider } from "./contexts/BacktestContext";
@@ -232,6 +232,7 @@ export default function App() {
                         exit={{ opacity: 0, y: -15 }}
                         transition={{ duration: 0.15 }}
                       >
+                        <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat portfolio...</div>}>
                         <PortfolioTracker
                           portfolio={pm.portfolio}
                           watchlist={pm.watchlist}
@@ -247,6 +248,7 @@ export default function App() {
                           tradeLogs={pm.tradeLogs}
                           setTradeLogs={pm.customSetTradeLogs}
                         />
+                        </Suspense>
                       </motion.div>
                     )}
 
@@ -259,6 +261,7 @@ export default function App() {
                         transition={{ duration: 0.15 }}
                         className="flex-1 flex flex-col"
                       >
+                        <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat simulator...</div>}>
                         <SimulationTab
                           portfolio={pm.portfolio}
                           onAddTransaction={pm.handleAddTransaction}
@@ -268,6 +271,7 @@ export default function App() {
                           getDynamicStock={df.getDynamicStock}
                           activeConfig={ui.activeConfig}
                         />
+                        </Suspense>
                       </motion.div>
                     )}
 
@@ -280,6 +284,7 @@ export default function App() {
                         transition={{ duration: 0.15 }}
                         className="flex-1 flex flex-col"
                       >
+                        <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat analitik...</div>}>
                         <AnalyticsTab
                           activeConfig={ui.activeConfig}
                           onSelectTicker={ui.handleSelectTicker}
@@ -288,6 +293,7 @@ export default function App() {
                           getDynamicStock={df.getDynamicStock}
                           isIHSGInCrisis={isIHSGInCrisis}
                         />
+                        </Suspense>
                       </motion.div>
                     )}
                   </AnimatePresence>

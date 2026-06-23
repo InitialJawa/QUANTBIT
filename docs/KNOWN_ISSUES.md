@@ -53,9 +53,9 @@
 **Fix:** Tidak perlu fix — data real.
 
 ## 11. 9/87 Tickers with Real Fundamentals
-**Status:** OPEN
-**Details:** Hanya 9 ticker (BBCA, BBRI, BMRI, TLKM, ASII, ADRO, PTBA, ESSA, GOTO) punya hardcoded fundamental snapshots. 78 ticker lainnya pakai deterministic hash fallback.
-**Fix:** Tambah hardcoded snapshots dari real data atau integrasi API fundamental (EODHD/Sectors.app).
+**Status:** PARTIALLY RESOLVED (2026-06-23)
+**Details:** Expanded dari 9 ke 18 ticker dengan hardcoded fundamental snapshots (2018-2025). Tick baru: BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR. 69 ticker lainnya masih pakai deterministic hash fallback.
+**Fix:** Tambahan hardcoded snapshots dari public financial reports. Sisa 69 ticker bisa diupgrade via API fundamental (EODHD/Sectors.app).
 
 ## 12. Gold/USDIDR Historical Fallback — Yearly Averages
 **Status:** OPEN

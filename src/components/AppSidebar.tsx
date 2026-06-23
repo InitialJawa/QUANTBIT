@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2 } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD } from "../marketRegimeEngine";
@@ -21,6 +21,35 @@ interface AppSidebarProps {
 
 function formatRupiah(val: number) {
   return "Rp " + Math.round(val).toLocaleString("id-ID");
+}
+
+function MiniSparkline({ data, width = 40, height = 16, color = "currentColor" }: {
+  data: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) {
+  if (data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="flex-shrink-0">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function formatVolume(vol: number): string {
+  if (vol >= 1_000_000_000) return (vol / 1_000_000_000).toFixed(1) + "B";
+  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + "M";
+  if (vol >= 1_000) return (vol / 1_000).toFixed(0) + "K";
+  return vol.toString();
 }
 
 export function AppSidebar({
@@ -180,7 +209,7 @@ export function AppSidebar({
         <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <TrendingUp className="w-3 h-3 text-tertiary" />
           <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Movers</span>
-          <span className="ml-auto"><ExplainButton label="Top Gainers &amp; Losers dengan indikasi RSI (Hijau ≥70, Abu 30-70, Merah ≤30)" /></span>
+          <span className="ml-auto"><ExplainButton label="Top Gainers &amp; Losers — sparkline 20 hari, volume terakhir, RSI (Hijau ≥70, Abu 30-70, Merah ≤30)" /></span>
         </div>
         <div className="grid grid-cols-2 gap-1 px-2 py-1.5">
           <div>
@@ -189,29 +218,35 @@ export function AppSidebar({
               <span className="text-caption font-medium text-emerald-400">Gainers</span>
             </div>
             <div className="space-y-1">
-              {gainersWithRSI.map(({ stock, rsi }) => (
-                <div key={stock.ticker} className="flex items-center gap-1.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
-                      <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
-                          style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
-                        />
+              {gainersWithRSI.map(({ stock, rsi }) => {
+                const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
+                const lastVol = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
+                return (
+                  <div key={stock.ticker} className="flex items-center gap-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
+                        <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
+                        </span>
                       </div>
-                      <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
-                        {rsi !== null ? rsi.toFixed(0) : "--"}
-                      </span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
+                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
+                            style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-label text-tertiary font-mono">{formatVolume(lastVol)}</span>
+                        <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
+                          {rsi !== null ? rsi.toFixed(0) : "--"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           <div>
@@ -220,29 +255,35 @@ export function AppSidebar({
               <span className="text-caption font-medium text-rose-400">Losers</span>
             </div>
             <div className="space-y-1">
-              {losersWithRSI.map(({ stock, rsi }) => (
-                <div key={stock.ticker} className="flex items-center gap-1.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
-                      <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
-                          style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
-                        />
+              {losersWithRSI.map(({ stock, rsi }) => {
+                const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
+                const lastVol = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
+                return (
+                  <div key={stock.ticker} className="flex items-center gap-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
+                        <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
+                        </span>
                       </div>
-                      <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
-                        {rsi !== null ? rsi.toFixed(0) : "--"}
-                      </span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
+                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
+                            style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-label text-tertiary font-mono">{formatVolume(lastVol)}</span>
+                        <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
+                          {rsi !== null ? rsi.toFixed(0) : "--"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

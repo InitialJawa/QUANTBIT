@@ -1,20 +1,16 @@
-﻿import { useState } from "react";
+﻿import { useState, useMemo } from "react";
 import { StockData, AnalysisResult } from "../types";
 import { 
   Sparkles, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
-  Plus, 
-  HelpCircle,
-  Clock,
   ShieldCheck,
   Target,
-  ArrowRightLeft
+  BarChart2,
+  Users,
+  TrendingUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TickerLogo } from "./TickerLogo";
+import { STOCKS_DATA } from "../stocksData";
 
 interface DeepReportProps {
   stock: StockData;
@@ -58,6 +54,24 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
     }
     return "bg-rose-500/10 text-rose-400 border-rose-500/20 text-body";
   };
+
+  const priceHistory = useMemo(() => {
+    const data = stock.chartDataDaily?.slice(-90) || [];
+    if (data.length < 2) return null;
+    const prices = data.map(d => d.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const range = max - min || 1;
+    return { data, prices, min, max, range };
+  }, [stock.chartDataDaily]);
+
+  const sectorPeers = useMemo(() => {
+    const peerSector = stock.sector;
+    return STOCKS_DATA
+      .filter(s => s.sector === peerSector && s.ticker !== stock.ticker)
+      .sort((a, b) => b.marketCap - a.marketCap)
+      .slice(0, 5);
+  }, [stock.sector, stock.ticker]);
 
   return (
     <div id="deep-report-container" className="space-y-5">
@@ -244,9 +258,12 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               
               <div className="bg-[#050505] rounded-xl border border-[#00c9a5]/20 p-4 space-y-2">
-                <span className="text-label font-bold text-[#00c9a5] uppercase tracking-wide">
-                  Kekuatan (S)
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00c9a5]" />
+                  <span className="text-label font-bold text-[#00c9a5] uppercase tracking-wide">
+                    Kekuatan (S)
+                  </span>
+                </div>
                 <ul className="text-label text-white/70 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.strengths?.map((item, idx) => (
                     <li key={idx}>{item}</li>
@@ -255,9 +272,12 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
               </div>
 
               <div className="bg-[#050505] rounded-xl border border-rose-500/20 p-4 space-y-2">
-                <span className="text-label font-bold text-rose-400 uppercase tracking-wide">
-                  Kelemahan (W)
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <span className="text-label font-bold text-rose-400 uppercase tracking-wide">
+                    Kelemahan (W)
+                  </span>
+                </div>
                 <ul className="text-label text-white/70 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.weaknesses?.map((item, idx) => (
                     <li key={idx}>{item}</li>
@@ -266,9 +286,12 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
               </div>
 
               <div className="bg-[#050505] rounded-xl border border-blue-500/20 p-4 space-y-2">
-                <span className="text-label font-bold text-blue-400 uppercase tracking-wide">
-                  Peluang (O)
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <span className="text-label font-bold text-blue-400 uppercase tracking-wide">
+                    Peluang (O)
+                  </span>
+                </div>
                 <ul className="text-label text-white/70 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.opportunities?.map((item, idx) => (
                     <li key={idx}>{item}</li>
@@ -277,9 +300,12 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
               </div>
 
               <div className="bg-[#050505] rounded-xl border border-purple-500/20 p-4 space-y-2">
-                <span className="text-label font-bold text-purple-400 uppercase tracking-wide">
-                  Ancaman (T)
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <span className="text-label font-bold text-purple-400 uppercase tracking-wide">
+                    Ancaman (T)
+                  </span>
+                </div>
                 <ul className="text-label text-white/70 space-y-1.5 list-disc pl-4 leading-relaxed">
                   {report.swotAnalysis.threats?.map((item, idx) => (
                     <li key={idx}>{item}</li>
@@ -289,6 +315,99 @@ export function DeepReport({ stock, report, onGenerateReport, isGenerating, erro
 
             </div>
           </div>
+
+          {/* Price History Chart */}
+          {priceHistory && (
+            <div className="bg-[#050505] rounded-2xl border border-white/[0.04] p-5">
+              <h4 className="text-label uppercase font-bold text-white/40 tracking-widest mb-3 flex items-center gap-2">
+                <BarChart2 className="w-3.5 h-3.5 text-[#00c9a5]" />
+                Harga 90 Hari Terakhir
+              </h4>
+              <div className="relative h-32">
+                <svg width="100%" height="100%" viewBox={`0 0 ${priceHistory.prices.length} 100`} preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00c9a5" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#00c9a5" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points={priceHistory.prices.map((p, i) => {
+                      const x = (i / (priceHistory.prices.length - 1)) * 100;
+                      const y = 100 - ((p - priceHistory.min) / priceHistory.range) * 100;
+                      return `${x},${y}`;
+                    }).join(" ") + ` 100,100 0,100`}
+                    fill="url(#priceGrad)"
+                  />
+                  <polyline
+                    points={priceHistory.prices.map((p, i) => {
+                      const x = (i / (priceHistory.prices.length - 1)) * 100;
+                      const y = 100 - ((p - priceHistory.min) / priceHistory.range) * 100;
+                      return `${x},${y}`;
+                    }).join(" ")}
+                    fill="none"
+                    stroke="#00c9a5"
+                    strokeWidth="1.5"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+                <div className="absolute top-0 left-0 text-label text-white/30 font-mono">
+                  Rp {priceHistory.max.toLocaleString("id-ID")}
+                </div>
+                <div className="absolute bottom-0 left-0 text-label text-white/30 font-mono">
+                  Rp {priceHistory.min.toLocaleString("id-ID")}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Peer Comparison */}
+          {sectorPeers.length > 0 && (
+            <div className="bg-[#050505] rounded-2xl border border-white/[0.04] p-5 overflow-hidden">
+              <h4 className="text-label uppercase font-bold text-white/40 tracking-widest mb-3 flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 text-[#00c9a5]" />
+                Perbandingan Sektor ({stock.sector})
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/[0.04] text-label font-bold text-white/40 uppercase tracking-widest">
+                      <th className="pb-2 pr-3">Saham</th>
+                      <th className="pb-2 px-3 text-right">Harga</th>
+                      <th className="pb-2 px-3 text-right">Chg%</th>
+                      <th className="pb-2 px-3 text-right">PE</th>
+                      <th className="pb-2 px-3 text-right">PBV</th>
+                      <th className="pb-2 pl-3 text-right">MCap</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03] text-label">
+                    <tr className="bg-[#00c9a5]/5">
+                      <td className="py-2 pr-3 font-bold text-[#00c9a5]">{stock.ticker.replace(".JK", "")}</td>
+                      <td className="py-2 px-3 text-right font-mono text-white/80">{stock.currentPrice.toLocaleString("id-ID")}</td>
+                      <td className={`py-2 px-3 text-right font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono text-white/70">{stock.peRatio?.toFixed(1) || "-"}</td>
+                      <td className="py-2 px-3 text-right font-mono text-white/70">{stock.pbRatio?.toFixed(1) || "-"}</td>
+                      <td className="py-2 pl-3 text-right font-mono text-white/60">{stock.marketCap?.toLocaleString("id-ID") || "-"}</td>
+                    </tr>
+                    {sectorPeers.map(peer => (
+                      <tr key={peer.ticker} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-2 pr-3 font-medium text-white/80">{peer.ticker.replace(".JK", "")}</td>
+                        <td className="py-2 px-3 text-right font-mono text-white/70">{peer.currentPrice.toLocaleString("id-ID")}</td>
+                        <td className={`py-2 px-3 text-right font-mono font-bold ${peer.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {peer.change >= 0 ? "+" : ""}{peer.change.toFixed(1)}%
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-white/60">{peer.peRatio?.toFixed(1) || "-"}</td>
+                        <td className="py-2 px-3 text-right font-mono text-white/60">{peer.pbRatio?.toFixed(1) || "-"}</td>
+                        <td className="py-2 pl-3 text-right font-mono text-white/50">{peer.marketCap?.toLocaleString("id-ID") || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Key ratio Audit Table */}
           <div className="bg-[#050505] rounded-2xl border border-white/[0.04] p-5 overflow-hidden">

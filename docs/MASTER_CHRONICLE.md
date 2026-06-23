@@ -89,3 +89,34 @@
 6. Permissions: `contents: write` untuk push ke main
 
 **Docs updated:** CURRENT_STATE, NEXT_ACTION, KNOWN_ISSUES, MASTER_CHRONICLE
+
+## 2026-06-23 — Docs Cleanup: Fix Stale ACTIVE_TASK.md
+**Masalah:** ACTIVE_TASK.md punya duplikat Task 20-24 (versi lama dan baru). Tasks 21 (IHSG spike verified), 23 (gold unit mismatch fixed), 24 (carry-forward labeled) masih tercatat PENDING padahal sudah DONE.
+**Fix:**
+1. Hapus duplikat Task 20-24 (consolidate ke versi final)
+2. Update Task 21 status ke DONE — IHSG 8748 confirmed real
+3. Update Task 23 status ke DONE — post_process_live_market.py fetch GC=F langsung
+4. Update Task 24 status ke DONE — DataStatus.CARRIED_FORWARD added
+5. Update CURRENT_STATE.md — In Progress section updated
+6. Update NEXT_ACTION.md — completed session list updated
+
+## 2026-06-23 — Feature Enhancements Session
+**Top Movers Enhancement:**
+- Added `MiniSparkline` SVG component — 20-day price trend mini chart per stock
+- Added volume indicator (formatted K/M/B) alongside RSI and change histogram
+
+**DeepReport Enhancement:**
+- Added dot indicators to SWOT section headers
+- Added 90-day price history chart (SVG with gradient fill, min/max labels)
+- Added peer comparison table (sector-based, top 5 peers by market cap)
+- Cleaned up 7 unused imports
+
+**Bundle Optimization:**
+- Lazy-loaded SimulationTab, AnalyticsTab, PortfolioTracker via `React.lazy()` + `Suspense`
+- Main bundle: 732 kB → 612 kB (-16.5%)
+- Lazy chunks: AnalyticsTab 36 kB, PortfolioTracker 36 kB, SimulationTab 51 kB
+
+**Fundamentals Expansion:**
+- Added 9 new hardcoded snapshots: BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR
+- Each with 8 years (2018-2025): ROE, PB, PE, DER, ROA, Net Margin, DPS
+- Total: 18 tickers with real historical data (was 9)

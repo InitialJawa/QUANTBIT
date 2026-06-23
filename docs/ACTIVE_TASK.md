@@ -82,26 +82,6 @@ Sprint: Data Validation & Integrity
 ### Task 20: Full Data Pipeline Validation (P1)
 **Status:** DONE (2026-06-23)
 **Files:** docs/CURRENT_STATE.md, docs/ACTIVE_TASK.md, docs/NEXT_ACTION.md, docs/KNOWN_ISSUES.md
-
-### Task 21: Verify IHSG Jan 2026 Spike (P1)
-**Status:** PENDING
-**Files:** data/years/2026.json, scripts/fetch_historical_data.ts
-
-### Task 22: Refresh live_market.json from idx80_scan (P1)
-**Status:** DONE (2026-06-23)
-**Files:** data/live_market.json
-**Notes:** Already updated via post_process_live_market.py. last_update: 2026-06-23, IHSG 6101.
-
-### Task 23: Add Data Freshness Guard (P3)
-**Status:** PENDING
-**Files:** src/hooks/useDataFeed.ts, src/marketData.ts
-
-### Task 24: Label Carry-Forward with DataStatus (P3)
-**Status:** PENDING
-**Files:** src/stocksData.ts, src/types/DataStatus.ts
-
-### Task 20: Data Validation Audit — Full Pipeline Trace
-**Status:** DONE (2026-06-23)
 **Findings:**
 - `idx80_scan.json` — VALID, fresh 2026-06-23, 87 stocks from Yahoo
 - Backtest year files (2000-2026) — VALID, 27 years complete
@@ -110,22 +90,43 @@ Sprint: Data Validation & Integrity
 - See `docs/AUDIT_DATA_SINTETIS.md` + `docs/DATA_AUDIT_NOTES.md` for full report
 
 ### Task 21: Verify IHSG Jan 2026 Spike (P2)
-**Status:** PENDING
-**Detail:** IHSG 8748 di 2026-01-02, turun ke 5342 (Jun), recovery ke 6101. Perlu cek raw Yahoo `^JKSE` data.
-
-### Task 22: Refresh live_market.json — Stale Cache (P3)
 **Status:** DONE (2026-06-23)
-**Detail:** Already updated. `live_market.json` last_update: 2026-06-23, IHSG 6101.
+**Detail:** IHSG 8748 confirmed real dari raw Yahoo `^JKSE` (peak 9134, crash 8232). Bukan error data.
+
+### Task 22: Refresh live_market.json from idx80_scan (P1)
+**Status:** DONE (2026-06-23)
+**Files:** data/live_market.json
+**Notes:** Already updated via post_process_live_market.py. last_update: 2026-06-23, IHSG 6101.
 
 ### Task 23: Gold Unit Mismatch Fix (P3)
-**Status:** PENDING
-**Detail:** `live_market.json` gold: 4347 (USD/oz) tapi MKT gold value pakai IDR/gram. Perlu rekonsiliasi satuan.
+**Status:** DONE (2026-06-23)
+**Detail:** `post_process_live_market.py` fetch GC=F langsung + konversi USD/oz→IDR/gram. MKT gold sync. Semua layer konsisten IDR/gram.
 
 ### Task 24: Label Carry-Forward Data (P4)
-**Status:** PENDING
-**Detail:** Data hasil bridgeHistoricalDataToToday harus diberi status `CARRIED_FORWARD` bukan terlihat seperti live.
+**Status:** DONE (2026-06-23)
+**Detail:** `DataStatus.CARRIED_FORWARD` added. Backend set `isCarriedForward: true` di response. Data di `setIhsgHistory`/`getIhsgData` pass through flag.
 
 ### Task 25: Fix Random Scores in force-sync (P2)
 **Status:** DONE (2026-06-23)
 **Files:** functions/api/[[path]].ts
 **Detail:** `Math.random() * 40 + 60` diganti dengan compute deterministik (momentum, quality, value, growth dari chart data Yahoo). Range chart diperpanjang 1mo→6mo untuk kalkulasi lebih akurat.
+
+### Task 26: Top Movers Enhancement — Sparkline + Volume
+**Status:** DONE (2026-06-23)
+**Files:** src/components/AppSidebar.tsx
+**Detail:** Added `MiniSparkline` SVG component (20-day price trend), volume indicator (K/M/B format) per stock in sidebar Top Movers section.
+
+### Task 27: DeepReport Enhancement — Price Chart + Peer Comparison
+**Status:** DONE (2026-06-23)
+**Files:** src/components/DeepReport.tsx
+**Detail:** Added 90-day price history chart (SVG gradient), peer comparison table (sector-based, 5 peers), SWOT dot indicators. Cleaned 7 unused imports.
+
+### Task 28: Bundle Optimization — Lazy Loading
+**Status:** DONE (2026-06-23)
+**Files:** src/App.tsx
+**Detail:** Lazy-loaded SimulationTab, AnalyticsTab, PortfolioTracker via `React.lazy()` + `Suspense`. Main bundle 732→612 kB (-16.5%).
+
+### Task 29: Fundamentals Expansion — 18 Tickers
+**Status:** DONE (2026-06-23)
+**Files:** src/components/SimulationTab.tsx
+**Detail:** Added 9 new hardcoded snapshots (BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR) with 8 years data (2018-2025). Total 18 tickers.

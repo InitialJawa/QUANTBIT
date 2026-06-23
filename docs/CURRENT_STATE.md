@@ -3,7 +3,7 @@
 |-------|-------|
 | Tanggal | 2026-06-23 |
 | Status | Development |
-| Progress | ~85% |
+| Progress | ~88% |
 
 ## Completed
 - [x] **Data Validation Audit** — full pipeline traced: daily live feed, idx80_scan, backtest year files, carry-forward analysis
@@ -45,10 +45,15 @@
 - [x] **Sidebar Market Enhancements** — expanded berita (no max-height, all items), added Top Movers section (2-col gainers/losers with RSI coloring + histogram bars), added Technical Stats section (RSI, MACD histogram, SMA20, SMA50, market breadth, score gap)
 - [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
 - [x] **CI/CD Pipeline auto-aktif** — fix workflow: hapus bootstrap scripts (fetch_historical_data, scrape fundamentals) dari daily run, ganti strategi deploy via git push + CF Pages auto-build, setup conditional manual trigger
+- [x] **Top Movers Enhancement** — added sparkline (20-day mini chart) + volume indicator per stock in sidebar
+- [x] **DeepReport Enhancement** — added SWOT dot indicators, 90-day price history chart (SVG gradient), peer comparison table (sector-based, 5 peers)
+- [x] **Bundle Optimization** — lazy loading for SimulationTab, AnalyticsTab, PortfolioTracker; main bundle 732→612 kB (-16.5%)
+- [x] **Fundamentals Expansion** — 9 new hardcoded snapshots (BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR); total 18 tickers with real historical data (2018-2025)
 
 ## In Progress
+- [ ] P2: Trigger manual CI/CD pipeline untuk verifikasi
 - [ ] P3: Telegram bot integration (deferred)
 - [ ] P4: MCP server setup (deferred)
 
 ## Current Focus
-CI/CD pipeline automation — daily data update live_market.json otomatis tiap jam 21:00 WIB.
+Fitur enhancement: Top Movers sparkline, DeepReport price chart + peer comparison, bundle optimization, fundamentals expansion.

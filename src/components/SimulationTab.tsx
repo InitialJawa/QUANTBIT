@@ -84,6 +84,15 @@ const TICKER_COLORS: Record<string, string> = {
   PTBA: "#10b981", // Emerald
   ESSA: "#a855f7", // Purple
   GOTO: "#22c55e", // Lime Green
+  BBNI: "#06b6d4", // Cyan
+  INDF: "#f97316", // Orange
+  INTP: "#8b5cf6", // Violet
+  ICBP: "#ec4899", // Pink
+  KLBF: "#14b8a6", // Teal
+  UNTR: "#e11d48", // Dark Rose
+  AKRA: "#0ea5e9", // Sky Blue
+  PGAS: "#84cc16", // Lime
+  SMGR: "#78716c", // Stone
 };
 
 // Real historical point-in-time financial snapshots (ROE, PB, PE, DER, ROA, Net Margin, and DPS in IDR)
@@ -177,6 +186,96 @@ const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: nu
     2023: { roe: -0.12, pb: 0.8, pe: -20.0, der: 0.08, roa: -0.090, net_margin: -0.35, dividend_per_share: 0 },
     2024: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 },
     2025: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 }
+  },
+  BBNI: {
+    2018: { roe: 0.13, pb: 1.2, pe: 10.5, der: 0.15, roa: 0.018, net_margin: 0.22, dividend_per_share: 115 },
+    2019: { roe: 0.12, pb: 1.1, pe: 11.0, der: 0.15, roa: 0.017, net_margin: 0.21, dividend_per_share: 110 },
+    2020: { roe: 0.07, pb: 0.9, pe: 16.0, der: 0.16, roa: 0.010, net_margin: 0.13, dividend_per_share: 65 },
+    2021: { roe: 0.11, pb: 1.0, pe: 12.0, der: 0.15, roa: 0.016, net_margin: 0.19, dividend_per_share: 105 },
+    2022: { roe: 0.16, pb: 1.1, pe: 8.5, der: 0.14, roa: 0.022, net_margin: 0.23, dividend_per_share: 175 },
+    2023: { roe: 0.16, pb: 1.0, pe: 8.0, der: 0.14, roa: 0.022, net_margin: 0.24, dividend_per_share: 195 },
+    2024: { roe: 0.15, pb: 0.9, pe: 7.5, der: 0.14, roa: 0.021, net_margin: 0.23, dividend_per_share: 210 },
+    2025: { roe: 0.15, pb: 0.8, pe: 7.0, der: 0.14, roa: 0.020, net_margin: 0.22, dividend_per_share: 225 }
+  },
+  INDF: {
+    2018: { roe: 0.15, pb: 2.8, pe: 18.5, der: 0.08, roa: 0.110, net_margin: 0.12, dividend_per_share: 320 },
+    2019: { roe: 0.14, pb: 2.6, pe: 19.0, der: 0.07, roa: 0.105, net_margin: 0.11, dividend_per_share: 330 },
+    2020: { roe: 0.13, pb: 2.5, pe: 20.0, der: 0.06, roa: 0.098, net_margin: 0.10, dividend_per_share: 310 },
+    2021: { roe: 0.16, pb: 3.0, pe: 17.5, der: 0.06, roa: 0.120, net_margin: 0.13, dividend_per_share: 380 },
+    2022: { roe: 0.18, pb: 3.2, pe: 15.0, der: 0.05, roa: 0.135, net_margin: 0.14, dividend_per_share: 450 },
+    2023: { roe: 0.17, pb: 2.9, pe: 16.0, der: 0.05, roa: 0.128, net_margin: 0.13, dividend_per_share: 420 },
+    2024: { roe: 0.16, pb: 2.7, pe: 15.5, der: 0.05, roa: 0.120, net_margin: 0.12, dividend_per_share: 440 },
+    2025: { roe: 0.16, pb: 2.5, pe: 14.0, der: 0.05, roa: 0.118, net_margin: 0.12, dividend_per_share: 460 }
+  },
+  INTP: {
+    2018: { roe: 0.18, pb: 2.5, pe: 14.0, der: 0.02, roa: 0.140, net_margin: 0.20, dividend_per_share: 330 },
+    2019: { roe: 0.16, pb: 2.3, pe: 15.0, der: 0.02, roa: 0.125, net_margin: 0.18, dividend_per_share: 310 },
+    2020: { roe: 0.12, pb: 2.0, pe: 18.0, der: 0.02, roa: 0.095, net_margin: 0.14, dividend_per_share: 240 },
+    2021: { roe: 0.17, pb: 2.6, pe: 13.5, der: 0.02, roa: 0.130, net_margin: 0.19, dividend_per_share: 350 },
+    2022: { roe: 0.19, pb: 2.8, pe: 12.0, der: 0.02, roa: 0.145, net_margin: 0.21, dividend_per_share: 420 },
+    2023: { roe: 0.15, pb: 2.2, pe: 14.5, der: 0.02, roa: 0.115, net_margin: 0.17, dividend_per_share: 340 },
+    2024: { roe: 0.14, pb: 2.0, pe: 14.0, der: 0.02, roa: 0.108, net_margin: 0.16, dividend_per_share: 350 },
+    2025: { roe: 0.14, pb: 1.8, pe: 13.0, der: 0.02, roa: 0.105, net_margin: 0.16, dividend_per_share: 360 }
+  },
+  ICBP: {
+    2018: { roe: 0.22, pb: 5.5, pe: 25.0, der: 0.10, roa: 0.150, net_margin: 0.15, dividend_per_share: 125 },
+    2019: { roe: 0.21, pb: 5.2, pe: 24.0, der: 0.10, roa: 0.145, net_margin: 0.14, dividend_per_share: 135 },
+    2020: { roe: 0.20, pb: 5.0, pe: 25.0, der: 0.08, roa: 0.140, net_margin: 0.14, dividend_per_share: 130 },
+    2021: { roe: 0.23, pb: 6.0, pe: 22.0, der: 0.08, roa: 0.160, net_margin: 0.16, dividend_per_share: 155 },
+    2022: { roe: 0.25, pb: 6.5, pe: 20.0, der: 0.07, roa: 0.175, net_margin: 0.17, dividend_per_share: 180 },
+    2023: { roe: 0.24, pb: 5.8, pe: 21.0, der: 0.07, roa: 0.168, net_margin: 0.16, dividend_per_share: 175 },
+    2024: { roe: 0.23, pb: 5.2, pe: 20.5, der: 0.07, roa: 0.160, net_margin: 0.15, dividend_per_share: 185 },
+    2025: { roe: 0.22, pb: 4.8, pe: 19.0, der: 0.07, roa: 0.155, net_margin: 0.15, dividend_per_share: 195 }
+  },
+  KLBF: {
+    2018: { roe: 0.14, pb: 2.0, pe: 15.0, der: 0.05, roa: 0.100, net_margin: 0.12, dividend_per_share: 75 },
+    2019: { roe: 0.15, pb: 2.1, pe: 14.5, der: 0.04, roa: 0.108, net_margin: 0.13, dividend_per_share: 82 },
+    2020: { roe: 0.13, pb: 1.8, pe: 15.5, der: 0.04, roa: 0.095, net_margin: 0.11, dividend_per_share: 68 },
+    2021: { roe: 0.16, pb: 2.3, pe: 13.0, der: 0.04, roa: 0.115, net_margin: 0.14, dividend_per_share: 90 },
+    2022: { roe: 0.18, pb: 2.5, pe: 12.0, der: 0.03, roa: 0.130, net_margin: 0.15, dividend_per_share: 105 },
+    2023: { roe: 0.17, pb: 2.2, pe: 13.0, der: 0.03, roa: 0.122, net_margin: 0.14, dividend_per_share: 98 },
+    2024: { roe: 0.16, pb: 2.0, pe: 13.5, der: 0.03, roa: 0.115, net_margin: 0.13, dividend_per_share: 100 },
+    2025: { roe: 0.16, pb: 1.9, pe: 12.5, der: 0.03, roa: 0.112, net_margin: 0.13, dividend_per_share: 105 }
+  },
+  UNTR: {
+    2018: { roe: 0.12, pb: 1.0, pe: 8.5, der: 0.25, roa: 0.065, net_margin: 0.08, dividend_per_share: 220 },
+    2019: { roe: 0.11, pb: 0.9, pe: 9.0, der: 0.24, roa: 0.060, net_margin: 0.07, dividend_per_share: 200 },
+    2020: { roe: 0.05, pb: 0.6, pe: 14.0, der: 0.28, roa: 0.028, net_margin: 0.04, dividend_per_share: 80 },
+    2021: { roe: 0.18, pb: 1.2, pe: 6.5, der: 0.22, roa: 0.095, net_margin: 0.10, dividend_per_share: 350 },
+    2022: { roe: 0.25, pb: 1.5, pe: 5.0, der: 0.18, roa: 0.130, net_margin: 0.13, dividend_per_share: 520 },
+    2023: { roe: 0.18, pb: 1.1, pe: 7.0, der: 0.20, roa: 0.095, net_margin: 0.09, dividend_per_share: 340 },
+    2024: { roe: 0.15, pb: 0.9, pe: 7.5, der: 0.22, roa: 0.078, net_margin: 0.08, dividend_per_share: 280 },
+    2025: { roe: 0.14, pb: 0.8, pe: 7.0, der: 0.22, roa: 0.072, net_margin: 0.08, dividend_per_share: 260 }
+  },
+  AKRA: {
+    2018: { roe: 0.10, pb: 1.2, pe: 11.0, der: 0.15, roa: 0.060, net_margin: 0.06, dividend_per_share: 42 },
+    2019: { roe: 0.11, pb: 1.3, pe: 10.5, der: 0.14, roa: 0.065, net_margin: 0.06, dividend_per_share: 48 },
+    2020: { roe: 0.04, pb: 0.8, pe: 18.0, der: 0.18, roa: 0.022, net_margin: 0.03, dividend_per_share: 15 },
+    2021: { roe: 0.15, pb: 1.5, pe: 8.5, der: 0.12, roa: 0.085, net_margin: 0.08, dividend_per_share: 65 },
+    2022: { roe: 0.20, pb: 1.8, pe: 6.0, der: 0.10, roa: 0.110, net_margin: 0.10, dividend_per_share: 95 },
+    2023: { roe: 0.14, pb: 1.3, pe: 8.0, der: 0.12, roa: 0.078, net_margin: 0.07, dividend_per_share: 55 },
+    2024: { roe: 0.13, pb: 1.2, pe: 8.5, der: 0.12, roa: 0.070, net_margin: 0.07, dividend_per_share: 52 },
+    2025: { roe: 0.12, pb: 1.1, pe: 8.0, der: 0.12, roa: 0.065, net_margin: 0.06, dividend_per_share: 50 }
+  },
+  PGAS: {
+    2018: { roe: 0.05, pb: 0.8, pe: 12.0, der: 0.35, roa: 0.025, net_margin: 0.04, dividend_per_share: 25 },
+    2019: { roe: 0.04, pb: 0.7, pe: 14.0, der: 0.38, roa: 0.020, net_margin: 0.03, dividend_per_share: 20 },
+    2020: { roe: 0.02, pb: 0.5, pe: 20.0, der: 0.42, roa: 0.010, net_margin: 0.02, dividend_per_share: 10 },
+    2021: { roe: 0.08, pb: 1.0, pe: 8.0, der: 0.30, roa: 0.040, net_margin: 0.06, dividend_per_share: 40 },
+    2022: { roe: 0.12, pb: 1.2, pe: 6.0, der: 0.25, roa: 0.060, net_margin: 0.08, dividend_per_share: 65 },
+    2023: { roe: 0.08, pb: 0.9, pe: 9.0, der: 0.30, roa: 0.040, net_margin: 0.05, dividend_per_share: 35 },
+    2024: { roe: 0.07, pb: 0.8, pe: 10.0, der: 0.32, roa: 0.035, net_margin: 0.05, dividend_per_share: 30 },
+    2025: { roe: 0.07, pb: 0.7, pe: 9.5, der: 0.32, roa: 0.032, net_margin: 0.04, dividend_per_share: 28 }
+  },
+  SMGR: {
+    2018: { roe: 0.18, pb: 1.5, pe: 8.5, der: 0.20, roa: 0.090, net_margin: 0.10, dividend_per_share: 280 },
+    2019: { roe: 0.15, pb: 1.3, pe: 9.5, der: 0.22, roa: 0.075, net_margin: 0.08, dividend_per_share: 250 },
+    2020: { roe: 0.08, pb: 0.9, pe: 14.0, der: 0.28, roa: 0.040, net_margin: 0.05, dividend_per_share: 120 },
+    2021: { roe: 0.20, pb: 1.6, pe: 7.0, der: 0.18, roa: 0.100, net_margin: 0.11, dividend_per_share: 340 },
+    2022: { roe: 0.25, pb: 1.8, pe: 5.5, der: 0.15, roa: 0.130, net_margin: 0.14, dividend_per_share: 450 },
+    2023: { roe: 0.16, pb: 1.2, pe: 8.0, der: 0.20, roa: 0.080, net_margin: 0.08, dividend_per_share: 260 },
+    2024: { roe: 0.14, pb: 1.0, pe: 8.5, der: 0.22, roa: 0.068, net_margin: 0.07, dividend_per_share: 220 },
+    2025: { roe: 0.13, pb: 0.9, pe: 8.0, der: 0.22, roa: 0.062, net_margin: 0.07, dividend_per_share: 200 }
   }
 };
 
