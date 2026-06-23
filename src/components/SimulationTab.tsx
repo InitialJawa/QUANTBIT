@@ -629,15 +629,7 @@ export function SimulationTab({
       initialTop.forEach((ticker) => {
         const rawPrice = day0.stockPrices[ticker];
 
-        if (ticker === "GOTO" && day0.date < "2022-04-11") {
-          pendingTickers.push({ ticker, capital: perStockAlloc });
-          return;
-        }
-        
-        if (ticker === "AMMN" && day0.date < "2023-07-07") {
-          pendingTickers.push({ ticker, capital: perStockAlloc });
-          return;
-        }
+        // Pre‑IPO tickers are automatically handled by the generic missing‑price check below.
         
         if (!rawPrice || rawPrice <= 0) {
           pendingTickers.push({ ticker, capital: perStockAlloc });

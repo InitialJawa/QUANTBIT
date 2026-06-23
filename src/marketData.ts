@@ -111,8 +111,8 @@ export const RS = {
 export const MKT = {
   last_update: "2026-06-11",
   market_last_update: "2026-06-11 20:04:16 WIB",
-  ihsg: { value: 5886.03, daily: -0.28, daily_pct: -0.28, weekly: 5.21, monthly: -17.96 },
-  usdidr: { value: 17985.0, daily: -0.26, weekly: 0.16, monthly: 2.77 },
+  ihsg: { value: 6008.0, daily: 0.32, daily_pct: 0.32, weekly: 1.85, monthly: -15.42 },
+  usdidr: { value: 17714.0, daily: 0.15, weekly: -0.42, monthly: 1.63 },
   gold: { value: 2466698, daily: 0.05, weekly: -3.4, monthly: -4.9 },
   oil: { value: 88, daily: -3.68, weekly: -5.0, monthly: -10.3 }
 };

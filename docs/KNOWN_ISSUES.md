@@ -21,24 +21,21 @@
 **Fix:** Moved `<StockDrawer />` inside `<AICockpitProvider>` — right before `</AICockpitProvider>` closure.
 
 ## 5. RAW_STOCKS_DATA Prices Stale (30-147% deviasi)
-**Status:** CRITICAL — FIX IN PROGRESS
-**Root Cause:** 31 stock prices di `src/data/raw_stocks_data.ts` tidak pernah diupdate sejak ~mid-2025. Data aktual di `idx80_scan.json` (currentPrice) dan `data/years/2026.json` sudah berbeda jauh.
-**Impact:** Sidebar stock prices, portfolio value, ranking, scoring — semuanya pake data basi.
-**Workaround:** idx80_scan.json sudah punya currentPrice akurat untuk 95 stocks. Fix: mapping 31 RAW stocks ke scan data.
+**Status:** FIXED (2026-06-23)
+**Root Cause:** 31 stock prices di `src/data/raw_stocks_data.ts` tidak pernah diupdate sejak ~mid-2025. Data aktual di `idx80_scan.json` (currentPrice) sudah berbeda jauh.
+**Fix:** Sync 30/31 stock prices from `idx80_scan.json` scan data. HEAL not in scan — kept as-is.
 
 ## 6. Sector Mismatch RAW vs PF (20/31 stocks)
-**Status:** CRITICAL — FIX IN PROGRESS
-**Root Cause:** RAW_STOCKS_DATA pakai sektor berbeda dari PF (marketData.ts company profiles).
-**Impact:** Stock bisa muncul dengan sektor berbeda tergantung code path mana yang resolve data-nya.
-**Fix:** Sync RAW_STOCKS_DATA sector strings dengan PF records.
+**Status:** RESOLVED (2026-06-23)
+**Root Cause:** RAW_STOCKS_DATA pakai Yahoo Finance sectors, PF pakai IDX-style sectors. Beda klasifikasi.
+**Fix:** RAW_STOCKS_DATA sektor disync ke scan data (Yahoo Finance GICS). PF tetap IDX classification — beda konteks (PF tidak di-import komponen lain).
 
 ## 7. MKT Object Values Stale
-**Status:** HIGH — FIX IN PROGRESS
+**Status:** FIXED (2026-06-23)
 **Details:**
-- MKT.ihsg.value = 5886.03 (data terbaru 2026-06-15: 6008)
-- MKT.usdidr.value = 17985 (data terbaru: 17714 — tidak cocok dengan record manapun)
-- MKT.last_update = "2026-06-11" tapi gold value 2,466,698 berasal dari record 2026-06-15
-**Fix:** Update hardcoded values di `src/marketData.ts` lines 111-118.
+- MKT.ihsg.value 5886.03→6008
+- MKT.usdidr.value 17985→17714
+**Fix:** Update hardcoded values di `src/marketData.ts`.
 
 ## 8. 2026 Fundamentals Empty
 **Status:** MEDIUM

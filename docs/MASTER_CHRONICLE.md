@@ -38,3 +38,10 @@
 - Redesign DeepReport (AI Intel): uniform bg #050505, cyan accent, simplified SWOT
 - Sidebar widened w-56→w-72, font sizes bumped
 - Wallet: added Coins/CreditCard icons, text-display balance, fixed rgba bug
+
+## 2026-06-23 — Data Integrity Fix (P0)
+**Masalah:** RAW_STOCKS_DATA 31 prices stale (30-147% deviasi), 20 sector mismatches, MKT values basi.
+**Fix:**
+- Synced 30/31 stock prices from `idx80_scan.json` scan data (HEAL not in scan — kept as-is)
+- RAW_STOCKS_DATA sectors sync ke scan (Yahoo GICS classification)
+- MKT.ihsg 5886→6008, MKT.usdidr 17985→17714

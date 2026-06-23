@@ -6,6 +6,9 @@
 | Progress | ~80% |
 
 ## Completed
+- [x] **P0: Fix RAW_STOCKS_DATA stale prices** — synced 30/31 stock prices from `idx80_scan.json` (HEAL not in scan)
+- [x] **P0: Fix sector mismatches RAW vs PF** — RAW_STOCKS_DATA sectors sync to scan (Yahoo GICS); PF tetap IDX classification
+- [x] **P1: Update MKT values** — IHSG 5886→6008, USDIDR 17985→17714
 - [x] React 19 + Vite 6 + Tailwind 4 scaffold
 - [x] Multi-factor quantitative engine (Quality, Growth, Value, Momentum)
 - [x] Market regime engine (RISK_ON, RISK_OFF, RECOVERY_WATCH, GOLD_DEFENSE, CASH_DEFENSE)
@@ -34,9 +37,6 @@
 - [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
 
 ## In Progress
-- [ ] **P0: Fix RAW_STOCKS_DATA stale prices (30-147% deviasi vs data aktual)**
-- [ ] **P0: Fix sector mismatches RAW vs PF (20/31 stocks beda sektor)**
-- [ ] **P1: Update MKT.ihsg (5886→6008) & MKT.usdidr (17985→17714) stale**
 - [ ] P2: Run IDX scraper for 2026 fundamentals (0 records)
 - [ ] P3: Telegram bot integration (deferred)
 - [ ] P4: MCP server setup (deferred)

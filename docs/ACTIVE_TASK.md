@@ -63,16 +63,16 @@ Sprint: UI Overhaul & Cleanup
 **Files:** TBD
 
 ### Task 16: Fix RAW_STOCKS_DATA Stale Prices (P0)
-**Status:** PENDING
-**Files:** src/data/raw_stocks_data.ts, src/stocksData.ts
+**Status:** DONE (2026-06-23)
+**Files:** src/data/raw_stocks_data.ts — synced 30/31 prices from idx80_scan.json
 
 ### Task 17: Fix Sector Mismatches RAW vs PF (P0)
-**Status:** PENDING
-**Files:** src/data/raw_stocks_data.ts, src/marketData.ts
+**Status:** DONE (2026-06-23)
+**Files:** src/data/raw_stocks_data.ts — RAW sectors sync to scan (Yahoo GICS). PF tetap IDX classification.
 
 ### Task 18: Update Stale MKT Object Values (P1)
-**Status:** PENDING
-**Files:** src/marketData.ts
+**Status:** DONE (2026-06-23)
+**Files:** src/marketData.ts — IHSG 5886→6008, USDIDR 17985→17714
 
 ### Task 19: Run IDX Scraper for 2026 Fundamentals (P2)
 **Status:** PENDING
