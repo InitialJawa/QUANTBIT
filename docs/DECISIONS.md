@@ -39,3 +39,12 @@
 **Keputusan:** Hapus DataSourcesRow (price/fundamentals/charts/description status badges) dari StockDrawer dan DataBadge dari watchlist MarketTab.
 **Alasan:** Badge tidak memberikan nilai informatif yang berarti bagi user. Menambah clutter visual.
 **Konsekuensi:** File SourceBadge.tsx menjadi unused (orphan). DataBadge.tsx masih digunakan di PortfolioTracker dan DecisionAuditTrail.
+
+## 2026-06-23 — Data Audit: RAW_STOCKS_DATA Stale + Sector Mismatch
+**Keputusan:** Prioritaskan fix data integrity sebelum fitur baru. Temuan audit:
+- 31 stock prices di `raw_stocks_data.ts` deviasi 30-147% dari data aktual `idx80_scan.json`
+- 20/31 stocks punya sector mismatch antara RAW_STOCKS_DATA dan PF records di `marketData.ts`
+- `MKT.ihsg.value` (5886) != data terbaru (6008)
+- `MKT.usdidr.value` (17985) != record manapun di JSON (terakhir 17714)
+- 2026 fundamentals kosong di `idx_fundamentals_all.json`
+**Alasan:** Sidebar prices, portfolio, ranking, scoring semuanya pakai data basi. Sektor inkonsisten bikin filter/filtering rusak.

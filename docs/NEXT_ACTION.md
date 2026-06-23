@@ -1,21 +1,21 @@
 # NEXT ACTION
 
-1. Implementasi Telegram bot
-2. Setup MCP server
-
 ## Priority Queue
-### P1 — Telegram Bot
-### P2 — MCP Server
+### P0 — Fix RAW_STOCKS_DATA Stale Prices + Sector Mismatch
+- Sync 31 stock prices dari idx80_scan.json ke raw_stocks_data.ts
+- Fix 20 sector mismatches between RAW_STOCKS_DATA sectors vs PF (marketData.ts) sectors
+- Update stale MKT.ihsg.value (5886→6008) & MKT.usdidr.value (17985→17714)
+
+### P1 — Data Pipeline
+- Run IDX scraper untuk fundamentals 2026 (current: 0 records)
+- Jakarta holiday calendar-aware gap detection (128 gaps mostly libur, verify)
+
+### P2 — Telegram Bot
+### P3 — MCP Server
 
 ## Completed This Session (2026-06-23)
-- Sidebar market enhancements: expanded berita (no max-height), added Top Movers section (2-col gainers/losers with RSI coloring + histogram bars), added Technical Stats section (RSI, MACD histogram, SMA20, SMA50, breadth, score gap)
-- Added computeRSI, computeMACD, getIhsgData exports to marketRegimeEngine.ts for sidebar widgets
-- **Fixed backtest data bug** (3 fixes):
-  - Added `/api/backtest-data` Express handler di `server.ts` — baca dari `data/years/*.json` langsung (real data, no PRNG)
-  - Added Vite proxy `/api/backtest-data` dan `/api/yahoo` → `localhost:3001`
-  - Fixed `generateClientBacktestData()` gold starting price: 300K→75K (realistis 2000), drift: 0.007→0.054
-  - Updated `MKT.gold.value` stale: 1,350,000 → 2,466,698 (latest from data)
-  - Added `npm run dev:full` — runs API server + Vite concurrently
+- **Comprehensive data audit** — checked all data sources: historical JSON (✅), yearly JSON (✅), scan data (✅), marketData.ts (🟡 stale), stock prices (🔴 stale 30-147%), sectors (🔴 20 mismatch), fundamentals 2026 (🔴 0 records)
+- See `docs/KNOWN_ISSUES.md` for full audit findings
 
 ## Setelah Selesai
 1. Update CURRENT_STATE.md

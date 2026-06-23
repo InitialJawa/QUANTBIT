@@ -55,9 +55,25 @@ Sprint: UI Overhaul & Cleanup
 **Files:** src/marketRegimeEngine.ts — added getIhsgData, computeRSI, computeMACD exports
 
 ### Task 14: Telegram Bot
-**Status:** PENDING
+**Status:** DEFERRED
 **Files:** TBD
 
 ### Task 15: MCP Server
-**Status:** PENDING
+**Status:** DEFERRED
 **Files:** TBD
+
+### Task 16: Fix RAW_STOCKS_DATA Stale Prices (P0)
+**Status:** PENDING
+**Files:** src/data/raw_stocks_data.ts, src/stocksData.ts
+
+### Task 17: Fix Sector Mismatches RAW vs PF (P0)
+**Status:** PENDING
+**Files:** src/data/raw_stocks_data.ts, src/marketData.ts
+
+### Task 18: Update Stale MKT Object Values (P1)
+**Status:** PENDING
+**Files:** src/marketData.ts
+
+### Task 19: Run IDX Scraper for 2026 Fundamentals (P2)
+**Status:** PENDING
+**Files:** data/idx_fundamentals_all.json, scripts/scrape_idx_fundamentals.py

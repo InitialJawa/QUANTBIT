@@ -34,9 +34,12 @@
 - [x] **Market Regime Engine exports** — added `getIhsgData()`, `computeRSI()`, `computeMACD()` helpers for sidebar widgets
 
 ## In Progress
-- [ ] Telegram bot integration
-- [ ] MCP server setup
-- [ ] Mobile responsiveness refinements
+- [ ] **P0: Fix RAW_STOCKS_DATA stale prices (30-147% deviasi vs data aktual)**
+- [ ] **P0: Fix sector mismatches RAW vs PF (20/31 stocks beda sektor)**
+- [ ] **P1: Update MKT.ihsg (5886→6008) & MKT.usdidr (17985→17714) stale**
+- [ ] P2: Run IDX scraper for 2026 fundamentals (0 records)
+- [ ] P3: Telegram bot integration (deferred)
+- [ ] P4: MCP server setup (deferred)
 
 ## Current Focus
-UI cleanup & refinement.
+Data validation & integrity fixes — prioritas sebelum fitur baru.
