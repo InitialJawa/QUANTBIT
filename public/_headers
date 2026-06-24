@@ -1,0 +1,11 @@
+/*
+  Cache-Control headers for Cloudflare Pages
+  - index.html: no cache (always fetch fresh to get latest chunk hashes)
+  - assets/*: long cache (1 year) since they have content hashes
+*/
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
