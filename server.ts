@@ -27,7 +27,8 @@ app.get("/api/backtest-data", (req, res) => {
       res.status(503).json({ error: "No historical data available" });
       return;
     }
-    const data = allData.map((day: any) => ({
+    const bridged = bridgeHistoricalData(allData);
+    const data = bridged.map((day: any) => ({
       date: day.date,
       ihsgPrice: day.ihsgPrice,
       goldPrice: day.goldPrice,
@@ -38,6 +39,7 @@ app.get("/api/backtest-data", (req, res) => {
       stockRanksRes: day.stockRanksRes,
       stockRawMetrics: day.stockRawMetrics ?? null,
       stockNormScores: day.stockNormScores ?? null,
+      isCarriedForward: day.isCarriedForward || false,
     }));
     const defaultWeights = {
       prod: { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 },
@@ -52,6 +54,27 @@ app.get("/api/backtest-data", (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+function bridgeHistoricalData(rawData: any[]): any[] {
+  if (rawData.length === 0) return rawData;
+  const last = rawData[rawData.length - 1];
+  const lastDate = new Date(last.date);
+  const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const todayStr = now.toISOString().slice(0, 10);
+  if (last.date >= todayStr) return rawData;
+
+  const bridged = [...rawData];
+  const curr = new Date(lastDate.getTime() + 86400000);
+  while (curr <= now) {
+    const dow = curr.getDay();
+    if (dow !== 0 && dow !== 6) {
+      const ds = curr.toISOString().slice(0, 10);
+      if (ds <= todayStr) bridged.push({ ...last, date: ds, isCarriedForward: true });
+    }
+    curr.setDate(curr.getDate() + 1);
+  }
+  return bridged;
+}
 
 app.listen(PORT, () => {
   console.log(`Dev API server listening on http://localhost:${PORT}`);

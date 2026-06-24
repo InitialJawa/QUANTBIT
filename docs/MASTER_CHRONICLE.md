@@ -38,3 +38,25 @@ Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT
 - Comma input fix: defaultValue + onBlur untuk customTickers/customUniverse
 - Duplicate config row (Parameter/F/B/Jalankan) dihapus dari SimulationTab header
 - PortfolioTracker: fix stale dependency engineConfig.activeProfile → activeProfile
+
+## 2026-06-24 — Full Audit Fix: Custom Mode Crash Detection + peak60 + Dead Code Removal
+13 bugs resolved across codebase:
+
+**🔴 Critical Engine Fixes:**
+- Custom mode crash/recovery now uses IHSG-based detection (was using single-stock)
+- `peak60` wired through entire chain: `getIhsgDrawdown60()` → `evaluateStrategy()` → notification rules → AI
+- AI `strategyEvaluation` no longer hardcoded `shouldExit: false`; uses real drawdown
+- Custom mode alerts: universe-based breach/exit + buy suggestions for unowned members
+
+**🟡 UI/Config Fixes:**
+- Portfolio sidebar: custom panel with fine-tune sliders + universe summary
+- localStorage: legacy `"single"` → `"custom"` auto-migration
+- AnalyticsTab: activeProfileId used directly (no lossy downcast)
+- FloatingAIChat: receives missing props
+- server.ts: bridgeHistoricalData() added
+
+**🟢 Dead Code Removed:**
+- `"single"` type union removed from types, context, systemKnowledge
+- Dead single-mode branches removed from core.ts, PortfolioTracker.tsx, AppSidebar.tsx, notificationRules.ts, aiClient.ts
+- Engine index: unused exports cleaned up (detectCrashSingle, detectRecoverySingle, rule_singleModeTrigger)
+- Missing import `shouldTriggerExit` in PortfolioTracker.tsx — removed (was unused after dead code deletion in prior session)

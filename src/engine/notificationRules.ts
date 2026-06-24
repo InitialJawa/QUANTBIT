@@ -36,9 +36,6 @@ export function rule_crashProtectionTriggered(ctx: RuleContext): RuleResult {
   if (!ctx.config.enableCrashProtection) {
     return { triggered: false };
   }
-  if (ctx.config.simulationMode === "single") {
-    return { triggered: false };
-  }
   if (ctx.ihsgPrice === undefined || ctx.peak60 === undefined) {
     return { triggered: false };
   }
@@ -73,10 +70,7 @@ export function rule_customUniverseBreach(ctx: RuleContext): RuleResult {
 }
 
 export function rule_singleModeTrigger(ctx: RuleContext): RuleResult {
-  if (ctx.config.simulationMode !== "single") {
-    return { triggered: false };
-  }
-  if (ctx.currentPrice === undefined || !ctx.config.singleTicker) {
+  if (ctx.config.simulationMode !== "custom") {
     return { triggered: false };
   }
   return { triggered: false };

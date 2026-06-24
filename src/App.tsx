@@ -331,7 +331,11 @@ export default function App() {
         onSellGold={pm.handleSellGoldToCashInput}
       />
 <Toaster position="top-right" theme="dark" richColors closeButton />
-<FloatingAIChat />
+<FloatingAIChat
+  selectedStock={activeStock}
+  portfolio={pm.portfolio}
+  cash={pm.cash}
+/>
       <StockDrawer
         isOpen={ui.isDrawerOpen}
         onClose={() => ui.setIsDrawerOpen(false)}

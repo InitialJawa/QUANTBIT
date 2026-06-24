@@ -27,7 +27,7 @@ export interface BacktestConfig {
   reserveBufferPct: number;
   topNCount: number;
   universe: string;
-  simulationMode: "algo" | "single" | "custom";
+  simulationMode: "algo" | "custom";
   singleTicker: string;
   enableCrashProtection: boolean;
   crashSensitivity: number;

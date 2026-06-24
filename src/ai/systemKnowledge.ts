@@ -25,7 +25,7 @@ export interface AILiveContext {
     momentumWeight?: number;
     customTickers?: string[];
     customUniverse?: string[];
-    simulationMode?: "algo" | "single" | "custom";
+    simulationMode?: "algo" | "custom";
     singleTicker?: string;
     enableCrashProtection?: boolean;
     lastBacktestProfile?: {
@@ -158,16 +158,16 @@ export const SYSTEM_KNOWLEDGE: string = [
   "- reserveBufferPct (10%)  : cash yg selalu disisakan sbg buffer.",
   "- crashSensitivity (10%)  : ambang krisis IHSG bulanan (lihat 6).",
   "- safeHavenAsset (emas/kas): aset proteksi saat regime defensif.",
-  "- singleSellTrigger (8%)  : mode single - sinyal JUAL bila gerak <= -8%.",
-  "- singleBuyTrigger (5%)   : mode single - sinyal BELI bila gerak >= +5%.",
+  "- singleSellTrigger (8%)  : mode custom - sinyal JUAL bila harga turun melebihi threshold.",
+  "- singleBuyTrigger (5%)   : mode custom - sinyal BELI bila harga naik melebihi threshold.",
   "- enableCrashProtection / enableCrossover : on/off proteksi & sinyal MA.",
   "- universe (idx80/idx30/lq45/all) : himpunan saham yg dipindai.",
-  "- simulationMode (algo/single) : strategi backtest.",
+  "- simulationMode (algo/custom) : strategi backtest. Algo = rank-based multi-ticker, Custom = user-defined universe.",
   "",
   "## 10. REBALANCING (PortfolioTracker)",
   "Alert otomatis muncul saat:",
   "- Sisa cash besar & regime defensif -> saran alokasi ke Safe Haven (emas).",
-  "- Mode single -> bangun posisi 1 emiten dgn buffer reserveBufferPct.",
+  "- Mode custom -> bangun posisi pada universe sendiri dgn buffer reserveBufferPct.",
   "- Emiten kena Exit Ops (EXIT/EXIT RISK) -> saran kurangi/keluar.",
   "",
   "## 11. STRATEGY PROFILE EXPLANATION (untuk pertanyaan 'kenapa')",
@@ -191,7 +191,6 @@ export const SYSTEM_KNOWLEDGE: string = [
   "3. Baca ctx.strategyEvaluation.targetSafeHaven — sebutkan target exit (emas/kas).",
   "4. Baca ctx.activeUniverse — list ticker yang user peduli:",
   "   - custom: ticker di customUniverse.",
-  "   - single: hanya singleTicker.",
   "   - algo: customTickers (jika ada) atau tidak spesifik.",
   "5. Untuk pertanyaan 'harus beli X?': jawab berdasarkan activeUniverse:",
   "   - Jika X ada di activeUniverse: 'ya, X adalah bagian dari strategi Anda'.",

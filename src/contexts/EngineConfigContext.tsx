@@ -18,7 +18,7 @@ export interface EngineConfig {
   crashSensitivity: number;
   enableCrossover: boolean;
   reserveBufferPct: number;
-  simulationMode: "algo" | "single" | "custom";
+  simulationMode: "algo" | "custom";
   singleTicker: string;
   singleSellTrigger: number;
   singleBuyTrigger: number;
@@ -67,7 +67,7 @@ export function createDefaultConfig(): EngineConfig {
 
 export interface StrategySnapshot {
   profile: WeightProfile;
-  simulationMode: "algo" | "single" | "custom";
+  simulationMode: "algo" | "custom";
   universe: string;
   customTickers: string[];
   customUniverse: string[];
@@ -127,6 +127,13 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customTickers) parsed.customTickers = [];
         if (!parsed.customUniverse) parsed.customUniverse = [];
+        // Migrate legacy "single" mode → "custom"
+        if (parsed.simulationMode === "single") {
+          parsed.simulationMode = "custom";
+          if (parsed.singleTicker && (!parsed.customUniverse || parsed.customUniverse.length === 0)) {
+            parsed.customUniverse = [parsed.singleTicker];
+          }
+        }
         return parsed;
       }
     } catch {}
@@ -157,7 +164,6 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     setBacktestResultState(r);
     if (r?.configName) {
       setLastBacktestProfile(activeProfile);
-      updateConfigValue("lastBacktestProfile", activeProfile);
     }
   };
 

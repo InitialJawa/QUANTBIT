@@ -13,11 +13,9 @@ import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import {
   evaluateStrategy,
-  shouldTriggerExit,
   rule_tickerOutOfTopN,
   rule_crashProtectionTriggered,
   rule_customUniverseBreach,
-  rule_singleModeTrigger,
   getActiveUniverse,
 } from "../engine";
 import type { RuleContext } from "../engine";
@@ -172,7 +170,7 @@ export function PortfolioTracker({
 
   const strategyEval = useMemo(() => evaluateStrategy(
     engineConfig as any,
-    { ihsgPrice: MKT.ihsg.value, peak60: undefined },
+    { ihsgPrice: MKT.ihsg.value, peak60: ihsgDrawdown60 !== null ? MKT.ihsg.value / (1 + ihsgDrawdown60 / 100) : undefined },
   ), [engineConfig.enableCrashProtection, engineConfig.crashSensitivity, engineConfig.simulationMode, engineConfig.safeHavenAsset, ihsgDrawdown60]);
   const activeUniverse = useMemo(() => getActiveUniverse(engineConfig as any), [engineConfig]);
 
@@ -228,19 +226,21 @@ export function PortfolioTracker({
     return true;
   });
 
+  const peak60Price = ihsgDrawdown60 !== null ? MKT.ihsg.value / (1 + ihsgDrawdown60 / 100) : undefined;
+
   useEffect(() => {
     const ruleCtx: Partial<RuleContext> = {
       config: engineConfig as any,
       topN: engineConfig.topNCount,
       ihsgPrice: MKT.ihsg.value,
-      peak60: undefined,
+      peak60: peak60Price,
     };
 
     if (engineConfig.enableCrashProtection) {
       const crashResult = rule_crashProtectionTriggered({
         ...ruleCtx as RuleContext,
         ihsgPrice: MKT.ihsg.value,
-        peak60: undefined,
+        peak60: peak60Price,
       });
       if (crashResult.triggered) {
         notif.fireRule("crashProtectionTriggered", {
@@ -422,95 +422,86 @@ export function PortfolioTracker({
           badge: "SAFE-HAVEN PROTECT",
         });
       }
-    } else if (engineConfig.simulationMode === "single") {
-      // 2. Single Stock mode normal regime checks
-      const targetTicker = engineConfig.singleTicker || "BBCA";
-      const stock = visibleStocks.find((s) => s.ticker === targetTicker);
-      const targetOwned = portfolio.find((p) => p.ticker === targetTicker);
-
-      // Recommend liquidating non-target stocks
+    } else if (engineConfig.simulationMode === "custom") {
+      // 2. Custom mode: universe-based alerts (no rank/rotation)
       portfolio.forEach((item) => {
-        if (
-          item.ticker !== targetTicker &&
-          item.ticker !== "EMAS" &&
-          item.ticker !== "GOLD"
-        ) {
-          const itemStock = visibleStocks.find((s) => s.ticker === item.ticker);
-          const price = itemStock ? itemStock.currentPrice : item.buyPrice;
+        if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
+        const stock = visibleStocks.find((s) => s.ticker === item.ticker);
+        const price = stock ? stock.currentPrice : item.buyPrice;
+        const cleanT = item.ticker.toUpperCase().replace(".JK", "");
+        const inUniverse = engineConfig.customUniverse.some(
+          (u) => u.toUpperCase().replace(".JK", "") === cleanT
+        );
+        const exData = EX.find(
+          (e) => e.ticker.replace(".JK", "").toUpperCase() === cleanT,
+        );
+        const isExitStatic =
+          exData &&
+          (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
+
+        if (isExitStatic) {
           list.push({
-            id: `sell-non-target-${item.ticker}`,
-            type: "SELL",
+            id: `sell-exit-custom-${item.ticker}`,
+            type: "EXIT_SIGNAL",
             ticker: item.ticker,
-            name: itemStock ? itemStock.name : item.ticker,
+            name: stock ? stock.name : item.ticker,
             price,
             shares: item.shares,
-            reason: `Kebijakan Single Stock: Emiten non-target #${item.ticker} perlu dilikuidasi untuk memusatkan kapital pada saham tunggal #${targetTicker}.`,
-            badge: "LILKUIDASI ASET",
+            reason: `Exit Ops (${exData.exit_state === "EXIT" ? "Sinyal Jual Kuat" : "Risiko Tinggi"}).`,
+            badge: "EXIT REBALANCING",
+          });
+        } else if (!inUniverse) {
+          list.push({
+            id: `sell-outside-universe-${item.ticker}`,
+            type: "SELL",
+            ticker: item.ticker,
+            name: stock ? stock.name : item.ticker,
+            price,
+            shares: item.shares,
+            reason: `#${item.ticker} tidak ada di Custom Universe (${engineConfig.customUniverse.length} emiten). Likuidasi untuk selaraskan dengan strategi.`,
+            badge: "LIKUIDASI ASET",
           });
         }
       });
 
-      if (targetOwned && stock) {
-        const buyPrice = targetOwned.buyPrice;
-        const currentPrice = stock.currentPrice;
-        const pctDiff = ((currentPrice - buyPrice) / buyPrice) * 100;
-        const isCrashProtectionEnabled =
-          engineConfig.enableCrashProtection !== false;
-
-        if (
-          isCrashProtectionEnabled &&
-          pctDiff <= -engineConfig.singleSellTrigger
-        ) {
-          list.push({
-            id: `crisis-sell-single-${targetTicker}`,
-            type: "SELL",
-            ticker: targetTicker,
-            name: stock.name,
-            price: currentPrice,
-            shares: targetOwned.shares,
-            reason: `Proteksi Kerugian Aktif: Saham tunggal #${targetTicker} anjlok ${pctDiff.toFixed(1)}% di bawah harga rata-rata beli (Batas toleransi: -${engineConfig.singleSellTrigger}%). Amankan posisi ke ${engineConfig.safeHavenAsset === "emas" ? "Emas Fisik (LM)" : "Kas Tunai"} segera.`,
-            badge: "RISK OFF SELL",
-          });
-
-          if (engineConfig.safeHavenAsset === "emas" && cash > 10000) {
-            list.push({
-              id: "single-buy-gold",
-              type: "BUY",
-              ticker: "EMAS",
-              name: "Logam Mulia (Safe Haven)",
-              price: MKT.gold.value,
-              shares: Math.floor(cash / MKT.gold.value),
-              reason: `Alokasikan sisa tunai Rp ${cash.toLocaleString()} ke Safe Haven Emas untuk perlindungan nilai selama risk-off.`,
-              badge: "SAFE-HAVEN PROTECT",
-            });
-          }
-        }
-      } else if (!targetOwned && stock) {
-        // Recommend buying single target stock
+      // Buy suggestions for custom universe tickers not owned
+      engineConfig.customUniverse.forEach((ticker) => {
+        const cleanT = ticker.toUpperCase().replace(".JK", "");
+        const alreadyOwned = portfolio.some(
+          (p) => p.ticker.toUpperCase().replace(".JK", "") === cleanT,
+        );
+        if (alreadyOwned) return;
+        const stock = visibleStocks.find(
+          (s) =>
+            s.ticker === ticker ||
+            s.ticker + ".JK" === ticker ||
+            s.ticker.replace(".JK", "") === cleanT
+        );
+        if (!stock) return;
         const totalPortfolioVal = cash + totalCurrentValue;
         const bufferPct = engineConfig.reserveBufferPct ?? 10;
         const bufferCash = totalPortfolioVal * (bufferPct / 100);
         const maxInvestableCash = Math.max(0, cash - bufferCash);
-
-        const countShares = Math.floor(maxInvestableCash / stock.currentPrice);
+        const targetBudget = totalPortfolioVal / Math.max(1, engineConfig.customUniverse.length);
+        const spend = Math.min(maxInvestableCash, targetBudget);
+        const countShares = Math.floor(spend / stock.currentPrice);
         const lots = Math.floor(countShares / 100);
         const finalShares = lots * 100;
-
         if (finalShares > 0) {
           list.push({
-            id: `buy-single-${targetTicker}`,
+            id: `buy-custom-${stock.ticker}`,
             type: "BUY",
-            ticker: targetTicker,
+            ticker: stock.ticker,
             name: stock.name,
             price: stock.currentPrice,
             shares: finalShares,
-            reason: `Membangun Posisi Saham Tunggal: Alokasikan saldo IDR ekuitas bersih (dengan buffer ${bufferPct}%) ke emiten tunggal pilihan #${targetTicker}.`,
+            reason: `#${ticker} dalam Custom Universe dan belum dimiliki. Alokasikan sesuai strategi.`,
             badge: "INSTRUKSI BELI",
           });
         }
-      }
+      });
     } else {
-      // 3. Normal regime: check exits first
+      // 3. Algo mode: rank-based alerts
       portfolio.forEach((item) => {
         if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
         const cleanT = item.ticker.toUpperCase().replace(".JK", "");
@@ -643,8 +634,6 @@ export function PortfolioTracker({
             <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
               UNIVERSE: {engineConfig.simulationMode === "custom"
                 ? `Custom (${engineConfig.customUniverse.length})`
-                : engineConfig.simulationMode === "single"
-                ? `#${engineConfig.singleTicker}`
                 : engineConfig.universe.toUpperCase()}
             </div>
             {engineConfig.simulationMode === "algo" && (

@@ -467,7 +467,7 @@ export function AppSidebar({
           <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Settings className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Mesin Kuantitatif</span>
-            <span className="ml-auto"><ExplainButton label="Mesin Kuantitatif (topNCount, reserveBufferPct, crashSensitivity, single triggers, bobot Q/G/V/M)" /></span>
+            <span className="ml-auto"><ExplainButton label="Mesin Kuantitatif (topNCount, reserveBufferPct, crashSensitivity, sell/buy triggers, bobot Q/G/V/M)" /></span>
           </div>
           <EngineConfigSidebarContent />
         </div>
@@ -591,29 +591,41 @@ export function AppSidebar({
             </div>
           </div>
 
-        {engineConfig.simulationMode === "single" ? (
+        {engineConfig.simulationMode === "custom" ? (
           <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
-            <span className="text-label text-tertiary block">Saham</span>
-            <input type="text" value={engineConfig.singleTicker || "BBCA"}
-              onChange={e => updateConfigValue("singleTicker", e.target.value.toUpperCase())}
-              className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
             <div>
-              <div className="flex justify-between text-label mb-0.5">
-                <span className="text-tertiary">Jual Turun</span>
-                <span className="text-accent font-bold">{engineConfig.singleSellTrigger ?? 8}%</span>
-              </div>
-              <input type="range" min="1" max="25" value={engineConfig.singleSellTrigger ?? 8}
-                onChange={e => updateConfigValue("singleSellTrigger", Number(e.target.value))}
-                className="w-full accent-emerald-500 h-1" />
+              <span className="text-label text-tertiary block mb-1">Custom Universe</span>
+              {engineConfig.customUniverse && engineConfig.customUniverse.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {engineConfig.customUniverse.map((t, i) => (
+                    <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-caption text-tertiary italic">Set di panel Backtest</span>
+              )}
             </div>
-            <div>
-              <div className="flex justify-between text-label mb-0.5">
-                <span className="text-tertiary">Beli Naik</span>
-                <span className="text-accent font-bold">{engineConfig.singleBuyTrigger ?? 5}%</span>
-              </div>
-              <input type="range" min="1" max="25" value={engineConfig.singleBuyTrigger ?? 5}
-                onChange={e => updateConfigValue("singleBuyTrigger", Number(e.target.value))}
-                className="w-full accent-emerald-500 h-1" />
+            <div className="border-t border-white/[0.04] pt-2">
+              <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
+              {[
+                ["qualityWeight", "Quality (Q)", activeProfile.qualityWeight * 100],
+                ["growthWeight", "Growth (G)", activeProfile.growthWeight * 100],
+                ["valueWeight", "Value (V)", activeProfile.valueWeight * 100],
+                ["momentumWeight", "Momentum (M)", activeProfile.momentumWeight * 100],
+              ].map(([key, label, val]) => (
+                <div key={key} className="mb-1.5">
+                  <div className="flex justify-between text-label mb-0.5">
+                    <span className="text-tertiary">{label as string}</span>
+                    <span className="text-accent font-bold">{Math.round(val as number)}%</span>
+                  </div>
+                  <input type="range" min="0" max="1" step="0.05"
+                    value={(activeProfile as any)[key as string]}
+                    onChange={e => updateProfile(activeProfile.id, { [key]: parseFloat(e.target.value) })}
+                    className="w-full accent-emerald-500 h-1" />
+                </div>
+              ))}
             </div>
           </div>
         ) : (

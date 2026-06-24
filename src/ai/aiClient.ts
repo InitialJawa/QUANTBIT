@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 import { api } from "../services/api";
 import { MKT, RS } from "../marketData";
+import { getIhsgDrawdown60 } from "../marketRegimeEngine";
 import type { AILiveContext } from "./systemKnowledge";
 import type { StockData, PortfolioItem } from "../types";
 
@@ -74,19 +75,21 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
 
     if (c.simulationMode === "custom" && c.customUniverse?.length) {
       ctx.activeUniverse = [...c.customUniverse];
-    } else if (c.simulationMode === "single" && c.singleTicker) {
-      ctx.activeUniverse = [c.singleTicker];
     } else if (c.simulationMode === "algo" && c.customTickers?.length) {
       ctx.activeUniverse = [...c.customTickers];
     }
 
-    if (c.enableCrashProtection && c.simulationMode !== "single") {
+    if (c.enableCrashProtection) {
       const ihsgPrice = MKT.ihsg?.value;
+      const ihsgDrawdown60 = getIhsgDrawdown60();
       if (typeof ihsgPrice === "number") {
+        const shouldExit = ihsgDrawdown60 !== null && ihsgDrawdown60 <= -(c.crashSensitivity ?? 10);
         ctx.strategyEvaluation = {
-          shouldExit: false,
-          reason: "IHSG within tolerance (threshold: " + c.crashSensitivity + "%)",
-          targetSafeHaven: c.safeHavenAsset,
+          shouldExit,
+          reason: shouldExit
+            ? `IHSG dropped ${Math.abs(ihsgDrawdown60!).toFixed(1)}% from 60d peak (threshold: ${c.crashSensitivity}%)`
+            : `IHSG within tolerance (${ihsgDrawdown60 !== null ? ihsgDrawdown60.toFixed(1) : "N/A"}%, threshold: ${c.crashSensitivity}%)`,
+          targetSafeHaven: shouldExit ? c.safeHavenAsset : null,
         };
       }
     }

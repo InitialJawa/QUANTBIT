@@ -75,8 +75,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     const customTickers = config.customTickers || [];
     const customWithPrice = customTickers.filter(t => day0.stockPrices[t] && day0.stockPrices[t] > 0);
     topTickers = [...customWithPrice, ...rankedTickers.filter(t => !customWithPrice.includes(t))].slice(0, Math.max(config.topNCount, customWithPrice.length));
-  } else {
+  } else if (config.simulationMode === "single") {
     topTickers = [config.singleTicker];
+  } else {
+    topTickers = [];
   }
 
   const initialAlloc = computeInitialAllocation(
@@ -104,9 +106,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const initialGoldPrice = day0.goldPrice;
 
   let singlePriceWindow: number[] = [];
-  if (config.simulationMode === "single") {
-    singlePriceWindow = [day0.stockPrices[config.singleTicker] || 1000];
-  }
   let singleStockTrough = day0.stockPrices[config.singleTicker] || 1000;
   let lastJulyYear = 2019;
   const dailyReturns: number[] = [];
@@ -119,7 +118,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   logs.push({
     date: day0.date,
     type: "BUY",
-    message: `Inisialisasi portofolio ${config.simulationMode === "algo" || config.simulationMode === "custom" ? `${topTickers.length} emiten` : `tunggal #${config.singleTicker}`}`,
+    message: `Inisialisasi portofolio ${topTickers.length} emiten`,
   });
 
   const getPointInTimeDate = (date: Date): Date => {
@@ -203,7 +202,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     let crashReason = "";
 
     if (config.enableCrashProtection) {
-      if (config.simulationMode === "algo") {
+      if (config.simulationMode === "algo" || config.simulationMode === "custom") {
         const ihsgPricesWindow = filtered.slice(0, stepIndex + 1).map(d => d.ihsgPrice);
         const result = detectCrashAlgo(ihsgPricesWindow, day.ihsgPrice, config.crashSensitivity);
         crashSignaled = result.signaled;
@@ -225,10 +224,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         message: `⚠️ CRASH: ${crashReason}`,
       });
 
-      if (config.simulationMode === "single") {
-        singleStockTrough = day.stockPrices[config.singleTicker] || 100;
-      }
-
       const liq = liquidateHoldings(positions, day.stockPrices, fees);
       positions = {};
       cash += liq.proceeds;
@@ -248,7 +243,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     if (inCrashState && crashCooldown <= 0) {
       let recoverySignaled = false;
 
-      if (config.simulationMode === "algo") {
+      if (config.simulationMode === "algo" || config.simulationMode === "custom") {
         const ihsgPricesWindow = filtered.slice(0, stepIndex + 1).map(d => d.ihsgPrice);
         const result = detectRecoveryAlgo(ihsgPricesWindow, day.ihsgPrice);
         recoverySignaled = result.signaled;
@@ -286,8 +281,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           reentryTickers = pickTopTickersByRank(
             day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
           );
-        } else {
+        } else if (config.simulationMode === "single") {
           reentryTickers = [config.singleTicker];
+        } else {
+          reentryTickers = [];
         }
 
         const reentryAlloc = computeInitialAllocation(
@@ -476,8 +473,8 @@ export function evaluateStrategy(
     return { shouldExit: false, reason: "Crash protection disabled", targetSafeHaven: null };
   }
 
-  if (config.simulationMode === "single") {
-    return { shouldExit: false, reason: "Single mode uses own trigger", targetSafeHaven: null };
+  if (config.simulationMode !== "algo" && config.simulationMode !== "custom") {
+    return { shouldExit: false, reason: "Non-algo mode uses own trigger", targetSafeHaven: null };
   }
 
   if (marketData.peak60 !== undefined) {
@@ -510,10 +507,10 @@ export function shouldTriggerExit(
   }
 
   const drawdown = ((position.currentPrice - position.buyPrice) / position.buyPrice) * 100;
-  if (config.simulationMode === "single" && drawdown <= -config.singleSellTrigger) {
+  if (drawdown <= -config.singleSellTrigger) {
     return {
       shouldExit: true,
-      reason: `${ticker} dropped ${Math.abs(drawdown).toFixed(1)}% (single trigger: ${config.singleSellTrigger}%)`,
+      reason: `${ticker} dropped ${Math.abs(drawdown).toFixed(1)}% (sell trigger: ${config.singleSellTrigger}%)`,
       targetSafeHaven: config.safeHavenAsset,
     };
   }
@@ -524,9 +521,6 @@ export function shouldTriggerExit(
 export function getActiveUniverse(config: BacktestConfig): string[] {
   if (config.simulationMode === "custom") {
     return [...(config.customUniverse || [])];
-  }
-  if (config.simulationMode === "single") {
-    return [config.singleTicker];
   }
   if (config.simulationMode === "algo" && config.customTickers.length > 0) {
     return [...config.customTickers];

@@ -23,8 +23,8 @@ const SUB_TABS = [
   { id: "risk" as const, icon: ShieldAlert, label: "Risk" },
 ];
 
-export function AnalyticsTab({ activeConfig, onSelectTicker, portfolio, watchlist, getDynamicStock, isIHSGInCrisis }: AnalyticsTabProps) {
-  const { activeProfile } = useEngineConfig();
+export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, portfolio, watchlist, getDynamicStock, isIHSGInCrisis }: AnalyticsTabProps) {
+  const { activeProfile, engineConfig } = useEngineConfig();
   const [subTab, setSubTab] = useState<SubTab>("leaders");
 
   return (
@@ -48,7 +48,7 @@ export function AnalyticsTab({ activeConfig, onSelectTicker, portfolio, watchlis
       <div className="flex-1">
         {subTab === "leaders" && (
           <LeadersTab
-            activeConfig={activeConfig}
+            activeConfig={engineConfig.activeProfileId === "res" ? "res" : "prod"}
             activeProfile={activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : null}
             onSelectTicker={onSelectTicker}
             portfolio={portfolio}
