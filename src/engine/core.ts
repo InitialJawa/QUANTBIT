@@ -89,7 +89,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   let inCrashState = false;
   let crashCooldown = 0;
   let totalTransactionVolume = initialAlloc.totalVolume;
-  let lastRebalanceMonth = -1;
+  let lastRebalanceMonth = new Date(day0.date).getMonth();
   let pendingTickers = [...initialAlloc.pendingTickers];
 
   let totalSwaps = 0;
@@ -292,7 +292,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (crashCooldown > 0) crashCooldown--;
 
-    if (!inCrashState && config.enableCrossover && (config.simulationMode === "algo" || config.simulationMode === "custom")) {
+    if (!inCrashState && config.enableCrossover && config.simulationMode === "algo") {
       const ownedTickers = Object.entries(positions)
         .filter(([_, shares]) => shares > 0)
         .map(([ticker]) => ticker);
@@ -310,17 +310,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           totalTransactionVolume += sellResult.volume;
           delete positions[ticker];
 
-          let topCandidates: string[];
-          if (config.simulationMode === "custom") {
-            topCandidates = (config.customUniverse || []).filter(
-              t => day.stockPrices[t] && day.stockPrices[t] > 0
-            );
-          } else {
-            topCandidates = pickTopTickersByRank(
-              day.stockRanks, day.stockPrices, getUniverseTickers(), 4
-            );
-          }
-          const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
+          const topCandidates = pickTopTickersByRank(
+            day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
+          );
+          const swapInTicker = topCandidates.find(t => t !== ticker && (!positions[t] || positions[t] === 0));
 
           if (swapInTicker) {
             const swapResult = computeRebalanceSwap(

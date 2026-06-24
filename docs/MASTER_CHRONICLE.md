@@ -75,3 +75,6 @@ Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT
 - Custom mode sidebar: singleTicker/sell/buy triggers hidden
 - MarketTab.tsx: dead "single" checks removed
 - `tsc --noEmit` + `vite build` pass
+
+## 2026-06-24 — Rebalancing Engine Fix (4 Bugs)
+4 bug di `core.ts` rebalancing block diperbaiki: (1) `lastRebalanceMonth = -1` → init ke day0 month — day-1 false trigger hilang; (2) custom mode dikeluarkan dari rank-based exit — custom stock hold kecuali crash; (3) hardcoded `4` → `config.topNCount` — swap kandidat sesuai user config; (4) self-swap/duplicate position dicegah — `swapInTicker` exclude just-sold ticker + no fallback. ADR-008 dibuat.

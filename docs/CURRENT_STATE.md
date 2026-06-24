@@ -57,6 +57,14 @@ backtestConfig (draft, isolated from engineConfig)
 - **Legacy field di custom sidebar dihapus** — `singleTicker`, `singleSellTrigger`, `singleBuyTrigger` tidak muncul lagi di custom mode
 - **`MarketTab.tsx`** — dead `"single"` checks dihapus
 
+### 🔴 Bug 4 Fix: Rebalancing Engine — 4 Bug di core.ts:92-323
+- **Bug 4a (day-1 false trigger)**: `lastRebalanceMonth = -1` → `new Date(day0.date).getMonth()` — day 1 tidak lagi trigger rebalance yang nggak perlu
+- **Bug 4b (custom mode rank exit)**: Custom mode dikeluarkan dari blok rebalancing rank-based — custom stock di-hold, exit hanya via crash protection
+- **Bug 4c (hardcoded top 4)**: `pickTopTickersByRank(..., 4)` → `pickTopTickersByRank(..., config.topNCount)` — swap kandidat sesuai setting user
+- **Bug 4d (self-swap/duplicate)**: `swapInTicker` sekarang exclude ticker yang baru dijual + tidak fallback ke `topCandidates[0]` — hold cash jika tidak ada kandidat suitable
+- **Dead code removed**: Custom `if` branch di blok swap dihapus (tidak pernah tercapai setelah fix 4b)
+- **ADR-008** dibuat untuk record keputusan
+
 ## Verification
 - `tsc --noEmit` — passes (0 errors)
 - `vite build` — passes (0 errors)
