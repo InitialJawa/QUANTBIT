@@ -10,7 +10,7 @@ import {
   StrategiesInput,
 } from "./types";
 import { computeDayRankings, pickTopTickersByRank, getCleanTickerList } from "./ranker";
-import { detectCrashAlgo, detectCrashSingle, detectRecoveryAlgo, detectRecoverySingle } from "./crashDetector";
+import { detectCrashAlgo, detectRecoveryAlgo } from "./crashDetector";
 import {
   computeInitialAllocation,
   liquidateHoldings,
@@ -24,7 +24,7 @@ import { computeMetrics } from "./metrics";
 export function runStrategy(input: StrategiesInput): BacktestResult {
   const { dayData: rawInput, config, profileWeights, universeTickers, fees = DEFAULT_FEES } = input;
 
-  const activeProfileKey = config.activeProfileId === "prod" ? "stockRanksProd" : "stockRanksRes";
+  const activeProfileKey: "stockRanksProd" | "stockRanksRes" = config.activeProfileId === "res" ? "stockRanksRes" : "stockRanksProd";
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
@@ -75,8 +75,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     const customTickers = config.customTickers || [];
     const customWithPrice = customTickers.filter(t => day0.stockPrices[t] && day0.stockPrices[t] > 0);
     topTickers = [...customWithPrice, ...rankedTickers.filter(t => !customWithPrice.includes(t))].slice(0, Math.max(config.topNCount, customWithPrice.length));
-  } else if (config.simulationMode === "single") {
-    topTickers = [config.singleTicker];
   } else {
     topTickers = [];
   }
@@ -105,8 +103,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const initialIhsgPrice = day0.ihsgPrice;
   const initialGoldPrice = day0.goldPrice;
 
-  let singlePriceWindow: number[] = [];
-  let singleStockTrough = day0.stockPrices[config.singleTicker] || 1000;
   let lastJulyYear = 2019;
   const dailyReturns: number[] = [];
   let lastDayVal = cap;
@@ -207,13 +203,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         const result = detectCrashAlgo(ihsgPricesWindow, day.ihsgPrice, config.crashSensitivity);
         crashSignaled = result.signaled;
         crashReason = result.reason;
-      } else {
-        const currentPrice = day.stockPrices[config.singleTicker] || 100;
-        singlePriceWindow.push(currentPrice);
-        if (singlePriceWindow.length > 20) singlePriceWindow.shift();
-        const result = detectCrashSingle(singlePriceWindow, currentPrice, config.singleSellTrigger);
-        crashSignaled = result.signaled;
-        crashReason = result.reason;
       }
     }
 
@@ -255,11 +244,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
             message: `✅ RECOVERY: ${result.reason}`,
           });
         }
-      } else {
-        const currentPrice = day.stockPrices[config.singleTicker] || 100;
-        singleStockTrough = Math.min(singleStockTrough, currentPrice);
-        const result = detectRecoverySingle(singleStockTrough, currentPrice, config.singleBuyTrigger);
-        recoverySignaled = result.signaled;
       }
 
       if (recoverySignaled) {
@@ -281,8 +265,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           reentryTickers = pickTopTickersByRank(
             day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
           );
-        } else if (config.simulationMode === "single") {
-          reentryTickers = [config.singleTicker];
         } else {
           reentryTickers = [];
         }

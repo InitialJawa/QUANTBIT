@@ -60,3 +60,18 @@ Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT
 - Dead single-mode branches removed from core.ts, PortfolioTracker.tsx, AppSidebar.tsx, notificationRules.ts, aiClient.ts
 - Engine index: unused exports cleaned up (detectCrashSingle, detectRecoverySingle, rule_singleModeTrigger)
 - Missing import `shouldTriggerExit` in PortfolioTracker.tsx — removed (was unused after dead code deletion in prior session)
+
+## 2026-06-24 — Backtest Draft Isolation + Custom Mode Final Fix
+**Bug 1: Auto-sync Backtest → Porto dihentikan.**
+- `backtestConfig` draft state added to EngineConfigContext — separate from `engineConfig` (live)
+- Backtest sidebar inputs read/write `backtestConfig` only
+- SimulationTab auto-run/handleRunAlgoBacktest/SYNC use `backtestConfig`
+- PortfolioTracker reads `engineConfig` only — unaffected until SYNC
+
+**Bug 2: Custom mode final fixes.**
+- `BacktestConfig.activeProfileId` type: `"prod" | "res"` → `string`
+- `core.ts`: handles custom profile IDs (fallback to stockRanksProd)
+- Dead `"single"` branches removed from core.ts crash/recovery/reentry
+- Custom mode sidebar: singleTicker/sell/buy triggers hidden
+- MarketTab.tsx: dead "single" checks removed
+- `tsc --noEmit` + `vite build` pass

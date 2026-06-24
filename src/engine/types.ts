@@ -39,7 +39,7 @@ export interface BacktestConfig {
   simEndDate: string;
   customTickers: string[];
   customUniverse: string[];
-  activeProfileId: "prod" | "res";
+  activeProfileId: string;
 }
 
 export interface ExecutionFees {

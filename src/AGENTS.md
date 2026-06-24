@@ -23,7 +23,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 
 **EngineConfigContext = single source of truth. Portfolio = strategy control center.**
 
-- `simulationMode: "algo" | "single" | "custom"` (custom = user-defined exclusive universe)
+- `simulationMode: "algo" | "custom"` (custom = user-defined exclusive universe)
 - `customTickers: string[]` (forced holdings in algo mode)
 - `customUniverse: string[]` (exclusive list in custom mode — separate field, different semantics)
 - `lastBacktestProfile: WeightProfile | null` (set by wrapped `setBacktestResult`)

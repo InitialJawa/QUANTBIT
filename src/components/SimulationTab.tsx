@@ -213,7 +213,8 @@ export function SimulationTab({
     }
     return null;
   };
-  const { engineConfig, activeProfile, updateConfigValue, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest } = useEngineConfig();
+  const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest, backtestConfig, updateBacktestValue } = useEngineConfig();
+  const backtestActiveProfile = useMemo(() => engineConfig.profiles.find(p => p.id === backtestConfig.activeProfileId) || engineConfig.profiles[0], [engineConfig.profiles, backtestConfig.activeProfileId]);
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");
@@ -258,24 +259,24 @@ export function SimulationTab({
 
   // Safe parse clean capital
   const simCapital = useMemo(() => {
-    const parsed = parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 0;
+    const parsed = parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 0;
     return parsed > 0 ? parsed : 10000000;
-  }, [engineConfig.algoCapital]);
+  }, [backtestConfig.algoCapital]);
 
-  const activeStock = useMemo(() => getDynamicStock(engineConfig.singleTicker) || getDynamicStock("BBCA"), [engineConfig.singleTicker, getDynamicStock]);
+  const activeStock = useMemo(() => getDynamicStock(backtestConfig.singleTicker) || getDynamicStock("BBCA"), [backtestConfig.singleTicker, getDynamicStock]);
 
   const simPrices = useMemo(() => {
     if (historicalData.length === 0) {
       return { startPrice: 0, endPrice: 0, years: 0 };
     }
-    const cleanTicker = engineConfig.singleTicker.toUpperCase().replace(".JK", "");
+    const cleanTicker = backtestConfig.singleTicker.toUpperCase().replace(".JK", "");
     
-    let startIndex = historicalData.findIndex(d => d.date >= engineConfig.simStartDate);
+    let startIndex = historicalData.findIndex(d => d.date >= backtestConfig.simStartDate);
     if (startIndex === -1) startIndex = 0;
     
-    let endIndex = historicalData.findIndex(d => d.date >= engineConfig.simEndDate);
+    let endIndex = historicalData.findIndex(d => d.date >= backtestConfig.simEndDate);
     if (endIndex === -1) endIndex = historicalData.length - 1;
-    if (historicalData[endIndex] && historicalData[endIndex].date > engineConfig.simEndDate && endIndex > 0) endIndex--;
+    if (historicalData[endIndex] && historicalData[endIndex].date > backtestConfig.simEndDate && endIndex > 0) endIndex--;
 
     const startRaw = historicalData[startIndex] as any;
     const endRaw = historicalData[endIndex] as any;
@@ -288,7 +289,7 @@ export function SimulationTab({
       endPrice: Math.round(ePrice),
       years: Math.max(0.1, (Date.parse(endRaw?.date) - Date.parse(startRaw?.date)) / (1000*60*60*24*365.25))
     };
-  }, [historicalData, engineConfig.singleTicker, engineConfig.simStartDate, engineConfig.simEndDate, activeStock.currentPrice]);
+  }, [historicalData, backtestConfig.singleTicker, backtestConfig.simStartDate, backtestConfig.simEndDate, activeStock.currentPrice]);
   
   const startPrice = simPrices.startPrice;
 
@@ -330,12 +331,11 @@ export function SimulationTab({
   const simulatorChartData = useMemo(() => {
     const steps = 6;
     const data = [];
-    const ticker = engineConfig.singleTicker;
+    const ticker = backtestConfig.singleTicker;
     const finalPrice = simPrices.endPrice;
 
     for (let i = 0; i <= steps; i++) {
       const progress = i / steps;
-      // Synthesize realistic path curves with fluctuation nodes
       const variance = 1 + (Math.sin(progress * Math.PI) * 0.10 * (1 - progress));
       const midPrice = startPrice + (finalPrice - startPrice) * progress;
       const stepPrice = Math.max(10, Math.round(midPrice * variance));
@@ -343,12 +343,10 @@ export function SimulationTab({
       const { realSharesPurchased, cashResidual } = simReturnDetails;
       const stepAssetVal = realSharesPurchased * stepPrice;
       
-      // Proportional dividends growing linearly over step intervals
       const stepDividends = Math.round(simReturnDetails.totalDividends * progress);
 
       const totalStepVal = stepAssetVal + cashResidual + stepDividends;
 
-      // Benchmark IHSG baseline simulated index
       const ihsgProgress = 1 + (0.05 * progress) + (0.09 * Math.sin(progress * Math.PI) * progress);
       const benchmarkVal = Math.round(simCapital * ihsgProgress);
 
@@ -367,7 +365,7 @@ export function SimulationTab({
       });
     }
     return data;
-  }, [engineConfig.singleTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails]);
+  }, [backtestConfig.singleTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails]);
 
   // Today ledger values
   const portfolioSummary = useMemo(() => {
@@ -428,34 +426,34 @@ export function SimulationTab({
         return;
       }
 
-      const cap = parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
+      const cap = parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
 
       const result = runStrategy({
         dayData: historicalData,
         config: {
           capital: cap,
-          reserveBufferPct: engineConfig.reserveBufferPct,
-          topNCount: engineConfig.topNCount,
-          universe: engineConfig.universe,
-          simulationMode: engineConfig.simulationMode,
-          singleTicker: engineConfig.singleTicker,
-          enableCrashProtection: engineConfig.enableCrashProtection,
-          crashSensitivity: engineConfig.crashSensitivity,
-          singleSellTrigger: engineConfig.singleSellTrigger,
-          singleBuyTrigger: engineConfig.singleBuyTrigger,
-          safeHavenAsset: engineConfig.safeHavenAsset,
-          enableCrossover: engineConfig.enableCrossover,
-          simStartDate: engineConfig.simStartDate,
-          simEndDate: engineConfig.simEndDate,
-          customTickers: engineConfig.customTickers || [],
-          customUniverse: engineConfig.customUniverse || [],
-          activeProfileId: engineConfig.activeProfileId as "prod" | "res",
+          reserveBufferPct: backtestConfig.reserveBufferPct,
+          topNCount: backtestConfig.topNCount,
+          universe: backtestConfig.universe,
+          simulationMode: backtestConfig.simulationMode,
+          singleTicker: backtestConfig.singleTicker,
+          enableCrashProtection: backtestConfig.enableCrashProtection,
+          crashSensitivity: backtestConfig.crashSensitivity,
+          singleSellTrigger: backtestConfig.singleSellTrigger,
+          singleBuyTrigger: backtestConfig.singleBuyTrigger,
+          safeHavenAsset: backtestConfig.safeHavenAsset,
+          enableCrossover: backtestConfig.enableCrossover,
+          simStartDate: backtestConfig.simStartDate,
+          simEndDate: backtestConfig.simEndDate,
+          customTickers: backtestConfig.customTickers || [],
+          customUniverse: backtestConfig.customUniverse || [],
+          activeProfileId: backtestConfig.activeProfileId,
         },
         profileWeights: {
-          quality: activeProfile?.qualityWeight ?? 0.25,
-          growth: activeProfile?.growthWeight ?? 0.10,
-          value: activeProfile?.valueWeight ?? 0.30,
-          momentum: activeProfile?.momentumWeight ?? 0.35,
+          quality: backtestActiveProfile?.qualityWeight ?? 0.25,
+          growth: backtestActiveProfile?.growthWeight ?? 0.10,
+          value: backtestActiveProfile?.valueWeight ?? 0.30,
+          momentum: backtestActiveProfile?.momentumWeight ?? 0.35,
         },
         universeTickers: {
           idx80: IDX80_TICKERS,
@@ -482,34 +480,34 @@ export function SimulationTab({
     if (historicalData.length === 0) return;
     handleRunAlgoBacktest();
   }, [
-    engineConfig.singleTicker,
-    engineConfig.simStartDate,
-    engineConfig.simEndDate,
-    engineConfig.algoCapital,
-    engineConfig.simulationMode,
-    engineConfig.universe,
-    engineConfig.topNCount,
-    engineConfig.enableCrossover,
-    engineConfig.enableCrashProtection,
-    engineConfig.crashSensitivity,
-    engineConfig.safeHavenAsset,
-    engineConfig.singleSellTrigger,
-    engineConfig.singleBuyTrigger,
-    engineConfig.reserveBufferPct,
-    engineConfig.activeProfileId,
-    engineConfig.customTickers,
-    engineConfig.customUniverse,
-    activeProfile?.qualityWeight,
-    activeProfile?.growthWeight,
-    activeProfile?.valueWeight,
-    activeProfile?.momentumWeight,
+    backtestConfig.singleTicker,
+    backtestConfig.simStartDate,
+    backtestConfig.simEndDate,
+    backtestConfig.algoCapital,
+    backtestConfig.simulationMode,
+    backtestConfig.universe,
+    backtestConfig.topNCount,
+    backtestConfig.enableCrossover,
+    backtestConfig.enableCrashProtection,
+    backtestConfig.crashSensitivity,
+    backtestConfig.safeHavenAsset,
+    backtestConfig.singleSellTrigger,
+    backtestConfig.singleBuyTrigger,
+    backtestConfig.reserveBufferPct,
+    backtestConfig.activeProfileId,
+    backtestConfig.customTickers,
+    backtestConfig.customUniverse,
+    backtestActiveProfile?.qualityWeight,
+    backtestActiveProfile?.growthWeight,
+    backtestActiveProfile?.valueWeight,
+    backtestActiveProfile?.momentumWeight,
     triggerRun,
     historicalData,
   ]);
 
   useEffect(() => {
     const handler = () => {
-      if (engineConfig.simulationMode === "algo" && backtestResult) {
+      if (backtestConfig.simulationMode === "algo" && backtestResult) {
         handleDownloadJournal();
       } else {
         handleDownloadCSV();
@@ -517,7 +515,7 @@ export function SimulationTab({
     };
     window.addEventListener("download-csv-backtest", handler);
     return () => window.removeEventListener("download-csv-backtest", handler);
-  }, [engineConfig.simulationMode, backtestResult]);
+  }, [backtestConfig.simulationMode, backtestResult]);
 
   const handleDownloadCSV = async () => {
     try {
@@ -539,7 +537,7 @@ export function SimulationTab({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `database_backtest_${engineConfig.simStartDate}_${engineConfig.simEndDate}_${engineConfig.activeProfileId.toUpperCase()}.csv`);
+      link.setAttribute("download", `database_backtest_${backtestConfig.simStartDate}_${backtestConfig.simEndDate}_${backtestConfig.activeProfileId.toUpperCase()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -563,7 +561,7 @@ export function SimulationTab({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `buku_jurnal_simulasi_${engineConfig.activeProfileId.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `buku_jurnal_simulasi_${backtestConfig.activeProfileId.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -584,7 +582,7 @@ export function SimulationTab({
              Interactive Trading & Backtest Laboratory
           </h2>
           <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
-            Bandingkan performa investasi harian sejak {engineConfig.simStartDate} dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
+            Bandingkan performa investasi harian sejak {backtestConfig.simStartDate} dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
           </p>
         </div>
         
@@ -647,8 +645,8 @@ export function SimulationTab({
                   { value: "BBNI", label: "BBNI - Bank Negara Indo" },
                   { value: "TPIA", label: "TPIA - Chandra Asri" }
                 ].filter((opt, index, self) => index === self.findIndex(t => t.value === opt.value))}
-                value={engineConfig.singleTicker}
-                onChange={(val) => updateConfigValue("singleTicker", val)}
+                value={backtestConfig.singleTicker}
+                onChange={(val) => updateBacktestValue("singleTicker", val)}
                 theme="amber"
               />
             </div>
@@ -662,14 +660,14 @@ export function SimulationTab({
                   <div className="relative">
                     <input
                       type="date"
-                      value={engineConfig.simStartDate}
+                      value={backtestConfig.simStartDate}
                       min="2021-01-04"
-                      max={engineConfig.simEndDate}
-                      onChange={(e) => updateConfigValue("simStartDate", e.target.value)}
+                      max={backtestConfig.simEndDate}
+                      onChange={(e) => updateBacktestValue("simStartDate", e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
                     {(() => {
-                      const status = isMarketClosedDate(engineConfig.simStartDate);
+                      const status = isMarketClosedDate(backtestConfig.simStartDate);
                       if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
                       if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
@@ -681,14 +679,14 @@ export function SimulationTab({
                   <div className="relative">
                     <input
                       type="date"
-                      value={engineConfig.simEndDate}
-                      min={engineConfig.simStartDate}
+                      value={backtestConfig.simEndDate}
+                      min={backtestConfig.simStartDate}
                       max={todayWIBStr}
-                      onChange={(e) => updateConfigValue("simEndDate", e.target.value)}
+                      onChange={(e) => updateBacktestValue("simEndDate", e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
                     {(() => {
-                      const status = isMarketClosedDate(engineConfig.simEndDate);
+                      const status = isMarketClosedDate(backtestConfig.simEndDate);
                       if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
                       if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
@@ -704,10 +702,10 @@ export function SimulationTab({
               <div className="space-y-2">
                 <input
                   type="text"
-                  value={engineConfig.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                  value={backtestConfig.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
                   onChange={(e) => {
                     const numbers = e.target.value.replace(/[^0-9]/g, "");
-                    updateConfigValue("algoCapital", numbers);
+                    updateBacktestValue("algoCapital", numbers);
                   }}
                   placeholder="Rp 10.000.000"
                   className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold font-mono rounded-xl block"
@@ -718,9 +716,9 @@ export function SimulationTab({
                     <button
                       key={preset}
                       type="button"
-                      onClick={() => updateConfigValue("algoCapital", preset)}
+                      onClick={() => updateBacktestValue("algoCapital", preset)}
                       className={`text-label px-2 py-1 font-bold font-sans rounded-md border transition-all cursor-pointer ${
-                        engineConfig.algoCapital === preset 
+                        backtestConfig.algoCapital === preset 
                           ? "bg-amber-400 text-black border-amber-400" 
                           : "bg-white/5 border-white/5 text-white/50 hover:border-white/10"
                       }`}
@@ -740,7 +738,7 @@ export function SimulationTab({
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Harga Jual Masa Lalu</span>
               <span className="text-sm font-bold font-mono text-white block">{formatRupiah(startPrice)}</span>
-              <span className="text-label text-[#A0A0A0] block">Per lembar pada {engineConfig.simStartDate}</span>
+              <span className="text-label text-[#A0A0A0] block">Per lembar pada {backtestConfig.simStartDate}</span>
             </div>
 
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
@@ -788,7 +786,7 @@ export function SimulationTab({
             </div>
 
             <div className="text-body text-white/50 leading-relaxed font-sans max-w-md sm:text-right">
-              Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{engineConfig.singleTicker}</span> dari <span className="text-white">{engineConfig.simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{engineConfig.simEndDate}</span>.
+              Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{backtestConfig.singleTicker}</span> dari <span className="text-white">{backtestConfig.simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{backtestConfig.simEndDate}</span>.
             </div>
           </div>
 
@@ -821,7 +819,7 @@ export function SimulationTab({
                     itemStyle={{ color: theme === "light" ? "#0f172a" : "#ffffff" }}
                   />
                   <Legend verticalAlign="top" height={36} iconType="circle" />
-                  <Area type="monotone" name={`Investasi #${engineConfig.singleTicker}`} dataKey="Nilai Portofolio" stroke="#eab308" strokeWidth={2} fillOpacity={1} fill="url(#colorPortfolio)" />
+                  <Area type="monotone" name={`Investasi #${backtestConfig.singleTicker}`} dataKey="Nilai Portofolio" stroke="#eab308" strokeWidth={2} fillOpacity={1} fill="url(#colorPortfolio)" />
                   <Area type="monotone" name="IHSG Benchmark" dataKey="Tolok Ukur IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorBenchmark)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -839,7 +837,7 @@ export function SimulationTab({
             <div className="flex items-center gap-2.5">
               <Award className="w-5 h-5 text-emerald-400" />
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Advanced Real-time Algorithmic Backtester ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Advanced Real-time Algorithmic Backtester ({backtestConfig.simStartDate} hingga {backtestConfig.simEndDate})</h3>
                 <p className="text-body text-white/35 mt-0.5">Simulasikan rotasi harian dengan perlindungan crash IHSG & rebalance otomatis.</p>
               </div>
             </div>
@@ -854,7 +852,7 @@ export function SimulationTab({
           <div className="flex justify-end pb-2">
             <button
               onClick={() => {
-                if (!activeProfile) {
+                if (!backtestActiveProfile) {
                   toast.error("No active profile selected");
                   return;
                 }
@@ -864,20 +862,20 @@ export function SimulationTab({
                 }
                 try {
                   syncFromBacktest({
-                    profile: activeProfile,
-                    simulationMode: engineConfig.simulationMode,
-                    universe: engineConfig.universe,
-                    customTickers: engineConfig.customTickers || [],
-                    customUniverse: engineConfig.customUniverse || [],
-                    topNCount: engineConfig.topNCount,
-                    singleTicker: engineConfig.singleTicker,
-                    singleSellTrigger: engineConfig.singleSellTrigger,
-                    singleBuyTrigger: engineConfig.singleBuyTrigger,
-                    enableCrashProtection: engineConfig.enableCrashProtection,
-                    crashSensitivity: engineConfig.crashSensitivity,
-                    safeHavenAsset: engineConfig.safeHavenAsset,
-                    enableCrossover: engineConfig.enableCrossover,
-                    reserveBufferPct: engineConfig.reserveBufferPct,
+                    profile: backtestActiveProfile,
+                    simulationMode: backtestConfig.simulationMode,
+                    universe: backtestConfig.universe,
+                    customTickers: backtestConfig.customTickers || [],
+                    customUniverse: backtestConfig.customUniverse || [],
+                    topNCount: backtestConfig.topNCount,
+                    singleTicker: backtestConfig.singleTicker,
+                    singleSellTrigger: backtestConfig.singleSellTrigger,
+                    singleBuyTrigger: backtestConfig.singleBuyTrigger,
+                    enableCrashProtection: backtestConfig.enableCrashProtection,
+                    crashSensitivity: backtestConfig.crashSensitivity,
+                    safeHavenAsset: backtestConfig.safeHavenAsset,
+                    enableCrossover: backtestConfig.enableCrossover,
+                    reserveBufferPct: backtestConfig.reserveBufferPct,
                   });
                   toast.success("Strategy synced to portfolio");
                 } catch (err: any) {
@@ -906,17 +904,17 @@ export function SimulationTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-label font-bold text-white block">
-                  {engineConfig.activeProfileId === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)"}
+                  {backtestConfig.activeProfileId === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)"}
                 </span>
                 <span className="text-caption text-white/40 font-mono block mt-0.5">
-                  Quality: {activeProfile?.qualityWeight ?? 0.25} | Growth: {activeProfile?.growthWeight ?? 0.10} | Value: {activeProfile?.valueWeight ?? 0.30} | Momentum: {activeProfile?.momentumWeight ?? 0.35}
+                  Quality: {backtestActiveProfile?.qualityWeight ?? 0.25} | Growth: {backtestActiveProfile?.growthWeight ?? 0.10} | Value: {backtestActiveProfile?.valueWeight ?? 0.30} | Momentum: {backtestActiveProfile?.momentumWeight ?? 0.35}
                 </span>
               </div>
-              {engineConfig.customTickers && engineConfig.customTickers.length > 0 && (
+              {backtestConfig.customTickers && backtestConfig.customTickers.length > 0 && (
                 <div className="text-right">
                   <span className="text-caption text-white/40 block mb-1">Custom Tickers:</span>
                   <div className="flex gap-1 justify-end flex-wrap">
-                    {engineConfig.customTickers.map((t, i) => (
+                    {backtestConfig.customTickers.map((t, i) => (
                       <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                         #{t}
                       </span>
@@ -937,7 +935,7 @@ export function SimulationTab({
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-xs font-mono text-white tracking-widest uppercase animate-pulse">Running Quant Simulations...</p>
-                    <p className="text-caption text-white/30 font-mono">Iterating ticks day-by-day ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})</p>
+                    <p className="text-caption text-white/30 font-mono">Iterating ticks day-by-day ({backtestConfig.simStartDate} hingga {backtestConfig.simEndDate})</p>
                   </div>
                   
                   {/* Progress bar */}
@@ -1041,10 +1039,10 @@ export function SimulationTab({
                     <div className="flex items-start gap-3">
                       <span className="text-lg">📈</span>
                       <div className="text-xs text-white/60">
-                        {engineConfig.simulationMode === "algo" ? (
-                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {engineConfig.simStartDate} hingga {engineConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
+                        {backtestConfig.simulationMode === "algo" ? (
+                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
                         ) : (
-                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{engineConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {engineConfig.simStartDate} hingga {engineConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
+                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{backtestConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
                         )}
                       </div>
                     </div>
@@ -1098,12 +1096,12 @@ export function SimulationTab({
                   </div>
 
                   {/* Historical Factor Rank Component */}
-                  {engineConfig.simulationMode === "algo" && (
+                  {backtestConfig.simulationMode === "algo" && (
                     <div className="space-y-4 border-t border-white/5 pt-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                           <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham ({backtestConfig.simStartDate} hingga {backtestConfig.simEndDate})
                           </span>
                           <p className="text-body text-white/40 leading-relaxed mt-1">
                             Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.

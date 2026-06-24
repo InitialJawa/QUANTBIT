@@ -4,56 +4,57 @@
 |-------|-------|
 | Tanggal | 2026-06-24 |
 | Status | Development |
-| Progress | ~95% |
+| Progress | ~96% |
 | Sprint | Platform Stabilization & MCP |
 
 ## Active Architecture
 
 ```
-EngineConfigContext (single source of truth)
+EngineConfigContext (source of truth for LIVE strategy)
   ├── profiles[] — F, B, Custom N (weight profiles)
   ├── activeProfileId — profile aktif (getter: activeProfile)
   ├── activeConfig — backward compat getter ("prod"/"res")
   ├── topNCount, universe, crash/crossover settings
-  ├── simulationMode: "algo" | "custom"  (single → custom migrated)
+  ├── simulationMode: "algo" | "custom"
   ├── customUniverse: string[] (exclusive, custom mode)
   └── customTickers: string[] (forced holdings, algo mode)
        │
        ├── AppSidebar → 2-button mode toggle + custom panel
-       ├── SimulationTab → runStrategy() with profile weights
-       ├── PortfolioTracker → Strategy Control Center + notification rules
+       ├── └── renderBacktestContent → uses backtestConfig (draft, NOT engineConfig)
+       ├── SimulationTab → runStrategy() with backtestConfig (draft)
+       ├── PortfolioTracker → reads engineConfig (live, only updated via SYNC)
        ├── MarketTab → cascade filter from engineConfig
        └── AI Chat → profile-aware context (Section 12)
+
+backtestConfig (draft, isolated from engineConfig)
+  ├── Full EngineConfig copy for backtest experimentation
+  ├── Modified by Backtest sidebar inputs (no effect on Portfolio)
+  ├── Auto-run useEffect fires on backtestConfig changes
+  └── syncFromBacktest() copies backtestConfig → engineConfig on SYNC click
 ```
 
 ## Current Focus
 
-**Session 2026-06-24: Full audit fix** — 13 critical/medium bugs resolved, dead code removed:
+**Session 2026-06-24 (session 2): Backtest/Portfolio isolation + Custom mode fixes** — Backtest config draft separated from engineConfig:
 
-### 🔴 Critical Engine Fixes
-- **Custom mode crash detection** — now uses IHSG-based `detectCrashAlgo` (not single-stock)
-- **Custom mode recovery** — now uses IHSG-based `detectRecoveryAlgo`
-- **`peak60` wired through chain** — `getIhsgDrawdown60()` → `evaluateStrategy()` → `rule_crashProtectionTriggered()` → AI `strategyEvaluation`
-- **Custom mode alerts** — custom universe-based (not rank-based) + buy suggestions
-- **AI strategyEvaluation** — no longer hardcoded `shouldExit: false`, uses real drawdown
-- **`rule_singleModeTrigger`** — updated for custom mode context
-- **PortfolioTracker dep fix** — engineConfig.activeProfile → activeProfile
+### 🔴 Bug 1 Fix: Backtest Auto-Sync ke Porto
+- **`backtestConfig` draft state** ditambahkan di `EngineConfigContext` — terpisah dari `engineConfig` (live)
+- **`updateBacktestValue()`** — function untuk modify draft tanpa sentuh live config
+- **`renderBacktestContent()`** di `AppSidebar` — semua input baca/tulis `backtestConfig` (bukan `engineConfig`)
+- **`SimulationTab.tsx`** — auto-run useEffect, `handleRunAlgoBacktest()`, dan SYNC button semua pakai `backtestConfig`
+- **PortfolioTracker tetap baca `engineConfig`** — tidak kena perubahan backtest sampai SYNC diklik
+- **`syncFromBacktest()`** — satu-satunya jalan draft → engineConfig (via SYNC TO PORTO button)
 
-### 🟡 UI/Config Fixes
-- **Portfolio sidebar custom panel** — shows fine-tune sliders + custom universe summary
-- **localStorage migration** — legacy `"single"` → `"custom"` on load
-- **AnalyticsTab** — uses `engineConfig.activeProfileId` directly (no lossy downcast)
-- **FloatingAIChat** — now receives `selectedStock`, `portfolio`, `cash` props
-- **server.ts** — now uses `bridgeHistoricalData()` matching CF Pages Function behavior
-
-### 🟢 Dead Code Removed
-- **`"single"` type union** removed from `types.ts`, `EngineConfigContext.tsx`, `systemKnowledge.ts`
-- **Dead single-mode branches** — `core.ts` (crash/recovery/reentry/fallbacks), `PortfolioTracker.tsx` (alerts), `AppSidebar.tsx` (panel), `notificationRules.ts`, `aiClient.ts`
-- **Engine index** — cleaned up unused exports (`detectCrashSingle`, `detectRecoverySingle`, `rule_singleModeTrigger`)
+### 🔴 Bug 2 Fix: Custom Mode Gagal Total
+- **`BacktestConfig.activeProfileId`** — type diubah dari `"prod" | "res"` → `string` (engine/types.ts)
+- **`core.ts`** — handle custom profile ID: fallback ke `stockRanksProd` untuk non-"res" ID
+- **Dead `"single"` branches dihapus** — `core.ts` (crash/recovery/reentry), `detectCrashSingle`/`detectRecoverySingle` imports
+- **Legacy field di custom sidebar dihapus** — `singleTicker`, `singleSellTrigger`, `singleBuyTrigger` tidak muncul lagi di custom mode
+- **`MarketTab.tsx`** — dead `"single"` checks dihapus
 
 ## Verification
-- `tsc --noEmit` — passes
-- `vite build` — passes
+- `tsc --noEmit` — passes (0 errors)
+- `vite build` — passes (0 errors)
 
 ## Remaining (P2/Deferred)
 - `npm run build` to regenerate year files with raw metrics

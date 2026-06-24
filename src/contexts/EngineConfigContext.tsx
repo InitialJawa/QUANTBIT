@@ -105,6 +105,9 @@ export interface EngineConfigContextType {
   lastBacktestProfile: WeightProfile | null;
   setLastBacktestProfile: (profile: WeightProfile) => void;
   syncFromBacktest: (snapshot: Omit<StrategySnapshot, "syncedAt">) => void;
+  backtestConfig: EngineConfig;
+  updateBacktestValue: (key: string, value: any) => void;
+  resetBacktestConfig: () => void;
 }
 
 const EngineConfigContext = createContext<EngineConfigContextType | null>(null);
@@ -140,6 +143,24 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     return createDefaultConfig();
   });
   const todayWIBStr = getTodayWIB();
+
+  // Backtest Draft Config — isolated from main engineConfig (only syncs via SYNC TO PORTO)
+  const [backtestConfig, setBacktestConfig] = useState<EngineConfig>(() => {
+    try {
+      const saved = localStorage.getItem("idx_engine_config");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...createDefaultConfig(), ...parsed };
+      }
+    } catch {}
+    return createDefaultConfig();
+  });
+  const updateBacktestValue = (key: string, value: any) => {
+    setBacktestConfig((prev) => ({ ...prev, [key]: value }));
+  };
+  const resetBacktestConfig = () => {
+    setBacktestConfig({ ...engineConfig });
+  };
 
   // Transient (non-persisted) backtest run-state
   const [isBacktesting, setBacktesting] = useState(false);
@@ -247,6 +268,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       triggerBacktest, setBacktesting, setBacktestResult,
       lastBacktestProfile, setLastBacktestProfile,
       syncFromBacktest,
+      backtestConfig, updateBacktestValue, resetBacktestConfig,
     }}>
       {children}
     </EngineConfigContext.Provider>

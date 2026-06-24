@@ -67,9 +67,6 @@ export function MarketTab({
     if (mode === "custom" && engineConfig.customUniverse.length > 0) {
       return allVisibleStocks.filter(s => engineConfig.customUniverse.includes(s.ticker));
     }
-    if (mode === "single") {
-      return allVisibleStocks.filter(s => s.ticker === engineConfig.singleTicker);
-    }
     if (mode === "algo" && engineConfig.customTickers.length > 0) {
       return allVisibleStocks.filter(s => engineConfig.customTickers.includes(s.ticker));
     }
@@ -270,13 +267,10 @@ export function MarketTab({
 
   const isFilteredByStrategy =
     (engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0) ||
-    (engineConfig.simulationMode === "single") ||
     (engineConfig.simulationMode === "algo" && engineConfig.customTickers.length > 0);
 
   const strategyFilterLabel = engineConfig.simulationMode === "custom"
     ? `Custom Universe (${engineConfig.customUniverse.length})`
-    : engineConfig.simulationMode === "single"
-    ? `Single #${engineConfig.singleTicker}`
     : `Custom Tickers (${engineConfig.customTickers.length})`;
 
   return (
