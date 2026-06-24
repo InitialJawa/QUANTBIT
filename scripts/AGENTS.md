@@ -16,7 +16,9 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - `npm run build:db` — build SQLite DB from JSON market data
 - `npm run split-data` — split large JSON into yearly chunks
 - Scripts are NOT part of the main build (except via npm scripts)
-- Python scripts for scraping tasks (IDX fundamentals, etc.)
+- `fetch_historical_data.ts` — master pipeline: downloads Yahoo prices + scores with IDX Warehouse fundamentals
+- IDX fundamentals scraping now in `collectors/` (fetches via IDX API, outputs warehouse parquet+JSON)
+- `scrape_idx_fundamentals.py` — legacy, superseded by `collectors/fetch_idx_fundamental.py`
 
 ## Verification
 - Run script with `--dry-run` or test flag if available

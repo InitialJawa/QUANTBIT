@@ -120,3 +120,13 @@
 - Added 9 new hardcoded snapshots: BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR
 - Each with 8 years (2018-2025): ROE, PB, PE, DER, ROA, Net Margin, DPS
 - Total: 18 tickers with real historical data (was 9)
+
+## 2026-06-24 — IDX Fundamental API (Game Changer)
+**Temuan:** Endpoint IDX `/primary/DigitalStatistic/GetApiDataPaginated` ditemukan via reverse engineering Nuxt.js bundles. Mengembalikan 32 field fundamental untuk 947 companies.
+**Verifikasi:** 60-month audit lulus 100% — schema konsisten, 0 error, avg 1.0s response. Bisa diakses via `cloudscraper` tanpa API key.
+**Dampak:**
+- IDX API menjadi primary source fundamental QuantBit (ADR-006)
+- Yahoo Fundamental, FMP, Sectors.app, Hash Fallback — dihentikan
+- RTI/Stockbit — backfill 2015-2020 only
+- Arsitektur fundamental diubah total: IDX API → warehouse_fundamental_idx → Factor Engine
+- Bottleneck utama QuantBit (fundamental data sourcing) resmi terpecahkan

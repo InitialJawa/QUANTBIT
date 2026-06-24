@@ -154,3 +154,41 @@ Sprint: Platform Stabilization & MCP
 **Status:** SKIPPED (2026-06-24)
 **Files:** N/A
 **Detail:** Tidak ada API free yang bisa backfill daily prices pre-2022 (Invezgo max 2 tahun, Sectors.app cuma 90 hari). Skipped — proceed with current data coverage.
+
+### Task 34: IDX Fundamental API Discovery
+**Status:** DONE (2026-06-24)
+**Files:** docs/REPORT-IDX-API-001.md, docs/ADR-006.md, docs/audit_idx_api_60months.json
+**Detail:**
+- Endpoint `/primary/DigitalStatistic/GetApiDataPaginated` ditemukan via reverse engineering Nuxt.js bundles
+- 60-month audit (2021-01 to 2025-12) PASS: 60/60 months, schema 100% consistent, 0 errors
+- 947 companies, 32 fields termasuk assets, equity, sales, profit, eps, per, pbv, roe, roa
+- Status: **PRODUCTION READY**
+- IDX API menjadi primary source fundamental — gantikan Yahoo/FMP/Sectors/Hash Fallback
+- RTI/Stockbit ditahan untuk backfill 2015-2020
+
+### Task 35: Build IDX Fundamental Collector
+**Status:** DONE (2026-06-24)
+**Files:** collectors/fetch_idx_fundamental.py, collectors/AGENTS.md, collectors/requirements.txt, data/fundamental_idx.parquet, data/fundamental_idx_all.json
+**Detail:**
+- Created `collectors/fetch_idx_fundamental.py` — pulls all 60 months (2021-01 to 2025-12) from IDX API
+- Idempotent (skips existing months), retry 3x, argparse CLI, structured logging
+- Output: parquet (2.2 MB) + JSON (42 MB) + pull meta
+- **60 months, 51,662 records, 0 errors, 100% schema consistent**
+- **976 unique companies** across 11 sectors
+- Ratio mismatch confirmed on all samples — API ROE/ROA/NPM tidak reliable
+- Cross-check: BBCA/BBRI/BMRI/TLKM full 60 months, ASII 59/60 (missing 2021-02)
+
+### Task 36: Factor Engine Migration — IDX Warehouse Priority 1
+**Status:** DONE (2026-06-24)
+**Files:** scripts/fetch_historical_data.ts, src/components/SimulationTab.tsx
+**Detail:**
+- `scripts/fetch_historical_data.ts`: Removed Yahoo fundamentals fetching entirely. IDX Warehouse (976 companies, 60 months) = Priority 1. Hardcoded snapshots = Priority 2. Fallback = Priority 3.
+- `src/components/SimulationTab.tsx`: Same priority chain. Imports `fundamental_idx_all.json` directly (replaces old `idx_fundamentals.json`).
+- Pipeline successfully regenerated: 6,582 trading days, 95 active tickers, all scored with IDX warehouse fundamentals.
+- Yahoo fundamentals API calls removed — no more dependency on Yahoo for fundamental data.
+- Old `idx_fundamentals.json` deleted from `src/data/`.
+
+### Task 37 (Next): Backtest Config B & F Validation
+**Status:** PENDING
+**Files:** TBD
+**Detail:** Jalankan backtest Config B dan Config F menggunakan warehouse baru. Bandingkan hasil dengan baseline lama. Verifikasi distribusi rank masuk akal.

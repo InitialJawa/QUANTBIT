@@ -58,6 +58,7 @@ Update parent docs saat parent-level structure, ownership, workflow, atau child 
 - `docs/` — AI Context Persistence System (project master, state, decisions, ADRs)
 - `handover/` — session snapshots
 - `scripts/` — data pipeline scripts (fetch, build, split, scrape)
+- `collectors/` — data collectors (IDX fundamental, market data)
 - `functions/` — Cloudflare Pages Functions (production API)
 - `data/` — raw datasets, historical market data, caches
 - `db/` — database schema and migrations

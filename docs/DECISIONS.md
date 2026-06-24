@@ -48,3 +48,16 @@
 - `MKT.usdidr.value` (17985) != record manapun di JSON (terakhir 17714)
 - 2026 fundamentals kosong di `idx_fundamentals_all.json`
 **Alasan:** Sidebar prices, portfolio, ranking, scoring semuanya pakai data basi. Sektor inkonsisten bikin filter/filtering rusak.
+
+## 2026-06-24 — IDX API Menjadi Sumber Fundamental Utama
+**Keputusan:** IDX API `/primary/DigitalStatistic/GetApiDataPaginated` menjadi primary source fundamental QuantBit, menggantikan Yahoo Fundamental, FMP, Sectors.app, dan Hash Fallback Fundamental.
+**Alasan:**
+- 60-month audit (2021-01 s.d. 2025-12) lulus 100% — 60/60 months available, schema konsisten, 0 error
+- 947 companies, 32 fields — lebih lengkap dari semua sumber sebelumnya
+- Sumber resmi IDX — data primer, bukan scraping pihak ketiga
+- Cloudscraper bypass Cloudflare tanpa API key
+**Konsekuensi:**
+- Yahoo Fundamental, FMP, Sectors.app, Hash Fallback — DIHENTIKAN
+- RTI/Stockbit — ditahan sebagai backfill 2015-2020 saja
+- Arsitektur baru: IDX API → warehouse_fundamental_idx.parquet → Factor Engine
+- Perlu build `collectors/fetch_idx_fundamental.py` untuk pull bulanan

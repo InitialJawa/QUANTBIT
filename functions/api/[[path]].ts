@@ -299,7 +299,7 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
   if (path === "/api/backtest-data" && method === "GET") {
     const configType = (url.searchParams.get("configType") === "res" ? "res" : "prod") as string;
     try {
-      const yearStart = parseInt(url.searchParams.get("from") || "2000");
+      const yearStart = parseInt(url.searchParams.get("from") || "2021");
       const yearEnd = parseInt(url.searchParams.get("to") || "2026");
       const allData: any[] = [];
       for (let y = yearStart; y <= yearEnd; y++) {

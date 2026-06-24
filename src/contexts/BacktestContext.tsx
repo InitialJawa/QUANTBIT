@@ -49,7 +49,7 @@ const getTodayWIB = () => {
 
 export function BacktestProvider({ children }: { children: ReactNode }) {
   const [simTicker, setSimTicker] = useState("BBCA");
-  const [simStartDate, setSimStartDate] = useState("2000-01-03");
+  const [simStartDate, setSimStartDate] = useState("2021-01-04");
   const todayWIBStr = getTodayWIB();
   const [simEndDate, setSimEndDate] = useState(todayWIBStr);
   const [algoCapital, setAlgoCapital] = useState("100000000");

@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "start cmd /c \"tsx server.ts\" && vite",
     "build:db": "tsx scripts/build-db.ts",
     "split-data": "tsx scripts/split-data.ts",
     "build": "npm run build:db && npm run split-data && vite build && tsx scripts/build-cf.ts",
@@ -13,8 +13,7 @@
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true });\"",
     "lint": "tsc --noEmit",
     "serve-api": "tsx server.ts",
-    "serve-mcp": "tsx src/mcp/index.ts",
-    "dev:full": "start cmd /c \"tsx server.ts\" && vite"
+    "serve-mcp": "tsx src/mcp/index.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -45,6 +44,7 @@
     "@types/express": "^5.0.6",
     "@types/node-cron": "^3.0.11",
     "@types/papaparse": "^5.5.2",
+    "playwright": "^1.61.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "tsx": "^4.22.4"
   }

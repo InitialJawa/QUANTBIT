@@ -17,6 +17,8 @@ AI Context Persistence System — menyimpan state project, keputusan arsitektur,
 - **AI_ONBOARDING.md** — update saat project-wide rules berubah
 - **MASTER_CHRONICLE.md** — append-only log perubahan besar
 - **ADR-*.md** — Architecture Decision Records, immutable setelah accepted
+- **REPORT-*.md** — Research reports & discoveries
+- **audit_*.json** — Audit results & metrics
 
 ## Work Guidance
 - DOX pass wajib dilakukan setiap kali edit di project

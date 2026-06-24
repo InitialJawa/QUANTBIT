@@ -26,7 +26,8 @@ import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
 import { useBacktest } from "../contexts/BacktestContext";
-import idxFundamentalsData from "../data/idx_fundamentals.json";
+import warehouseData from "../data/fundamental_idx_all.json";
+import fundamentalSnapshots from "../data/archive/fundamental_snapshots.json";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -65,19 +66,6 @@ interface BacktestDayData {
   stockAdjPrices?: Record<string, number>;
 }
 
-// Define simulated stable factor ratings for each stock [quality, growth, value, momentum]
-const STOCK_FACTORS: Record<string, [number, number, number, number]> = {
-  BBCA: [95, 60, 40, 65],  // high quality, moderate growth, low value (expensive), moderate momentum
-  BBRI: [85, 65, 52, 60],  // high quality, stable growth, fair value, moderate momentum
-  BMRI: [88, 70, 50, 75],  // high quality, strong growth, fair value, high momentum
-  TLKM: [80, 45, 65, 40],  // moderate quality, lower growth, good value, lower momentum
-  ASII: [75, 50, 60, 50],  // moderate quality, moderate growth, good value, moderate momentum
-  ADRO: [65, 85, 75, 80],  // moderate quality, cyclical high growth, cheap value, high momentum
-  PTBA: [62, 80, 85, 70],  // moderate quality, cyclical high growth, very cheap value, high dividend
-  ESSA: [45, 90, 30, 85],  // speculative quality, very hot growth, expensive value, extreme momentum
-  GOTO: [30, 95, 10, 90],  // low quality, hyper growth, extreme expensive, extreme momentum
-};
-
 const TICKER_COLORS: Record<string, string> = {
   BBCA: "#3b82f6", // Royal Blue
   BBRI: "#00c9a5",
@@ -99,227 +87,64 @@ const TICKER_COLORS: Record<string, string> = {
   SMGR: "#78716c", // Stone
 };
 
-// Real historical point-in-time financial snapshots (ROE, PB, PE, DER, ROA, Net Margin, and DPS in IDR)
-const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>> = {
-  BBCA: {
-    2018: { roe: 0.20, pb: 4.1, pe: 26.0, der: 0.15, roa: 0.035, net_margin: 0.38, dividend_per_share: 145 },
-    2019: { roe: 0.18, pb: 4.4, pe: 28.0, der: 0.15, roa: 0.034, net_margin: 0.39, dividend_per_share: 155 },
-    2020: { roe: 0.16, pb: 4.2, pe: 27.0, der: 0.15, roa: 0.031, net_margin: 0.36, dividend_per_share: 145 },
-    2021: { roe: 0.19, pb: 4.6, pe: 29.0, der: 0.14, roa: 0.034, net_margin: 0.37, dividend_per_share: 170 },
-    2022: { roe: 0.21, pb: 4.8, pe: 25.0, der: 0.13, roa: 0.036, net_margin: 0.40, dividend_per_share: 205 },
-    2023: { roe: 0.22, pb: 4.9, pe: 24.0, der: 0.12, roa: 0.037, net_margin: 0.42, dividend_per_share: 228 },
-    2024: { roe: 0.23, pb: 4.8, pe: 24.5, der: 0.12, roa: 0.038, net_margin: 0.43, dividend_per_share: 270 },
-    2025: { roe: 0.23, pb: 4.5, pe: 22.0, der: 0.12, roa: 0.037, net_margin: 0.44, dividend_per_share: 310 }
-  },
-  BBRI: {
-    2018: { roe: 0.17, pb: 2.3, pe: 15.0, der: 0.18, roa: 0.025, net_margin: 0.25, dividend_per_share: 120 },
-    2019: { roe: 0.16, pb: 2.5, pe: 16.0, der: 0.18, roa: 0.024, net_margin: 0.26, dividend_per_share: 130 },
-    2020: { roe: 0.11, pb: 2.1, pe: 21.0, der: 0.19, roa: 0.015, net_margin: 0.18, dividend_per_share: 80 },
-    2021: { roe: 0.14, pb: 2.2, pe: 18.0, der: 0.18, roa: 0.020, net_margin: 0.21, dividend_per_share: 120 },
-    2022: { roe: 0.17, pb: 2.4, pe: 14.5, der: 0.18, roa: 0.026, net_margin: 0.24, dividend_per_share: 188 },
-    2023: { roe: 0.18, pb: 2.3, pe: 14.0, der: 0.17, roa: 0.027, net_margin: 0.26, dividend_per_share: 220 },
-    2024: { roe: 0.18, pb: 1.8, pe: 11.5, der: 0.18, roa: 0.026, net_margin: 0.25, dividend_per_share: 240 },
-    2025: { roe: 0.18, pb: 1.6, pe: 10.0, der: 0.18, roa: 0.025, net_margin: 0.24, dividend_per_share: 260 }
-  },
-  BMRI: {
-    2018: { roe: 0.16, pb: 1.8, pe: 14.0, der: 0.16, roa: 0.022, net_margin: 0.24, dividend_per_share: 160 },
-    2019: { roe: 0.17, pb: 1.9, pe: 15.0, der: 0.16, roa: 0.023, net_margin: 0.25, dividend_per_share: 180 },
-    2020: { roe: 0.09, pb: 1.5, pe: 22.0, der: 0.17, roa: 0.013, net_margin: 0.14, dividend_per_share: 100 },
-    2021: { roe: 0.15, pb: 1.7, pe: 15.0, der: 0.16, roa: 0.021, net_margin: 0.22, dividend_per_share: 175 },
-    2022: { roe: 0.20, pb: 2.0, pe: 12.0, der: 0.15, roa: 0.025, net_margin: 0.27, dividend_per_share: 260 },
-    2023: { roe: 0.21, pb: 2.1, pe: 11.0, der: 0.15, roa: 0.026, net_margin: 0.28, dividend_per_share: 350 },
-    2024: { roe: 0.21, pb: 1.9, pe: 11.0, der: 0.15, roa: 0.026, net_margin: 0.28, dividend_per_share: 380 },
-    2025: { roe: 0.21, pb: 1.7, pe: 10.5, der: 0.15, roa: 0.025, net_margin: 0.28, dividend_per_share: 410 }
-  },
-  TLKM: {
-    2018: { roe: 0.16, pb: 3.2, pe: 18.0, der: 0.40, roa: 0.090, net_margin: 0.14, dividend_per_share: 163 },
-    2019: { roe: 0.16, pb: 3.0, pe: 17.5, der: 0.42, roa: 0.085, net_margin: 0.14, dividend_per_share: 154 },
-    2020: { roe: 0.15, pb: 2.8, pe: 16.0, der: 0.45, roa: 0.080, net_margin: 0.15, dividend_per_share: 168 },
-    2021: { roe: 0.17, pb: 3.3, pe: 17.0, der: 0.48, roa: 0.095, net_margin: 0.16, dividend_per_share: 149 },
-    2022: { roe: 0.16, pb: 2.9, pe: 18.0, der: 0.46, roa: 0.088, net_margin: 0.14, dividend_per_share: 167 },
-    2023: { roe: 0.14, pb: 2.5, pe: 16.5, der: 0.44, roa: 0.074, net_margin: 0.11, dividend_per_share: 186 },
-    2024: { roe: 0.14, pb: 2.0, pe: 15.0, der: 0.45, roa: 0.072, net_margin: 0.11, dividend_per_share: 195 },
-    2025: { roe: 0.13, pb: 1.8, pe: 13.5, der: 0.44, roa: 0.070, net_margin: 0.11, dividend_per_share: 210 }
-  },
-  ASII: {
-    2018: { roe: 0.13, pb: 1.6, pe: 13.5, der: 0.38, roa: 0.072, net_margin: 0.09, dividend_per_share: 220 },
-    2019: { roe: 0.13, pb: 1.4, pe: 12.0, der: 0.37, roa: 0.068, net_margin: 0.09, dividend_per_share: 215 },
-    2020: { roe: 0.08, pb: 1.1, pe: 16.0, der: 0.39, roa: 0.041, net_margin: 0.08, dividend_per_share: 114 },
-    2021: { roe: 0.12, pb: 1.2, pe: 11.5, der: 0.38, roa: 0.055, net_margin: 0.09, dividend_per_share: 194 },
-    2022: { roe: 0.15, pb: 1.3, pe: 9.5, der: 0.35, roa: 0.065, net_margin: 0.10, dividend_per_share: 640 },
-    2023: { roe: 0.13, pb: 1.1, pe: 8.5, der: 0.40, roa: 0.045, net_margin: 0.10, dividend_per_share: 521 },
-    2024: { roe: 0.13, pb: 0.8, pe: 7.0, der: 0.40, roa: 0.045, net_margin: 0.10, dividend_per_share: 410 },
-    2025: { roe: 0.13, pb: 0.7, pe: 6.5, der: 0.40, roa: 0.044, net_margin: 0.10, dividend_per_share: 440 }
-  },
-  ADRO: {
-    2018: { roe: 0.10, pb: 0.8, pe: 9.0, der: 0.32, roa: 0.055, net_margin: 0.12, dividend_per_share: 110 },
-    2019: { roe: 0.11, pb: 0.7, pe: 8.5, der: 0.30, roa: 0.060, net_margin: 0.13, dividend_per_share: 95 },
-    2020: { roe: 0.04, pb: 0.5, pe: 14.0, der: 0.34, roa: 0.021, net_margin: 0.06, dividend_per_share: 60 },
-    2021: { roe: 0.22, pb: 1.1, pe: 6.0, der: 0.31, roa: 0.110, net_margin: 0.20, dividend_per_share: 280 },
-    2022: { roe: 0.38, pb: 1.5, pe: 2.8, der: 0.24, roa: 0.190, net_margin: 0.29, dividend_per_share: 510 },
-    2023: { roe: 0.24, pb: 0.8, pe: 3.5, der: 0.20, roa: 0.125, net_margin: 0.23, dividend_per_share: 360 },
-    2024: { roe: 0.20, pb: 0.7, pe: 4.8, der: 0.20, roa: 0.105, net_margin: 0.21, dividend_per_share: 320 },
-    2025: { roe: 0.10, pb: 0.7, pe: 7.2, der: 0.20, roa: 0.054, net_margin: 0.25, dividend_per_share: 180 }
-  },
-  PTBA: {
-    2018: { roe: 0.32, pb: 2.1, pe: 7.2, der: 0.15, roa: 0.170, net_margin: 0.24, dividend_per_share: 340 },
-    2019: { roe: 0.22, pb: 1.7, pe: 7.5, der: 0.15, roa: 0.130, net_margin: 0.19, dividend_per_share: 326 },
-    2020: { roe: 0.14, pb: 1.3, pe: 10.0, der: 0.16, roa: 0.080, net_margin: 0.14, dividend_per_share: 74 },
-    2021: { roe: 0.33, pb: 1.6, pe: 5.5, der: 0.14, roa: 0.180, net_margin: 0.28, dividend_per_share: 688 },
-    2022: { roe: 0.44, pb: 2.2, pe: 3.5, der: 0.12, roa: 0.220, net_margin: 0.30, dividend_per_share: 1090 },
-    2023: { roe: 0.24, pb: 1.4, pe: 6.2, der: 0.11, roa: 0.110, net_margin: 0.13, dividend_per_share: 397 },
-    2024: { roe: 0.15, pb: 1.3, pe: 8.9, der: 0.11, roa: 0.080, net_margin: 0.08, dividend_per_share: 250 },
-    2025: { roe: 0.14, pb: 1.3, pe: 8.9, der: 0.11, roa: 0.053, net_margin: 0.08, dividend_per_share: 220 }
-  },
-  ESSA: {
-    2018: { roe: 0.08, pb: 1.3, pe: 16.0, der: 0.85, roa: 0.035, net_margin: 0.06, dividend_per_share: 5 },
-    2019: { roe: 0.05, pb: 1.1, pe: 22.0, der: 0.80, roa: 0.020, net_margin: 0.04, dividend_per_share: 5 },
-    2020: { roe: -0.04, pb: 0.9, pe: -18.0, der: 0.95, roa: -0.015, net_margin: -0.03, dividend_per_share: 0 },
-    2021: { roe: 0.12, pb: 1.5, pe: 12.0, der: 0.65, roa: 0.050, net_margin: 0.08, dividend_per_share: 15 },
-    2022: { roe: 0.35, pb: 2.8, pe: 8.0, der: 0.35, roa: 0.180, net_margin: 0.22, dividend_per_share: 45 },
-    2023: { roe: 0.15, pb: 1.6, pe: 11.5, der: 0.22, roa: 0.080, net_margin: 0.12, dividend_per_share: 10 },
-    2024: { roe: 0.12, pb: 1.3, pe: 11.0, der: 0.00, roa: 0.084, net_margin: 0.16, dividend_per_share: 5 },
-    2025: { roe: 0.12, pb: 1.3, pe: 11.0, der: 0.00, roa: 0.084, net_margin: 0.16, dividend_per_share: 30 }
-  },
-  GOTO: {
-    2018: { roe: -0.80, pb: 12.0, pe: -5.0, der: 0.05, roa: -0.600, net_margin: -2.50, dividend_per_share: 0 },
-    2019: { roe: -0.60, pb: 8.0, pe: -6.0, der: 0.05, roa: -0.450, net_margin: -1.80, dividend_per_share: 0 },
-    2020: { roe: -0.40, pb: 6.0, pe: -8.0, der: 0.08, roa: -0.320, net_margin: -1.20, dividend_per_share: 0 },
-    2021: { roe: -0.25, pb: 3.5, pe: -12.0, der: 0.12, roa: -0.200, net_margin: -0.80, dividend_per_share: 0 },
-    2022: { roe: -0.18, pb: 1.6, pe: -15.0, der: 0.10, roa: -0.150, net_margin: -0.55, dividend_per_share: 0 },
-    2023: { roe: -0.12, pb: 0.8, pe: -20.0, der: 0.08, roa: -0.090, net_margin: -0.35, dividend_per_share: 0 },
-    2024: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 },
-    2025: { roe: -0.03, pb: 1.7, pe: -50.0, der: 0.28, roa: 0.003, net_margin: -0.03, dividend_per_share: 0 }
-  },
-  BBNI: {
-    2018: { roe: 0.13, pb: 1.2, pe: 10.5, der: 0.15, roa: 0.018, net_margin: 0.22, dividend_per_share: 115 },
-    2019: { roe: 0.12, pb: 1.1, pe: 11.0, der: 0.15, roa: 0.017, net_margin: 0.21, dividend_per_share: 110 },
-    2020: { roe: 0.07, pb: 0.9, pe: 16.0, der: 0.16, roa: 0.010, net_margin: 0.13, dividend_per_share: 65 },
-    2021: { roe: 0.11, pb: 1.0, pe: 12.0, der: 0.15, roa: 0.016, net_margin: 0.19, dividend_per_share: 105 },
-    2022: { roe: 0.16, pb: 1.1, pe: 8.5, der: 0.14, roa: 0.022, net_margin: 0.23, dividend_per_share: 175 },
-    2023: { roe: 0.16, pb: 1.0, pe: 8.0, der: 0.14, roa: 0.022, net_margin: 0.24, dividend_per_share: 195 },
-    2024: { roe: 0.15, pb: 0.9, pe: 7.5, der: 0.14, roa: 0.021, net_margin: 0.23, dividend_per_share: 210 },
-    2025: { roe: 0.15, pb: 0.8, pe: 7.0, der: 0.14, roa: 0.020, net_margin: 0.22, dividend_per_share: 225 }
-  },
-  INDF: {
-    2018: { roe: 0.15, pb: 2.8, pe: 18.5, der: 0.08, roa: 0.110, net_margin: 0.12, dividend_per_share: 320 },
-    2019: { roe: 0.14, pb: 2.6, pe: 19.0, der: 0.07, roa: 0.105, net_margin: 0.11, dividend_per_share: 330 },
-    2020: { roe: 0.13, pb: 2.5, pe: 20.0, der: 0.06, roa: 0.098, net_margin: 0.10, dividend_per_share: 310 },
-    2021: { roe: 0.16, pb: 3.0, pe: 17.5, der: 0.06, roa: 0.120, net_margin: 0.13, dividend_per_share: 380 },
-    2022: { roe: 0.18, pb: 3.2, pe: 15.0, der: 0.05, roa: 0.135, net_margin: 0.14, dividend_per_share: 450 },
-    2023: { roe: 0.17, pb: 2.9, pe: 16.0, der: 0.05, roa: 0.128, net_margin: 0.13, dividend_per_share: 420 },
-    2024: { roe: 0.16, pb: 2.7, pe: 15.5, der: 0.05, roa: 0.120, net_margin: 0.12, dividend_per_share: 440 },
-    2025: { roe: 0.16, pb: 2.5, pe: 14.0, der: 0.05, roa: 0.118, net_margin: 0.12, dividend_per_share: 460 }
-  },
-  INTP: {
-    2018: { roe: 0.18, pb: 2.5, pe: 14.0, der: 0.02, roa: 0.140, net_margin: 0.20, dividend_per_share: 330 },
-    2019: { roe: 0.16, pb: 2.3, pe: 15.0, der: 0.02, roa: 0.125, net_margin: 0.18, dividend_per_share: 310 },
-    2020: { roe: 0.12, pb: 2.0, pe: 18.0, der: 0.02, roa: 0.095, net_margin: 0.14, dividend_per_share: 240 },
-    2021: { roe: 0.17, pb: 2.6, pe: 13.5, der: 0.02, roa: 0.130, net_margin: 0.19, dividend_per_share: 350 },
-    2022: { roe: 0.19, pb: 2.8, pe: 12.0, der: 0.02, roa: 0.145, net_margin: 0.21, dividend_per_share: 420 },
-    2023: { roe: 0.15, pb: 2.2, pe: 14.5, der: 0.02, roa: 0.115, net_margin: 0.17, dividend_per_share: 340 },
-    2024: { roe: 0.14, pb: 2.0, pe: 14.0, der: 0.02, roa: 0.108, net_margin: 0.16, dividend_per_share: 350 },
-    2025: { roe: 0.14, pb: 1.8, pe: 13.0, der: 0.02, roa: 0.105, net_margin: 0.16, dividend_per_share: 360 }
-  },
-  ICBP: {
-    2018: { roe: 0.22, pb: 5.5, pe: 25.0, der: 0.10, roa: 0.150, net_margin: 0.15, dividend_per_share: 125 },
-    2019: { roe: 0.21, pb: 5.2, pe: 24.0, der: 0.10, roa: 0.145, net_margin: 0.14, dividend_per_share: 135 },
-    2020: { roe: 0.20, pb: 5.0, pe: 25.0, der: 0.08, roa: 0.140, net_margin: 0.14, dividend_per_share: 130 },
-    2021: { roe: 0.23, pb: 6.0, pe: 22.0, der: 0.08, roa: 0.160, net_margin: 0.16, dividend_per_share: 155 },
-    2022: { roe: 0.25, pb: 6.5, pe: 20.0, der: 0.07, roa: 0.175, net_margin: 0.17, dividend_per_share: 180 },
-    2023: { roe: 0.24, pb: 5.8, pe: 21.0, der: 0.07, roa: 0.168, net_margin: 0.16, dividend_per_share: 175 },
-    2024: { roe: 0.23, pb: 5.2, pe: 20.5, der: 0.07, roa: 0.160, net_margin: 0.15, dividend_per_share: 185 },
-    2025: { roe: 0.22, pb: 4.8, pe: 19.0, der: 0.07, roa: 0.155, net_margin: 0.15, dividend_per_share: 195 }
-  },
-  KLBF: {
-    2018: { roe: 0.14, pb: 2.0, pe: 15.0, der: 0.05, roa: 0.100, net_margin: 0.12, dividend_per_share: 75 },
-    2019: { roe: 0.15, pb: 2.1, pe: 14.5, der: 0.04, roa: 0.108, net_margin: 0.13, dividend_per_share: 82 },
-    2020: { roe: 0.13, pb: 1.8, pe: 15.5, der: 0.04, roa: 0.095, net_margin: 0.11, dividend_per_share: 68 },
-    2021: { roe: 0.16, pb: 2.3, pe: 13.0, der: 0.04, roa: 0.115, net_margin: 0.14, dividend_per_share: 90 },
-    2022: { roe: 0.18, pb: 2.5, pe: 12.0, der: 0.03, roa: 0.130, net_margin: 0.15, dividend_per_share: 105 },
-    2023: { roe: 0.17, pb: 2.2, pe: 13.0, der: 0.03, roa: 0.122, net_margin: 0.14, dividend_per_share: 98 },
-    2024: { roe: 0.16, pb: 2.0, pe: 13.5, der: 0.03, roa: 0.115, net_margin: 0.13, dividend_per_share: 100 },
-    2025: { roe: 0.16, pb: 1.9, pe: 12.5, der: 0.03, roa: 0.112, net_margin: 0.13, dividend_per_share: 105 }
-  },
-  UNTR: {
-    2018: { roe: 0.12, pb: 1.0, pe: 8.5, der: 0.25, roa: 0.065, net_margin: 0.08, dividend_per_share: 220 },
-    2019: { roe: 0.11, pb: 0.9, pe: 9.0, der: 0.24, roa: 0.060, net_margin: 0.07, dividend_per_share: 200 },
-    2020: { roe: 0.05, pb: 0.6, pe: 14.0, der: 0.28, roa: 0.028, net_margin: 0.04, dividend_per_share: 80 },
-    2021: { roe: 0.18, pb: 1.2, pe: 6.5, der: 0.22, roa: 0.095, net_margin: 0.10, dividend_per_share: 350 },
-    2022: { roe: 0.25, pb: 1.5, pe: 5.0, der: 0.18, roa: 0.130, net_margin: 0.13, dividend_per_share: 520 },
-    2023: { roe: 0.18, pb: 1.1, pe: 7.0, der: 0.20, roa: 0.095, net_margin: 0.09, dividend_per_share: 340 },
-    2024: { roe: 0.15, pb: 0.9, pe: 7.5, der: 0.22, roa: 0.078, net_margin: 0.08, dividend_per_share: 280 },
-    2025: { roe: 0.14, pb: 0.8, pe: 7.0, der: 0.22, roa: 0.072, net_margin: 0.08, dividend_per_share: 260 }
-  },
-  AKRA: {
-    2018: { roe: 0.10, pb: 1.2, pe: 11.0, der: 0.15, roa: 0.060, net_margin: 0.06, dividend_per_share: 42 },
-    2019: { roe: 0.11, pb: 1.3, pe: 10.5, der: 0.14, roa: 0.065, net_margin: 0.06, dividend_per_share: 48 },
-    2020: { roe: 0.04, pb: 0.8, pe: 18.0, der: 0.18, roa: 0.022, net_margin: 0.03, dividend_per_share: 15 },
-    2021: { roe: 0.15, pb: 1.5, pe: 8.5, der: 0.12, roa: 0.085, net_margin: 0.08, dividend_per_share: 65 },
-    2022: { roe: 0.20, pb: 1.8, pe: 6.0, der: 0.10, roa: 0.110, net_margin: 0.10, dividend_per_share: 95 },
-    2023: { roe: 0.14, pb: 1.3, pe: 8.0, der: 0.12, roa: 0.078, net_margin: 0.07, dividend_per_share: 55 },
-    2024: { roe: 0.13, pb: 1.2, pe: 8.5, der: 0.12, roa: 0.070, net_margin: 0.07, dividend_per_share: 52 },
-    2025: { roe: 0.12, pb: 1.1, pe: 8.0, der: 0.12, roa: 0.065, net_margin: 0.06, dividend_per_share: 50 }
-  },
-  PGAS: {
-    2018: { roe: 0.05, pb: 0.8, pe: 12.0, der: 0.35, roa: 0.025, net_margin: 0.04, dividend_per_share: 25 },
-    2019: { roe: 0.04, pb: 0.7, pe: 14.0, der: 0.38, roa: 0.020, net_margin: 0.03, dividend_per_share: 20 },
-    2020: { roe: 0.02, pb: 0.5, pe: 20.0, der: 0.42, roa: 0.010, net_margin: 0.02, dividend_per_share: 10 },
-    2021: { roe: 0.08, pb: 1.0, pe: 8.0, der: 0.30, roa: 0.040, net_margin: 0.06, dividend_per_share: 40 },
-    2022: { roe: 0.12, pb: 1.2, pe: 6.0, der: 0.25, roa: 0.060, net_margin: 0.08, dividend_per_share: 65 },
-    2023: { roe: 0.08, pb: 0.9, pe: 9.0, der: 0.30, roa: 0.040, net_margin: 0.05, dividend_per_share: 35 },
-    2024: { roe: 0.07, pb: 0.8, pe: 10.0, der: 0.32, roa: 0.035, net_margin: 0.05, dividend_per_share: 30 },
-    2025: { roe: 0.07, pb: 0.7, pe: 9.5, der: 0.32, roa: 0.032, net_margin: 0.04, dividend_per_share: 28 }
-  },
-  SMGR: {
-    2018: { roe: 0.18, pb: 1.5, pe: 8.5, der: 0.20, roa: 0.090, net_margin: 0.10, dividend_per_share: 280 },
-    2019: { roe: 0.15, pb: 1.3, pe: 9.5, der: 0.22, roa: 0.075, net_margin: 0.08, dividend_per_share: 250 },
-    2020: { roe: 0.08, pb: 0.9, pe: 14.0, der: 0.28, roa: 0.040, net_margin: 0.05, dividend_per_share: 120 },
-    2021: { roe: 0.20, pb: 1.6, pe: 7.0, der: 0.18, roa: 0.100, net_margin: 0.11, dividend_per_share: 340 },
-    2022: { roe: 0.25, pb: 1.8, pe: 5.5, der: 0.15, roa: 0.130, net_margin: 0.14, dividend_per_share: 450 },
-    2023: { roe: 0.16, pb: 1.2, pe: 8.0, der: 0.20, roa: 0.080, net_margin: 0.08, dividend_per_share: 260 },
-    2024: { roe: 0.14, pb: 1.0, pe: 8.5, der: 0.22, roa: 0.068, net_margin: 0.07, dividend_per_share: 220 },
-    2025: { roe: 0.13, pb: 0.9, pe: 8.0, der: 0.22, roa: 0.062, net_margin: 0.07, dividend_per_share: 200 }
-  }
-};
+// Archived: FUNDAMENTAL_SNAPSHOTS (18 tickers, 2018-2025) moved to src/data/archive/fundamental_snapshots.json
+// Used for dividend_per_share data via `fundamentalSnapshots` import
 
-function generateFallbackFundamentals(ticker: string, year: number) {
-  const hash = ticker.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
-  const stablePseudoRoe = 0.05 + (Math.abs(hash % 20) / 100);
-  const stablePseudoPb = 1.0 + (Math.abs(hash % 30) / 10);
-  return {
-    roe: stablePseudoRoe + ((year % 3) * 0.01),
-    pb: stablePseudoPb + ((year % 2) * 0.1),
-    pe: 15.0, der: 0.5, roa: 0.05, net_margin: 0.10, dividend_per_share: Math.abs(hash % 100)
-  };
+// Build warehouse index: ticker -> period -> record
+interface WHRecord {
+  code: string; period: string;
+  assets: number | null; equity: number | null;
+  sales: number | null; profitAttrOwner: number | null;
+  eps: number | null; bookValue: number | null;
+  per: number | null; priceBV: number | null; deRatio: number | null;
+}
+const warehouseIndex: Record<string, Record<string, WHRecord>> = {};
+const whRaw = warehouseData as WHRecord[];
+for (const rec of whRaw) {
+  if (!warehouseIndex[rec.code]) warehouseIndex[rec.code] = {};
+  warehouseIndex[rec.code][rec.period] = rec;
+}
+
+function getLatestWarehousePeriod(ticker: string, date: Date): WHRecord | null {
+  const periods = warehouseIndex[ticker];
+  if (!periods) return null;
+  const ds = date.toISOString().split("T")[0];
+  let best: string | null = null;
+  for (const p of Object.keys(periods)) {
+    if (p <= ds && (!best || p > best)) best = p;
+  }
+  return best ? periods[best] : null;
 }
 
 function getPointInTimeFundamentals(ticker: string, date: Date) {
-  const currentYear = date.getFullYear();
-  const lagCutoff = new Date(currentYear, 2, 31); // March 31
+  // Priority 1: IDX Warehouse — latest monthly snapshot before this date
+  const wh = getLatestWarehousePeriod(ticker, date);
+  if (wh) {
+    const { profitAttrOwner, equity, assets, sales, priceBV, per, deRatio } = wh;
+    const roe = equity && profitAttrOwner ? profitAttrOwner / equity : 0;
+    const pb = priceBV ?? 1.5;
+    const pe = per ?? 15;
+    const der = deRatio ?? 0.5;
+    const roa = assets && profitAttrOwner ? profitAttrOwner / assets : 0;
+    const net_margin = sales && profitAttrOwner ? profitAttrOwner / sales : 0;
 
-  let reportYear = currentYear - 1;
-  if (date.getTime() < lagCutoff.getTime()) {
-    reportYear = currentYear - 2;
+    // DPS from archive snapshots (18 tickers) — fallback 0 for rest
+    const snapTicker = (fundamentalSnapshots as any)[ticker];
+    let dividend_per_share = 0;
+    if (snapTicker) {
+      const currentYear = date.getFullYear();
+      const lagCutoff = new Date(currentYear, 2, 31);
+      let reportYear = currentYear - 1;
+      if (date.getTime() < lagCutoff.getTime()) reportYear = currentYear - 2;
+      if (reportYear < 1995) reportYear = 1995;
+      if (reportYear > 2025) reportYear = 2025;
+      dividend_per_share = snapTicker[String(reportYear)]?.dividend_per_share ?? 0;
+    }
+
+    return { year: date.getFullYear(), roe, pb, pe, der, roa, net_margin, dividend_per_share };
   }
 
-  if (reportYear < 1995) reportYear = 1995;
-  if (reportYear > 2025) reportYear = 2025;
-
-  // Priority 1: Hardcoded snapshots for known tickers
-  const snaps = FUNDAMENTAL_SNAPSHOTS[ticker];
-  if (snaps && snaps[reportYear]) {
-    return { year: reportYear, ...snaps[reportYear] };
-  }
-
-  // Priority 2: IDX scraper fundamentals (pre-processed from idx_fundamentals_all.json)
-  const idxRec = (idxFundamentalsData as Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>>)[ticker]?.[reportYear];
-  if (idxRec) {
-    return { year: reportYear, ...idxRec };
-  }
-
-  // Priority 3: Auto-generated fallback (no look-ahead bias)
-  return { year: reportYear, ...generateFallbackFundamentals(ticker, reportYear) };
+  return { year: date.getFullYear(), roe: 0, pb: 1, pe: 15, der: 0.5, roa: 0, net_margin: 0, dividend_per_share: 0 };
 }
 
 const calcStdDev = (vals: number[]): number => {
@@ -332,7 +157,7 @@ const calcStdDev = (vals: number[]): number => {
 
 function generateClientBacktestData(): BacktestDayData[] {
   const tickers = STOCKS_DATA.map(s => s.ticker).filter(Boolean);
-  const startDate = new Date("2000-01-03");
+  const startDate = new Date("2021-01-04");
   const endDate = new Date(Date.now() + 7 * 60 * 60 * 1000);
   const data: BacktestDayData[] = [];
 
@@ -424,7 +249,7 @@ export function SimulationTab({
     if (day === 0 || day === 6) return "weekend";
     const exists = historicalData.some(d => d.date === dateStr);
     if (!exists) {
-      if (dateStr >= "2000-01-03" && dateStr <= bt.todayWIBStr) {
+      if (dateStr >= "2021-01-04" && dateStr <= bt.todayWIBStr) {
         return "holiday";
       }
     }
@@ -1055,7 +880,6 @@ export function SimulationTab({
             .map(([ticker]) => ticker);
 
           const isMonthChange = currentMonth !== lastRebalanceMonth;
-          let rebalancedThisMonth = false;
 
           for (const ticker of ownedTickers) {
             const currentRank = day.stockRanks[ticker] || 5;
@@ -1066,12 +890,11 @@ export function SimulationTab({
             if (isEmergencyExit || isRoutineExit) {
               const rawPrice = day.stockPrices[ticker] || 100;
               const exitPrice = rawPrice * (1 - SLIPPAGE);
-              const sellProceeds = positions[ticker] * exitPrice * (1 - SELL_FEE - TAX); // proceeds nett
+              const sellProceeds = positions[ticker] * exitPrice * (1 - SELL_FEE - TAX);
               totalTransactionVolume += positions[ticker] * exitPrice;
               
               delete positions[ticker];
               
-              // Find first non-owned top candidate
               const topCandidates = getTopTickersOnDay(day.stockPrices, day.stockRanks, 4);
               const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
               
@@ -1106,8 +929,6 @@ export function SimulationTab({
                   ? `🚨 EMERGENCY EXIT (Mid-Month): Emiten #${ticker} jatuh drastis dari Top 15 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
                   : `🔄 REBALANCING BULANAN: Emiten #${ticker} diganti karena keluar dari Top 10 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
               });
-              
-              if (isRoutineExit) rebalancedThisMonth = true;
             }
           }
 
@@ -1405,7 +1226,7 @@ export function SimulationTab({
                     <input
                       type="date"
                       value={bt.simStartDate}
-                      min="2000-01-03"
+                      min="2021-01-04"
                       max={bt.simEndDate}
                       onChange={(e) => bt.setSimStartDate(e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
@@ -1591,20 +1412,40 @@ export function SimulationTab({
           </div>
 
           {/* Config row */}
-          <div className="flex items-center gap-2 pb-2">
+          <div className="flex items-center gap-2 pb-2 flex-wrap">
             <button onClick={() => bt.triggerBacktest()}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors"
               style={{ backgroundColor: 'rgba(0,201,165,0.12)', color: '#00c9a5' }}>
               <Award className="w-3 h-3" />
-              Parameter Backtest
+              Parameter
             </button>
+            <div className="flex gap-0.5">
+              <button onClick={() => bt.setBacktestConfigType("prod")}
+                className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
+                style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                F
+              </button>
+              <button onClick={() => bt.setBacktestConfigType("res")}
+                className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
+                style={{ backgroundColor: bt.backtestConfigType === "res" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                B
+              </button>
+            </div>
             <button onClick={handleRunAlgoBacktest} disabled={bt.isBacktesting}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: '#00c9a5', color: '#fff' }}>
               {bt.isBacktesting ? "Running..." : "Jalankan"}
             </button>
-            <span className="text-label font-mono font-medium uppercase tracking-wider" style={{ color: '#5d6080' }}>
-              {bt.simulationMode === "algo" ? `Algo ${bt.numStocks} ${bt.simUniverse.toUpperCase()} ${bt.backtestConfigType === "prod" ? "Config F" : "Config B"}` : `Single ${bt.simTicker}`}
+            <span className="text-label font-mono font-medium uppercase tracking-wider flex items-center gap-2" style={{ color: '#5d6080' }}>
+              {bt.simulationMode === "algo" ? (
+                <>Algo {bt.numStocks} {bt.simUniverse.toUpperCase()}
+                  <span style={{ color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#f59e0b', fontSize: '0.6rem' }} className="px-1.5 py-0.5 rounded bg-white/5">
+                    {bt.backtestConfigType === "prod"
+                      ? "Q25 G10 V30 M35"
+                      : "Q25 G30 V10 M35"}
+                  </span>
+                </>
+              ) : `Single ${bt.simTicker}`}
             </span>
           </div>
 

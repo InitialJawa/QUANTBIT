@@ -25,3 +25,4 @@ Raw datasets, historical market data, caches, and SQLite databases.
 - `data/yahoo/` — Yahoo Finance data fetching module
 - `data/yahooCache/` — Yahoo Finance cache
 - `data/kaggle/` — Kaggle dataset scripts
+- `data/years/` — Year-split historical market data (2021+ only; pre-2021 archived)

@@ -56,9 +56,32 @@
 - [x] **Vite Chunk Size** — lazy-load MarketTab, rollup-plugin-visualizer installed, chunkSizeWarningLimit 1000→500; main bundle 576 kB
 - [x] **Fundamentals 69/87** — IDX scraper data (idx_fundamentals_all.json) terintegrasi sebagai Priority 1.5 di pipeline fetch_historical_data.ts dan SimulationTab.tsx
 - [x] **Gold/USDIDR Historical** — yearly → monthly granular via linear interpolation (buildMonthlySeries helper); HISTORICAL_GOLD_USD dan HISTORICAL_USDIDR pakai Record<string,number>
+- [x] **IDX Fundamental API Discovery** — endpoint `/primary/DigitalStatistic/GetApiDataPaginated` diverifikasi (60-month audit lulus 100%). 947 companies, 32 fields, schema konsisten, 0 error. **PRODUCTION READY** — lihat ADR-006
+- [x] **IDX Fundamental Collector Built** — `collectors/fetch_idx_fundamental.py` pulls 60 months (2021-2025), output parquet+JSON. 51,662 records, 976 companies, 0 errors
+- [x] **Factor Engine Migration** — `scripts/fetch_historical_data.ts` + `src/components/SimulationTab.tsx` use IDX Warehouse as Priority 1. Yahoo fundamentals removed. Pipeline regenerated: 6,582 days, 95 active tickers.
 
 ## In Progress
+- [x] Cross-check audit: BBCA, BBRI, BMRI, TLKM, ASII — warehouse vs legacy
+- [x] Run Config B & F frontend backtest (manual — buka app)
 - [ ] P3: Telegram bot integration (deferred)
 
 ## Current Focus
-Deploy final optimizations, wrap Sprint: Platform Stabilization & MCP.
+Single Engine Architecture — factor_engine sebagai satu-satunya source of truth untuk ranking.
+
+## Audit Results (2025-12 vs Hardcoded Snapshots)
+| Metric | Dev | Notes |
+|--------|-----|-------|
+| ROE | -28.4% avg | Warehouse lebih konservatif; snapshot overestimated |
+| PB | +6.9% avg | Close match — good validation |
+| DER | ~+2000% | Bank leverage: warehouse = total liability/equity; snapshot = interest-bearing only. NOT used in scoring. |
+
+Warehouse resmi IDX lebih akurat. Cross-sectional ranking tetap valid karena semua 976 saham pakai sumber sama.
+
+## Archive — Legacy Cleanup
+- `STOCK_FACTORS` — removed (dead code)
+- `generateFallbackFundamentals` — removed (hash-based, replaced by warehouse)
+- `FUNDAMENTAL_SNAPSHOTS` (18 ticker × 8 years) — moved to `src/data/archive/fundamental_snapshots.json`. DPS retain untuk dividend simulation.
+- `stock_factors` — moved to `src/data/archive/stock_factors.json`
+- Pre-2021 year data (`2000.json` through `2020.json`) — deleted from `data/years/`
+- `BacktestContext.tsx` default `simStartDate` — changed from `2000-01-03` to `2021-01-04`
+- CF function default `from` param — changed from `2000` to `2021`
