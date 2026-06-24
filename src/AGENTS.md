@@ -35,3 +35,4 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/utils/` — Utility functions
 - `src/types/` — TypeScript type definitions
 - `src/constants/` — Constant data (IDX lists)
+- `src/mcp/` — MCP server (Model Context Protocol) for AI agent integration

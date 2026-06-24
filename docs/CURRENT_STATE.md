@@ -1,9 +1,9 @@
 # CURRENT STATE
 | Field | Value |
 |-------|-------|
-| Tanggal | 2026-06-23 |
+| Tanggal | 2026-06-24 |
 | Status | Development |
-| Progress | ~88% |
+| Progress | ~90% |
 
 ## Completed
 - [x] **Data Validation Audit** — full pipeline traced: daily live feed, idx80_scan, backtest year files, carry-forward analysis
@@ -48,12 +48,17 @@
 - [x] **Top Movers Enhancement** — added sparkline (20-day mini chart) + volume indicator per stock in sidebar
 - [x] **DeepReport Enhancement** — added SWOT dot indicators, 90-day price history chart (SVG gradient), peer comparison table (sector-based, 5 peers)
 - [x] **Bundle Optimization** — lazy loading for SimulationTab, AnalyticsTab, PortfolioTracker; main bundle 732→612 kB (-16.5%)
+- [x] **Bundle Optimization (v2)** — MarketTab also lazy-loaded (34.88 kB); main bundle 576 kB; rollup-plugin-visualizer; chunkSizeWarningLimit 500 kB
 - [x] **Fundamentals Expansion** — 9 new hardcoded snapshots (BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR); total 18 tickers with real historical data (2018-2025)
 
+## Completed
+- [x] **MCP Server Setup** — 5 tools + 3 resources via @modelcontextprotocol/sdk; data dari live_market, raw_stocks, idx80_scan, backtest years
+- [x] **Vite Chunk Size** — lazy-load MarketTab, rollup-plugin-visualizer installed, chunkSizeWarningLimit 1000→500; main bundle 576 kB
+- [x] **Fundamentals 69/87** — IDX scraper data (idx_fundamentals_all.json) terintegrasi sebagai Priority 1.5 di pipeline fetch_historical_data.ts dan SimulationTab.tsx
+- [x] **Gold/USDIDR Historical** — yearly → monthly granular via linear interpolation (buildMonthlySeries helper); HISTORICAL_GOLD_USD dan HISTORICAL_USDIDR pakai Record<string,number>
+
 ## In Progress
-- [ ] P2: Trigger manual CI/CD pipeline untuk verifikasi
 - [ ] P3: Telegram bot integration (deferred)
-- [ ] P4: MCP server setup (deferred)
 
 ## Current Focus
-Fitur enhancement: Top Movers sparkline, DeepReport price chart + peer comparison, bundle optimization, fundamentals expansion.
+Deploy final optimizations, wrap Sprint: Platform Stabilization & MCP.

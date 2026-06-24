@@ -13,10 +13,12 @@
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true });\"",
     "lint": "tsc --noEmit",
     "serve-api": "tsx server.ts",
-  "dev:full": "start cmd /c \"tsx server.ts\" && vite"
+    "serve-mcp": "tsx src/mcp/index.ts",
+    "dev:full": "start cmd /c \"tsx server.ts\" && vite"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.4",
@@ -30,12 +32,12 @@
     "papaparse": "^5.5.4",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-
     "recharts": "^3.8.1",
     "tailwindcss": "^4.1.14",
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
-    "yahoo-finance2": "^3.15.3"
+    "yahoo-finance2": "^3.15.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
@@ -43,6 +45,7 @@
     "@types/express": "^5.0.6",
     "@types/node-cron": "^3.0.11",
     "@types/papaparse": "^5.5.2",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tsx": "^4.22.4"
   }
 }

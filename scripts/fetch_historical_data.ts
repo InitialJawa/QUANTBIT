@@ -5,7 +5,7 @@ import { COMBINED_TICKERS } from "../src/constants/idx80.ts";
 
 // Historical fallback values for when Yahoo Finance data is unavailable.
 // Gold price in USD per troy ounce (approximate yearly start/average).
-const HISTORICAL_GOLD_USD: Record<number, number> = {
+const HISTORICAL_GOLD_USD_YEARLY: Record<number, number> = {
   2000: 280, 2001: 265, 2002: 300, 2003: 360, 2004: 410,
   2005: 440, 2006: 600, 2007: 700, 2008: 870, 2009: 970,
   2010: 1225, 2011: 1570, 2012: 1670, 2013: 1410, 2014: 1270,
@@ -15,7 +15,7 @@ const HISTORICAL_GOLD_USD: Record<number, number> = {
 };
 
 // Historical USD/IDR exchange rate (approximate yearly average).
-const HISTORICAL_USDIDR: Record<number, number> = {
+const HISTORICAL_USDIDR_YEARLY: Record<number, number> = {
   2000: 8400, 2001: 10400, 2002: 9300, 2003: 8500, 2004: 9000,
   2005: 9700, 2006: 9100, 2007: 9100, 2008: 9700, 2009: 10400,
   2010: 9100, 2011: 8700, 2012: 9600, 2013: 12200, 2014: 12400,
@@ -23,6 +23,26 @@ const HISTORICAL_USDIDR: Record<number, number> = {
   2020: 14500, 2021: 14400, 2022: 15000, 2023: 15400, 2024: 15700,
   2025: 16000, 2026: 16600,
 };
+
+// Build monthly-granular series from yearly averages via linear interpolation
+function buildMonthlySeries(yearly: Record<number, number>): Record<string, number> {
+  const years = Object.keys(yearly).map(Number).sort((a, b) => a - b);
+  const monthly: Record<string, number> = {};
+  for (let i = 0; i < years.length; i++) {
+    const yr = years[i];
+    const val = yearly[yr];
+    const nextVal = i < years.length - 1 ? yearly[years[i + 1]] : val;
+    for (let m = 1; m <= 12; m++) {
+      const t = (m - 1) / 11; // 0 at Jan, 1 at Dec
+      const interp = val + (nextVal - val) * t;
+      monthly[`${yr}-${String(m).padStart(2, "0")}`] = Math.round(interp);
+    }
+  }
+  return monthly;
+}
+
+const HISTORICAL_GOLD_USD = buildMonthlySeries(HISTORICAL_GOLD_USD_YEARLY);
+const HISTORICAL_USDIDR = buildMonthlySeries(HISTORICAL_USDIDR_YEARLY);
 
 // 2000-01-01 to Today for extended backtest
 const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);
@@ -208,6 +228,38 @@ async function fetchAllYahooFundamentals(tickers: string[]) {
   console.log(`Total tickers with Yahoo fundamentals: ${count}/${tickers.length}`);
 }
 
+// ─── IDX Scraper Fundamentals (Priority 1.5) ──────────────────────────────────────
+let idxFundamentals: Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>> = {};
+
+function loadIDXFundamentals() {
+  const idxPath = path.join(process.cwd(), "data", "idx_fundamentals_all.json");
+  if (!fs.existsSync(idxPath)) {
+    console.log("IDX fundamentals file not found, skipping.");
+    return;
+  }
+  const raw = fs.readFileSync(idxPath, "utf-8");
+  const data: any[] = JSON.parse(raw);
+  let count = 0;
+  for (const yearGroup of data) {
+    for (const rec of yearGroup.records) {
+      const ticker = rec.code;
+      const yr = new Date(rec.fsDate).getFullYear();
+      if (!idxFundamentals[ticker]) idxFundamentals[ticker] = {};
+      idxFundamentals[ticker][yr] = {
+        roe: (rec.roe ?? 0) / 100,
+        pb: rec.priceBV ?? 0,
+        pe: rec.per ?? 0,
+        der: rec.deRatio ?? 0,
+        roa: (rec.roa ?? 0) / 100,
+        net_margin: (rec.npm ?? 0) / 100,
+        dividend_per_share: 0,
+      };
+      count++;
+    }
+  }
+  console.log(`Loaded IDX fundamentals: ${count} records for ${Object.keys(idxFundamentals).length} tickers`);
+}
+
 // ─── Fundamental Resolution Pipeline ─────────────────────────────────────────────
 
 function generateFallbackFundamentals(ticker: string, year: number) {
@@ -251,6 +303,12 @@ function getPointInTimeFundamentals(ticker: string, date: Date, currentPrice?: n
   const yahoo = yahooFundamentals[ticker]?.[reportYear];
   if (yahoo) {
     return { year: reportYear, ...computeFromYahoo(yahoo, currentPrice) };
+  }
+
+  // Priority 1.5: IDX scraper fundamentals (covers many tickers pre-2021)
+  const idx = idxFundamentals[ticker]?.[reportYear];
+  if (idx) {
+    return { year: reportYear, ...idx };
   }
 
   // Priority 2: Hardcoded snapshots for known tickers
@@ -322,6 +380,7 @@ async function main() {
   const idx80Clean = COMBINED_TICKERS.map(t => t.split(".")[0]);
   console.log("Fetching Yahoo fundamentals for all IDX80 tickers...");
   await fetchAllYahooFundamentals(idx80Clean);
+  loadIDXFundamentals();
   console.log("Done fetching fundamentals. Starting price data download...");
 
   const allData: Record<string, any> = {};
@@ -384,22 +443,23 @@ async function main() {
       ihsg = lastKnownPrices["^JKSE"] || 6000;
     }
 
-    let usdidr = HISTORICAL_USDIDR[dateObj.getFullYear()] || 15000;
+    const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+    let usdidr = HISTORICAL_USDIDR[monthKey] || 15000;
     const usdidrRow = allData["IDR=X"]?.[dateStr];
     if (usdidrRow) {
       usdidr = usdidrRow.close;
       lastKnownPrices["IDR=X"] = usdidr;
     } else {
-      usdidr = lastKnownPrices["IDR=X"] || HISTORICAL_USDIDR[dateObj.getFullYear()] || 15000;
+      usdidr = lastKnownPrices["IDR=X"] || HISTORICAL_USDIDR[monthKey] || 15000;
     }
 
-    let gold_usd = HISTORICAL_GOLD_USD[dateObj.getFullYear()] || 1800;
+    let gold_usd = HISTORICAL_GOLD_USD[monthKey] || 1800;
     const goldRow = allData["GC=F"]?.[dateStr];
     if (goldRow) {
       gold_usd = goldRow.close;
       lastKnownPrices["GC=F"] = gold_usd;
     } else {
-      gold_usd = lastKnownPrices["GC=F"] || HISTORICAL_GOLD_USD[dateObj.getFullYear()] || 1800;
+      gold_usd = lastKnownPrices["GC=F"] || HISTORICAL_GOLD_USD[monthKey] || 1800;
     }
     const goldPriceIdrPerGram = Math.round((gold_usd * usdidr) / 31.1034768);
 
@@ -617,6 +677,11 @@ async function main() {
   const outPath2 = path.join(dir2, "historical_market_data.json");
   fs.writeFileSync(outPath2, JSON.stringify(rowList, null, 2));
   console.log(`Wrote offline-ready frontend bundle to ${outPath2}.`);
+
+  // Output IDX fundamentals for frontend SimulationTab import
+  const idxFundPath = path.join(dir2, "idx_fundamentals.json");
+  fs.writeFileSync(idxFundPath, JSON.stringify(idxFundamentals));
+  console.log(`Wrote IDX fundamentals to ${idxFundPath}.`);
 }
 
 main().catch(err => {

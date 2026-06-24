@@ -1,6 +1,6 @@
 # ACTIVE TASK
 ## Current Sprint
-Sprint: Data Validation & Integrity
+Sprint: Platform Stabilization & MCP
 
 ### Task 1: Initialize DOX + Context Persistence
 **Status:** DONE
@@ -58,9 +58,10 @@ Sprint: Data Validation & Integrity
 **Status:** DEFERRED
 **Files:** TBD
 
-### Task 15: MCP Server
-**Status:** DEFERRED
-**Files:** TBD
+### Task 15: MCP Server Setup
+**Status:** DONE (2026-06-24)
+**Files:** src/mcp/index.ts (new), package.json
+**Detail:** Built custom QuantBit MCP server using @modelcontextprotocol/sdk. Exposes 5 tools (get_market_overview, get_stock_info, search_stocks, get_top_movers, get_historical_data) + 3 resources (quantbit://market/overview, quantbit://stocks, quantbit://stocks/{ticker}). Run via `npm run serve-mcp`. Tested — all tools respond with real data from live_market.json, raw_stocks_data.ts, idx80_scan.json, and years/*.json.
 
 ### Task 16: Fix RAW_STOCKS_DATA Stale Prices (P0)
 **Status:** DONE (2026-06-23)
@@ -130,3 +131,26 @@ Sprint: Data Validation & Integrity
 **Status:** DONE (2026-06-23)
 **Files:** src/components/SimulationTab.tsx
 **Detail:** Added 9 new hardcoded snapshots (BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR) with 8 years data (2018-2025). Total 18 tickers.
+
+### Task 30: Vite Chunk Size — Bundle Optimization
+**Status:** DONE (2026-06-24)
+**Files:** vite.config.ts, src/App.tsx
+**Detail:** MarketTab sekarang lazy-loaded (34.88 kB terpisah). rollup-plugin-visualizer installed. chunkSizeWarningLimit turun 1000→500. Main bundle 576 kB (sebelumnya ~984 kB total).
+
+### Task 31: Fundamentals — Upgrade 69/87 Ticker dari Hash Fallback
+**Status:** DONE (2026-06-24)
+**Files:** src/components/SimulationTab.tsx, scripts/fetch_historical_data.ts, src/data/idx_fundamentals.json (new)
+**Detail:** IDX scraper data (idx_fundamentals_all.json, 987 tickers × 27 years) terintegrasi sebagai Priority 1.5 di pipeline:
+- fetch_historical_data.ts: `loadIDXFundamentals()` load data + Priority 1.5 di `getPointInTimeFundamentals`
+- SimulationTab.tsx: import `idx_fundamentals.json` + Priority 2 di pipeline lokal
+- Pipeline sekarang: Yahoo (Priority 1) → IDX scraper (Priority 1.5) → Hardcoded snapshots (Priority 2) → Hash fallback (Priority 3)
+
+### Task 32: Gold/USDIDR Historical — Yearly → Monthly/Daily Averages
+**Status:** DONE (2026-06-24)
+**Files:** scripts/fetch_historical_data.ts
+**Detail:** HISTORICAL_GOLD_USD dan HISTORICAL_USDIDR diubah dari `Record<number,number>` (yearly) jadi `Record<string,number>` (monthly, key "YYYY-MM"). Helper `buildMonthlySeries()` melakukan linear interpolation antara yearly values. Lookup di main loop pakai `monthKey` dari date.
+
+### Task 33: Yahoo Data Pre-2022 — GoAPI Integration
+**Status:** SKIPPED (2026-06-24)
+**Files:** N/A
+**Detail:** Tidak ada API free yang bisa backfill daily prices pre-2022 (Invezgo max 2 tahun, Sectors.app cuma 90 hari). Skipped — proceed with current data coverage.

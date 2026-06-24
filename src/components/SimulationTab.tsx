@@ -26,6 +26,7 @@ import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
 import { useBacktest } from "../contexts/BacktestContext";
+import idxFundamentalsData from "../data/idx_fundamentals.json";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -302,18 +303,20 @@ function getPointInTimeFundamentals(ticker: string, date: Date) {
   if (reportYear < 1995) reportYear = 1995;
   if (reportYear > 2025) reportYear = 2025;
 
+  // Priority 1: Hardcoded snapshots for known tickers
   const snaps = FUNDAMENTAL_SNAPSHOTS[ticker];
-  if (!snaps || !snaps[reportYear]) {
-    return {
-      year: reportYear,
-      ...generateFallbackFundamentals(ticker, reportYear)
-    };
+  if (snaps && snaps[reportYear]) {
+    return { year: reportYear, ...snaps[reportYear] };
   }
 
-  return {
-    year: reportYear,
-    ...snaps[reportYear]
-  };
+  // Priority 2: IDX scraper fundamentals (pre-processed from idx_fundamentals_all.json)
+  const idxRec = (idxFundamentalsData as Record<string, Record<number, { roe: number, pb: number, pe: number, der: number, roa: number, net_margin: number, dividend_per_share: number }>>)[ticker]?.[reportYear];
+  if (idxRec) {
+    return { year: reportYear, ...idxRec };
+  }
+
+  // Priority 3: Auto-generated fallback (no look-ahead bias)
+  return { year: reportYear, ...generateFallbackFundamentals(ticker, reportYear) };
 }
 
 const calcStdDev = (vals: number[]): number => {

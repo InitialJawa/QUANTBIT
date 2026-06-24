@@ -8,7 +8,7 @@ import { AppSidebar } from "./components/AppSidebar";
 import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
 
-import { MarketTab } from "./components/MarketTab";
+const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
 const AnalyticsTab = lazy(() => import("./components/AnalyticsTab").then(m => ({ default: m.AnalyticsTab })));
 const SimulationTab = lazy(() => import("./components/SimulationTab").then(m => ({ default: m.SimulationTab })));
@@ -208,6 +208,7 @@ export default function App() {
                         transition={{ duration: 0.15 }}
                         className="flex-1 flex flex-col"
                       >
+                        <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat market...</div>}>
                         <MarketTab
                           onSelectTicker={ui.handleSelectTicker}
                           onChangeActiveTicker={ui.handleChangeActiveTicker}
@@ -221,6 +222,7 @@ export default function App() {
                           getDynamicStock={df.getDynamicStock}
                           filteredStocks={filteredStocks}
                         />
+                        </Suspense>
                       </motion.div>
                     )}
 
