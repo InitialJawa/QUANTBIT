@@ -60,6 +60,9 @@ interface BacktestDayData {
   stockPrices: Record<string, number>;
   stockVolumes?: Record<string, number>;
   stockRanks: Record<string, number>;
+  stockRanksProd?: Record<string, number>;
+  stockRanksRes?: Record<string, number>;
+  stockAdjPrices?: Record<string, number>;
 }
 
 // Define simulated stable factor ratings for each stock [quality, growth, value, momentum]
@@ -640,18 +643,17 @@ export function SimulationTab({
     try {
       setBacktestProgress(45);
 
-      let rawData: BacktestDayData[] = [];
-      try {
-        const apiRes = await api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${bt.backtestConfigType}`);
-        if (apiRes.success && Array.isArray(apiRes.data)) {
-          rawData = apiRes.data;
-        } else {
-          rawData = [...historicalData];
-        }
-      } catch (err) {
-        console.warn("Backtest backend error, fallback to client data: ", err);
-        rawData = historicalData.length > 0 ? [...historicalData] : generateClientBacktestData();
+      if (historicalData.length === 0) {
+        bt.setBacktesting(false);
+        setBacktestProgress(0);
+        return;
       }
+
+      const configRanksKey = bt.backtestConfigType === "prod" ? "stockRanksProd" as const : "stockRanksRes" as const;
+      let rawData: BacktestDayData[] = historicalData.map(d => ({
+        ...d,
+        stockRanks: d[configRanksKey] || d.stockRanks,
+      }));
 
       setBacktestProgress(85);
 
@@ -1225,6 +1227,7 @@ export function SimulationTab({
 
   // Auto-run backtest when parameters change to keep everything dynamically in sync
   useEffect(() => {
+    if (historicalData.length === 0) return;
     handleRunAlgoBacktest();
   }, [
     bt.simTicker,
@@ -1242,7 +1245,8 @@ export function SimulationTab({
     bt.singleBuyTrigger,
     bt.reserveBufferPct,
     bt.backtestConfigType,
-    bt.triggerRun
+    bt.triggerRun,
+    historicalData,
   ]);
 
   useEffect(() => {
