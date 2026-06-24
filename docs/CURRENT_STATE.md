@@ -45,6 +45,11 @@ backtestConfig (draft, isolated from engineConfig)
 - **PortfolioTracker tetap baca `engineConfig`** — tidak kena perubahan backtest sampai SYNC diklik
 - **`syncFromBacktest()`** — satu-satunya jalan draft → engineConfig (via SYNC TO PORTO button)
 
+### 🟢 Data Fix: stockNormScores — Profile Weights Sekarang Berfungsi
+- **Akar masalah**: `stockNormScores` tidak ada di `data/historical_market_data.json` → engine selalu fallback ke `stockRanksProd` fixed → profile weights slider tidak berpengaruh
+- **Fix**: Migration script `scripts/migrate-normscores.ts` — komputasi quality (ROE), growth (EPS growth), value (inverse PER/PBV), momentum (20d price return) dari IDX warehouse + normalized min-max per hari
+- **6482/6582** records enriched (2000-2026). Semua year files update. Build pass.
+
 ### 🔴 Bug 2 Fix: Custom Mode Gagal Total
 - **`BacktestConfig.activeProfileId`** — type diubah dari `"prod" | "res"` → `string` (engine/types.ts)
 - **`core.ts`** — handle custom profile ID: fallback ke `stockRanksProd` untuk non-"res" ID
