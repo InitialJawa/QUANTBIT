@@ -60,6 +60,8 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       valueWeight: profile?.valueWeight,
       momentumWeight: profile?.momentumWeight,
       customTickers: c.customTickers,
+      customUniverse: c.customUniverse,
+      simulationMode: c.simulationMode,
       lastBacktestProfile: c.lastBacktestProfile ? {
         id: c.lastBacktestProfile.id,
         name: c.lastBacktestProfile.name,
@@ -69,6 +71,25 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
         momentumWeight: c.lastBacktestProfile.momentumWeight,
       } : undefined,
     };
+
+    if (c.simulationMode === "custom" && c.customUniverse?.length) {
+      ctx.activeUniverse = [...c.customUniverse];
+    } else if (c.simulationMode === "single" && c.singleTicker) {
+      ctx.activeUniverse = [c.singleTicker];
+    } else if (c.simulationMode === "algo" && c.customTickers?.length) {
+      ctx.activeUniverse = [...c.customTickers];
+    }
+
+    if (c.enableCrashProtection && c.simulationMode !== "single") {
+      const ihsgPrice = MKT.ihsg?.value;
+      if (typeof ihsgPrice === "number") {
+        ctx.strategyEvaluation = {
+          shouldExit: false,
+          reason: "IHSG within tolerance (threshold: " + c.crashSensitivity + "%)",
+          targetSafeHaven: c.safeHavenAsset,
+        };
+      }
+    }
   }
 
   if (s) {

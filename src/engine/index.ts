@@ -1,4 +1,5 @@
-export { runStrategy } from "./core";
+export { runStrategy, evaluateStrategy, shouldTriggerExit, getActiveUniverse } from "./core";
+export type { StrategyEvaluation } from "./core";
 export { computeDayRankings, pickTopTickersByRank, getCleanTickerList } from "./ranker";
 export { detectCrashAlgo, detectCrashSingle, detectRecoveryAlgo, detectRecoverySingle } from "./crashDetector";
 export {
@@ -11,6 +12,13 @@ export {
   computeSellProceeds,
 } from "./allocator";
 export { computeMetrics, calcStdDev } from "./metrics";
+export {
+  rule_tickerOutOfTopN,
+  rule_crashProtectionTriggered,
+  rule_customUniverseBreach,
+  rule_singleModeTrigger,
+} from "./notificationRules";
+export type { RuleContext, RuleResult } from "./notificationRules";
 export type {
   ProfileWeights,
   BacktestDayData,

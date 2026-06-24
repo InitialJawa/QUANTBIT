@@ -24,6 +24,10 @@ export interface AILiveContext {
     valueWeight?: number;
     momentumWeight?: number;
     customTickers?: string[];
+    customUniverse?: string[];
+    simulationMode?: "algo" | "single" | "custom";
+    singleTicker?: string;
+    enableCrashProtection?: boolean;
     lastBacktestProfile?: {
       id: string;
       name: string;
@@ -63,6 +67,14 @@ export interface AILiveContext {
   };
   portfolio?: { ticker: string; shares: number; buyPrice: number }[];
   cash?: number;
+  /** Strategy evaluation from engine (shouldExit, reason, targetSafeHaven) */
+  strategyEvaluation?: {
+    shouldExit: boolean;
+    reason: string;
+    targetSafeHaven: "emas" | "kas" | null;
+  };
+  /** List of tickers user actively cares about (from engineConfig mode) */
+  activeUniverse?: string[];
   /** Panel/konteks UI yang sedang dibuka (untuk fitur "Jelaskan ini"). */
   uiContext?: string;
 }
@@ -169,6 +181,22 @@ export const SYSTEM_KNOWLEDGE: string = [
   "   meskipun tidak di Top N berdasarkan ranking.",
   "6. Untuk Sync To Portfolio: jelaskan bahwa hasil backtest menggunakan profile",
   "   yang sama, sehingga keputusan portofolio live = keputusan backtest.",
+  "",
+  "## 12. STRATEGY EVALUATION (untuk pertanyaan 'should I exit?' / 'harus beli X?')",
+  "Saat user tanya 'harus exit?' / 'harus beli X?' / 'apa yang harus dilakukan?':",
+  "1. Cek ctx.strategyEvaluation.shouldExit:",
+  "   - true: sarankan exit ke safeHaven (emas/kas).",
+  "   - false: jelaskan kondisi pasar masih dalam toleransi.",
+  "2. Baca ctx.strategyEvaluation.reason — tampilkan ke user sebagai justifikasi.",
+  "3. Baca ctx.strategyEvaluation.targetSafeHaven — sebutkan target exit (emas/kas).",
+  "4. Baca ctx.activeUniverse — list ticker yang user peduli:",
+  "   - custom: ticker di customUniverse.",
+  "   - single: hanya singleTicker.",
+  "   - algo: customTickers (jika ada) atau tidak spesifik.",
+  "5. Untuk pertanyaan 'harus beli X?': jawab berdasarkan activeUniverse:",
+  "   - Jika X ada di activeUniverse: 'ya, X adalah bagian dari strategi Anda'.",
+  "   - Jika X tidak ada di activeUniverse: 'tidak, X tidak dalam strategi custom Anda'.",
+  "6. Untuk pertanyaan 'kenapa exit ke emas?': jelaskan safeHavenAsset + IHSG drop > sensitivity.",
 ].join("\n");
 
 /** Instruksi perilaku: ringkas default, detail bila diminta. */
@@ -210,6 +238,15 @@ export function formatLiveContext(ctx?: AILiveContext): string {
         `Last backtest profile: ${p.name} (Q${Math.round(p.qualityWeight * 100)}/G${Math.round(p.growthWeight * 100)}/V${Math.round(p.valueWeight * 100)}/M${Math.round(p.momentumWeight * 100)})`
       );
     }
+  }
+  if (ctx.strategyEvaluation) {
+    const se = ctx.strategyEvaluation;
+    lines.push(
+      `Strategy evaluation: shouldExit=${se.shouldExit}, reason=${se.reason}, targetSafeHaven=${se.targetSafeHaven || "none"}`
+    );
+  }
+  if (ctx.activeUniverse && ctx.activeUniverse.length > 0) {
+    lines.push(`Active universe (tickers user cares about): ${ctx.activeUniverse.map(t => `#${t}`).join(", ")}`);
   }
   if (ctx.regime) {
     const r = ctx.regime;

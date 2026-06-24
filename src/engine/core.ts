@@ -63,7 +63,12 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const day0 = filtered[0];
 
   let topTickers: string[];
-  if (config.simulationMode === "algo") {
+  if (config.simulationMode === "custom") {
+    const customUniverse = (config.customUniverse || []).filter(
+      t => day0.stockPrices[t] && day0.stockPrices[t] > 0
+    );
+    topTickers = customUniverse;
+  } else if (config.simulationMode === "algo") {
     const rankedTickers = pickTopTickersByRank(
       day0.stockRanks, day0.stockPrices, getUniverseTickers(), config.topNCount
     );
@@ -114,7 +119,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   logs.push({
     date: day0.date,
     type: "BUY",
-    message: `Inisialisasi portofolio ${config.simulationMode === "algo" ? `${topTickers.length} emiten` : `tunggal #${config.singleTicker}`}`,
+    message: `Inisialisasi portofolio ${config.simulationMode === "algo" || config.simulationMode === "custom" ? `${topTickers.length} emiten` : `tunggal #${config.singleTicker}`}`,
   });
 
   const getPointInTimeDate = (date: Date): Date => {
@@ -273,7 +278,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         }
 
         let reentryTickers: string[];
-        if (config.simulationMode === "algo") {
+        if (config.simulationMode === "custom") {
+          reentryTickers = (config.customUniverse || []).filter(
+            t => day.stockPrices[t] && day.stockPrices[t] > 0
+          );
+        } else if (config.simulationMode === "algo") {
           reentryTickers = pickTopTickersByRank(
             day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
           );
@@ -304,7 +313,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (crashCooldown > 0) crashCooldown--;
 
-    if (!inCrashState && config.enableCrossover && config.simulationMode === "algo") {
+    if (!inCrashState && config.enableCrossover && (config.simulationMode === "algo" || config.simulationMode === "custom")) {
       const ownedTickers = Object.entries(positions)
         .filter(([_, shares]) => shares > 0)
         .map(([ticker]) => ticker);
@@ -322,28 +331,39 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           totalTransactionVolume += sellResult.volume;
           delete positions[ticker];
 
-          const topCandidates = pickTopTickersByRank(
-            day.stockRanks, day.stockPrices, getUniverseTickers(), 4
-          );
+          let topCandidates: string[];
+          if (config.simulationMode === "custom") {
+            topCandidates = (config.customUniverse || []).filter(
+              t => day.stockPrices[t] && day.stockPrices[t] > 0
+            );
+          } else {
+            topCandidates = pickTopTickersByRank(
+              day.stockRanks, day.stockPrices, getUniverseTickers(), 4
+            );
+          }
           const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
 
-          const swapResult = computeRebalanceSwap(
-            ticker, swapProceeds, day.stockPrices, day.stockVolumes, swapInTicker, fees
-          );
+          if (swapInTicker) {
+            const swapResult = computeRebalanceSwap(
+              ticker, swapProceeds, day.stockPrices, day.stockVolumes, swapInTicker, fees
+            );
 
-          if (swapResult.shares > 0) {
-            positions[swapInTicker] = (positions[swapInTicker] || 0) + swapResult.shares;
-            cash += swapResult.cashRemainder;
-            totalTransactionVolume += swapResult.totalVolume;
-            logs.push({
-              date: day.date,
-              type: "REBALANCE",
-              message: `Swap #${ticker}→${swapInTicker} (Rank ${currentRank}), ${swapResult.shares} lot @ Rp ${(day.stockPrices[swapInTicker] || 0).toLocaleString("id-ID")}`,
-            });
+            if (swapResult.shares > 0) {
+              positions[swapInTicker] = (positions[swapInTicker] || 0) + swapResult.shares;
+              cash += swapResult.cashRemainder;
+              totalTransactionVolume += swapResult.totalVolume;
+              logs.push({
+                date: day.date,
+                type: "REBALANCE",
+                message: `Swap #${ticker}→${swapInTicker} (Rank ${currentRank}), ${swapResult.shares} lot @ Rp ${(day.stockPrices[swapInTicker] || 0).toLocaleString("id-ID")}`,
+              });
+            } else {
+              cash += swapProceeds;
+            }
+            totalSwaps++;
           } else {
             cash += swapProceeds;
           }
-          totalSwaps++;
         }
       }
 
@@ -440,4 +460,76 @@ export function setDividendCache(cache: Record<string, Record<string, number>>) 
 function getDividendPerShare(ticker: string, date: Date): number {
   const year = date.getFullYear().toString();
   return dividendCache[ticker]?.[year] || 0;
+}
+
+export interface StrategyEvaluation {
+  shouldExit: boolean;
+  reason: string;
+  targetSafeHaven: "emas" | "kas" | null;
+}
+
+export function evaluateStrategy(
+  config: BacktestConfig,
+  marketData: { ihsgPrice: number; peak60?: number; dayRanks?: Record<string, number> }
+): StrategyEvaluation {
+  if (!config.enableCrashProtection) {
+    return { shouldExit: false, reason: "Crash protection disabled", targetSafeHaven: null };
+  }
+
+  if (config.simulationMode === "single") {
+    return { shouldExit: false, reason: "Single mode uses own trigger", targetSafeHaven: null };
+  }
+
+  if (marketData.peak60 !== undefined) {
+    const drop = ((marketData.ihsgPrice - marketData.peak60) / marketData.peak60) * 100;
+    if (drop <= -config.crashSensitivity) {
+      return {
+        shouldExit: true,
+        reason: `IHSG dropped ${Math.abs(drop).toFixed(1)}% from 60d peak (threshold: ${config.crashSensitivity}%)`,
+        targetSafeHaven: config.safeHavenAsset,
+      };
+    }
+  }
+
+  return { shouldExit: false, reason: "IHSG within tolerance", targetSafeHaven: null };
+}
+
+export function shouldTriggerExit(
+  ticker: string,
+  position: { shares: number; buyPrice: number; currentPrice: number },
+  config: BacktestConfig,
+  marketData: { ihsgPrice: number; peak60?: number }
+): StrategyEvaluation {
+  if (!position || position.shares <= 0) {
+    return { shouldExit: false, reason: "No position", targetSafeHaven: null };
+  }
+
+  const strategy = evaluateStrategy(config, marketData);
+  if (strategy.shouldExit) {
+    return strategy;
+  }
+
+  const drawdown = ((position.currentPrice - position.buyPrice) / position.buyPrice) * 100;
+  if (config.simulationMode === "single" && drawdown <= -config.singleSellTrigger) {
+    return {
+      shouldExit: true,
+      reason: `${ticker} dropped ${Math.abs(drawdown).toFixed(1)}% (single trigger: ${config.singleSellTrigger}%)`,
+      targetSafeHaven: config.safeHavenAsset,
+    };
+  }
+
+  return { shouldExit: false, reason: "Position healthy", targetSafeHaven: null };
+}
+
+export function getActiveUniverse(config: BacktestConfig): string[] {
+  if (config.simulationMode === "custom") {
+    return [...(config.customUniverse || [])];
+  }
+  if (config.simulationMode === "single") {
+    return [config.singleTicker];
+  }
+  if (config.simulationMode === "algo" && config.customTickers.length > 0) {
+    return [...config.customTickers];
+  }
+  return [];
 }

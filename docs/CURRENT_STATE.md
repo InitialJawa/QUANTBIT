@@ -71,7 +71,7 @@
 - [x] **P2: marketRegimeEngine** — supports custom weight objects via setActiveConfig
 
 ## Current Focus
-Strategy Sync Engine operational — EngineConfigContext single source of truth, profiles with customizable weights, runtime re-ranking in backtest engine. Core engine (`src/engine/`) provides pure functions for ranking, crash detection, allocation, and metrics. SimulationTab uses `runStrategy()` with custom tickers UI, crash sensitivity slider, and Strategy Profile card. All 7 phases complete: Context Consolidation, Core Engine, Backtest Refactor, Sync To Portfolio, Portfolio Refactor, Market/Notification Integration, and AI Integration.
+Strategy Sync Engine v2 — Portfolio = Strategy Control Center. EngineConfigContext remains single source of truth, but Portfolio now drives all other modules (Market, Notifications, AI). All 7 v1 phases complete (pushed as commit `2424f73`). Now in v2 implementation: adding `simulationMode: "custom"`, `customUniverse` field, real `syncFromBacktest()`, Portfolio cascade to Market/Notifications/AI, threshold-based notification rules, AI exit-logic explanation. User identified settings update bugs in v1 (customTickers missing from useEffect deps, PortfolioTracker dual source of truth) — being fixed in v2.
 
 ## Active Architecture
 ```

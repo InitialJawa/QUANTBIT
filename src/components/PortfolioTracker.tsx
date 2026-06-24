@@ -46,7 +46,6 @@ interface PortfolioTrackerProps {
   onSelectStock: (ticker: string) => void;
   onToggleWatchlist: (ticker: string) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
-  activeConfig: "prod" | "res";
   cash: number;
   setCash: React.Dispatch<React.SetStateAction<number>>;
   tradeLogs: any[];
@@ -62,7 +61,6 @@ export function PortfolioTracker({
   onSelectStock,
   onToggleWatchlist,
   getDynamicStock,
-  activeConfig,
   cash,
   setCash,
   tradeLogs,
@@ -203,7 +201,7 @@ export function PortfolioTracker({
 
   const processedLeaders = getProcessedLeaders(
     visibleStocks,
-    activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : engineConfig.activeConfig,
+    activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : (engineConfig.activeProfileId === "res" ? "res" : "prod"),
   ).filter((item) => {
     const rawTicker = item.ticker.replace(".JK", "");
     if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);
@@ -509,7 +507,7 @@ export function PortfolioTracker({
                 name: stock.name,
                 price: stock.currentPrice,
                 shares: finalShares,
-                reason: `Berada di peringkat premium #${target.rank} dalam Model ${activeProfile?.name || (engineConfig.activeConfig === "prod" ? "Config F" : "Config B")}.`,
+                reason: `Berada di peringkat premium #${target.rank} dalam Model ${activeProfile?.name || (engineConfig.activeProfileId === "res" ? "Config B" : "Config F")}.`,
                 badge: "INSTRUKSI BELI",
               });
             }
@@ -527,32 +525,64 @@ export function PortfolioTracker({
 
       {/* Active Strategy Banner */}
       <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 rounded-2xl shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="p-2 bg-emerald-500/10 rounded-lg shrink-0">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="p-2 bg-emerald-500/10 rounded-lg shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-caption uppercase tracking-widest text-emerald-400 font-bold mb-0.5">Active Strategy</div>
+                <div className="text-base font-bold text-white truncate">{activeProfile.name}</div>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-caption uppercase tracking-widest text-emerald-400 font-bold mb-0.5">Active Strategy</div>
-              <div className="text-base font-bold text-white truncate">{activeProfile.name}</div>
+            <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
+              <div className="text-right">
+                <div className="text-white/30 text-[10px]">QUALITY</div>
+                <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
+              </div>
+              <div className="text-right">
+                <div className="text-white/30 text-[10px]">GROWTH</div>
+                <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
+              </div>
+              <div className="text-right">
+                <div className="text-white/30 text-[10px]">VALUE</div>
+                <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
+              </div>
+              <div className="text-right">
+                <div className="text-white/30 text-[10px]">MOMENTUM</div>
+                <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
+              </div>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
-            <div className="text-right">
-              <div className="text-white/30 text-[10px]">QUALITY</div>
-              <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.05]">
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              MODE: {engineConfig.simulationMode.toUpperCase()}
             </div>
-            <div className="text-right">
-              <div className="text-white/30 text-[10px]">GROWTH</div>
-              <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+              UNIVERSE: {engineConfig.simulationMode === "custom"
+                ? `Custom (${engineConfig.customUniverse.length})`
+                : engineConfig.simulationMode === "single"
+                ? `#${engineConfig.singleTicker}`
+                : engineConfig.universe.toUpperCase()}
             </div>
-            <div className="text-right">
-              <div className="text-white/30 text-[10px]">VALUE</div>
-              <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
-            </div>
-            <div className="text-right">
-              <div className="text-white/30 text-[10px]">MOMENTUM</div>
-              <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
+            {engineConfig.simulationMode === "algo" && (
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+                TOP {engineConfig.topNCount}
+              </div>
+            )}
+            {engineConfig.enableCrashProtection && (
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                CRASH ≤ {engineConfig.crashSensitivity}%
+              </div>
+            )}
+            {engineConfig.enableCrashProtection && (
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
+                SAFE HAVEN: {engineConfig.safeHavenAsset.toUpperCase()}
+              </div>
+            )}
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/[0.06]">
+              BUFFER: {engineConfig.reserveBufferPct}%
             </div>
           </div>
         </div>

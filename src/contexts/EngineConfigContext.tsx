@@ -18,7 +18,7 @@ export interface EngineConfig {
   crashSensitivity: number;
   enableCrossover: boolean;
   reserveBufferPct: number;
-  simulationMode: "algo" | "single";
+  simulationMode: "algo" | "single" | "custom";
   singleTicker: string;
   singleSellTrigger: number;
   singleBuyTrigger: number;
@@ -27,6 +27,7 @@ export interface EngineConfig {
   simEndDate: string;
   algoCapital: string;
   customTickers: string[];
+  customUniverse: string[];
   lastBacktestProfile: WeightProfile | null;
 }
 
@@ -59,8 +60,27 @@ export function createDefaultConfig(): EngineConfig {
     simEndDate: getTodayWIB(),
     algoCapital: "100000000",
     customTickers: [],
+    customUniverse: [],
     lastBacktestProfile: null,
   };
+}
+
+export interface StrategySnapshot {
+  profile: WeightProfile;
+  simulationMode: "algo" | "single" | "custom";
+  universe: string;
+  customTickers: string[];
+  customUniverse: string[];
+  topNCount: number;
+  singleTicker: string;
+  singleSellTrigger: number;
+  singleBuyTrigger: number;
+  enableCrashProtection: boolean;
+  crashSensitivity: number;
+  safeHavenAsset: "emas" | "kas";
+  enableCrossover: boolean;
+  reserveBufferPct: number;
+  syncedAt: number;
 }
 
 export interface EngineConfigContextType {
@@ -84,6 +104,7 @@ export interface EngineConfigContextType {
   setBacktestResult: (r: any) => void;
   lastBacktestProfile: WeightProfile | null;
   setLastBacktestProfile: (profile: WeightProfile) => void;
+  syncFromBacktest: (snapshot: Omit<StrategySnapshot, "syncedAt">) => void;
 }
 
 const EngineConfigContext = createContext<EngineConfigContextType | null>(null);
@@ -105,6 +126,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.simEndDate) parsed.simEndDate = getTodayWIB();
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customTickers) parsed.customTickers = [];
+        if (!parsed.customUniverse) parsed.customUniverse = [];
         return parsed;
       }
     } catch {}
@@ -181,6 +203,33 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const syncFromBacktest = (snapshot: Omit<StrategySnapshot, "syncedAt">) => {
+    setEngineConfig((prev) => {
+      const next: EngineConfig = {
+        ...prev,
+        activeProfileId: snapshot.profile.id,
+        simulationMode: snapshot.simulationMode,
+        universe: snapshot.universe,
+        customTickers: [...snapshot.customTickers],
+        customUniverse: [...snapshot.customUniverse],
+        topNCount: snapshot.topNCount,
+        singleTicker: snapshot.singleTicker,
+        singleSellTrigger: snapshot.singleSellTrigger,
+        singleBuyTrigger: snapshot.singleBuyTrigger,
+        enableCrashProtection: snapshot.enableCrashProtection,
+        crashSensitivity: snapshot.crashSensitivity,
+        safeHavenAsset: snapshot.safeHavenAsset,
+        enableCrossover: snapshot.enableCrossover,
+        reserveBufferPct: snapshot.reserveBufferPct,
+        lastBacktestProfile: snapshot.profile,
+      };
+      localStorage.setItem("idx_engine_config", JSON.stringify(next));
+      return next;
+    });
+    setLastBacktestProfile(snapshot.profile);
+    setTriggerRun(t => t + 1);
+  };
+
   return (
     <EngineConfigContext.Provider value={{
       engineConfig, activeProfile, activeConfig,
@@ -191,6 +240,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       backtestResult, isBacktesting, triggerRun,
       triggerBacktest, setBacktesting, setBacktestResult,
       lastBacktestProfile, setLastBacktestProfile,
+      syncFromBacktest,
     }}>
       {children}
     </EngineConfigContext.Provider>

@@ -196,3 +196,58 @@
 **Files changed:** 20+ files, `npm run lint` clean
 **ADR created:** docs/ADR-007.md — Strategy Sync Engine Architecture
 **Task doc:** docs/TASK_STRATEGY_SYNC_ENGINE.md — Complete task list dengan ✅ status
+
+## 2026-06-24 — Strategy Sync Engine v2 (Portfolio = Control Center)
+**Latar Belakang:** v1 (PRD-009) sudah ada single source of truth, tapi user ingin:
+- Backtest config lebih detail (custom mode, custom universe)
+- Settingan Backtest = Settingan Portfolio (sama persis setelah SYNC)
+- Portfolio = strategy control center yang cascade ke Market, Notifications, AI
+- AI bisa jawab "should I exit?" berdasarkan settingan user
+
+**Phase 8 — Custom Mode + Custom Universe:**
+- Add `customUniverse: string[]` field ke `EngineConfig` (separate dari `customTickers`)
+- Extend `simulationMode: "algo" | "single" | "custom"` (3 modes)
+- 3-button mode toggle di AppSidebar (Algo / Custom / Single)
+- Custom Universe picker UI (multi-select + chips) visible only in custom mode
+- Engine `runStrategy()` support `customUniverse` as exclusive list
+
+**Phase 9 — SYNC TO PORTO Real Implementation:**
+- `syncFromBacktest(snapshot)` function di EngineConfigContext
+- `StrategySnapshot` interface
+- Replace `console.log` dengan actual sync logic
+- Install `sonner` (~3KB) untuk toast notifications
+- Success toast: "Strategy synced to portfolio"
+
+**Phase 10 — Portfolio = Strategy Control Center:**
+- Remove `activeConfig` prop dari `PortfolioTrackerProps` (use context only)
+- Enhanced Active Strategy banner: mode, universe, crash, safe haven, top N
+- `shouldTriggerExit()`, `evaluateStrategy()`, `getActiveUniverse()` engine helpers
+- Auto-notify via NotificationContext when engine says exit
+- "Strategy says: Exit to emas" recommendation banner
+
+**Phase 11 — Notification Rule Firing:**
+- `fireRule(rule, notification)` helper di NotificationContext
+- 4 rules: `tickerOutOfTopN`, `crashProtectionTriggered`, `customUniverseBreach`, `singleModeTrigger`
+- Threshold-based, not real-time (avoid spam)
+- Wired to PortfolioTracker useEffect
+
+**Phase 12 — Market Tab Filter Cascade:**
+- Mode-aware filter: algo+customTickers / algo+universe / custom / single
+- Memoize `visibleStocks` dengan `useMemo`
+- "Filtered by Portfolio Strategy" badge di MarketTab header
+
+**Phase 13 — AI Explain Exit Logic:**
+- Section 12 "STRATEGY EVALUATION" di systemKnowledge
+- `strategyEvaluation` + `activeUniverse` di `AILiveContext`
+- `buildLiveContext()` pass new fields
+- AI bisa jawab "should I exit?" / "must buy X?" dengan settingan references
+
+**Key Design Decisions:**
+- `customUniverse` (exclusive) vs `customTickers` (forced) — separate fields, different semantics
+- SYNC = replace strategy fields, exclude cash
+- Notification = threshold-based, not real-time
+- Docs-first approach (D1-D7 before code)
+
+**Files changed:** ~15-20 files, `npm run lint` clean
+**Task doc:** docs/TASK_STRATEGY_SYNC_ENGINE_V2.md — Phases 8-13 task list
+**ADR updated:** docs/ADR-007.md — added v2 Extension section

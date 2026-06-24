@@ -29,5 +29,27 @@ AI Context Persistence System — menyimpan state project, keputusan arsitektur,
 - Pastikan semua docs references valid
 - Pastikan tidak ada stale/contradictory text
 
+## Active Strategy — Single Source of Truth (PRD-009 v2)
+
+EngineConfigContext adalah **single source of truth** untuk SEMUA setting strategi user.
+Portfolio adalah **strategy control center** yang menerima settingan via SYNC TO PORTO dan
+mencascade settingan tersebut ke SEMUA modul lain (Market, Notifications, AI, Rekomendasi).
+
+**Flow:**
+```
+[Backtest] → user configures → runStrategy() → result
+         ↓
+[SYNC TO PORTO] → copy snapshot to engineConfig
+         ↓
+[Portfolio] → reads engineConfig → drives Market, Notifications, AI
+```
+
+**Key contracts:**
+- Setting Backtest = Setting Portfolio (sama persis setelah SYNC)
+- Portfolio edit setting → cascade ke semua modul
+- Notification rules membaca dari `engineConfig` (threshold-based, bukan real-time)
+- AI context berisi `engineConfig` lengkap untuk menjawab "kenapa exit?" / "harus beli X?"
+- Mode baru: `"custom"` (exclusive universe, bukan forced holding)
+
 ## Child DOX Index
 (None — all files are managed directly by this AGENTS.md)

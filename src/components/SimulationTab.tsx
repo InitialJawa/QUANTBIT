@@ -27,6 +27,7 @@ import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
+import { toast } from "sonner";
 import warehouseData from "../data/fundamental_idx_all.json";
 import fundamentalSnapshots from "../data/archive/fundamental_snapshots.json";
 
@@ -40,7 +41,6 @@ interface SimulationTabProps {
   onSelectTicker: (ticker: string) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
   theme?: "dark" | "light";
-  activeConfig?: "prod" | "res";
   defaultSubTab?: "past" | "algo" | "ledger";
   hideTabs?: boolean;
 }
@@ -228,7 +228,6 @@ export function SimulationTab({
   onSelectTicker,
   getDynamicStock,
   theme,
-  activeConfig = "prod",
   defaultSubTab = "algo",
   hideTabs = false
 }: SimulationTabProps) {
@@ -256,7 +255,7 @@ export function SimulationTab({
     }
     return null;
   };
-  const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerRun, triggerBacktest, setBacktesting, setBacktestResult } = useEngineConfig();
+  const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerRun, triggerBacktest, setBacktesting, setBacktestResult, syncFromBacktest } = useEngineConfig();
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");
@@ -289,10 +288,6 @@ export function SimulationTab({
       return flatItem;
     });
   }, [backtestResult]);
-  
-  useEffect(() => {
-    setActiveProfile(activeConfig);
-  }, [activeConfig]);
 
   // Sync spot pricing when ledger ticker selection shifts
   const handleLedgerTickerChange = (ticker: string) => {
@@ -495,6 +490,7 @@ export function SimulationTab({
           simStartDate: engineConfig.simStartDate,
           simEndDate: engineConfig.simEndDate,
           customTickers: engineConfig.customTickers || [],
+          customUniverse: engineConfig.customUniverse || [],
         },
         profileWeights: {
           quality: activeProfile?.qualityWeight ?? 0.25,
@@ -542,6 +538,12 @@ export function SimulationTab({
     engineConfig.singleBuyTrigger,
     engineConfig.reserveBufferPct,
     engineConfig.activeProfileId,
+    engineConfig.customTickers,
+    engineConfig.customUniverse,
+    activeProfile?.qualityWeight,
+    activeProfile?.growthWeight,
+    activeProfile?.valueWeight,
+    activeProfile?.momentumWeight,
     triggerRun,
     historicalData,
   ]);
@@ -929,17 +931,41 @@ export function SimulationTab({
           <div className="flex justify-end pb-2">
             <button
               onClick={() => {
-                if (engineConfig.lastBacktestProfile) {
-                  console.log("Strategy synced to portfolio");
-                } else {
-                  console.log("No strategy to sync. Run a backtest first.");
+                if (!activeProfile) {
+                  toast.error("No active profile selected");
+                  return;
+                }
+                if (!backtestResult) {
+                  toast.error("Run a backtest first before syncing to portfolio");
+                  return;
+                }
+                try {
+                  syncFromBacktest({
+                    profile: activeProfile,
+                    simulationMode: engineConfig.simulationMode,
+                    universe: engineConfig.universe,
+                    customTickers: engineConfig.customTickers || [],
+                    customUniverse: engineConfig.customUniverse || [],
+                    topNCount: engineConfig.topNCount,
+                    singleTicker: engineConfig.singleTicker,
+                    singleSellTrigger: engineConfig.singleSellTrigger,
+                    singleBuyTrigger: engineConfig.singleBuyTrigger,
+                    enableCrashProtection: engineConfig.enableCrashProtection,
+                    crashSensitivity: engineConfig.crashSensitivity,
+                    safeHavenAsset: engineConfig.safeHavenAsset,
+                    enableCrossover: engineConfig.enableCrossover,
+                    reserveBufferPct: engineConfig.reserveBufferPct,
+                  });
+                  toast.success("Strategy synced to portfolio");
+                } catch (err: any) {
+                  toast.error(`Sync failed: ${err.message || "Unknown error"}`);
                 }
               }}
-              disabled={!engineConfig.lastBacktestProfile}
+              disabled={!backtestResult || isBacktesting}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ 
-                backgroundColor: engineConfig.lastBacktestProfile ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)',
-                color: engineConfig.lastBacktestProfile ? '#00c9a5' : '#7a7a7a',
+                backgroundColor: backtestResult ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)',
+                color: backtestResult ? '#00c9a5' : '#7a7a7a',
                 border: '1px solid rgba(255,255,255,0.06)'
               }}
             >

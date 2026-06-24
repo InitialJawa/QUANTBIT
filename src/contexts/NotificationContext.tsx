@@ -17,6 +17,10 @@ export interface NotificationContextType {
   /** Check if a rule has been triggered (used by the UI to determine when to fire alerts) */
   shouldFireRule: (rule: string) => boolean;
   markRuleFired: (rule: string) => void;
+  /** Fire a rule — dedupes via shouldFireRule + markRuleFired, then adds notification */
+  fireRule: (rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule" | "timestamp">) => boolean;
+  /** Reset a fired rule so it can fire again */
+  resetRule: (rule: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -54,6 +58,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const resetRule = useCallback((rule: string) => {
+    setFiredRules((prev) => {
+      const next = new Set(prev);
+      next.delete(rule);
+      return next;
+    });
+  }, []);
+
+  const fireRule = useCallback((rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule">) => {
+    if (firedRules.has(rule)) return false;
+    addNotification({ ...notification, rule });
+    markRuleFired(rule);
+    return true;
+  }, [firedRules, addNotification, markRuleFired]);
+
   return (
     <NotificationContext.Provider
       value={{
@@ -63,6 +82,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         clearAll,
         shouldFireRule,
         markRuleFired,
+        fireRule,
+        resetRule,
       }}
     >
       {children}

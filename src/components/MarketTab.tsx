@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useMemo } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
@@ -58,10 +58,23 @@ export function MarketTab({
 }: MarketTabProps) {
   const [marketSubTab, setMarketSubTab] = useState<"overview" | "charts" | "watchlist">("overview");
   const { engineConfig } = useEngineConfig();
-  const allVisibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
-  const visibleStocks = engineConfig.customTickers && engineConfig.customTickers.length > 0
-    ? allVisibleStocks.filter(s => engineConfig.customTickers!.includes(s.ticker))
-    : allVisibleStocks;
+  const allVisibleStocks = useMemo(
+    () => STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s),
+    [getDynamicStock]
+  );
+  const visibleStocks = useMemo(() => {
+    const mode = engineConfig.simulationMode;
+    if (mode === "custom" && engineConfig.customUniverse.length > 0) {
+      return allVisibleStocks.filter(s => engineConfig.customUniverse.includes(s.ticker));
+    }
+    if (mode === "single") {
+      return allVisibleStocks.filter(s => s.ticker === engineConfig.singleTicker);
+    }
+    if (mode === "algo" && engineConfig.customTickers.length > 0) {
+      return allVisibleStocks.filter(s => engineConfig.customTickers.includes(s.ticker));
+    }
+    return allVisibleStocks;
+  }, [allVisibleStocks, engineConfig.simulationMode, engineConfig.customUniverse, engineConfig.singleTicker, engineConfig.customTickers]);
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
   const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);
@@ -255,9 +268,28 @@ export function MarketTab({
       ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
       : "bg-rose-500/10 text-rose-400 border-rose-500/20");
 
+  const isFilteredByStrategy =
+    (engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0) ||
+    (engineConfig.simulationMode === "single") ||
+    (engineConfig.simulationMode === "algo" && engineConfig.customTickers.length > 0);
+
+  const strategyFilterLabel = engineConfig.simulationMode === "custom"
+    ? `Custom Universe (${engineConfig.customUniverse.length})`
+    : engineConfig.simulationMode === "single"
+    ? `Single #${engineConfig.singleTicker}`
+    : `Custom Tickers (${engineConfig.customTickers.length})`;
+
   return (
     <div className="space-y-6">
-      
+
+      {isFilteredByStrategy && (
+        <div className="bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl px-4 py-2.5 flex items-center gap-2 text-caption font-mono">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="text-emerald-400 font-bold">FILTERED BY PORTFOLIO STRATEGY:</span>
+          <span className="text-white/80 truncate">{strategyFilterLabel}</span>
+        </div>
+      )}
+
       {/* Sub-tab bar */}
       <div className="flex border-b border-white/[0.04] -mt-1">
         {(["overview", "charts", "watchlist"] as const).map((id) => (

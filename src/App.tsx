@@ -24,6 +24,7 @@ import { FloatingWallet } from "./components/FloatingWallet";
 import { AICockpitProvider } from "./contexts/AICockpitContext";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { Toaster } from "sonner";
 
 function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: "prod" | "res"; setActiveConfig: (c: "prod" | "res") => void }) {
   const { engineConfig, setActiveProfile } = useEngineConfig();
@@ -261,7 +262,6 @@ export default function App() {
                           onSelectStock={ui.handleSelectTicker}
                           onToggleWatchlist={pm.handleToggleWatchlist}
                           getDynamicStock={df.getDynamicStock}
-                          activeConfig={ui.activeConfig}
                           cash={pm.cash}
                           setCash={pm.setCash}
                           tradeLogs={pm.tradeLogs}
@@ -288,7 +288,6 @@ export default function App() {
                           onSellTransaction={pm.handleSellTransaction}
                           onSelectTicker={ui.handleSelectTicker}
                           getDynamicStock={df.getDynamicStock}
-                          activeConfig={ui.activeConfig}
                         />
                         </Suspense>
                       </motion.div>
@@ -331,6 +330,7 @@ export default function App() {
         onMoveToGold={pm.handleMoveToGold}
         onSellGold={pm.handleSellGoldToCashInput}
       />
+<Toaster position="top-right" theme="dark" richColors closeButton />
 <FloatingAIChat />
       <StockDrawer
         isOpen={ui.isDrawerOpen}
