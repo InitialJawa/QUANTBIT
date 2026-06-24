@@ -29,3 +29,12 @@ Portfolio = Strategy Control Center. Custom mode + universe, SYNC TO PORTO real,
 
 ## 2026-06-24 — Docs Cleanup + Final P0 Tasks
 Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT_STATE + ACTIVE_TASK merged, NEXT_ACTION stripped, MASTER_CHRONICLE trimmed. Custom mode toggle + custom universe picker di AppSidebar. Notification rules (4) wired ke PortfolioTracker via useNotifications. Strategy exit banner added.
+
+## 2026-06-24 — Backtest Panel UI Cleanup + Profile Weight Fixes
+- Mode toggle 3→2 ([Algo] [Custom]), Custom = old Single + renamed
+- Config F vs B fix: activeProfileId di BacktestConfig, rank key selection benar
+- Fine-tune sliders: read/write via activeProfile + updateProfile
+- mock data: stockNormScores generated untuk dev mode
+- Comma input fix: defaultValue + onBlur untuk customTickers/customUniverse
+- Duplicate config row (Parameter/F/B/Jalankan) dihapus dari SimulationTab header
+- PortfolioTracker: fix stale dependency engineConfig.activeProfile → activeProfile

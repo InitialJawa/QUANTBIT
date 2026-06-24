@@ -4,7 +4,7 @@
 |-------|-------|
 | Tanggal | 2026-06-24 |
 | Status | Development |
-| Progress | ~94% |
+| Progress | ~95% |
 | Sprint | Platform Stabilization & MCP |
 
 ## Active Architecture
@@ -15,11 +15,11 @@ EngineConfigContext (single source of truth)
   ├── activeProfileId — profile aktif (getter: activeProfile)
   ├── activeConfig — backward compat getter ("prod"/"res")
   ├── topNCount, universe, crash/crossover settings
-  ├── simulationMode: "algo" | "custom" | "single"
+  ├── simulationMode: "algo" | "custom"
   ├── customUniverse: string[] (exclusive, custom mode)
   └── customTickers: string[] (forced holdings, algo mode)
        │
-       ├── AppSidebar → 3-button mode toggle + custom universe picker
+       ├── AppSidebar → 2-button mode toggle + custom universe picker
        ├── SimulationTab → runStrategy() with profile weights
        ├── PortfolioTracker → Strategy Control Center + notification rules
        ├── MarketTab → cascade filter from engineConfig
@@ -28,13 +28,14 @@ EngineConfigContext (single source of truth)
 
 ## Current Focus
 
-All P0 items complete. Strategy Sync Engine v2 (PRD-009 v2) fully implemented:
-- **3-mode toggle** (Algo/Custom/Single) + custom universe picker in AppSidebar
-- **SYNC TO PORTO** real implementation (syncFromBacktest, sonner toast)
-- **Portfolio = Control Center** (enhanced banner, shouldTriggerExit, evaluateStrategy)
-- **Notification rules** wired (crashProtection, tickerOutOfTopN, customUniverseBreach)
-- **MarketTab filter** mode-aware + "Filtered by Portfolio Strategy" badge
-- **AI Exit Logic** (Section 12, strategyEvaluation, activeUniverse)
+All P0 items complete. Backend bugs fixed:
+- **Mode toggle 3→2** ([Algo] [Custom]) — Custom = old single + renamed, no more 3-way
+- **Config F vs B fixed** — activeProfileId now correctly passed to engine, rank key selection fixed
+- **Fine-tune sliders fixed** — now read/write activeProfile via updateProfile (not orphaned engineConfig props)
+- **Mock data** now generates stockNormScores for dev mode weight support
+- **Comma input fix** — customTickers & customUniverse use defaultValue + onBlur
+- **Duplicate config row** removed from SimulationTab header
+- **PortfolioTracker dep fix** — engineConfig.activeProfile → activeProfile
 
 ## Remaining (P2/Deferred)
 - `npm run build` to regenerate year files with raw metrics
