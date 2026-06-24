@@ -23,8 +23,8 @@ export interface AILiveContext {
     growthWeight?: number;
     valueWeight?: number;
     momentumWeight?: number;
-    customTickers?: string[];
     customUniverse?: string[];
+    enableAdaptiveWeights?: boolean;
     simulationMode?: "algo" | "custom";
     singleTicker?: string;
     enableCrashProtection?: boolean;
@@ -191,7 +191,7 @@ export const SYSTEM_KNOWLEDGE: string = [
   "3. Baca ctx.strategyEvaluation.targetSafeHaven — sebutkan target exit (emas/kas).",
   "4. Baca ctx.activeUniverse — list ticker yang user peduli:",
   "   - custom: ticker di customUniverse.",
-  "   - algo: customTickers (jika ada) atau tidak spesifik.",
+  "   - algo: tidak spesifik (universe penuh).",
   "5. Untuk pertanyaan 'harus beli X?': jawab berdasarkan activeUniverse:",
   "   - Jika X ada di activeUniverse: 'ya, X adalah bagian dari strategi Anda'.",
   "   - Jika X tidak ada di activeUniverse: 'tidak, X tidak dalam strategi custom Anda'.",
@@ -228,8 +228,8 @@ export function formatLiveContext(ctx?: AILiveContext): string {
       `sellTrig=${c.singleSellTrigger}%, buyTrig=${c.singleBuyTrigger}%, ` +
       `bobot[Q/G/V/M]=${c.qualityWeight}/${c.growthWeight}/${c.valueWeight}/${c.momentumWeight}`
     );
-    if (c.customTickers && c.customTickers.length > 0) {
-      lines.push(`Custom tickers (forced holdings): ${c.customTickers.map(t => `#${t}`).join(", ")}`);
+    if (c.enableAdaptiveWeights) {
+      lines.push("Adaptive weights: ON (auto-adjust factor weights based on recent factor performance)");
     }
     if (c.lastBacktestProfile) {
       const p = c.lastBacktestProfile;

@@ -17,7 +17,7 @@ EngineConfigContext (source of truth for LIVE strategy)
   ├── topNCount, universe, crash/crossover settings
   ├── simulationMode: "algo" | "custom"
   ├── customUniverse: string[] (exclusive, custom mode)
-  └── customTickers: string[] (forced holdings, algo mode)
+  └── enableAdaptiveWeights: boolean (auto-adjust factor weights)
        │
        ├── AppSidebar → 2-button mode toggle + custom panel
        ├── └── renderBacktestContent → uses backtestConfig (draft, NOT engineConfig)
@@ -64,6 +64,20 @@ backtestConfig (draft, isolated from engineConfig)
 - **Bug 4d (self-swap/duplicate)**: `swapInTicker` sekarang exclude ticker yang baru dijual + tidak fallback ke `topCandidates[0]` — hold cash jika tidak ada kandidat suitable
 - **Dead code removed**: Custom `if` branch di blok swap dihapus (tidak pernah tercapai setelah fix 4b)
 - **ADR-008** dibuat untuk record keputusan
+
+### 🔴 Bug 4 Fix: Rebalancing Engine — 4 Bug di core.ts:92-323
+- **Bug 4a (day-1 false trigger)**: `lastRebalanceMonth = -1` → `new Date(day0.date).getMonth()` — day 1 tidak lagi trigger rebalance yang nggak perlu
+- **Bug 4b (custom mode rank exit)**: Custom mode dikeluarkan dari blok rebalancing rank-based — custom stock di-hold, exit hanya via crash protection
+- **Bug 4c (hardcoded top 4)**: `pickTopTickersByRank(..., 4)` → `pickTopTickersByRank(..., config.topNCount)` — swap kandidat sesuai setting user
+- **Bug 4d (self-swap/duplicate)**: `swapInTicker` sekarang exclude ticker yang baru dijual + tidak fallback ke `topCandidates[0]` — hold cash jika tidak ada kandidat suitable
+- **Dead code removed**: Custom `if` branch di blok swap dihapus (tidak pernah tercapai setelah fix 4b)
+- **ADR-008** dibuat untuk record keputusan
+
+### Feature: Remove customTickers + MultiSearchableSelect + Adaptive Weights
+- **customTickers removed** dari semua layer (types, context, engine, UI, AI) — algo mode tidak punya lagi forced holdings; custom mode dengan customUniverse sudah cukup
+- **MultiSearchableSelect** komponen baru — ganti text input comma-separated dengan search-based multi-select (TickerLogo, filter, pills)
+- **Default profile** diubah dari F ("prod") → B ("res") — B beats IHSG, F underperforms
+- **Adaptive Weights** (`enableAdaptiveWeights`) — engine otomatis adjust Q/G/V/M weights berdasarkan recent factor return; `computeAdaptiveWeights()` di ranker.ts; integrated di core.ts rebalancing loop; toggle UI di backtest + portfolio sidebar
 
 ## Verification
 - `tsc --noEmit` — passes (0 errors)

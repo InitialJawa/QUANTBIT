@@ -26,14 +26,14 @@ export interface EngineConfig {
   simStartDate: string;
   simEndDate: string;
   algoCapital: string;
-  customTickers: string[];
   customUniverse: string[];
+  enableAdaptiveWeights: boolean;
   lastBacktestProfile: WeightProfile | null;
 }
 
 export const DEFAULT_PROFILES: WeightProfile[] = [
-  { id: "prod", name: "Fundamental Focus (F)", qualityWeight: 0.25, growthWeight: 0.1, valueWeight: 0.3, momentumWeight: 0.35 },
   { id: "res", name: "Backtest Optimized (B)", qualityWeight: 0.25, growthWeight: 0.3, valueWeight: 0.1, momentumWeight: 0.35 },
+  { id: "prod", name: "Fundamental Focus (F)", qualityWeight: 0.25, growthWeight: 0.1, valueWeight: 0.3, momentumWeight: 0.35 },
 ];
 
 const getTodayWIB = () => {
@@ -43,7 +43,7 @@ const getTodayWIB = () => {
 
 export function createDefaultConfig(): EngineConfig {
   return {
-    activeProfileId: "prod",
+    activeProfileId: "res",
     profiles: DEFAULT_PROFILES,
     safeHavenAsset: "emas",
     topNCount: 5,
@@ -59,8 +59,8 @@ export function createDefaultConfig(): EngineConfig {
     simStartDate: "2021-01-04",
     simEndDate: getTodayWIB(),
     algoCapital: "100000000",
-    customTickers: [],
     customUniverse: [],
+    enableAdaptiveWeights: false,
     lastBacktestProfile: null,
   };
 }
@@ -69,7 +69,6 @@ export interface StrategySnapshot {
   profile: WeightProfile;
   simulationMode: "algo" | "custom";
   universe: string;
-  customTickers: string[];
   customUniverse: string[];
   topNCount: number;
   singleTicker: string;
@@ -80,6 +79,7 @@ export interface StrategySnapshot {
   safeHavenAsset: "emas" | "kas";
   enableCrossover: boolean;
   reserveBufferPct: number;
+  enableAdaptiveWeights: boolean;
   syncedAt: number;
 }
 
@@ -128,8 +128,8 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.simStartDate) parsed.simStartDate = "2021-01-04";
         if (!parsed.simEndDate) parsed.simEndDate = getTodayWIB();
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
-        if (!parsed.customTickers) parsed.customTickers = [];
         if (!parsed.customUniverse) parsed.customUniverse = [];
+        if (parsed.enableAdaptiveWeights === undefined) parsed.enableAdaptiveWeights = false;
         // Migrate legacy "single" mode → "custom"
         if (parsed.simulationMode === "single") {
           parsed.simulationMode = "custom";
@@ -237,8 +237,8 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         activeProfileId: snapshot.profile.id,
         simulationMode: snapshot.simulationMode,
         universe: snapshot.universe,
-        customTickers: [...snapshot.customTickers],
         customUniverse: [...snapshot.customUniverse],
+        enableAdaptiveWeights: snapshot.enableAdaptiveWeights,
         topNCount: snapshot.topNCount,
         singleTicker: snapshot.singleTicker,
         singleSellTrigger: snapshot.singleSellTrigger,

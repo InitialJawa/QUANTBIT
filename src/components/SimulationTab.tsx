@@ -445,9 +445,9 @@ export function SimulationTab({
           enableCrossover: backtestConfig.enableCrossover,
           simStartDate: backtestConfig.simStartDate,
           simEndDate: backtestConfig.simEndDate,
-          customTickers: backtestConfig.customTickers || [],
           customUniverse: backtestConfig.customUniverse || [],
           activeProfileId: backtestConfig.activeProfileId,
+          enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
         },
         profileWeights: {
           quality: backtestActiveProfile?.qualityWeight ?? 0.25,
@@ -495,8 +495,8 @@ export function SimulationTab({
     backtestConfig.singleBuyTrigger,
     backtestConfig.reserveBufferPct,
     backtestConfig.activeProfileId,
-    backtestConfig.customTickers,
     backtestConfig.customUniverse,
+    backtestConfig.enableAdaptiveWeights,
     backtestActiveProfile?.qualityWeight,
     backtestActiveProfile?.growthWeight,
     backtestActiveProfile?.valueWeight,
@@ -865,8 +865,8 @@ export function SimulationTab({
                     profile: backtestActiveProfile,
                     simulationMode: backtestConfig.simulationMode,
                     universe: backtestConfig.universe,
-                    customTickers: backtestConfig.customTickers || [],
                     customUniverse: backtestConfig.customUniverse || [],
+                    enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
                     topNCount: backtestConfig.topNCount,
                     singleTicker: backtestConfig.singleTicker,
                     singleSellTrigger: backtestConfig.singleSellTrigger,
@@ -910,18 +910,7 @@ export function SimulationTab({
                   Quality: {backtestActiveProfile?.qualityWeight ?? 0.25} | Growth: {backtestActiveProfile?.growthWeight ?? 0.10} | Value: {backtestActiveProfile?.valueWeight ?? 0.30} | Momentum: {backtestActiveProfile?.momentumWeight ?? 0.35}
                 </span>
               </div>
-              {backtestConfig.customTickers && backtestConfig.customTickers.length > 0 && (
-                <div className="text-right">
-                  <span className="text-caption text-white/40 block mb-1">Custom Tickers:</span>
-                  <div className="flex gap-1 justify-end flex-wrap">
-                    {backtestConfig.customTickers.map((t, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              
             </div>
           </div>
 

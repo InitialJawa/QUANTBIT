@@ -78,3 +78,6 @@ Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT
 
 ## 2026-06-24 — Rebalancing Engine Fix (4 Bugs)
 4 bug di `core.ts` rebalancing block diperbaiki: (1) `lastRebalanceMonth = -1` → init ke day0 month — day-1 false trigger hilang; (2) custom mode dikeluarkan dari rank-based exit — custom stock hold kecuali crash; (3) hardcoded `4` → `config.topNCount` — swap kandidat sesuai user config; (4) self-swap/duplicate position dicegah — `swapInTicker` exclude just-sold ticker + no fallback. ADR-008 dibuat.
+
+## 2026-06-24 — customTickers Removal + MultiSearchableSelect + Adaptive Weights
+customTickers (forced holdings in algo mode) dihapus dari semua layer — redundant dengan custom mode. MultiSearchableSelect baru mengganti text input custom universe (search-based multi-select). Default profile diubah F → B (B outperforms IHSG). Adaptive Weights (market regime detection) — `computeAdaptiveWeights()` di ranker.ts menghitung recent factor return → adjust Q/G/V/M weights dinamis. Toggle UI di backtest + portfolio sidebar (default off).

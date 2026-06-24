@@ -9,7 +9,7 @@ import {
   DEFAULT_FEES,
   StrategiesInput,
 } from "./types";
-import { computeDayRankings, pickTopTickersByRank, getCleanTickerList } from "./ranker";
+import { computeDayRankings, pickTopTickersByRank, getCleanTickerList, computeAdaptiveWeights } from "./ranker";
 import { detectCrashAlgo, detectRecoveryAlgo } from "./crashDetector";
 import {
   computeInitialAllocation,
@@ -22,13 +22,14 @@ import {
 import { computeMetrics } from "./metrics";
 
 export function runStrategy(input: StrategiesInput): BacktestResult {
-  const { dayData: rawInput, config, profileWeights, universeTickers, fees = DEFAULT_FEES } = input;
+  const { dayData: rawInput, config, profileWeights: inputWeights, universeTickers, fees = DEFAULT_FEES } = input;
+  let currentWeights = { ...inputWeights };
 
   const activeProfileKey: "stockRanksProd" | "stockRanksRes" = config.activeProfileId === "res" ? "stockRanksRes" : "stockRanksProd";
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
-      const stockRanks = computeDayRankings(d.stockNormScores, profileWeights);
+      const stockRanks = computeDayRankings(d.stockNormScores, inputWeights);
       return { ...d, stockRanks };
     }
     return {
@@ -69,12 +70,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     );
     topTickers = customUniverse;
   } else if (config.simulationMode === "algo") {
-    const rankedTickers = pickTopTickersByRank(
+    topTickers = pickTopTickersByRank(
       day0.stockRanks, day0.stockPrices, getUniverseTickers(), config.topNCount
     );
-    const customTickers = config.customTickers || [];
-    const customWithPrice = customTickers.filter(t => day0.stockPrices[t] && day0.stockPrices[t] > 0);
-    topTickers = [...customWithPrice, ...rankedTickers.filter(t => !customWithPrice.includes(t))].slice(0, Math.max(config.topNCount, customWithPrice.length));
   } else {
     topTickers = [];
   }
@@ -292,6 +290,15 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (crashCooldown > 0) crashCooldown--;
 
+    if (!inCrashState && config.enableAdaptiveWeights && day.stockNormScores && stepIndex >= 60) {
+      const isMonthChange = currentMonth !== lastRebalanceMonth;
+      if (isMonthChange) {
+        currentWeights = computeAdaptiveWeights(filtered, stepIndex, 60, currentWeights, config.topNCount);
+        const newRanks = computeDayRankings(day.stockNormScores, currentWeights);
+        (filtered[stepIndex] as BacktestDayData).stockRanks = newRanks;
+      }
+    }
+
     if (!inCrashState && config.enableCrossover && config.simulationMode === "algo") {
       const ownedTickers = Object.entries(positions)
         .filter(([_, shares]) => shares > 0)
@@ -496,9 +503,6 @@ export function shouldTriggerExit(
 export function getActiveUniverse(config: BacktestConfig): string[] {
   if (config.simulationMode === "custom") {
     return [...(config.customUniverse || [])];
-  }
-  if (config.simulationMode === "algo" && config.customTickers.length > 0) {
-    return [...config.customTickers];
   }
   return [];
 }

@@ -24,8 +24,8 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 **EngineConfigContext = single source of truth. Portfolio = strategy control center.**
 
 - `simulationMode: "algo" | "custom"` (custom = user-defined exclusive universe)
-- `customTickers: string[]` (forced holdings in algo mode)
-- `customUniverse: string[]` (exclusive list in custom mode — separate field, different semantics)
+- `customUniverse: string[]` (exclusive list in custom mode)
+- `enableAdaptiveWeights: boolean` (auto-adjust factor weights based on recent factor performance)
 - `lastBacktestProfile: WeightProfile | null` (set by wrapped `setBacktestResult`)
 - `syncFromBacktest(snapshot)` — copy backtest config to portfolio (replace strategy fields, exclude cash)
 

@@ -67,11 +67,8 @@ export function MarketTab({
     if (mode === "custom" && engineConfig.customUniverse.length > 0) {
       return allVisibleStocks.filter(s => engineConfig.customUniverse.includes(s.ticker));
     }
-    if (mode === "algo" && engineConfig.customTickers.length > 0) {
-      return allVisibleStocks.filter(s => engineConfig.customTickers.includes(s.ticker));
-    }
     return allVisibleStocks;
-  }, [allVisibleStocks, engineConfig.simulationMode, engineConfig.customUniverse, engineConfig.singleTicker, engineConfig.customTickers]);
+  }, [allVisibleStocks, engineConfig.simulationMode, engineConfig.customUniverse, engineConfig.singleTicker]);
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
   const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);
@@ -266,12 +263,9 @@ export function MarketTab({
       : "bg-rose-500/10 text-rose-400 border-rose-500/20");
 
   const isFilteredByStrategy =
-    (engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0) ||
-    (engineConfig.simulationMode === "algo" && engineConfig.customTickers.length > 0);
+    engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0;
 
-  const strategyFilterLabel = engineConfig.simulationMode === "custom"
-    ? `Custom Universe (${engineConfig.customUniverse.length})`
-    : `Custom Tickers (${engineConfig.customTickers.length})`;
+  const strategyFilterLabel = `Custom Universe (${engineConfig.customUniverse.length})`;
 
   return (
     <div className="space-y-6">

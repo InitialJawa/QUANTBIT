@@ -60,8 +60,8 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       growthWeight: profile?.growthWeight,
       valueWeight: profile?.valueWeight,
       momentumWeight: profile?.momentumWeight,
-      customTickers: c.customTickers,
       customUniverse: c.customUniverse,
+      enableAdaptiveWeights: c.enableAdaptiveWeights,
       simulationMode: c.simulationMode,
       lastBacktestProfile: c.lastBacktestProfile ? {
         id: c.lastBacktestProfile.id,
@@ -75,8 +75,6 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
 
     if (c.simulationMode === "custom" && c.customUniverse?.length) {
       ctx.activeUniverse = [...c.customUniverse];
-    } else if (c.simulationMode === "algo" && c.customTickers?.length) {
-      ctx.activeUniverse = [...c.customTickers];
     }
 
     if (c.enableCrashProtection) {

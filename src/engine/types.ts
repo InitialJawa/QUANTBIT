@@ -37,8 +37,8 @@ export interface BacktestConfig {
   enableCrossover: boolean;
   simStartDate: string;
   simEndDate: string;
-  customTickers: string[];
   customUniverse: string[];
+  enableAdaptiveWeights: boolean;
   activeProfileId: string;
 }
 

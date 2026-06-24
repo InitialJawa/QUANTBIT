@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { ManageProfilesModal } from "./ManageProfilesModal";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { ExplainButton } from "./ExplainButton";
+import { MultiSearchableSelect } from "./MultiSearchableSelect";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -687,6 +688,14 @@ export function AppSidebar({
                 </button>
               </div>
             </div>
+            <div>
+              <span className="text-label text-tertiary block mb-1">Adaptive Weights (Auto)</span>
+              <button onClick={() => updateConfigValue("enableAdaptiveWeights", !engineConfig.enableAdaptiveWeights)}
+                className="w-full py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                style={{ backgroundColor: engineConfig.enableAdaptiveWeights ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableAdaptiveWeights ? '#a855f7' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {engineConfig.enableAdaptiveWeights ? "ON — Auto-adjust Q/G/V/M" : "OFF — Static Profile Weights"}
+              </button>
+            </div>
             <div className="border-t border-white/[0.04] pt-2">
               <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
               {[
@@ -832,31 +841,6 @@ export function AppSidebar({
                 </div>
               </div>
             </div>
-
-            <div className="mx-2">
-              <div className="px-2 py-1 border-b border-white/[0.04]">
-                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Custom Tickers (Forced)</span>
-              </div>
-              <div className="px-2 py-2 space-y-2">
-                <input type="text"
-                  defaultValue={backtestConfig.customTickers?.join(", ") || ""}
-                  onBlur={e => updateBacktestValue("customTickers", e.target.value.split(",").map(t => t.trim().toUpperCase()).filter(Boolean))}
-                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                  placeholder="BBCA, TLKM, ASII (pisahkan koma)"
-                  className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
-                {backtestConfig.customTickers && backtestConfig.customTickers.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {backtestConfig.customTickers.map((t, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                        #{t}
-                        <button onClick={() => updateBacktestValue("customTickers", backtestConfig.customTickers!.filter((_, idx) => idx !== i))}
-                          className="text-white/60 hover:text-white text-xs leading-none">×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </>
         ) : (
           <div className="mx-2">
@@ -866,26 +850,13 @@ export function AppSidebar({
             <div className="px-2 py-1.5 space-y-1.5">
               <div>
                 <span className="text-label text-tertiary block mb-1">Custom Universe (Eksklusif)</span>
-                <input type="text"
-                  defaultValue={backtestConfig.customUniverse?.join(", ") || ""}
-                  onBlur={e => {
-                    const val = e.target.value;
-                    updateBacktestValue("customUniverse", val.trim() ? val.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : []);
-                  }}
-                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                  placeholder="BBCA, BBRI, ADRO (pisahkan koma)"
-                  className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
-                {backtestConfig.customUniverse && backtestConfig.customUniverse.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {backtestConfig.customUniverse.map((t, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
-                        #{t}
-                        <button onClick={() => updateBacktestValue("customUniverse", backtestConfig.customUniverse!.filter((_, idx) => idx !== i))}
-                          className="text-white/60 hover:text-white text-xs leading-none">×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <MultiSearchableSelect
+                  options={STOCKS_DATA.map(s => ({ value: s.ticker, label: `${s.ticker} — ${s.name}` }))}
+                  value={backtestConfig.customUniverse || []}
+                  onChange={(v) => updateBacktestValue("customUniverse", v)}
+                  placeholder="Cari saham..."
+                  theme="indigo"
+                />
               </div>
             </div>
           </div>
@@ -953,6 +924,15 @@ export function AppSidebar({
                   Tanpa
                 </button>
               </div>
+            </div>
+
+            <div>
+              <span className="text-label text-tertiary block mb-1">Adaptive Weights (Auto)</span>
+              <button onClick={() => updateBacktestValue("enableAdaptiveWeights", !backtestConfig.enableAdaptiveWeights)}
+                className="w-full py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                style={{ backgroundColor: backtestConfig.enableAdaptiveWeights ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.enableAdaptiveWeights ? '#a855f7' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {backtestConfig.enableAdaptiveWeights ? "ON — Auto-adjust Q/G/V/M" : "OFF — Static Profile Weights"}
+              </button>
             </div>
 
             <div>
