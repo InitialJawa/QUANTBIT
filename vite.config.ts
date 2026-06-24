@@ -32,6 +32,14 @@ export default defineConfig(() => {
     build: {
       chunkSizeWarningLimit: 500,
       rollupOptions: {
+        // Exclude very large data files from the client bundle.
+        // These are loaded at runtime via API endpoints, not bundled.
+        external: [
+          /src\/data\/fundamental_idx_all\.json$/,
+          /src\/data\/historical_market_data\.json$/,
+          /data\/fundamental_idx_all\.json$/,
+          /data\/historical_market_data\.json$/,
+        ],
         output: {
           // Split heavy third-party libs into separate cacheable chunks.
           // React is intentionally left in the main bundle to avoid load-order issues.

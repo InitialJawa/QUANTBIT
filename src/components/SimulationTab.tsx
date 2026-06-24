@@ -28,8 +28,6 @@ import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
-import warehouseData from "../data/fundamental_idx_all.json";
-import fundamentalSnapshots from "../data/archive/fundamental_snapshots.json";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -88,73 +86,11 @@ const TICKER_COLORS: Record<string, string> = {
   SMGR: "#78716c", // Stone
 };
 
-// Archived: FUNDAMENTAL_SNAPSHOTS (18 tickers, 2018-2025) moved to src/data/archive/fundamental_snapshots.json
-// Used for dividend_per_share data via `fundamentalSnapshots` import
-
-// Build warehouse index: ticker -> period -> record
-interface WHRecord {
-  code: string; period: string;
-  assets: number | null; equity: number | null;
-  sales: number | null; profitAttrOwner: number | null;
-  eps: number | null; bookValue: number | null;
-  per: number | null; priceBV: number | null; deRatio: number | null;
-}
-const warehouseIndex: Record<string, Record<string, WHRecord>> = {};
-const whRaw = warehouseData as WHRecord[];
-for (const rec of whRaw) {
-  if (!warehouseIndex[rec.code]) warehouseIndex[rec.code] = {};
-  warehouseIndex[rec.code][rec.period] = rec;
-}
-
-function getLatestWarehousePeriod(ticker: string, date: Date): WHRecord | null {
-  const periods = warehouseIndex[ticker];
-  if (!periods) return null;
-  const ds = date.toISOString().split("T")[0];
-  let best: string | null = null;
-  for (const p of Object.keys(periods)) {
-    if (p <= ds && (!best || p > best)) best = p;
-  }
-  return best ? periods[best] : null;
-}
-
-function getPointInTimeFundamentals(ticker: string, date: Date) {
-  // Priority 1: IDX Warehouse — latest monthly snapshot before this date
-  const wh = getLatestWarehousePeriod(ticker, date);
-  if (wh) {
-    const { profitAttrOwner, equity, assets, sales, priceBV, per, deRatio } = wh;
-    const roe = equity && profitAttrOwner ? profitAttrOwner / equity : 0;
-    const pb = priceBV ?? 1.5;
-    const pe = per ?? 15;
-    const der = deRatio ?? 0.5;
-    const roa = assets && profitAttrOwner ? profitAttrOwner / assets : 0;
-    const net_margin = sales && profitAttrOwner ? profitAttrOwner / sales : 0;
-
-    // DPS from archive snapshots (18 tickers) — fallback 0 for rest
-    const snapTicker = (fundamentalSnapshots as any)[ticker];
-    let dividend_per_share = 0;
-    if (snapTicker) {
-      const currentYear = date.getFullYear();
-      const lagCutoff = new Date(currentYear, 2, 31);
-      let reportYear = currentYear - 1;
-      if (date.getTime() < lagCutoff.getTime()) reportYear = currentYear - 2;
-      if (reportYear < 1995) reportYear = 1995;
-      if (reportYear > 2025) reportYear = 2025;
-      dividend_per_share = snapTicker[String(reportYear)]?.dividend_per_share ?? 0;
-    }
-
-    return { year: date.getFullYear(), roe, pb, pe, der, roa, net_margin, dividend_per_share };
-  }
-
-  return { year: date.getFullYear(), roe: 0, pb: 1, pe: 15, der: 0.5, roa: 0, net_margin: 0, dividend_per_share: 0 };
-}
-
-const calcStdDev = (vals: number[]): number => {
-  if (vals.length < 2) return 0;
-  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-  const sqDiffs = vals.map(v => Math.pow(v - mean, 2));
-  const variance = sqDiffs.reduce((a, b) => a + b, 0) / (vals.length - 1);
-  return Math.sqrt(variance);
-};
+// NOTE: warehouseData (src/data/fundamental_idx_all.json, ~42MB) and 
+// fundamentalSnapshots are no longer imported here. Dividend data now
+// flows through the engine via setDividendCache() if needed.
+// Dead code (WHRecord, getPointInTimeFundamentals, getLatestWarehousePeriod,
+// calcStdDev) removed — backtest now uses runStrategy() from src/engine/.
 
 function generateClientBacktestData(): BacktestDayData[] {
   const tickers = STOCKS_DATA.map(s => s.ticker).filter(Boolean);
