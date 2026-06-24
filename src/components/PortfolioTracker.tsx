@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, useEffect, useRef } from "react";
+import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
 import { setActiveUniverse, setCrashSensitivity, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
@@ -10,6 +10,17 @@ import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { EX, getProcessedLeaders, MKT } from "../marketData";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
+import { useNotifications } from "../contexts/NotificationContext";
+import {
+  evaluateStrategy,
+  shouldTriggerExit,
+  rule_tickerOutOfTopN,
+  rule_crashProtectionTriggered,
+  rule_customUniverseBreach,
+  rule_singleModeTrigger,
+  getActiveUniverse,
+} from "../engine";
+import type { RuleContext } from "../engine";
 import {
   PieChart,
   Pie,
@@ -77,6 +88,7 @@ export function PortfolioTracker({
   const [isEditingCash, setIsEditingCash] = useState(false);
   const [editCashStr, setEditCashStr] = useState("");
   const { engineConfig, activeProfile } = useEngineConfig();
+  const notif = useNotifications();
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -158,6 +170,12 @@ export function PortfolioTracker({
     ihsgDrawdown60 !== null &&
     ihsgDrawdown60 <= -(engineConfig.crashSensitivity ?? 10);
 
+  const strategyEval = useMemo(() => evaluateStrategy(
+    engineConfig as any,
+    { ihsgPrice: MKT.ihsg.value, peak60: undefined },
+  ), [engineConfig.enableCrashProtection, engineConfig.crashSensitivity, engineConfig.simulationMode, engineConfig.safeHavenAsset, ihsgDrawdown60]);
+  const activeUniverse = useMemo(() => getActiveUniverse(engineConfig as any), [engineConfig]);
+
   const currentSelectedStock =
     visibleStocks.find((s) => s.ticker === selectedTicker) || visibleStocks[0];
 
@@ -209,6 +227,69 @@ export function PortfolioTracker({
     if (engineConfig.universe === "lq45") return cleanLq45.includes(rawTicker);
     return true;
   });
+
+  useEffect(() => {
+    const ruleCtx: Partial<RuleContext> = {
+      config: engineConfig as any,
+      topN: engineConfig.topNCount,
+      ihsgPrice: MKT.ihsg.value,
+      peak60: undefined,
+    };
+
+    if (engineConfig.enableCrashProtection) {
+      const crashResult = rule_crashProtectionTriggered({
+        ...ruleCtx as RuleContext,
+        ihsgPrice: MKT.ihsg.value,
+        peak60: undefined,
+      });
+      if (crashResult.triggered) {
+        notif.fireRule("crashProtectionTriggered", {
+          title: crashResult.title!,
+          message: crashResult.message!,
+          type: "error",
+        });
+      }
+    }
+
+    if (engineConfig.simulationMode === "custom") {
+      portfolio.forEach((item) => {
+        if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
+        const breachResult = rule_customUniverseBreach({
+          ...ruleCtx as RuleContext,
+          ticker: item.ticker,
+        });
+        if (breachResult.triggered) {
+          notif.fireRule(`customUniverseBreach_${item.ticker}`, {
+            title: breachResult.title!,
+            message: breachResult.message!,
+            type: "warning",
+          });
+        }
+      });
+    }
+
+    if (engineConfig.simulationMode === "algo") {
+      portfolio.forEach((item) => {
+        if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
+        const rankItem = processedLeaders.findIndex((l) => l.ticker === item.ticker) + 1;
+        if (rankItem > 0) {
+          const rankResult = rule_tickerOutOfTopN({
+            ...ruleCtx as RuleContext,
+            ticker: item.ticker,
+            currentRank: rankItem,
+            topN: engineConfig.topNCount,
+          });
+          if (rankResult.triggered) {
+            notif.fireRule(`tickerOutOfTopN_${item.ticker}`, {
+              title: rankResult.title!,
+              message: rankResult.message!,
+              type: "warning",
+            });
+          }
+        }
+      });
+    }
+  }, [engineConfig, portfolio, processedLeaders, notif]);
 
   const getStockRankAndScore = (ticker: string) => {
     const leaderIdx = processedLeaders.findIndex(
@@ -587,6 +668,30 @@ export function PortfolioTracker({
           </div>
         </div>
       </div>
+
+      {strategyEval.shouldExit && (
+        <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+          <div className="flex items-center gap-2 text-amber-400">
+            <AlertTriangle className="w-5 h-5 animate-pulse" />
+            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
+              Strategy Says: Exit ke {strategyEval.targetSafeHaven?.toUpperCase()}
+              <ExplainButton label="evaluateStrategy() — IHSG drop > crashSensitivity" />
+            </h3>
+          </div>
+          <p className="text-xs text-amber-200/70 font-sans max-w-3xl">
+            {strategyEval.reason}
+          </p>
+          <div className="flex gap-2 mt-2">
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
+              TARGET: {strategyEval.targetSafeHaven?.toUpperCase()}
+            </div>
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+              MODE: {engineConfig.simulationMode.toUpperCase()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {portfolioWarnings.length > 0 && (
         <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">

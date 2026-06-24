@@ -55,7 +55,7 @@ Update parent docs saat parent-level structure, ownership, workflow, atau child 
 ### Child DOX Index
 
 - `src/` — React UI components, hooks, contexts, engine, AI client, types, utils
-- `docs/` — AI Context Persistence System (project master, state, decisions, ADRs)
+- `docs/` — AI Context Persistence System (project master, state, decisions, ADRs, audit/ archive/)
 - `handover/` — session snapshots
 - `scripts/` — data pipeline scripts (fetch, build, split, scrape)
 - `collectors/` — data collectors (IDX fundamental, market data)
