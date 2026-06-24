@@ -191,7 +191,7 @@ export function SimulationTab({
     }
     return null;
   };
-  const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerRun, triggerBacktest, setBacktesting, setBacktestResult, syncFromBacktest } = useEngineConfig();
+  const { engineConfig, activeProfile, updateConfigValue, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest } = useEngineConfig();
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");
@@ -825,43 +825,7 @@ export function SimulationTab({
             </span>
           </div>
 
-          {/* Config row */}
-          <div className="flex items-center gap-2 pb-2 flex-wrap">
-            <button onClick={() => triggerBacktest()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors"
-              style={{ backgroundColor: 'rgba(0,201,165,0.12)', color: '#00c9a5' }}>
-              <Award className="w-3 h-3" />
-              Parameter
-            </button>
-            <div className="flex gap-0.5">
-              <button onClick={() => setActiveProfile("prod")}
-                className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.activeProfileId === "prod" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                F
-              </button>
-              <button onClick={() => setActiveProfile("res")}
-                className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.activeProfileId === "res" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                B
-              </button>
-            </div>
-            <button onClick={handleRunAlgoBacktest} disabled={isBacktesting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#00c9a5', color: '#fff' }}>
-              {isBacktesting ? "Running..." : "Jalankan"}
-            </button>
-            <span className="text-label font-mono font-medium uppercase tracking-wider flex items-center gap-2" style={{ color: '#5d6080' }}>
-              {engineConfig.simulationMode === "algo" ? (
-                <>Algo {engineConfig.topNCount} {engineConfig.universe.toUpperCase()}
-                  <span style={{ color: engineConfig.activeProfileId === "prod" ? '#00c9a5' : '#f59e0b', fontSize: '0.6rem' }} className="px-1.5 py-0.5 rounded bg-white/5">
-                    {engineConfig.activeProfileId === "prod"
-                      ? "Q25 G10 V30 M35"
-                      : "Q25 G30 V10 M35"}
-                  </span>
-                </>
-              ) : `Single ${engineConfig.singleTicker}`}
-            </span>
-          </div>
+
 
           {/* Sync to Portfolio Button */}
           <div className="flex justify-end pb-2">

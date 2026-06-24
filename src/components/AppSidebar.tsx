@@ -581,7 +581,7 @@ export function AppSidebar({
           <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
             <span className="text-label text-tertiary block">Mode</span>
             <div className="flex gap-1">
-              {([["algo","Algo"],["custom","Custom"],["single","Single"]] as const).map(([k, label]) => (
+              {([["algo","Algo"],["custom","Custom"]] as const).map(([k, label]) => (
                 <button key={k} onClick={() => updateConfigValue("simulationMode", k)}
                   className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
                   style={{ backgroundColor: engineConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
@@ -754,7 +754,7 @@ export function AppSidebar({
           </div>
           <div className="px-2 py-1.5 space-y-1.5">
             <div className="flex gap-1">
-              {([["algo","Algo"],["custom","Custom"],["single","Single"]] as const).map(([k, label]) => (
+              {([["algo","Algo"],["custom","Custom"]] as const).map(([k, label]) => (
                 <button key={k} onClick={() => updateConfigValue("simulationMode", k)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
                   style={{ backgroundColor: engineConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
@@ -765,37 +765,7 @@ export function AppSidebar({
           </div>
         </div>
 
-        {engineConfig.simulationMode === "single" ? (
-          <div className="mx-2">
-            <div className="px-2 py-1.5 border-b border-white/[0.04]">
-              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
-            </div>
-            <div className="px-2 py-1.5 space-y-1.5">
-              <input type="text" value={engineConfig.singleTicker}
-                onChange={e => updateConfigValue("singleTicker", e.target.value.toUpperCase())}
-                placeholder="BBCA"
-                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
-              <div>
-                <div className="flex justify-between text-label mb-1">
-                  <span className="text-tertiary">Jual Turun</span>
-                  <span className="text-accent">{engineConfig.singleSellTrigger}%</span>
-                </div>
-                <input type="range" min="1" max="25" value={engineConfig.singleSellTrigger}
-                  onChange={e => updateConfigValue("singleSellTrigger", Number(e.target.value))}
-                  className="w-full accent-emerald-500 h-1.5" />
-              </div>
-              <div>
-                <div className="flex justify-between text-label mb-1">
-                  <span className="text-tertiary">Beli Naik</span>
-                  <span className="text-accent">{engineConfig.singleBuyTrigger}%</span>
-                </div>
-                <input type="range" min="1" max="25" value={engineConfig.singleBuyTrigger}
-                  onChange={e => updateConfigValue("singleBuyTrigger", Number(e.target.value))}
-                  className="w-full accent-emerald-500 h-1.5" />
-              </div>
-            </div>
-          </div>
-        ) : (
+        {engineConfig.simulationMode === "algo" ? (
           <>
             <div className="mx-2">
               <div className="px-2 py-1 border-b border-white/[0.04]">
@@ -814,47 +784,22 @@ export function AppSidebar({
               </div>
             </div>
 
-            {engineConfig.simulationMode === "algo" ? (
-              <div className="mx-2">
-                <div className="px-2 py-1 border-b border-white/[0.04]">
-                  <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Universe</span>
-                </div>
-                <div className="px-2 py-2">
-                  <div className="flex gap-1 flex-wrap">
-                    {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
-                      <button key={k} onClick={() => updateConfigValue("universe", k)}
-                        className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                        style={{ backgroundColor: engineConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.universe === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+            <div className="mx-2">
+              <div className="px-2 py-1 border-b border-white/[0.04]">
+                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Universe</span>
+              </div>
+              <div className="px-2 py-2">
+                <div className="flex gap-1 flex-wrap">
+                  {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
+                    <button key={k} onClick={() => updateConfigValue("universe", k)}
+                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                      style={{ backgroundColor: engineConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.universe === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="mx-2">
-                <div className="px-2 py-1 border-b border-white/[0.04]">
-                  <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Custom Universe (Eksklusif)</span>
-                </div>
-                <div className="px-2 py-2 space-y-2">
-                  <input type="text" value={engineConfig.customUniverse?.join(",") || ""}
-                    onChange={e => updateConfigValue("customUniverse", e.target.value.split(",").map(t => t.trim().toUpperCase()).filter(Boolean))}
-                    placeholder="BBCA, BBRI, ADRO (pisahkan koma)"
-                    className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
-                  {engineConfig.customUniverse && engineConfig.customUniverse.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {engineConfig.customUniverse.map((t, i) => (
-                        <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
-                          #{t}
-                          <button onClick={() => updateConfigValue("customUniverse", engineConfig.customUniverse!.filter((_, idx) => idx !== i))}
-                            className="text-white/60 hover:text-white text-xs leading-none">×</button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            </div>
 
             <div className="mx-2">
               <div className="px-2 py-1 border-b border-white/[0.04]">
@@ -881,8 +826,10 @@ export function AppSidebar({
                 <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Custom Tickers (Forced)</span>
               </div>
               <div className="px-2 py-2 space-y-2">
-                <input type="text" value={engineConfig.customTickers?.join(",") || ""}
-                  onChange={e => updateConfigValue("customTickers", e.target.value.split(",").map(t => t.trim().toUpperCase()).filter(Boolean))}
+                <input type="text"
+                  defaultValue={engineConfig.customTickers?.join(", ") || ""}
+                  onBlur={e => updateConfigValue("customTickers", e.target.value.split(",").map(t => t.trim().toUpperCase()).filter(Boolean))}
+                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="BBCA, TLKM, ASII (pisahkan koma)"
                   className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
                 {engineConfig.customTickers && engineConfig.customTickers.length > 0 && (
@@ -899,6 +846,59 @@ export function AppSidebar({
               </div>
             </div>
           </>
+        ) : (
+          <div className="mx-2">
+            <div className="px-2 py-1.5 border-b border-white/[0.04]">
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
+            </div>
+            <div className="px-2 py-1.5 space-y-1.5">
+              <input type="text" value={engineConfig.singleTicker}
+                onChange={e => updateConfigValue("singleTicker", e.target.value.toUpperCase())}
+                placeholder="BBCA"
+                className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
+              <div>
+                <span className="text-label text-tertiary block mb-1">Custom Universe (Eksklusif)</span>
+                <input type="text"
+                  defaultValue={engineConfig.customUniverse?.join(", ") || ""}
+                  onBlur={e => {
+                    const val = e.target.value;
+                    updateConfigValue("customUniverse", val.trim() ? val.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : []);
+                  }}
+                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                  placeholder="BBCA, BBRI, ADRO (pisahkan koma)"
+                  className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
+                {engineConfig.customUniverse && engineConfig.customUniverse.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {engineConfig.customUniverse.map((t, i) => (
+                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
+                        #{t}
+                        <button onClick={() => updateConfigValue("customUniverse", engineConfig.customUniverse!.filter((_, idx) => idx !== i))}
+                          className="text-white/60 hover:text-white text-xs leading-none">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="flex justify-between text-label mb-1">
+                  <span className="text-tertiary">Jual Turun</span>
+                  <span className="text-accent">{engineConfig.singleSellTrigger}%</span>
+                </div>
+                <input type="range" min="1" max="25" value={engineConfig.singleSellTrigger}
+                  onChange={e => updateConfigValue("singleSellTrigger", Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-1.5" />
+              </div>
+              <div>
+                <div className="flex justify-between text-label mb-1">
+                  <span className="text-tertiary">Beli Naik</span>
+                  <span className="text-accent">{engineConfig.singleBuyTrigger}%</span>
+                </div>
+                <input type="range" min="1" max="25" value={engineConfig.singleBuyTrigger}
+                  onChange={e => updateConfigValue("singleBuyTrigger", Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-1.5" />
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="mx-2">
