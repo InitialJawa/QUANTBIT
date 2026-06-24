@@ -10,6 +10,8 @@
 export interface AILiveContext {
   config?: {
     activeConfig?: "prod" | "res";
+    activeProfileId?: string;
+    activeProfileName?: string;
     safeHavenAsset?: "emas" | "kas";
     topNCount?: number;
     reserveBufferPct?: number;
@@ -21,6 +23,15 @@ export interface AILiveContext {
     growthWeight?: number;
     valueWeight?: number;
     momentumWeight?: number;
+    customTickers?: string[];
+    lastBacktestProfile?: {
+      id: string;
+      name: string;
+      qualityWeight: number;
+      growthWeight: number;
+      valueWeight: number;
+      momentumWeight: number;
+    };
   };
   regime?: {
     status?: string;
@@ -71,9 +82,10 @@ export const SYSTEM_KNOWLEDGE: string = [
   "## 1. SKOR SAHAM (final_score, 0-100)",
   "final_score = quality*Wq + growth*Wg + value*Wv + momentum*Wm",
   "- quality/growth/value/momentum = 4 faktor per emiten (0-100).",
-  "- Bobot (W) tergantung 'Config' aktif:",
-  "  - prod (CW_F): quality 0.25 . growth 0.10 . value 0.30 . momentum 0.35",
-  "  - res  (CW_B): quality 0.25 . growth 0.30 . value 0.10 . momentum 0.35",
+  "- Bobot (W) tergantung 'Weight Profile' aktif. Sistem menyediakan:",
+  "  - 'prod' (default): quality 0.25 . growth 0.10 . value 0.30 . momentum 0.35 (Fundamental Focus)",
+  "  - 'res' (default):  quality 0.25 . growth 0.30 . value 0.10 . momentum 0.35 (Backtest Optimized)",
+  "  - User dapat membuat profile kustom dengan bobot bebas via UI Settings.",
   "  -> prod menekankan VALUE; res menekankan GROWTH.",
   "",
   "## 2. TREND IHSG (Moving Average)",
@@ -128,8 +140,9 @@ export const SYSTEM_KNOWLEDGE: string = [
   "  - RECOVERY_WATCH : 25 ; RISK_OFF : 15 ; lainnya : 0",
   "",
   "## 9. KNOB MESIN KUANTITATIF (Settings)",
-  "- activeConfig (prod/res) : set bobot skor (lihat 1).",
-  "- topNCount (default 5)   : maksimum emiten teratas yg dipilih/dipegang.",
+  "- Weight Profile (prod/res/kustom) : menentukan bobot quality/growth/value/momentum (lihat 1).",
+  "- activeConfig (prod/res)          : shorthand profile aktif (backward compat).",
+  "- topNCount (default 5)            : maksimum emiten teratas yg dipilih/dipegang.",
   "- reserveBufferPct (10%)  : cash yg selalu disisakan sbg buffer.",
   "- crashSensitivity (10%)  : ambang krisis IHSG bulanan (lihat 6).",
   "- safeHavenAsset (emas/kas): aset proteksi saat regime defensif.",
@@ -144,6 +157,18 @@ export const SYSTEM_KNOWLEDGE: string = [
   "- Sisa cash besar & regime defensif -> saran alokasi ke Safe Haven (emas).",
   "- Mode single -> bangun posisi 1 emiten dgn buffer reserveBufferPct.",
   "- Emiten kena Exit Ops (EXIT/EXIT RISK) -> saran kurangi/keluar.",
+  "",
+  "## 11. STRATEGY PROFILE EXPLANATION (untuk pertanyaan 'kenapa')",
+  "Saat user tanya 'kenapa beli X?' atau 'kenapa keluar dari Y?':",
+  "1. Identifikasi profile aktif (lihat ctx.config.activeProfileName).",
+  "2. Tunjukkan bobot profile (quality/growth/value/momentum).",
+  "3. Hitung skor emiten: quality*Wq + growth*Wg + value*Wv + momentum*Wm.",
+  "4. Jelaskan faktor dominan: jika qualityWeight tinggi, tekankan value/ROE/der;",
+  "   jika momentumWeight tinggi, tekankan RS_20d dan trend harga.",
+  "5. Untuk Custom Tickers: ini adalah 'forced holdings' yang selalu masuk portofolio",
+  "   meskipun tidak di Top N berdasarkan ranking.",
+  "6. Untuk Sync To Portfolio: jelaskan bahwa hasil backtest menggunakan profile",
+  "   yang sama, sehingga keputusan portofolio live = keputusan backtest.",
 ].join("\n");
 
 /** Instruksi perilaku: ringkas default, detail bila diminta. */
@@ -169,12 +194,22 @@ export function formatLiveContext(ctx?: AILiveContext): string {
   if (ctx.uiContext) lines.push(`Panel yang sedang dibuka user: ${ctx.uiContext}`);
   if (ctx.config) {
     const c = ctx.config;
+    const profileLabel = c.activeProfileName ? ` (${c.activeProfileName})` : "";
     lines.push(
-      `Config mesin: activeConfig=${c.activeConfig}, universe=${c.universe}, ` +
+      `Config mesin: activeConfig=${c.activeConfig}${profileLabel}, universe=${c.universe}, ` +
       `topN=${c.topNCount}, buffer=${c.reserveBufferPct}%, crashSens=${c.crashSensitivity}%, ` +
       `sellTrig=${c.singleSellTrigger}%, buyTrig=${c.singleBuyTrigger}%, ` +
       `bobot[Q/G/V/M]=${c.qualityWeight}/${c.growthWeight}/${c.valueWeight}/${c.momentumWeight}`
     );
+    if (c.customTickers && c.customTickers.length > 0) {
+      lines.push(`Custom tickers (forced holdings): ${c.customTickers.map(t => `#${t}`).join(", ")}`);
+    }
+    if (c.lastBacktestProfile) {
+      const p = c.lastBacktestProfile;
+      lines.push(
+        `Last backtest profile: ${p.name} (Q${Math.round(p.qualityWeight * 100)}/G${Math.round(p.growthWeight * 100)}/V${Math.round(p.valueWeight * 100)}/M${Math.round(p.momentumWeight * 100)})`
+      );
+    }
   }
   if (ctx.regime) {
     const r = ctx.regime;

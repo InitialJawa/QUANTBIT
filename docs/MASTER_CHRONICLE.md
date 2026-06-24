@@ -130,3 +130,69 @@
 - RTI/Stockbit — backfill 2015-2020 only
 - Arsitektur fundamental diubah total: IDX API → warehouse_fundamental_idx → Factor Engine
 - Bottleneck utama QuantBit (fundamental data sourcing) resmi terpecahkan
+
+## 2026-06-24 — Weight Profile System (Portfolio-Centric Architecture Phase 1)
+**Latar Belakang:** Sebelumnya EngineConfigContext punya `activeConfig: "prod" | "res"` dengan bobot hardcoded. Setiap toggle Config F/B clobber weights. Tidak ada dukungan profile kustom.
+**Implementasi:**
+- **EngineConfigContext** di-rewrite dengan `profiles[]` + `WeightProfile` interface + CRUD ops
+- **Backward compat:** `activeConfig` computed getter tetap ada, API lama tetap jalan
+- **Default profiles:** `"prod"` (Fundamental Focus) dan `"res"` (Backtest Optimized)
+- **Profile selector** di AppSidebar — dynamic buttons dari profiles[]
+- **ManageProfilesModal** — weight sliders (quality/growth/value/momentum 0-100%), add/delete custom
+- **ConfigSync bridge** di App.tsx — bidirectional sync useUIState ↔ EngineConfigContext
+- **Runtime re-ranking** di SimulationTab — compute ranks dari stockNormScores + profile weights
+- **Data pipeline:** fetch_historical_data.ts sekarang output `stockRawMetrics` + `stockNormScores` ke JSON dan SQLite
+- **Server API:** server.ts + CF function pass through stockRawMetrics/stockNormScores
+- **Market layer:** getProcessedLeaders, marketRegimeEngine accept weight objects
+- **AI layer:** systemKnowledge + aiClient profile-aware
+- **Files changed:** 15 files, `npm run lint` clean
+
+## 2026-06-24 — Strategy Sync Engine PRD-009 (All 7 Phases Complete)
+**Latar Belakang:** BacktestContext duplikasi config dengan EngineConfigContext, ~600 lines inline backtest logic di SimulationTab sulit maintain. Tidak ada single source of truth untuk strategy decisions across modules (Backtest, Portfolio, Market, Notification, AI).
+
+**Phase 1 — Context Consolidation:**
+- EngineConfigContext = single source of truth, deleted BacktestContext.tsx
+- All consumers updated: AppSidebar, SimulationTab, PortfolioTracker
+- BacktestContext.tsx dihapus setelah 100+ `bt.xxx` references dimigrate
+
+**Phase 2 — Core Engine (`src/engine/`):**
+- Created pure functions (no React dependencies):
+  - `types.ts` — All shared interfaces
+  - `ranker.ts` — `computeDayRankings()`, `pickTopTickersByRank()`, `getCleanTickerList()`
+  - `crashDetector.ts` — `detectCrashAlgo()`, `detectCrashSingle()`, `detectRecoveryAlgo()`, `detectRecoverySingle()`
+  - `allocator.ts` — `computeInitialAllocation()`, `liquidateHoldings()`, `computeGoldPurchase()`, etc.
+  - `metrics.ts` — `computeMetrics()`, `calcStdDev()`
+  - `core.ts` — `runStrategy()` main pure function
+  - `index.ts` — Re-exports
+
+**Phase 3 — SimulationTab Refactoring:**
+- 600+ lines inline backtest replaced with single `runStrategy()` call
+- Custom Tickers UI: comma-separated input + chip display (forced holdings)
+- Crash sensitivity: number input → slider (5-30% range)
+- Strategy Profile card showing active profile name, weights, custom tickers
+
+**Phase 4 — Sync To Portfolio:**
+- Added `lastBacktestProfile` state di EngineConfigContext
+- "SYNC TO PORTFOLIO" button di SimulationTab
+- Console.log feedback untuk sync actions
+
+**Phase 5 — Portfolio Refactor:**
+- Removed dependency on `marketRegimeEngine.setActiveConfig`
+- Added "Active Strategy" banner di PortfolioTracker
+- Replaced `activeConfig` reader dengan `engineConfig.activeProfile` directly
+
+**Phase 6 — Market/Notification Integration:**
+- MarketTab filter — tampilkan hanya `customTickers` jika ada
+- Created `NotificationContext` (NotificationProvider, useNotifications, rule engine)
+- Rules: ticker out of topN, crash protection, regime change
+- NotificationProvider added to App.tsx
+
+**Phase 7 — AI Integration:**
+- Updated `systemKnowledge.ts` — strategy explanation prompt section (Section 11)
+- Updated `buildLiveContext()` — kirim full strategy profile + customTickers + lastBacktestProfile
+- AI sekarang bisa explain "kenapa beli ADRO?" dengan engine reference
+- Added formatLiveContext updates untuk menampilkan custom tickers dan last backtest profile
+
+**Files changed:** 20+ files, `npm run lint` clean
+**ADR created:** docs/ADR-007.md — Strategy Sync Engine Architecture
+**Task doc:** docs/TASK_STRATEGY_SYNC_ENGINE.md — Complete task list dengan ✅ status

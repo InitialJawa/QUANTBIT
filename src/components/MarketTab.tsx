@@ -27,6 +27,7 @@ import {
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
+import { useEngineConfig } from "../contexts/EngineConfigContext";
 
 interface MarketTabProps {
   onSelectTicker: (ticker: string) => void;
@@ -56,7 +57,11 @@ export function MarketTab({
   filteredStocks
 }: MarketTabProps) {
   const [marketSubTab, setMarketSubTab] = useState<"overview" | "charts" | "watchlist">("overview");
-  const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
+  const { engineConfig } = useEngineConfig();
+  const allVisibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
+  const visibleStocks = engineConfig.customTickers && engineConfig.customTickers.length > 0
+    ? allVisibleStocks.filter(s => engineConfig.customTickers!.includes(s.ticker))
+    : allVisibleStocks;
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
   const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);

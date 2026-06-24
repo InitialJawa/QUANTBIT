@@ -36,6 +36,14 @@ daily/
 hourly/
 minutes/
 
+# Debug scripts and temporary files
+debug_*.cjs
+idx_api_investigate.cjs
+idx_html_extract.cjs
+audit_idx_api.py
+idx_bundles/
+idx_page.html
+
 
 # InsForge & AI agent skills
 .insforge

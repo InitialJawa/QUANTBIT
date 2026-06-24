@@ -36,11 +36,18 @@ app.get("/api/backtest-data", (req, res) => {
       stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
       stockRanksProd: day.stockRanksProd,
       stockRanksRes: day.stockRanksRes,
+      stockRawMetrics: day.stockRawMetrics ?? null,
+      stockNormScores: day.stockNormScores ?? null,
     }));
-    const weights = configType === "prod"
-      ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
-      : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
-    res.json({ success: true, count: data.length, configType, weights, data });
+    const defaultWeights = {
+      prod: { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 },
+      res: { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 },
+    };
+    res.json({
+      success: true, count: data.length, configType,
+      weights: defaultWeights,
+      data,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

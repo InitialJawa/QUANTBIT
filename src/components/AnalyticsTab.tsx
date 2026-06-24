@@ -4,6 +4,7 @@ import { LeadersTab } from "./LeadersTab";
 import { RecoveryOpsTab } from "./RecoveryOpsTab";
 import { CapitalProtectionTab } from "./CapitalProtectionTab";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
+import { useEngineConfig } from "../contexts/EngineConfigContext";
 
 type SubTab = "leaders" | "recovery" | "risk";
 
@@ -23,6 +24,7 @@ const SUB_TABS = [
 ];
 
 export function AnalyticsTab({ activeConfig, onSelectTicker, portfolio, watchlist, getDynamicStock, isIHSGInCrisis }: AnalyticsTabProps) {
+  const { activeProfile } = useEngineConfig();
   const [subTab, setSubTab] = useState<SubTab>("leaders");
 
   return (
@@ -47,6 +49,7 @@ export function AnalyticsTab({ activeConfig, onSelectTicker, portfolio, watchlis
         {subTab === "leaders" && (
           <LeadersTab
             activeConfig={activeConfig}
+            activeProfile={activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : null}
             onSelectTicker={onSelectTicker}
             portfolio={portfolio}
             watchlist={watchlist}

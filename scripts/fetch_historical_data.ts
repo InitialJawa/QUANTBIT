@@ -483,6 +483,9 @@ async function main() {
     const minG = Math.min(...gs), maxG = Math.max(...gs);
     const minM = Math.min(...ms), maxM = Math.max(...ms);
 
+    const stockRawMetrics: Record<string, { qROE: number; vPB: number; gROEChg: number; mReturn: number }> = {};
+    const stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number }> = {};
+
     for (const ticker of tickersToScore) {
       const r = rawMetrics[ticker];
 
@@ -490,6 +493,9 @@ async function main() {
       const normV = maxV > minV ? 40 + 55 * (r.vPB - minV) / (maxV - minV) : 67.5;
       const normG = maxG > minG ? 40 + 55 * (r.gROEChg - minG) / (maxG - minG) : 67.5;
       const normM = maxM > minM ? 40 + 55 * (r.mReturn - minM) / (maxM - minM) : 67.5;
+
+      stockRawMetrics[ticker] = r;
+      stockNormScores[ticker] = { quality: normQ, growth: normG, value: normV, momentum: normM };
 
       // Composite Config F (Prod): weights = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
       const scoreProd = normQ * 0.25 + normG * 0.10 + normV * 0.30 + normM * 0.35;
@@ -534,7 +540,9 @@ async function main() {
       stockHighs,
       stockLows,
       stockRanksProd, // point-in-time Config F
-      stockRanksRes   // point-in-time Config B
+      stockRanksRes,  // point-in-time Config B
+      stockRawMetrics, // raw pre-normalization metrics (qROE, vPB, gROEChg, mReturn)
+      stockNormScores  // normalized scores (quality, growth, value, momentum) for runtime re-ranking
     });
   }
 
@@ -566,15 +574,18 @@ async function main() {
       stockOpens     TEXT,
       stockHighs     TEXT,
       stockLows      TEXT,
-      stockRanksProd TEXT,
-      stockRanksRes  TEXT
+      stockRanksProd  TEXT,
+      stockRanksRes   TEXT,
+      stockRawMetrics TEXT,
+      stockNormScores TEXT
     )
   `);
   const insert = db.prepare(`
     INSERT OR REPLACE INTO daily_market
       (date, ihsgPrice, goldPrice, usdidrRate, stockPrices, stockAdjPrices, stockVolumes,
-       stockOpens, stockHighs, stockLows, stockRanksProd, stockRanksRes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       stockOpens, stockHighs, stockLows, stockRanksProd, stockRanksRes,
+       stockRawMetrics, stockNormScores)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const transaction = db.transaction((rows: typeof rowList) => {
     for (const row of rows) {
@@ -583,7 +594,8 @@ async function main() {
         JSON.stringify(row.stockPrices ?? {}), JSON.stringify(row.stockAdjPrices ?? {}),
         JSON.stringify(row.stockVolumes ?? {}), JSON.stringify(row.stockOpens ?? {}),
         JSON.stringify(row.stockHighs ?? {}), JSON.stringify(row.stockLows ?? {}),
-        JSON.stringify(row.stockRanksProd ?? {}), JSON.stringify(row.stockRanksRes ?? {})
+        JSON.stringify(row.stockRanksProd ?? {}), JSON.stringify(row.stockRanksRes ?? {}),
+        JSON.stringify(row.stockRawMetrics ?? {}), JSON.stringify(row.stockNormScores ?? {})
       );
     }
   });

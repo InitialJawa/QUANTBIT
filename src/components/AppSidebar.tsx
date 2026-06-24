@@ -5,7 +5,7 @@ import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD } from "../marketRegimeEngine";
 import type { PortfolioItem, StockData } from "../types";
 import { useState, useMemo } from "react";
-import { useBacktest } from "../contexts/BacktestContext";
+import { ManageProfilesModal } from "./ManageProfilesModal";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { ExplainButton } from "./ExplainButton";
 
@@ -62,6 +62,7 @@ export function AppSidebar({
   getDynamicStock,
 }: AppSidebarProps) {
   const isIHSGInCrisis = MKT.ihsg.monthly < -10;
+  const [showProfileManager, setShowProfileManager] = useState(false);
 
   const totalInvestment = portfolio.reduce((sum, p) => sum + p.shares * p.buyPrice, 0);
   const totalCurrentValue = portfolio.reduce((sum, p) => {
@@ -562,7 +563,7 @@ export function AppSidebar({
   };
 
   function EngineConfigSidebarContent() {
-    const { engineConfig, updateConfigValue, isSettingsLocked, setIsSettingsLocked } = useEngineConfig();
+    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked } = useEngineConfig();
     return (
       <div className="px-2 py-2 space-y-3">
         <div className="flex items-center justify-between">
@@ -622,18 +623,24 @@ export function AppSidebar({
           <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
             <div>
               <span className="text-label text-tertiary block mb-1">Konfigurasi</span>
-              <div className="flex gap-1">
-                <button onClick={() => updateConfigValue("activeConfig", "prod")}
-                  className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.activeConfig === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeConfig === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Config F
-                </button>
-                <button onClick={() => updateConfigValue("activeConfig", "res")}
-                  className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.activeConfig === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeConfig === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Config B
-                </button>
+              <div className="flex gap-1 flex-wrap">
+                {engineConfig.profiles.map(p => (
+                  <button key={p.id} onClick={() => setActiveProfile(p.id)}
+                    className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
+                    style={{ backgroundColor: engineConfig.activeProfileId === p.id ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === p.id ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    {p.name.length > 15 ? p.id.toUpperCase() : p.name}
+                  </button>
+                ))}
               </div>
+              {engineConfig.profiles.length > 2 && (
+                <div className="mt-1 text-caption text-tertiary">
+                  Aktif: <span className="text-accent">{activeProfile.name}</span>
+                </div>
+              )}
+              <button onClick={() => setShowProfileManager(true)}
+                className="mt-1 text-caption text-emerald-500/60 hover:text-emerald-400 transition-colors cursor-pointer">
+                Edit Profiles
+              </button>
             </div>
             <div>
               <span className="text-label text-tertiary block mb-1">Universe</span>
@@ -718,11 +725,11 @@ export function AppSidebar({
                 style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
               </button>
-              <input type="number" min="1" max="99" value={engineConfig.crashSensitivity ?? 10}
-                onChange={e => updateConfigValue("crashSensitivity", Math.max(1, Math.min(99, Number(e.target.value) || 10)))}
+              <input type="range" min="5" max="30" step="1" value={engineConfig.crashSensitivity ?? 10}
+                onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
                 disabled={engineConfig.enableCrashProtection === false}
-                className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
-              <span className="text-caption text-tertiary ml-1">%</span>
+                className="flex-1 accent-emerald-500 h-1.5" />
+              <span className="text-caption text-tertiary ml-1">{engineConfig.crashSensitivity ?? 10}%</span>
             </div>
           </div>
           <div>
@@ -740,7 +747,7 @@ export function AppSidebar({
   }
 
   const renderBacktestContent = () => {
-    const bt = useBacktest();
+    const { engineConfig, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerBacktest } = useEngineConfig();
     return (
       <>
         <div className="mx-2">
@@ -750,21 +757,21 @@ export function AppSidebar({
           </div>
           <div className="px-2 py-1.5 space-y-1.5">
             <div className="flex gap-1">
-              <button onClick={() => bt.setSimulationMode("algo")}
+              <button onClick={() => updateConfigValue("simulationMode", "algo")}
                 className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.simulationMode === "algo" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "algo" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "algo" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ backgroundColor: engineConfig.simulationMode === "algo" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === "algo" ? '#00c9a5' : '#7a7a7a', border: engineConfig.simulationMode === "algo" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                 Algo
               </button>
-              <button onClick={() => bt.setSimulationMode("single")}
+              <button onClick={() => updateConfigValue("simulationMode", "single")}
                 className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.simulationMode === "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simulationMode === "single" ? '#00c9a5' : '#7a7a7a', border: bt.simulationMode === "single" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ backgroundColor: engineConfig.simulationMode === "single" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === "single" ? '#00c9a5' : '#7a7a7a', border: engineConfig.simulationMode === "single" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                 Single
               </button>
             </div>
           </div>
         </div>
 
-        {bt.simulationMode === "algo" ? (
+        {engineConfig.simulationMode === "algo" ? (
           <>
             <div className="mx-2">
               <div className="px-2 py-1 border-b border-white/[0.04]">
@@ -772,10 +779,10 @@ export function AppSidebar({
               </div>
               <div className="px-2 py-2">
                 <div className="flex gap-1">
-                  {[1, 3, 5].map((n) => (
-                    <button key={n} onClick={() => bt.setNumStocks(n as 1|3|5)}
+                  {[1, 3, 5, 10].map((n) => (
+                    <button key={n} onClick={() => updateConfigValue("topNCount", n)}
                       className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: bt.numStocks === n ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.numStocks === n ? '#00c9a5' : '#7a7a7a', border: bt.numStocks === n ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      style={{ backgroundColor: engineConfig.topNCount === n ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.topNCount === n ? '#00c9a5' : '#7a7a7a', border: engineConfig.topNCount === n ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                       Top {n}
                     </button>
                   ))}
@@ -790,9 +797,9 @@ export function AppSidebar({
               <div className="px-2 py-2">
                 <div className="flex gap-1 flex-wrap">
                   {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => bt.setSimUniverse(k)}
+                    <button key={k} onClick={() => updateConfigValue("universe", k)}
                       className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: bt.simUniverse === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.simUniverse === k ? '#00c9a5' : '#7a7a7a', border: bt.simUniverse === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      style={{ backgroundColor: engineConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.universe === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                       {label}
                     </button>
                   ))}
@@ -806,17 +813,40 @@ export function AppSidebar({
               </div>
               <div className="px-2 py-2">
                 <div className="flex gap-1">
-                  <button onClick={() => bt.setBacktestConfigType("prod")}
+                  <button onClick={() => setActiveProfile("prod")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                    style={{ backgroundColor: engineConfig.activeProfileId === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "prod" ? '#00c9a5' : '#7a7a7a', border: engineConfig.activeProfileId === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                     Config F
                   </button>
-                  <button onClick={() => bt.setBacktestConfigType("res")}
+                  <button onClick={() => setActiveProfile("res")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: bt.backtestConfigType === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "res" ? '#00c9a5' : '#7a7a7a', border: bt.backtestConfigType === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                    style={{ backgroundColor: engineConfig.activeProfileId === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "res" ? '#00c9a5' : '#7a7a7a', border: engineConfig.activeProfileId === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                     Config B
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <div className="mx-2">
+              <div className="px-2 py-1 border-b border-white/[0.04]">
+                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Custom Tickers (Forced)</span>
+              </div>
+              <div className="px-2 py-2 space-y-2">
+                <input type="text" value={engineConfig.customTickers?.join(",") || ""}
+                  onChange={e => updateConfigValue("customTickers", e.target.value.split(",").map(t => t.trim().toUpperCase()).filter(Boolean))}
+                  placeholder="BBCA, TLKM, ASII (pisahkan koma)"
+                  className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
+                {engineConfig.customTickers && engineConfig.customTickers.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {engineConfig.customTickers.map((t, i) => (
+                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        #{t}
+                        <button onClick={() => updateConfigValue("customTickers", engineConfig.customTickers!.filter((_, idx) => idx !== i))}
+                          className="text-white/60 hover:text-white text-xs leading-none">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -826,26 +856,26 @@ export function AppSidebar({
               <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
             </div>
             <div className="px-2 py-1.5 space-y-1.5">
-              <input type="text" value={bt.simTicker}
-                onChange={e => bt.setSimTicker(e.target.value.toUpperCase())}
+              <input type="text" value={engineConfig.singleTicker}
+                onChange={e => updateConfigValue("singleTicker", e.target.value.toUpperCase())}
                 placeholder="BBCA"
                 className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded-md outline-none text-white font-mono" />
               <div>
                 <div className="flex justify-between text-label mb-1">
                   <span className="text-tertiary">Jual Turun</span>
-                  <span className="text-accent">{bt.singleSellTrigger}%</span>
+                  <span className="text-accent">{engineConfig.singleSellTrigger}%</span>
                 </div>
-                <input type="range" min="1" max="25" value={bt.singleSellTrigger}
-                  onChange={e => bt.setSingleSellTrigger(Number(e.target.value))}
+                <input type="range" min="1" max="25" value={engineConfig.singleSellTrigger}
+                  onChange={e => updateConfigValue("singleSellTrigger", Number(e.target.value))}
                   className="w-full accent-emerald-500 h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between text-label mb-1">
                   <span className="text-tertiary">Beli Naik</span>
-                  <span className="text-accent">{bt.singleBuyTrigger}%</span>
+                  <span className="text-accent">{engineConfig.singleBuyTrigger}%</span>
                 </div>
-                <input type="range" min="1" max="25" value={bt.singleBuyTrigger}
-                  onChange={e => bt.setSingleBuyTrigger(Number(e.target.value))}
+                <input type="range" min="1" max="25" value={engineConfig.singleBuyTrigger}
+                  onChange={e => updateConfigValue("singleBuyTrigger", Number(e.target.value))}
                   className="w-full accent-emerald-500 h-1.5" />
               </div>
             </div>
@@ -861,28 +891,28 @@ export function AppSidebar({
             <div className="grid grid-cols-2 gap-1.5">
               <div>
                 <label className="text-label text-tertiary block mb-0.5">Mulai</label>
-                <input type="date" value={bt.simStartDate} min="2000-01-03" max={bt.simEndDate}
-                  onChange={e => bt.setSimStartDate(e.target.value)}
+                <input type="date" value={engineConfig.simStartDate} min="2000-01-03" max={engineConfig.simEndDate}
+                  onChange={e => updateConfigValue("simStartDate", e.target.value)}
                   className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               </div>
               <div>
                 <label className="text-label text-tertiary block mb-0.5">Sampai</label>
-                <input type="date" value={bt.simEndDate} min={bt.simStartDate} max={bt.todayWIBStr}
-                  onChange={e => bt.setSimEndDate(e.target.value)}
+                <input type="date" value={engineConfig.simEndDate} min={engineConfig.simStartDate} max={todayWIBStr}
+                  onChange={e => updateConfigValue("simEndDate", e.target.value)}
                   className="w-full text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               </div>
             </div>
             <div>
               <label className="text-label text-tertiary block mb-1">Modal (IDR)</label>
-              <input type="text" value={bt.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                onChange={e => bt.setAlgoCapital(e.target.value.replace(/[^0-9]/g, ""))}
+              <input type="text" value={engineConfig.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                onChange={e => updateConfigValue("algoCapital", e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="Rp 100.000.000"
                 className="w-full text-caption p-1.5 bg-black border border-white/[0.08] rounded outline-none text-white font-mono" />
               <div className="flex gap-1 mt-1">
                 {["10000000", "50000000", "100000000"].map((preset) => (
-                  <button key={preset} onClick={() => bt.setAlgoCapital(preset)}
+                  <button key={preset} onClick={() => updateConfigValue("algoCapital", preset)}
                     className={`text-label px-1.5 py-0.5 font-medium rounded transition-colors cursor-pointer ${
-                      bt.algoCapital === preset
+                      engineConfig.algoCapital === preset
                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                         : "bg-white/5 border border-white/[0.06] text-tertiary hover:text-secondary"
                     }`}>
@@ -903,14 +933,14 @@ export function AppSidebar({
             <div>
               <span className="text-label text-tertiary block mb-1">Rotasi Saham</span>
               <div className="flex gap-1">
-                <button onClick={() => bt.setEnableCrossover(true)}
+                <button onClick={() => updateConfigValue("enableCrossover", true)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: bt.enableCrossover ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrossover ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ backgroundColor: engineConfig.enableCrossover ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrossover ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Rank &lt; 7
                 </button>
-                <button onClick={() => bt.setEnableCrossover(false)}
+                <button onClick={() => updateConfigValue("enableCrossover", false)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: !bt.enableCrossover ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: !bt.enableCrossover ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ backgroundColor: !engineConfig.enableCrossover ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: !engineConfig.enableCrossover ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Tanpa
                 </button>
               </div>
@@ -919,30 +949,30 @@ export function AppSidebar({
             <div>
               <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
               <div className="flex gap-1 items-center">
-                <button onClick={() => bt.setEnableCrashProtection(!bt.enableCrashProtection)}
+                <button onClick={() => updateConfigValue("enableCrashProtection", !engineConfig.enableCrashProtection)}
                   className="px-2 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: bt.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {bt.enableCrashProtection ? "ON" : "OFF"}
+                  style={{ backgroundColor: engineConfig.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {engineConfig.enableCrashProtection ? "ON" : "OFF"}
                 </button>
-                <input type="number" min="1" max="99" value={bt.crashSensitivity}
-                  onChange={e => bt.setCrashSensitivity(Math.max(1, Math.min(99, Number(e.target.value) || 5)))}
-                  disabled={!bt.enableCrashProtection}
-                  className="flex-1 text-caption p-1 bg-black border border-white/[0.08] rounded outline-none text-white disabled:opacity-40 text-center" />
-                <span className="text-caption text-tertiary ml-1">%</span>
+                <input type="range" min="5" max="30" step="1" value={engineConfig.crashSensitivity}
+                  onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
+                  disabled={!engineConfig.enableCrashProtection}
+                  className="flex-1 accent-emerald-500 h-1.5" />
+                <span className="text-caption text-tertiary ml-1">{engineConfig.crashSensitivity}%</span>
               </div>
             </div>
 
             <div>
               <span className="text-label text-tertiary block mb-1">Safe Haven</span>
               <div className="flex gap-1">
-                <button onClick={() => bt.setSafeHavenAsset("emas")} disabled={!bt.enableCrashProtection}
+                <button onClick={() => updateConfigValue("safeHavenAsset", "emas")} disabled={!engineConfig.enableCrashProtection}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: bt.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ backgroundColor: engineConfig.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Emas
                 </button>
-                <button onClick={() => bt.setSafeHavenAsset("kas")} disabled={!bt.enableCrashProtection}
+                <button onClick={() => updateConfigValue("safeHavenAsset", "kas")} disabled={!engineConfig.enableCrashProtection}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: bt.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: bt.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ backgroundColor: engineConfig.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                   Kas
                 </button>
               </div>
@@ -951,10 +981,10 @@ export function AppSidebar({
             <div>
               <div className="flex justify-between text-label mb-1">
                 <span className="text-tertiary">Buffer Kas</span>
-                <span className="text-accent">{bt.reserveBufferPct}%</span>
+                <span className="text-accent">{engineConfig.reserveBufferPct}%</span>
               </div>
-              <input type="range" min="0" max="30" step="5" value={bt.reserveBufferPct}
-                onChange={e => bt.setReserveBufferPct(Number(e.target.value))}
+              <input type="range" min="0" max="30" step="5" value={engineConfig.reserveBufferPct}
+                onChange={e => updateConfigValue("reserveBufferPct", Number(e.target.value))}
                 className="w-full accent-emerald-500 h-1.5" />
             </div>
           </div>
@@ -966,13 +996,13 @@ export function AppSidebar({
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Eksekusi</span>
           </div>
           <div className="px-2 py-2 space-y-2">
-            <button onClick={() => bt.triggerBacktest()}
-              disabled={bt.isBacktesting}
+            <button onClick={() => triggerBacktest()}
+              disabled={isBacktesting}
               className="w-full py-1.5 text-caption font-bold rounded-md transition-opacity cursor-pointer disabled:opacity-50"
               style={{ backgroundColor: '#00c9a5', color: '#000' }}>
-              {bt.isBacktesting ? "Memproses..." : "Jalankan Backtest"}
+              {isBacktesting ? "Memproses..." : "Jalankan Backtest"}
             </button>
-            {bt.backtestResult && (
+            {backtestResult && (
               <button onClick={() => document.dispatchEvent(new CustomEvent("download-csv-backtest"))}
                 className="w-full py-1.5 text-caption font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#b0b0b0', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1041,6 +1071,7 @@ export function AppSidebar({
           </>
         )}
       </aside>
+      {showProfileManager && <ManageProfilesModal onClose={() => setShowProfileManager(false)} />}
     </>
   );
 }

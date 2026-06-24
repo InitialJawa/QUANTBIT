@@ -329,8 +329,10 @@ export function getScanData() {
   return scanDataCache;
 }
 
-export function getProcessedLeaders(activeStocksList: any[], activeConfig: "prod" | "res") {
-  const weights = activeConfig === "prod" ? CW_F : CW_B;
+export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "res" | { quality: number; growth: number; value: number; momentum: number }) {
+  const weights = typeof config === "string"
+    ? (config === "prod" ? CW_F : CW_B)
+    : config;
 
   const dynamicL = activeStocksList.map((s, idx) => {
     // Prefer scan data over hardcoded L for score factors

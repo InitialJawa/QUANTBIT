@@ -22,10 +22,11 @@ import {
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
+import { runStrategy } from "../engine";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { getSession, api } from "../services/api";
-import { useBacktest } from "../contexts/BacktestContext";
+import { useEngineConfig } from "../contexts/EngineConfigContext";
 import warehouseData from "../data/fundamental_idx_all.json";
 import fundamentalSnapshots from "../data/archive/fundamental_snapshots.json";
 
@@ -249,13 +250,13 @@ export function SimulationTab({
     if (day === 0 || day === 6) return "weekend";
     const exists = historicalData.some(d => d.date === dateStr);
     if (!exists) {
-      if (dateStr >= "2021-01-04" && dateStr <= bt.todayWIBStr) {
+      if (dateStr >= "2021-01-04" && dateStr <= todayWIBStr) {
         return "holiday";
       }
     }
     return null;
   };
-  const bt = useBacktest();
+  const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerRun, triggerBacktest, setBacktesting, setBacktestResult } = useEngineConfig();
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");
@@ -275,8 +276,8 @@ export function SimulationTab({
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
 
   const rankChartData = useMemo(() => {
-    if (!bt.backtestResult || !bt.backtestResult.chartData) return [];
-    return bt.backtestResult.chartData.map((item: any) => {
+    if (!backtestResult || !backtestResult.chartData) return [];
+    return backtestResult.chartData.map((item: any) => {
       const flatItem: any = {
         date: item.date,
       };
@@ -287,10 +288,10 @@ export function SimulationTab({
       }
       return flatItem;
     });
-  }, [bt.backtestResult]);
+  }, [backtestResult]);
   
   useEffect(() => {
-    bt.setBacktestConfigType(activeConfig);
+    setActiveProfile(activeConfig);
   }, [activeConfig]);
 
   // Sync spot pricing when ledger ticker selection shifts
@@ -304,24 +305,24 @@ export function SimulationTab({
 
   // Safe parse clean capital
   const simCapital = useMemo(() => {
-    const parsed = parseInt(bt.algoCapital.replace(/[^0-9]/g, "")) || 0;
+    const parsed = parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 0;
     return parsed > 0 ? parsed : 10000000;
-  }, [bt.algoCapital]);
+  }, [engineConfig.algoCapital]);
 
-  const activeStock = useMemo(() => getDynamicStock(bt.simTicker) || getDynamicStock("BBCA"), [bt.simTicker, getDynamicStock]);
+  const activeStock = useMemo(() => getDynamicStock(engineConfig.singleTicker) || getDynamicStock("BBCA"), [engineConfig.singleTicker, getDynamicStock]);
 
   const simPrices = useMemo(() => {
     if (historicalData.length === 0) {
       return { startPrice: 0, endPrice: 0, years: 0 };
     }
-    const cleanTicker = bt.simTicker.toUpperCase().replace(".JK", "");
+    const cleanTicker = engineConfig.singleTicker.toUpperCase().replace(".JK", "");
     
-    let startIndex = historicalData.findIndex(d => d.date >= bt.simStartDate);
+    let startIndex = historicalData.findIndex(d => d.date >= engineConfig.simStartDate);
     if (startIndex === -1) startIndex = 0;
     
-    let endIndex = historicalData.findIndex(d => d.date >= bt.simEndDate);
+    let endIndex = historicalData.findIndex(d => d.date >= engineConfig.simEndDate);
     if (endIndex === -1) endIndex = historicalData.length - 1;
-    if (historicalData[endIndex] && historicalData[endIndex].date > bt.simEndDate && endIndex > 0) endIndex--;
+    if (historicalData[endIndex] && historicalData[endIndex].date > engineConfig.simEndDate && endIndex > 0) endIndex--;
 
     const startRaw = historicalData[startIndex] as any;
     const endRaw = historicalData[endIndex] as any;
@@ -334,7 +335,7 @@ export function SimulationTab({
       endPrice: Math.round(ePrice),
       years: Math.max(0.1, (Date.parse(endRaw?.date) - Date.parse(startRaw?.date)) / (1000*60*60*24*365.25))
     };
-  }, [historicalData, bt.simTicker, bt.simStartDate, bt.simEndDate, activeStock.currentPrice]);
+  }, [historicalData, engineConfig.singleTicker, engineConfig.simStartDate, engineConfig.simEndDate, activeStock.currentPrice]);
   
   const startPrice = simPrices.startPrice;
 
@@ -376,7 +377,7 @@ export function SimulationTab({
   const simulatorChartData = useMemo(() => {
     const steps = 6;
     const data = [];
-    const ticker = bt.simTicker;
+    const ticker = engineConfig.singleTicker;
     const finalPrice = simPrices.endPrice;
 
     for (let i = 0; i <= steps; i++) {
@@ -413,7 +414,7 @@ export function SimulationTab({
       });
     }
     return data;
-  }, [bt.simTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails]);
+  }, [engineConfig.singleTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails]);
 
   // Today ledger values
   const portfolioSummary = useMemo(() => {
@@ -462,587 +463,62 @@ export function SimulationTab({
   }, [portfolio]);
 
   const handleRunAlgoBacktest = async () => {
-    bt.setBacktesting(true);
+    setBacktesting(true);
     setBacktestProgress(15);
-    
+
     try {
       setBacktestProgress(45);
 
       if (historicalData.length === 0) {
-        bt.setBacktesting(false);
+        setBacktesting(false);
         setBacktestProgress(0);
         return;
       }
 
-      const configRanksKey = bt.backtestConfigType === "prod" ? "stockRanksProd" as const : "stockRanksRes" as const;
-      let rawData: BacktestDayData[] = historicalData.map(d => ({
-        ...d,
-        stockRanks: d[configRanksKey] || d.stockRanks,
-      }));
+      const cap = parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
 
-      setBacktestProgress(85);
-
-      rawData = rawData.filter(d => d.date >= bt.simStartDate && d.date <= bt.simEndDate);
-      if (rawData.length === 0) {
-        bt.setBacktesting(false);
-        setBacktestProgress(0);
-        alert("Tidak ada data dalam rentang tanggal yang dipilih.");
-        return;
-      }
-      
-      const cap = parseInt(bt.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
-      const reservePct = bt.reserveBufferPct;
-      const bufferCash = cap * (reservePct / 100);
-      const initialInvestable = cap - bufferCash;
-        
-      let currentPortfolioVal = cap;
-      let cash = initialInvestable;
-      let goldGrams = 0;
-      let inCrashState = false;
-      let crashCooldown = 0;
-      
-      // positions: ticker -> shares (always multiples of 100, which is 1 lot)
-      let positions: Record<string, number> = {};
-      
-      const chartData: any[] = [];
-      const logs: any[] = [];
-      
-      const cleanIdx80 = IDX80_TICKERS.map(t => t.replace('.JK', ''));
-      const cleanIdx30 = IDX30_TICKERS.map(t => t.replace('.JK', ''));
-      const cleanLq45 = LQ45_TICKERS.map(t => t.replace('.JK', ''));
-
-      const getTopTickersOnDay = (dayPrices: Record<string, number>, dayRanks: Record<string, number>, count: number = 3) => {
-        return Object.entries(dayRanks)
-          .filter(([ticker]) => {
-            if (bt.simUniverse === "idx80" && !cleanIdx80.includes(ticker)) return false;
-            if (bt.simUniverse === "idx30" && !cleanIdx30.includes(ticker)) return false;
-            if (bt.simUniverse === "lq45" && !cleanLq45.includes(ticker)) return false;
-            const price = dayPrices[ticker];
-            return price !== undefined && price > 0;
-          })
-          .sort((a, b) => a[1] - b[1]) // lower ranks are better
-          .slice(0, count)
-          .map(([ticker]) => ticker);
-      };
-
-      // Day 0 initialization
-      const day0 = rawData[0];
-      const initialIhsgPrice = day0.ihsgPrice;
-      const initialGoldPrice = day0.goldPrice;
-      
-      // IDX standard execution params
-      const BUY_FEE = 0.0015; // 0.15%
-      const SELL_FEE = 0.0025; // 0.25%
-      const TAX = 0.0010; // 0.10%
-      const SLIPPAGE = 0.0025; // 0.25% slippage on entry and exit prices (Impact cost due to low liquidity / algos)
-      
-      let initialTop: string[] = [];
-      if (bt.simulationMode === "algo") {
-        initialTop = getTopTickersOnDay(day0.stockPrices, day0.stockRanks, bt.numStocks);
-      } else {
-        initialTop = [bt.simTicker];
-      }
-      
-      // Total trade volume accumulator for turnover
-      let totalTransactionVolume = 0;
-      
-      // Track last rebalance month
-      let lastRebalanceMonth = -1;
-      
-      // Track pending tickers that couldn't be bought on day0 (pre-IPO, no data)
-      const pendingTickers: { ticker: string; capital: number }[] = [];
-
-      // Calculate per-stock allocation once before loop (fixes sequential cash depletion)
-      const perStockAlloc = initialInvestable / initialTop.length;
-      let day0Spent = 0;
-      initialTop.forEach((ticker) => {
-        const rawPrice = day0.stockPrices[ticker];
-
-        // Pre‑IPO tickers are automatically handled by the generic missing‑price check below.
-        
-        if (!rawPrice || rawPrice <= 0) {
-          pendingTickers.push({ ticker, capital: perStockAlloc });
-          return;
-        }
-        
-        const entryPrice = rawPrice * (1 + SLIPPAGE);
-        const costPerShareWithFee = entryPrice * (1 + BUY_FEE);
-        
-        // 1 LOT = 100 SHARES constraint & Liquidity constraint max 5% daily volume
-        let maxLots = Math.floor(perStockAlloc / (costPerShareWithFee * 100));
-        let sharesToBuy = maxLots * 100;
-        
-        const day0Any = day0 as any;
-        const dailyVol = day0Any.stockVolumes && day0Any.stockVolumes[ticker] ? day0Any.stockVolumes[ticker] : 10000000;
-        const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
-        if (sharesToBuy > maxVolShares) {
-          sharesToBuy = maxVolShares;
-        }
-        
-        if (sharesToBuy > 0) {
-          positions[ticker] = sharesToBuy;
-          const costSpent = sharesToBuy * costPerShareWithFee;
-          cash -= costSpent;
-          day0Spent += costSpent;
-          totalTransactionVolume += sharesToBuy * entryPrice;
-        }
+      const result = runStrategy({
+        dayData: historicalData,
+        config: {
+          capital: cap,
+          reserveBufferPct: engineConfig.reserveBufferPct,
+          topNCount: engineConfig.topNCount,
+          universe: engineConfig.universe,
+          simulationMode: engineConfig.simulationMode,
+          singleTicker: engineConfig.singleTicker,
+          enableCrashProtection: engineConfig.enableCrashProtection,
+          crashSensitivity: engineConfig.crashSensitivity,
+          singleSellTrigger: engineConfig.singleSellTrigger,
+          singleBuyTrigger: engineConfig.singleBuyTrigger,
+          safeHavenAsset: engineConfig.safeHavenAsset,
+          enableCrossover: engineConfig.enableCrossover,
+          simStartDate: engineConfig.simStartDate,
+          simEndDate: engineConfig.simEndDate,
+          customTickers: engineConfig.customTickers || [],
+        },
+        profileWeights: {
+          quality: activeProfile?.qualityWeight ?? 0.25,
+          growth: activeProfile?.growthWeight ?? 0.10,
+          value: activeProfile?.valueWeight ?? 0.30,
+          momentum: activeProfile?.momentumWeight ?? 0.35,
+        },
+        universeTickers: {
+          idx80: IDX80_TICKERS,
+          idx30: IDX30_TICKERS,
+          lq45: LQ45_TICKERS,
+        },
       });
 
-      const configName = bt.backtestConfigType === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)";
-      const boughtTickers = initialTop.filter(t => !pendingTickers.some(p => p.ticker === t));
-      const pendingNames = pendingTickers.map(p => p.ticker).join(", ");
-      const tickerMsg = boughtTickers.length > 0
-        ? (bt.simulationMode === "algo" ? `Membeli Top ${boughtTickers.length} pembuka: ${boughtTickers.map(t => `#${t}`).join(", ")}.` : `Membeli saham: #${boughtTickers[0]}.`)
-        : "Menunggu ketersediaan data saham...";
-      logs.push({
-        date: day0.date,
-        type: "BUY",
-        message: `Backtest diinisiasi dengan modal Rp ${cap.toLocaleString("id-ID")} menggunakan strategi ${configName}. Menyisakan kas buffer ${reservePct}% (Rp ${bufferCash.toLocaleString("id-ID")}). ${tickerMsg}` + (pendingTickers.length > 0 ? ` ${pendingNames} ditunda (data belum tersedia).` : "")
-      });
+      setBacktestProgress(95);
 
-      let maxVal = cap;
-      let maxDrawdownValue = 0;
-      let totalSwaps = 0;
-      let totalDividendsEarned = 0;
-      
-      let singleStockTrough = day0.stockPrices[bt.simTicker] || 1000;
-      let singlePriceWindow: number[] = [day0.stockPrices[bt.simTicker] || 1000];
-      
-      let lastJulyYear = 2019; // Track annual ex-date dividends
-      
-      // Track daily returns of portfolio, IHSG and Gold
-      const dailyReturns: number[] = [];
-      let lastDayVal = cap;
+      setBacktestResult(result);
 
-      for (let stepIndex = 0; stepIndex < rawData.length; stepIndex++) {
-        const day = rawData[stepIndex];
-        const dateObj = new Date(day.date);
-        const currentYear = dateObj.getFullYear();
-        const currentMonth = dateObj.getMonth();
-
-        // 0. Execute pending ticker buys once their price data becomes available
-        if (pendingTickers.length > 0) {
-          for (let pi = pendingTickers.length - 1; pi >= 0; pi--) {
-            const pt = pendingTickers[pi];
-            const availPrice = day.stockPrices?.[pt.ticker];
-            if (availPrice && availPrice > 0) {
-              const entryPrice = availPrice * (1 + SLIPPAGE);
-              const costPerShare = entryPrice * (1 + BUY_FEE);
-              let maxLots = Math.floor(pt.capital / (costPerShare * 100));
-              let sharesToBuy = maxLots * 100;
-              if (sharesToBuy > 0) {
-                positions[pt.ticker] = sharesToBuy;
-                const costSpent = sharesToBuy * costPerShare;
-                cash -= costSpent;
-                totalTransactionVolume += sharesToBuy * entryPrice;
-                logs.push({ date: day.date, type: "BUY", message: `Eksekusi pembelian ditunda #${pt.ticker} pada harga Rp ${availPrice.toLocaleString("id-ID")} (data baru tersedia).` });
-              }
-              pendingTickers.splice(pi, 1);
-            }
-          }
-        }
-
-        // 1. Calculate Active Positions Value
-        let stocksValue = 0;
-        Object.entries(positions).forEach(([ticker, shares]) => {
-          const price = day.stockPrices[ticker] || 100;
-          stocksValue += shares * price;
-        });
-
-        const goldVal = goldGrams * day.goldPrice;
-        const todayPortfolioVal = cash + goldVal + stocksValue + bufferCash;
-
-        if (stepIndex > 0) {
-          const ret = ((todayPortfolioVal - lastDayVal) / lastDayVal) * 100;
-          dailyReturns.push(ret);
-        }
-        lastDayVal = todayPortfolioVal;
-
-        // Drawdown Tracking
-        if (todayPortfolioVal > maxVal) {
-          maxVal = todayPortfolioVal;
-        } else {
-          const dd = ((maxVal - todayPortfolioVal) / maxVal) * 100;
-          if (dd > maxDrawdownValue) {
-            maxDrawdownValue = dd;
-          }
-        }
-
-        // 2. Point-in-Time ex-date annual dividend credit on June 15th
-        if (currentYear > lastJulyYear && currentMonth >= 5 && dateObj.getDate() >= 15) {
-          let yearlyDividends = 0;
-          Object.entries(positions).forEach(([ticker, shares]) => {
-            // Fetch PIT metrics to check DPS of previous fiscal year
-            const pit = getPointInTimeFundamentals(ticker, dateObj);
-            const dps = pit.dividend_per_share || 0;
-            if (dps > 0 && shares > 0) {
-              const divPaid = Math.round(shares * dps * 0.90); // 10% dividend tax in IDR
-              yearlyDividends += divPaid;
-            }
-          });
-          
-          if (yearlyDividends > 0) {
-            cash += yearlyDividends;
-            totalDividendsEarned += yearlyDividends;
-            logs.push({
-              date: day.date,
-              type: "REBALANCE",
-              message: `Dividen Tahunan Dikreditkan: Berhasil mengumpulkan Rp ${yearlyDividends.toLocaleString("id-ID")} nett (10% tax-adjusted) dari kepemilikan portfolio aktif.`
-            });
-          }
-          lastJulyYear = currentYear;
-        }
-
-        // 3. IHSG Crash Protection Checks
-        let crashSignaled = false;
-        let crashReason = "Indeks anjlok di bawah sensitivitas pengetatan";
-        if (bt.enableCrashProtection) {
-          if (bt.simulationMode === "algo") {
-            const window = rawData.slice(Math.max(0, stepIndex - 60), stepIndex + 1);
-            const maxIhsg60d = Math.max(...window.map(d => d.ihsgPrice));
-            const ihsgPctDrop = ((day.ihsgPrice - maxIhsg60d) / maxIhsg60d) * 100;
-            
-            // Calculate Moving Averages for Grind Detection
-            const window20 = rawData.slice(Math.max(0, stepIndex - 20), stepIndex + 1);
-            const sma20 = window20.reduce((sum, d) => sum + d.ihsgPrice, 0) / window20.length;
-            const window50 = rawData.slice(Math.max(0, stepIndex - 50), stepIndex + 1);
-            const sma50 = window50.reduce((sum, d) => sum + d.ihsgPrice, 0) / window50.length;
-            
-            // Condition A: Sharp Drop from peak
-            const fastCrash = ihsgPctDrop <= -bt.crashSensitivity;
-            
-            // Condition B: Slow grind — threshold derived from crashSensitivity
-            const grindPriceRatio = 1 - (bt.crashSensitivity * 0.5 / 100);
-            const grindSmaRatio = 1 - (bt.crashSensitivity * 0.2 / 100);
-            const slowGrind = day.ihsgPrice < sma50 * grindPriceRatio && sma20 < sma50 * grindSmaRatio;
-            
-            if (fastCrash || slowGrind) {
-              crashSignaled = true;
-              if (fastCrash) {
-                crashReason = `IHSG anjlok tajam ${Math.abs(ihsgPctDrop).toFixed(1)}% dari puncak 60 hari`;
-              } else {
-                crashReason = `Trend bearish jangka panjang terkonfirmasi (IHSG di bawah MA50, MA20 < MA50)`;
-              }
-            }
-          } else {
-            if (!inCrashState) {
-              const currentStockPrice = day.stockPrices[bt.simTicker] || 100;
-              // Use trailing 20-day high instead of all-time peak
-              singlePriceWindow.push(currentStockPrice);
-              if (singlePriceWindow.length > 20) singlePriceWindow.shift();
-              const trailingHigh = Math.max(...singlePriceWindow);
-              const dropFromPeak = ((currentStockPrice - trailingHigh) / trailingHigh) * 100;
-              if (dropFromPeak <= -bt.singleSellTrigger) {
-                crashSignaled = true;
-                crashReason = `Saham #${bt.simTicker} turun ${Math.abs(dropFromPeak).toFixed(1)}% dari puncak 20 hari`;
-              }
-            }
-          }
-        }
-
-        if (crashSignaled && !inCrashState && crashCooldown <= 0) {
-          inCrashState = true;
-          if (bt.simulationMode === "single") {
-            singleStockTrough = day.stockPrices[bt.simTicker] || 100;
-            singlePriceWindow = [singleStockTrough];
-          }
-          
-          // Liquidate holdings with exit charges and slippage
-          let liquidationProceeds = 0;
-          Object.entries(positions).forEach(([ticker, shares]) => {
-            const rawPrice = day.stockPrices[ticker] || 100;
-            const exitPrice = rawPrice * (1 - SLIPPAGE);
-            const proceed = shares * exitPrice * (1 - SELL_FEE - TAX); // commission & 10% tax
-            liquidationProceeds += proceed;
-            totalTransactionVolume += shares * exitPrice;
-          });
-          positions = {}; // liquidate
-          cash += liquidationProceeds;
-
-          if (bt.safeHavenAsset === "emas") {
-            // Buy gold with 1% buy-spread premium
-            const goldBuyPrice = day.goldPrice * 1.01;
-            goldGrams = cash / goldBuyPrice;
-            cash = 0;
-            logs.push({
-              date: day.date,
-              type: "CRASH_TRIGGER",
-              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem mengamankan aset: Likuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett dan memindahkan dana ke Emas Fisik (${goldGrams.toFixed(2)} gram) dengan 1% spread.`
-            });
-          } else {
-            logs.push({
-              date: day.date,
-              type: "CRASH_TRIGGER",
-              message: `⚠️ CRASH TEKOR! ${crashReason}. Sistem melikuidasi saham senilai Rp ${liquidationProceeds.toLocaleString("id-ID")} nett untuk disimpan dalam bentuk Kas Tunai IDR demi melestarikan kapital.`
-            });
-          }
-          crashCooldown = 20;
-        }
-
-        // Recovery Checks
-        if (inCrashState && crashCooldown <= 0) {
-          let recoverySignaled = false;
-          let recoveryReason = "";
-
-          if (bt.simulationMode === "algo") {
-            const window20 = rawData.slice(Math.max(0, stepIndex - 20), stepIndex + 1);
-            const sma20 = window20.reduce((sum, d) => sum + d.ihsgPrice, 0) / window20.length;
-            
-            const ihsgPrev = rawData[Math.max(0, stepIndex - 5)].ihsgPrice;
-            const ihsg5dReturn = ((day.ihsgPrice - ihsgPrev) / ihsgPrev) * 100;
-
-            // Recovery: IHSG crossing above SMA20 is sufficient to confirm trend reversal
-            const trendRecovery = day.ihsgPrice > sma20;
-            const momentumRecovery = ihsg5dReturn >= 2.5 && day.ihsgPrice > sma20;
-
-            if (trendRecovery || momentumRecovery) {
-              recoverySignaled = true;
-              if (trendRecovery) {
-                recoveryReason = "Trend bullish kembali terkonfirmasi (IHSG melampaui MA20)";
-              } else {
-                recoveryReason = `Rebound terdeteksi (+${ihsg5dReturn.toFixed(1)}% dlm 5 hari)`;
-              }
-            }
-          } else {
-            const currentStockPrice = day.stockPrices[bt.simTicker] || 100;
-            singleStockTrough = Math.min(singleStockTrough, currentStockPrice);
-            const riseFromTrough = ((currentStockPrice - singleStockTrough) / singleStockTrough) * 100;
-            
-            if (riseFromTrough >= bt.singleBuyTrigger) {
-              recoverySignaled = true;
-              recoveryReason = `Saham #${bt.simTicker} naik ${riseFromTrough.toFixed(1)}% dari dasar`;
-              singlePriceWindow = [currentStockPrice];
-            }
-          }
-
-          if (recoverySignaled) {
-            inCrashState = false;
-            
-            // Sell gold back with 1% sell penalty spread
-            let recoveryCash = cash;
-            if (goldGrams > 0) {
-              const goldSellPrice = day.goldPrice * 0.99;
-              recoveryCash += goldGrams * goldSellPrice;
-              goldGrams = 0;
-            }
-
-            let top: string[] = [];
-            if (bt.simulationMode === "algo") {
-              top = getTopTickersOnDay(day.stockPrices, day.stockRanks, bt.numStocks);
-            } else {
-              top = [bt.simTicker];
-            }
-            const allocPrice = recoveryCash / top.length;
-
-            top.forEach((ticker) => {
-              const rawPrice = day.stockPrices[ticker] || 1000;
-              
-              // Validate IPO
-              if (ticker === "GOTO" && day.date < "2022-04-11") {
-                return; // skip GOTO if recovering before IPO
-              }
-
-              const entryPrice = rawPrice * (1 + SLIPPAGE);
-              const costWithFee = entryPrice * (1 + BUY_FEE);
-              let maxLots = Math.floor(allocPrice / (costWithFee * 100));
-              let sharesToBuy = maxLots * 100;
-
-              const dailyVol = (day as any).stockVolumes && (day as any).stockVolumes[ticker] ? (day as any).stockVolumes[ticker] : 10000000;
-              const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
-              if (sharesToBuy > maxVolShares) {
-                sharesToBuy = maxVolShares;
-              }
-
-              if (sharesToBuy > 0) {
-                positions[ticker] = sharesToBuy;
-                const cost = sharesToBuy * costWithFee;
-                recoveryCash -= cost;
-                totalTransactionVolume += sharesToBuy * entryPrice;
-              }
-            });
-            cash = recoveryCash;
-
-            logs.push({
-              date: day.date,
-              type: "CRASH_RECOVERY",
-              message: `🛡️ KOALISI CRASH BERAKHIR: ${recoveryReason}. Sistem membeli kembali saham incaran: ${top.map(t => `#${t}`).join(", ")} dengan komisi beli.`
-            });
-            crashCooldown = 20;
-          }
-        }
-
-        if (crashCooldown > 0) crashCooldown--;
-
-        // 4. Rank 7 Rule active rebalancing (Monthly + Daily Emergency)
-        if (!inCrashState && bt.enableCrossover && bt.simulationMode === "algo") {
-          const ownedTickers = Object.entries(positions)
-            .filter(([_, shares]) => shares > 0)
-            .map(([ticker]) => ticker);
-
-          const isMonthChange = currentMonth !== lastRebalanceMonth;
-
-          for (const ticker of ownedTickers) {
-            const currentRank = day.stockRanks[ticker] || 5;
-            
-            const isEmergencyExit = currentRank >= 15;
-            const isRoutineExit = isMonthChange && currentRank >= 10;
-            
-            if (isEmergencyExit || isRoutineExit) {
-              const rawPrice = day.stockPrices[ticker] || 100;
-              const exitPrice = rawPrice * (1 - SLIPPAGE);
-              const sellProceeds = positions[ticker] * exitPrice * (1 - SELL_FEE - TAX);
-              totalTransactionVolume += positions[ticker] * exitPrice;
-              
-              delete positions[ticker];
-              
-              const topCandidates = getTopTickersOnDay(day.stockPrices, day.stockRanks, 4);
-              const swapInTicker = topCandidates.find(t => !positions[t] || positions[t] === 0) || topCandidates[0];
-              
-              const swapInRawPrice = day.stockPrices[swapInTicker] || 100;
-              const swapInEntryPrice = swapInRawPrice * (1 + SLIPPAGE);
-              const swapInCostWithFee = swapInEntryPrice * (1 + BUY_FEE);
-
-              let newLots = Math.floor(sellProceeds / (swapInCostWithFee * 100));
-              let newShares = newLots * 100;
-
-              const dailyVol = (day as any).stockVolumes && (day as any).stockVolumes[swapInTicker] ? (day as any).stockVolumes[swapInTicker] : 10000000;
-              const maxVolShares = Math.floor((dailyVol * 0.05) / 100) * 100;
-              if (newShares > maxVolShares) {
-                newShares = maxVolShares;
-              }
-              
-              if (newShares > 0) {
-                positions[swapInTicker] = (positions[swapInTicker] || 0) + newShares;
-                const costPaid = newShares * swapInCostWithFee;
-                cash += sellProceeds - costPaid;
-                totalTransactionVolume += newShares * swapInEntryPrice;
-              } else {
-                cash += sellProceeds;
-              }
-              
-              totalSwaps++;
-              
-              logs.push({
-                date: day.date,
-                type: isEmergencyExit ? "EMERGENCY_EXIT" : "REBALANCE",
-                message: isEmergencyExit 
-                  ? `🚨 EMERGENCY EXIT (Mid-Month): Emiten #${ticker} jatuh drastis dari Top 15 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
-                  : `🔄 REBALANCING BULANAN: Emiten #${ticker} diganti karena keluar dari Top 10 (Rank ${currentRank}). Posisi dilikuidasi Rp ${sellProceeds.toLocaleString("id-ID")} nett, dipindahkan ke #${swapInTicker} (Rank ${day.stockRanks[swapInTicker] || 1}).`
-              });
-            }
-          }
-
-          if (isMonthChange) {
-            lastRebalanceMonth = currentMonth;
-          }
-        }
-
-        // 5. Record daily trajectory
-        if (stepIndex % 8 === 0 || stepIndex === rawData.length - 1) {
-          const benchmarkIhsgVal = Math.round((day.ihsgPrice / initialIhsgPrice) * cap);
-          const benchmarkGoldVal = Math.round((day.goldPrice / initialGoldPrice) * cap);
-
-          chartData.push({
-            date: day.date,
-            "Strategi Rebalancer": Math.round(todayPortfolioVal),
-            "Benchmark IHSG": benchmarkIhsgVal,
-            "Benchmark Emas": benchmarkGoldVal,
-            ranks: { ...day.stockRanks },
-          });
-
-          // Carry forward to bt.simEndDate if last trading day is before bt.simEndDate (e.g. weekend or holiday)
-          if (stepIndex === rawData.length - 1 && day.date < bt.simEndDate) {
-            chartData.push({
-              date: bt.simEndDate,
-              "Strategi Rebalancer": Math.round(todayPortfolioVal),
-              "Benchmark IHSG": benchmarkIhsgVal,
-              "Benchmark Emas": benchmarkGoldVal,
-              ranks: { ...day.stockRanks },
-            });
-          }
-        }
-
-        if (stepIndex === rawData.length - 1) {
-          currentPortfolioVal = todayPortfolioVal;
-          const isTargetWeekend = new Date(bt.simEndDate).getDay() === 0 || new Date(bt.simEndDate).getDay() === 6;
-          const finalLogDate = day.date < bt.simEndDate ? bt.simEndDate : day.date;
-          const closedReasonSuffix = day.date < bt.simEndDate 
-            ? (isTargetWeekend ? " (Bursa Saham Tutup / Akhir Pekan)." : " (Bursa Saham Tutup / Hari Libur).") 
-            : "";
-
-          logs.push({
-            date: finalLogDate,
-            type: "STATUS_AKHIR",
-            message: `🏁 BACKTEST SELESAI: Nilai akhir mencapai Rp ${todayPortfolioVal.toLocaleString("id-ID")}. ${inCrashState ? "(Berlindung di Safe Haven)." : "(Posisi aktif)."}${closedReasonSuffix}`
-          });
-        }
-      }
-
-      // Calculate highly rigorous professional performance metrics (PRIORITY 11)
-      const lastDayObj = rawData[rawData.length - 1];
-      const totalReturnPct = ((currentPortfolioVal - cap) / cap) * 100;
-      const ihsgReturnPct = ((lastDayObj.ihsgPrice - initialIhsgPrice) / initialIhsgPrice) * 100;
-      const goldReturnPct = ((lastDayObj.goldPrice - initialGoldPrice) / initialGoldPrice) * 100;
-
-      // cagr
-      const daysDiff = Math.ceil((new Date(lastDayObj.date).getTime() - new Date(day0.date).getTime()) / (1000 * 60 * 60 * 24)) || 1;
-      const yearsElapsed = daysDiff / 365.25;
-      const cagr = Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1;
-
-      // volatility
-      const annVolatility = calcStdDev(dailyReturns) * Math.sqrt(252) / 100;
-
-      // downside volatility & sortino
-      const negativeReturns = dailyReturns.filter(r => r < 0);
-      const downsideVol = negativeReturns.length > 1 
-        ? calcStdDev(negativeReturns) * Math.sqrt(252) / 100 
-        : annVolatility;
-
-      // sharpe & sortino
-      const rf = 0.050; // standard 5.0% risk free rate for Indonesia
-      const sharpe = annVolatility > 0 ? (cagr - rf) / annVolatility : 0;
-      const sortino = downsideVol > 0 ? (cagr - rf) / downsideVol : 0;
-      const calmar = maxDrawdownValue > 0 ? cagr / (maxDrawdownValue / 100) : 0;
-
-      // trading turnover
-      const avgPortfolioVal = (cap + currentPortfolioVal) / 2;
-      const turnoverRatio = totalTransactionVolume / avgPortfolioVal;
-
-      // daily win rate
-      const positiveReturnDays = dailyReturns.filter(ret => ret > 0).length;
-      const winRateRatio = dailyReturns.length > 0 ? positiveReturnDays / dailyReturns.length : 0;
-
-      bt.setBacktestResult({
-        finalValue: currentPortfolioVal,
-        ihsgFinalValue: Math.round((lastDayObj.ihsgPrice / initialIhsgPrice) * cap),
-        goldFinalValue: Math.round((lastDayObj.goldPrice / initialGoldPrice) * cap),
-        totalReturnPct,
-        ihsgReturnPct,
-        goldReturnPct,
-        maxDrawdown: maxDrawdownValue,
-        totalTrades: totalSwaps,
-        totalDividends: totalDividendsEarned,
-        logs: logs.slice().reverse(),
-        chartData,
-        configName,
-        // Advanced Quant scorecard specs
-        cagr: cagr * 100,
-        volatility: annVolatility * 100,
-        sharpe,
-        sortino,
-        calmar,
-        turnoverPct: turnoverRatio * 100,
-        winRatePct: winRateRatio * 100,
-        bench6040FinalVal: Math.round((0.6 * (lastDayObj.ihsgPrice / initialIhsgPrice) + 0.4 * (lastDayObj.goldPrice / initialGoldPrice)) * cap),
-        bench6040ReturnPct: (0.6 * ihsgReturnPct + 0.4 * goldReturnPct)
-      });
-
-      bt.setBacktesting(false);
+      setBacktesting(false);
       setBacktestProgress(100);
     } catch (err: any) {
       console.error("Backtest failed:", err);
       alert(err.message || "Backtest gagal. Periksa tanggal mulai.");
-      bt.setBacktesting(false);
+      setBacktesting(false);
     }
   };
 
@@ -1051,28 +527,28 @@ export function SimulationTab({
     if (historicalData.length === 0) return;
     handleRunAlgoBacktest();
   }, [
-    bt.simTicker,
-    bt.simStartDate,
-    bt.simEndDate,
-    bt.algoCapital,
-    bt.simulationMode,
-    bt.simUniverse,
-    bt.numStocks,
-    bt.enableCrossover,
-    bt.enableCrashProtection,
-    bt.crashSensitivity,
-    bt.safeHavenAsset,
-    bt.singleSellTrigger,
-    bt.singleBuyTrigger,
-    bt.reserveBufferPct,
-    bt.backtestConfigType,
-    bt.triggerRun,
+    engineConfig.singleTicker,
+    engineConfig.simStartDate,
+    engineConfig.simEndDate,
+    engineConfig.algoCapital,
+    engineConfig.simulationMode,
+    engineConfig.universe,
+    engineConfig.topNCount,
+    engineConfig.enableCrossover,
+    engineConfig.enableCrashProtection,
+    engineConfig.crashSensitivity,
+    engineConfig.safeHavenAsset,
+    engineConfig.singleSellTrigger,
+    engineConfig.singleBuyTrigger,
+    engineConfig.reserveBufferPct,
+    engineConfig.activeProfileId,
+    triggerRun,
     historicalData,
   ]);
 
   useEffect(() => {
     const handler = () => {
-      if (bt.simulationMode === "algo" && bt.backtestResult) {
+      if (engineConfig.simulationMode === "algo" && backtestResult) {
         handleDownloadJournal();
       } else {
         handleDownloadCSV();
@@ -1080,7 +556,7 @@ export function SimulationTab({
     };
     window.addEventListener("download-csv-backtest", handler);
     return () => window.removeEventListener("download-csv-backtest", handler);
-  }, [bt.simulationMode, bt.backtestResult]);
+  }, [engineConfig.simulationMode, backtestResult]);
 
   const handleDownloadCSV = async () => {
     try {
@@ -1102,7 +578,7 @@ export function SimulationTab({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `database_backtest_${bt.simStartDate}_${bt.simEndDate}_${bt.backtestConfigType.toUpperCase()}.csv`);
+      link.setAttribute("download", `database_backtest_${engineConfig.simStartDate}_${engineConfig.simEndDate}_${engineConfig.activeProfileId.toUpperCase()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1112,11 +588,11 @@ export function SimulationTab({
   };
 
   const handleDownloadJournal = () => {
-    if (!bt.backtestResult || !bt.backtestResult.logs) return;
+    if (!backtestResult || !backtestResult.logs) return;
 
     try {
       const header = ["Tanggal", "Tipe_Transaksi", "Rincian_Transaksi_Detail_Fees_Spread"].map(h => `"${h}"`).join(",");
-      const rows = bt.backtestResult.logs.map((log: any) => {
+      const rows = backtestResult.logs.map((log: any) => {
         const sanitizedMsg = (log.message || "").replace(/"/g, '""'); // escape double-quotes for CSV compliance
         return `"${log.date}","${log.type}","${sanitizedMsg}"`;
       });
@@ -1126,7 +602,7 @@ export function SimulationTab({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `buku_jurnal_simulasi_${bt.backtestConfigType.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `buku_jurnal_simulasi_${engineConfig.activeProfileId.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1147,7 +623,7 @@ export function SimulationTab({
              Interactive Trading & Backtest Laboratory
           </h2>
           <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
-            Bandingkan performa investasi harian sejak {bt.simStartDate} dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
+            Bandingkan performa investasi harian sejak {engineConfig.simStartDate} dengan algoritma rebalancing saham & perlindungan crash IHSG otomatis.
           </p>
         </div>
         
@@ -1156,7 +632,7 @@ export function SimulationTab({
             <button
               onClick={() => {
                 setActiveSubTab("algo");
-                if (!bt.backtestResult) {
+                if (!backtestResult) {
                   handleRunAlgoBacktest();
                 }
               }}
@@ -1210,8 +686,8 @@ export function SimulationTab({
                   { value: "BBNI", label: "BBNI - Bank Negara Indo" },
                   { value: "TPIA", label: "TPIA - Chandra Asri" }
                 ].filter((opt, index, self) => index === self.findIndex(t => t.value === opt.value))}
-                value={bt.simTicker}
-                onChange={(val) => bt.setSimTicker(val)}
+                value={engineConfig.singleTicker}
+                onChange={(val) => updateConfigValue("singleTicker", val)}
                 theme="amber"
               />
             </div>
@@ -1225,14 +701,14 @@ export function SimulationTab({
                   <div className="relative">
                     <input
                       type="date"
-                      value={bt.simStartDate}
+                      value={engineConfig.simStartDate}
                       min="2021-01-04"
-                      max={bt.simEndDate}
-                      onChange={(e) => bt.setSimStartDate(e.target.value)}
+                      max={engineConfig.simEndDate}
+                      onChange={(e) => updateConfigValue("simStartDate", e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
                     {(() => {
-                      const status = isMarketClosedDate(bt.simStartDate);
+                      const status = isMarketClosedDate(engineConfig.simStartDate);
                       if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
                       if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
@@ -1244,14 +720,14 @@ export function SimulationTab({
                   <div className="relative">
                     <input
                       type="date"
-                      value={bt.simEndDate}
-                      min={bt.simStartDate}
-                      max={bt.todayWIBStr}
-                      onChange={(e) => bt.setSimEndDate(e.target.value)}
+                      value={engineConfig.simEndDate}
+                      min={engineConfig.simStartDate}
+                      max={todayWIBStr}
+                      onChange={(e) => updateConfigValue("simEndDate", e.target.value)}
                       className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold rounded-xl font-mono cursor-pointer"
                     />
                     {(() => {
-                      const status = isMarketClosedDate(bt.simEndDate);
+                      const status = isMarketClosedDate(engineConfig.simEndDate);
                       if (status === "weekend") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Akhir Pekan (Bursa Tutup)</span>;
                       if (status === "holiday") return <span className="text-label text-amber-400 mt-1 block font-sans">⚠️ Hari Libur (Bursa Tutup)</span>;
                       return null;
@@ -1267,10 +743,10 @@ export function SimulationTab({
               <div className="space-y-2">
                 <input
                   type="text"
-                  value={bt.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                  value={engineConfig.algoCapital.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
                   onChange={(e) => {
                     const numbers = e.target.value.replace(/[^0-9]/g, "");
-                    bt.setAlgoCapital(numbers);
+                    updateConfigValue("algoCapital", numbers);
                   }}
                   placeholder="Rp 10.000.000"
                   className="w-full text-xs p-3 bg-black border border-white/10 focus:border-amber-500 outline-none text-white font-bold font-mono rounded-xl block"
@@ -1281,9 +757,9 @@ export function SimulationTab({
                     <button
                       key={preset}
                       type="button"
-                      onClick={() => bt.setAlgoCapital(preset)}
+                      onClick={() => updateConfigValue("algoCapital", preset)}
                       className={`text-label px-2 py-1 font-bold font-sans rounded-md border transition-all cursor-pointer ${
-                        bt.algoCapital === preset 
+                        engineConfig.algoCapital === preset 
                           ? "bg-amber-400 text-black border-amber-400" 
                           : "bg-white/5 border-white/5 text-white/50 hover:border-white/10"
                       }`}
@@ -1303,7 +779,7 @@ export function SimulationTab({
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Harga Jual Masa Lalu</span>
               <span className="text-sm font-bold font-mono text-white block">{formatRupiah(startPrice)}</span>
-              <span className="text-label text-[#A0A0A0] block">Per lembar pada {bt.simStartDate}</span>
+              <span className="text-label text-[#A0A0A0] block">Per lembar pada {engineConfig.simStartDate}</span>
             </div>
 
             <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
@@ -1351,7 +827,7 @@ export function SimulationTab({
             </div>
 
             <div className="text-body text-white/50 leading-relaxed font-sans max-w-md sm:text-right">
-              Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{bt.simTicker}</span> dari <span className="text-white">{bt.simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{bt.simEndDate}</span>.
+              Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{engineConfig.singleTicker}</span> dari <span className="text-white">{engineConfig.simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{engineConfig.simEndDate}</span>.
             </div>
           </div>
 
@@ -1384,7 +860,7 @@ export function SimulationTab({
                     itemStyle={{ color: theme === "light" ? "#0f172a" : "#ffffff" }}
                   />
                   <Legend verticalAlign="top" height={36} iconType="circle" />
-                  <Area type="monotone" name={`Investasi #${bt.simTicker}`} dataKey="Nilai Portofolio" stroke="#eab308" strokeWidth={2} fillOpacity={1} fill="url(#colorPortfolio)" />
+                  <Area type="monotone" name={`Investasi #${engineConfig.singleTicker}`} dataKey="Nilai Portofolio" stroke="#eab308" strokeWidth={2} fillOpacity={1} fill="url(#colorPortfolio)" />
                   <Area type="monotone" name="IHSG Benchmark" dataKey="Tolok Ukur IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorBenchmark)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1402,7 +878,7 @@ export function SimulationTab({
             <div className="flex items-center gap-2.5">
               <Award className="w-5 h-5 text-emerald-400" />
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Advanced Real-time Algorithmic Backtester ({bt.simStartDate} hingga {bt.simEndDate})</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Advanced Real-time Algorithmic Backtester ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})</h3>
                 <p className="text-body text-white/35 mt-0.5">Simulasikan rotasi harian dengan perlindungan crash IHSG & rebalance otomatis.</p>
               </div>
             </div>
@@ -1413,45 +889,98 @@ export function SimulationTab({
 
           {/* Config row */}
           <div className="flex items-center gap-2 pb-2 flex-wrap">
-            <button onClick={() => bt.triggerBacktest()}
+            <button onClick={() => triggerBacktest()}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors"
               style={{ backgroundColor: 'rgba(0,201,165,0.12)', color: '#00c9a5' }}>
               <Award className="w-3 h-3" />
               Parameter
             </button>
             <div className="flex gap-0.5">
-              <button onClick={() => bt.setBacktestConfigType("prod")}
+              <button onClick={() => setActiveProfile("prod")}
                 className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.backtestConfigType === "prod" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ backgroundColor: engineConfig.activeProfileId === "prod" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "prod" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 F
               </button>
-              <button onClick={() => bt.setBacktestConfigType("res")}
+              <button onClick={() => setActiveProfile("res")}
                 className="px-2 py-1.5 text-caption font-mono font-bold transition-colors cursor-pointer"
-                style={{ backgroundColor: bt.backtestConfigType === "res" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: bt.backtestConfigType === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ backgroundColor: engineConfig.activeProfileId === "res" ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === "res" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
                 B
               </button>
             </div>
-            <button onClick={handleRunAlgoBacktest} disabled={bt.isBacktesting}
+            <button onClick={handleRunAlgoBacktest} disabled={isBacktesting}
               className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: '#00c9a5', color: '#fff' }}>
-              {bt.isBacktesting ? "Running..." : "Jalankan"}
+              {isBacktesting ? "Running..." : "Jalankan"}
             </button>
             <span className="text-label font-mono font-medium uppercase tracking-wider flex items-center gap-2" style={{ color: '#5d6080' }}>
-              {bt.simulationMode === "algo" ? (
-                <>Algo {bt.numStocks} {bt.simUniverse.toUpperCase()}
-                  <span style={{ color: bt.backtestConfigType === "prod" ? '#00c9a5' : '#f59e0b', fontSize: '0.6rem' }} className="px-1.5 py-0.5 rounded bg-white/5">
-                    {bt.backtestConfigType === "prod"
+              {engineConfig.simulationMode === "algo" ? (
+                <>Algo {engineConfig.topNCount} {engineConfig.universe.toUpperCase()}
+                  <span style={{ color: engineConfig.activeProfileId === "prod" ? '#00c9a5' : '#f59e0b', fontSize: '0.6rem' }} className="px-1.5 py-0.5 rounded bg-white/5">
+                    {engineConfig.activeProfileId === "prod"
                       ? "Q25 G10 V30 M35"
                       : "Q25 G30 V10 M35"}
                   </span>
                 </>
-              ) : `Single ${bt.simTicker}`}
+              ) : `Single ${engineConfig.singleTicker}`}
             </span>
+          </div>
+
+          {/* Sync to Portfolio Button */}
+          <div className="flex justify-end pb-2">
+            <button
+              onClick={() => {
+                if (engineConfig.lastBacktestProfile) {
+                  console.log("Strategy synced to portfolio");
+                } else {
+                  console.log("No strategy to sync. Run a backtest first.");
+                }
+              }}
+              disabled={!engineConfig.lastBacktestProfile}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: engineConfig.lastBacktestProfile ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)',
+                color: engineConfig.lastBacktestProfile ? '#00c9a5' : '#7a7a7a',
+                border: '1px solid rgba(255,255,255,0.06)'
+              }}
+            >
+              <ArrowRightLeft className="w-3 h-3" />
+              SYNC TO PORTFOLIO
+            </button>
+          </div>
+
+          {/* Strategy Profile Card */}
+          <div className="bg-[#080808] border border-white/5 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-emerald-400" />
+              <span className="text-caption font-bold uppercase tracking-wider text-emerald-400">Strategy Profile</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-label font-bold text-white block">
+                  {engineConfig.activeProfileId === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)"}
+                </span>
+                <span className="text-caption text-white/40 font-mono block mt-0.5">
+                  Quality: {activeProfile?.qualityWeight ?? 0.25} | Growth: {activeProfile?.growthWeight ?? 0.10} | Value: {activeProfile?.valueWeight ?? 0.30} | Momentum: {activeProfile?.momentumWeight ?? 0.35}
+                </span>
+              </div>
+              {engineConfig.customTickers && engineConfig.customTickers.length > 0 && (
+                <div className="text-right">
+                  <span className="text-caption text-white/40 block mb-1">Custom Tickers:</span>
+                  <div className="flex gap-1 justify-end flex-wrap">
+                    {engineConfig.customTickers.map((t, i) => (
+                      <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-5">
               
-              {bt.isBacktesting ? (
+              {isBacktesting ? (
                 <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-24 space-y-4 shadow-inner">
                   <div className="relative w-16 h-16 flex items-center justify-center">
                     <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin absolute" />
@@ -1459,7 +988,7 @@ export function SimulationTab({
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-xs font-mono text-white tracking-widest uppercase animate-pulse">Running Quant Simulations...</p>
-                    <p className="text-caption text-white/30 font-mono">Iterating ticks day-by-day ({bt.simStartDate} hingga {bt.simEndDate})</p>
+                    <p className="text-caption text-white/30 font-mono">Iterating ticks day-by-day ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})</p>
                   </div>
                   
                   {/* Progress bar */}
@@ -1473,7 +1002,7 @@ export function SimulationTab({
                   </div>
                   <span className="text-caption font-mono text-emerald-400 font-bold">{backtestProgress}% Complete</span>
                 </div>
-              ) : bt.backtestResult ? (
+              ) : backtestResult ? (
                 <div className="space-y-6">
                   
                   {/* Stats Bento Grid */}
@@ -1482,40 +1011,40 @@ export function SimulationTab({
                     <div className="p-4 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Akhir Strategi</span>
                       <span className="text-base font-black font-mono text-emerald-400 block">
-                        {formatRupiah(bt.backtestResult.finalValue)}
+                        {formatRupiah(backtestResult.finalValue)}
                       </span>
                       <span className="text-caption font-bold text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.5 rounded inline-block">
-                        +{bt.backtestResult.totalReturnPct.toFixed(1)}% Absolut
+                        +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Benchmark IHSG</span>
                       <span className="text-sm font-semibold font-mono text-white/70 block">
-                        {formatRupiah(bt.backtestResult.ihsgFinalValue)}
+                        {formatRupiah(backtestResult.ihsgFinalValue)}
                       </span>
-                      <span className={`text-caption font-mono font-bold ${bt.backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {bt.backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{bt.backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
+                      <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
-                        {formatRupiah(bt.backtestResult.goldFinalValue)}
+                        {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
                       <span className="text-caption font-mono text-[#A0A0A0] block">
-                        Emas: +{bt.backtestResult.goldReturnPct.toFixed(1)}% (Hold)
+                        Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Swaps &amp; Dividen</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
-                        {bt.backtestResult.totalTrades} Rebalances
+                        {backtestResult.totalTrades} Rebalances
                       </span>
                       <span className="text-label text-[#A0A0A0] block">
-                        Dividen: +{formatRupiah(bt.backtestResult.totalDividends)}
+                        Dividen: +{formatRupiah(backtestResult.totalDividends)}
                       </span>
                     </div>
 
@@ -1527,7 +1056,7 @@ export function SimulationTab({
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
                       <span className="text-sm font-bold font-mono text-white block">
-                        {bt.backtestResult.cagr.toFixed(2)}%
+                        {backtestResult.cagr.toFixed(2)}%
                       </span>
                       <span className="text-label text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
                     </div>
@@ -1535,7 +1064,7 @@ export function SimulationTab({
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
                       <span className="text-sm font-bold font-mono text-emerald-400 block">
-                        S: {bt.backtestResult.sharpe.toFixed(2)} / So: {bt.backtestResult.sortino.toFixed(2)}
+                        S: {backtestResult.sharpe.toFixed(2)} / So: {backtestResult.sortino.toFixed(2)}
                       </span>
                       <span className="text-label text-white/40 block">Risko Terkoreksi (Rf=5%)</span>
                     </div>
@@ -1543,15 +1072,15 @@ export function SimulationTab({
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
                       <span className="text-sm font-bold font-mono text-rose-400 block">
-                        V: {bt.backtestResult.volatility.toFixed(1)}% / C: {bt.backtestResult.calmar.toFixed(2)}
+                        V: {backtestResult.volatility.toFixed(1)}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
-                      <span className="text-label text-[#A0A0A0] block">Max drawdown: -{bt.backtestResult.maxDrawdown.toFixed(1)}%</span>
+                      <span className="text-label text-[#A0A0A0] block">Max drawdown: -{backtestResult.maxDrawdown.toFixed(1)}%</span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
-                        W: {bt.backtestResult.winRatePct.toFixed(1)}% / T: {bt.backtestResult.turnoverPct.toFixed(1)}%
+                        W: {backtestResult.winRatePct.toFixed(1)}% / T: {backtestResult.turnoverPct.toFixed(1)}%
                       </span>
                       <span className="text-label text-white/40 block">Aktivitas Rotasi Portfolio</span>
                     </div>
@@ -1563,18 +1092,18 @@ export function SimulationTab({
                     <div className="flex items-start gap-3">
                       <span className="text-lg">📈</span>
                       <div className="text-xs text-white/60">
-                        {bt.simulationMode === "algo" ? (
-                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{bt.backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(bt.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {bt.simStartDate} hingga {bt.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(bt.backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(bt.backtestResult.ihsgFinalValue)}</span>.</>
+                        {engineConfig.simulationMode === "algo" ? (
+                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {engineConfig.simStartDate} hingga {engineConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
                         ) : (
-                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{bt.simTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(bt.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {bt.simStartDate} hingga {bt.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(bt.backtestResult.finalValue)}</span>.</>
+                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{engineConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(engineConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {engineConfig.simStartDate} hingga {engineConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
                         )}
                       </div>
                     </div>
                     {/* Comparative index list */}
                     <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
-                      <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(bt.backtestResult.ihsgFinalValue)}</span> (+{bt.backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
-                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(bt.backtestResult.goldFinalValue)}</span> (+{bt.backtestResult.goldReturnPct.toFixed(1)}%)</div>
-                      <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(bt.backtestResult.bench6040FinalVal)}</span> (+{bt.backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
+                      <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> (+{backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
+                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
+                      <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
                     </div>
                   </div>
 
@@ -1583,7 +1112,7 @@ export function SimulationTab({
                     <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
                     <div className="h-64 sm:h-72 w-full font-mono text-xs">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={bt.backtestResult.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                        <AreaChart data={backtestResult.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorStrategy" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
@@ -1620,15 +1149,15 @@ export function SimulationTab({
                   </div>
 
                   {/* Historical Factor Rank Component */}
-                  {bt.simulationMode === "algo" && (
+                  {engineConfig.simulationMode === "algo" && (
                     <div className="space-y-4 border-t border-white/5 pt-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                           <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham ({bt.simStartDate} hingga {bt.simEndDate})
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Peringkat Rotasi Historis Saham ({engineConfig.simStartDate} hingga {engineConfig.simEndDate})
                           </span>
                           <p className="text-body text-white/40 leading-relaxed mt-1">
-                            Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{bt.backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.
+                            Fluktuasi peringkat harian emiten berdasarkan bobot faktor kuantitatif untuk strategi aktif: <span className="text-emerald-400 font-bold">{backtestResult.configName}</span>. Peringkat yang lebih rendah (Rank 1) mewakili emiten terkuat untuk dikoleksi.
                           </p>
                         </div>
                       </div>
@@ -1746,7 +1275,7 @@ export function SimulationTab({
                     </div>
                     <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-caption border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
                       
-                      {bt.backtestResult.logs.map((log: any, idx: number) => (
+                      {backtestResult.logs.map((log: any, idx: number) => (
                         <div key={idx} className="border-b border-white/5 pb-2 last:border-0 hover:text-white/90">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                             <span className="text-white/40 block sm:inline">[{log.date}]</span>

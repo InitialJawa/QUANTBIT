@@ -45,6 +45,7 @@ export interface RegimeOutput {
 let _lastIhsgData: { close: number; date: string; isCarriedForward?: boolean }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeConfig: "prod" | "res" = "prod";
+let _activeWeights: { quality: number; growth: number; value: number; momentum: number } | null = null;
 let _crashSensitivity = 10;
 
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
@@ -55,8 +56,13 @@ export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
   _activeUniverse = u;
 }
 
-export function setActiveConfig(c: "prod" | "res") {
-  _activeConfig = c;
+export function setActiveConfig(c: "prod" | "res" | { quality: number; growth: number; value: number; momentum: number }) {
+  if (typeof c === "string") {
+    _activeConfig = c;
+    _activeWeights = null;
+  } else {
+    _activeWeights = c;
+  }
 }
 
 export function setCrashSensitivity(n: number) {
@@ -169,7 +175,7 @@ export function computeMarketRegime(): RegimeOutput {
   const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
 
   const lenL = universeL.length || 1;
-  const configWeights = _activeConfig === "prod" ? CW_F : CW_B;
+  const configWeights = _activeWeights ?? (_activeConfig === "prod" ? CW_F : CW_B);
   const scores = universeL.map(s =>
     (parseFloat(s.quality) || 0) * configWeights.quality +
     (parseFloat(s.growth) || 0) * configWeights.growth +

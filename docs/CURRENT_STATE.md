@@ -3,7 +3,7 @@
 |-------|-------|
 | Tanggal | 2026-06-24 |
 | Status | Development |
-| Progress | ~90% |
+| Progress | ~92% |
 
 ## Completed
 - [x] **Data Validation Audit** — full pipeline traced: daily live feed, idx80_scan, backtest year files, carry-forward analysis
@@ -50,38 +50,53 @@
 - [x] **Bundle Optimization** — lazy loading for SimulationTab, AnalyticsTab, PortfolioTracker; main bundle 732→612 kB (-16.5%)
 - [x] **Bundle Optimization (v2)** — MarketTab also lazy-loaded (34.88 kB); main bundle 576 kB; rollup-plugin-visualizer; chunkSizeWarningLimit 500 kB
 - [x] **Fundamentals Expansion** — 9 new hardcoded snapshots (BBNI, INDF, INTP, ICBP, KLBF, UNTR, AKRA, PGAS, SMGR); total 18 tickers with real historical data (2018-2025)
-
-## Completed
 - [x] **MCP Server Setup** — 5 tools + 3 resources via @modelcontextprotocol/sdk; data dari live_market, raw_stocks, idx80_scan, backtest years
 - [x] **Vite Chunk Size** — lazy-load MarketTab, rollup-plugin-visualizer installed, chunkSizeWarningLimit 1000→500; main bundle 576 kB
-- [x] **Fundamentals 69/87** — IDX scraper data (idx_fundamentals_all.json) terintegrasi sebagai Priority 1.5 di pipeline fetch_historical_data.ts dan SimulationTab.tsx
-- [x] **Gold/USDIDR Historical** — yearly → monthly granular via linear interpolation (buildMonthlySeries helper); HISTORICAL_GOLD_USD dan HISTORICAL_USDIDR pakai Record<string,number>
-- [x] **IDX Fundamental API Discovery** — endpoint `/primary/DigitalStatistic/GetApiDataPaginated` diverifikasi (60-month audit lulus 100%). 947 companies, 32 fields, schema konsisten, 0 error. **PRODUCTION READY** — lihat ADR-006
-- [x] **IDX Fundamental Collector Built** — `collectors/fetch_idx_fundamental.py` pulls 60 months (2021-2025), output parquet+JSON. 51,662 records, 976 companies, 0 errors
-- [x] **Factor Engine Migration** — `scripts/fetch_historical_data.ts` + `src/components/SimulationTab.tsx` use IDX Warehouse as Priority 1. Yahoo fundamentals removed. Pipeline regenerated: 6,582 days, 95 active tickers.
+- [x] **Gold/USDIDR Historical** — yearly → monthly granular via linear interpolation
+- [x] **IDX Fundamental API Discovery & Audit** — endpoint verified, 60-month 100% pass
+- [x] **IDX Fundamental Collector Built** — 51,662 records, 976 companies, 0 errors
+- [x] **Factor Engine Migration** — IDX Warehouse = primary source, Yahoo/FMP/Sectors dropped
+- [x] **Pre-2021 data cleanup** — 21 tahun file deleted, backtest default 2021+
+- [x] **Dev script fixed** — Express server auto-starts with Vite (was PRNG fallback)
+- [x] **Dead code cleanup** — `rebalancedThisMonth` removed from SimulationTab
 
-## In Progress
-- [x] Cross-check audit: BBCA, BBRI, BMRI, TLKM, ASII — warehouse vs legacy
-- [x] Run Config B & F frontend backtest (manual — buka app)
-- [ ] P3: Telegram bot integration (deferred)
+## Completed
+- [x] **P0: Weight Profile System** — `EngineConfigContext.tsx`: profiles[], WeightProfile, addProfile/deleteProfile/updateProfile/setActiveProfile, backward compat `activeConfig` getter
+- [x] **P0: Profile Selector UI** — `AppSidebar.tsx`: profile buttons replacing Config F/B toggle; `ManageProfilesModal.tsx`: weight sliders, add/delete, activate
+- [x] **P0: Config Sync Bridge** — bidirectional sync between `useUIState.activeConfig` and `EngineConfigContext.activeProfileId`
+- [x] **P1: Runtime Re-ranking** — SimulationTab computes ranks from `stockNormScores` + active profile weights (falls back to pre-computed ranks)
+- [x] **P1: Data Pipeline Raw Metrics** — `fetch_historical_data.ts` saves `stockRawMetrics` + `stockNormScores` per day to JSON/SQLite; `server.ts` + CF fn pass through
+- [x] **P1: getProcessedLeaders update** — accepts WeightProfile object alongside legacy "prod"/"res"; used by LeadersTab, PortfolioTracker, marketRegimeEngine
+- [x] **P2: AI profile awareness** — systemKnowledge.ts + aiClient.ts send activeProfileId, activeProfileName, profile weights
+- [x] **P2: marketRegimeEngine** — supports custom weight objects via setActiveConfig
 
 ## Current Focus
-Single Engine Architecture — factor_engine sebagai satu-satunya source of truth untuk ranking.
+Strategy Sync Engine operational — EngineConfigContext single source of truth, profiles with customizable weights, runtime re-ranking in backtest engine. Core engine (`src/engine/`) provides pure functions for ranking, crash detection, allocation, and metrics. SimulationTab uses `runStrategy()` with custom tickers UI, crash sensitivity slider, and Strategy Profile card. All 7 phases complete: Context Consolidation, Core Engine, Backtest Refactor, Sync To Portfolio, Portfolio Refactor, Market/Notification Integration, and AI Integration.
 
-## Audit Results (2025-12 vs Hardcoded Snapshots)
-| Metric | Dev | Notes |
-|--------|-----|-------|
-| ROE | -28.4% avg | Warehouse lebih konservatif; snapshot overestimated |
-| PB | +6.9% avg | Close match — good validation |
-| DER | ~+2000% | Bank leverage: warehouse = total liability/equity; snapshot = interest-bearing only. NOT used in scoring. |
+## Active Architecture
+```
+EngineConfigContext (single source of truth)
+  ├── profiles[] — F, B, Custom N (user-defined weight profiles)
+  ├── activeProfileId — profile aktif saat ini (getter: activeProfile)
+  ├── activeConfig — backward compat getter ("prod"/"res")
+  ├── topNCount, universe, crash/crossover settings, etc.
+  │
+  ├── AppSidebar → profile selector + ManageProfilesModal (sliders, add/delete)
+  ├── PortfolioTracker → recommendations using activeProfile weights
+  ├── SimulationTab → runtime rank compute from stockNormScores + profile weights
+  ├── LeadersTab / AnalyticsTab → display with activeProfile weights
+  ├── marketRegimeEngine → breadth/exit scores from profile weights
+  ├── AI Chat → context with activeProfileId + weights
+  └── data pipeline → stockRawMetrics + stockNormScores served via API
+```
 
-Warehouse resmi IDX lebih akurat. Cross-sectional ranking tetap valid karena semua 976 saham pakai sumber sama.
+## Known Gap
+BacktestContext still duplicates some config (simStartDate, simEndDate, algoCapital) not yet in EngineConfigContext. Deferred to next session.
 
 ## Archive — Legacy Cleanup
 - `STOCK_FACTORS` — removed (dead code)
 - `generateFallbackFundamentals` — removed (hash-based, replaced by warehouse)
-- `FUNDAMENTAL_SNAPSHOTS` (18 ticker × 8 years) — moved to `src/data/archive/fundamental_snapshots.json`. DPS retain untuk dividend simulation.
-- `stock_factors` — moved to `src/data/archive/stock_factors.json`
-- Pre-2021 year data (`2000.json` through `2020.json`) — deleted from `data/years/`
-- `BacktestContext.tsx` default `simStartDate` — changed from `2000-01-03` to `2021-01-04`
-- CF function default `from` param — changed from `2000` to `2021`
+- `FUNDAMENTAL_SNAPSHOTS` — archived to `src/data/archive/fundamental_snapshots.json`
+- Pre-2021 year data — deleted from `data/years/`
+- `BacktestContext.tsx` default `simStartDate` — 2021-01-04
+- CF function default `from` — 2021

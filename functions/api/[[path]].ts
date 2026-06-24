@@ -318,12 +318,15 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
         stockPrices: day.stockAdjPrices, stockAdjPrices: day.stockAdjPrices,
         stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
         stockRanksProd: day.stockRanksProd, stockRanksRes: day.stockRanksRes,
+        stockRawMetrics: day.stockRawMetrics ?? null,
+        stockNormScores: day.stockNormScores ?? null,
         isCarriedForward: day.isCarriedForward || false,
       }));
-      const weights = configType === "prod"
-        ? { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
-        : { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
-      return json({ success: true, count: data.length, configType, weights, data });
+      const defaultWeights = {
+        prod: { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 },
+        res: { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 },
+      };
+      return json({ success: true, count: data.length, configType, weights: defaultWeights, data });
     } catch (err: any) {
       return error(err.message, 500);
     }

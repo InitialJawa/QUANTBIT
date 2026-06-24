@@ -25,6 +25,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 
 ## Child DOX Index
 - `src/components/` — React UI components
+- `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
 - `src/contexts/` — React state contexts (Auth, Backtest, EngineConfig, AI)
 - `src/hooks/` — Custom React hooks
 - `src/ai/` — AI client and system knowledge

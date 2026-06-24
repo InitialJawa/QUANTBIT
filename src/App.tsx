@@ -14,8 +14,8 @@ const AnalyticsTab = lazy(() => import("./components/AnalyticsTab").then(m => ({
 const SimulationTab = lazy(() => import("./components/SimulationTab").then(m => ({ default: m.SimulationTab })));
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
-import { BacktestProvider } from "./contexts/BacktestContext";
-import { EngineConfigProvider } from "./contexts/EngineConfigContext";
+import { EngineConfigProvider, useEngineConfig } from "./contexts/EngineConfigContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
@@ -24,6 +24,22 @@ import { FloatingWallet } from "./components/FloatingWallet";
 import { AICockpitProvider } from "./contexts/AICockpitContext";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+
+function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: "prod" | "res"; setActiveConfig: (c: "prod" | "res") => void }) {
+  const { engineConfig, setActiveProfile } = useEngineConfig();
+  const ctxActiveConfig: "prod" | "res" = engineConfig.activeProfileId === "res" ? "res" : "prod";
+  useEffect(() => {
+    if (activeConfig !== ctxActiveConfig) {
+      setActiveProfile(activeConfig);
+    }
+  }, [activeConfig]);
+  useEffect(() => {
+    if (ctxActiveConfig !== activeConfig) {
+      setActiveConfig(ctxActiveConfig);
+    }
+  }, [ctxActiveConfig]);
+  return null;
+}
 
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -146,8 +162,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <BacktestProvider>
-        <AppHeader
+      <AppHeader
           activeTab={ui.activeTab}
           onTabChange={ui.setActiveTab}
           dataFeed={df.dataFeed}
@@ -168,7 +183,9 @@ export default function App() {
           onSearchSubmit={handleSearchSubmit}
         />
         <EngineConfigProvider>
-          <AICockpitProvider>
+          <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />
+          <NotificationProvider>
+            <AICockpitProvider>
             <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
               <AppSidebar
                 activeTab={ui.activeTab}
@@ -334,8 +351,8 @@ export default function App() {
         chartTheme={ui.getChartTheme()}
       />
 </AICockpitProvider>
+          </NotificationProvider>
         </EngineConfigProvider>
-      </BacktestProvider>
     </div>
   );
 }

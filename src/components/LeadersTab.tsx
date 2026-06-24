@@ -86,13 +86,14 @@ export function getRotationColor(label: string, trend: string) {
 
 interface LeadersTabProps {
   activeConfig: "prod" | "res";
+  activeProfile?: { quality: number; growth: number; value: number; momentum: number } | null;
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
   watchlist?: WatchlistItem[];
   getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
-export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: LeadersTabProps) {
+export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: LeadersTabProps) {
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [search, setSearch] = useState("");
   const [indexFilter, setIndexFilter] = useState<"ALL" | "IDX80" | "IDX30" | "LQ45">("ALL");
@@ -100,8 +101,8 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const activeStocksList = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
-  const processedLeaders = getProcessedLeaders(activeStocksList, activeConfig);
-  const weights = activeConfig === "prod" ? CW_F : CW_B;
+  const processedLeaders = getProcessedLeaders(activeStocksList, activeProfile ?? activeConfig);
+  const weights = activeProfile ?? (activeConfig === "prod" ? CW_F : CW_B);
 
   let filteredLeaders = processedLeaders.filter((item) => {
     const rawTicker = item.ticker.replace(".JK", "").toUpperCase();
@@ -144,7 +145,7 @@ export function LeadersTab({ activeConfig, onSelectTicker, portfolio = [], watch
           <div>
             <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <Sliders className="w-4 h-4 text-white/40" />
-              {activeConfig === "prod" ? "Strategi Fundamental" : "Strategi Teknis Kuat"}
+              {activeProfile ? "Skor Dinamis" : (activeConfig === "prod" ? "Strategi Fundamental" : "Strategi Teknis Kuat")}
               <ExplainButton label="Skor & Ranking Saham (final_score = quality·Wq + growth·Wg + value·Wv + momentum·Wm)" />
             </h2>
             <p className="text-label text-zinc-500 mt-2 uppercase tracking-widest font-bold">

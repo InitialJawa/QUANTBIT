@@ -2,50 +2,64 @@
 
 ## Priority Queue
 
-### P0 — Backtest Validation
-- [x] **Cross-check audit:** BBCA, BBRI, BMRI, TLKM, ASII — warehouse vs legacy snapshots
-- [x] **Run Config B & F backtest** — backend validation PASS (rebalancing + crash protection working)
-- [x] **Fix dev script** — `npm run dev` now auto-starts Express server (was PRNG fallback)
-- [x] **Verify rank distribution** — 95 active tickers, top = BDMN/PTPP/KREN, bottom = BREN/ARTO/BUMI
+### P0 — BacktestContext Consolidation
+- [ ] **Merge duplicat config** — simStartDate, simEndDate, algoCapital, simUniverse, reserveBufferPct dari BacktestContext → EngineConfigContext
+- [ ] **Hapus setBacktestConfigType** — ganti dengan activeProfileId dari EngineConfigContext
+
+### P1 — Data Pipeline Active Profile Support
+- [ ] **Run `npm run build`** — regenerate year files dengan stockRawMetrics + stockNormScores
+- [ ] **Verify runtime re-ranking** — pastikan SimulationTab baca normScores dan compute rank dengan profile weights
+
+### P2 — Profile UX
+- [ ] **Ticker-level weight override** — override weights per ticker dalam profile
+- [ ] **Profile import/export** — JSON export untuk sharing profiles
+
+### P3 — Portfolio Scoping
+- [ ] **MarketTab filter by portfolio tickers**
+- [ ] **Notifications scoped ke active tickers only**
 
 ### Sources State
 - ✅ IDX API = primary fundamental source (PRODUCTION READY)
 - ✅ `collectors/fetch_idx_fundamental.py` = pulls 60 months, output parquet+JSON
-- ✅ `scripts/fetch_historical_data.ts` = Priority 1: IDX Warehouse (976 co), no fallback needed
-- ✅ `src/components/SimulationTab.tsx` = IDX Warehouse only + DPS from archive
-- ✅ Legacy FUNDAMENTAL_SNAPSHOTS archived to `src/data/archive/fundamental_snapshots.json`
-- ✅ Pre-2021 year data (2000-2020) deleted from `data/years/`
-- ❌ Yahoo Fundamental API = dropped from pipeline (prices only via Yahoo chart)
-- ❌ FMP = dropped
-- ❌ Sectors.app = dropped
-- ❌ Hash Fallback Fundamental = dropped
-- ❌ generateFallbackFundamentals = removed (was hash-based)
-- ❌ STOCK_FACTORS = removed (dead code)
-- ⚠️ RTI = backfill 2015-2020 only (deferred)
-- ⚠️ Stockbit = backfill 2015-2020 only (deferred)
+- ✅ `scripts/fetch_historical_data.ts` = Priority 1: IDX Warehouse (976 co)
+- ✅ Weight Profile System = LIVE (profiles[], ManageProfilesModal, runtime re-ranking)
+- ✅ Config Sync Bridge = bidirectional sync useUIState ↔ EngineConfigContext
+- ✅ Data pipeline = stockRawMetrics + stockNormScores in output
+- ✅ AI = profile-aware context
+- ❌ BacktestContext = still has duplicate config (needs consolidation)
+- ❌ Pre-2021 data backfill = deferred
+- ❌ Telegram bot = deferred
 
 ## Completed This Session (2026-06-24)
-- **IDX Fundamental API Discovery** — endpoint diverifikasi via reverse engineering Nuxt bundles
-- **60-month audit PASS** — 60/60 months, schema 100% consistent, 0 errors, avg 1.0s response
-- **ADR-006 accepted** — IDX API = primary source, replace Yahoo/FMP/Sectors/Hash Fallback
-- **docs/REPORT-IDX-API-001.md finalized**
-- **`collectors/` created** — AGENTS.md, fetch_idx_fundamental.py, requirements.txt
-- **Full 60-month pull** — 51,662 records, 976 companies, 0 errors, 2.2 MB parquet + 42 MB JSON
-- **Ratio mismatch confirmed** — API ROE/ROA/NPM inconsistent, compute internally
-- **Idempotency verified** — re-run skips existing months
-- **Factor Engine Migration** — `fetch_historical_data.ts` + `SimulationTab.tsx` now use IDX Warehouse as Priority 1
-- **Yahoo fundamentals removed** — pipeline no longer fetches Yahoo balance sheet data
-- **Pipeline regenerated** — 6,582 trading days, 95 active tickers, all scored with IDX warehouse
-- **Cross-check audit** — ROE -28% (warehouse konservatif), PB +7% (close match), DER ~2000% (definisi berbeda)
-- **Archive created** — `src/data/archive/`: fundamental_snapshots.json (18 ticker × DPS), stock_factors.json (9 ticker)
-- **Legacy removed** — FUNDAMENTAL_SNAPSHOTS, STOCK_FACTORS, generateFallbackFundamentals dari kode
-- **Backtest default date** — simStartDate: 2000-01-03 → 2021-01-04
-- **Pre-2021 data deleted** — 21 tahun file dari `data/years/`
-- **Fixed dev script** — `npm run dev` now auto-starts Express server (root cause: backtest pakai PRNG fallback instead of real data)
-- **Backtest engine verified** — rebalancing + crash protection berfungsi dengan real data
-- **Diagnosed data flow** — rank variation dan IHSG drawdowns confirmed valid di year files
+- **Weight Profile System** — EngineConfigContext rewritten with profiles[], WeightProfile, add/delete/update/setActiveProfile
+- **ManageProfilesModal** — UI for weight sliders, add/delete custom profiles
+- **AppSidebar profile selector** — dynamic buttons replacing Config F/B toggle
+- **ConfigSync bridge** — two-way sync between useUIState and EngineConfigContext
+- **Runtime re-ranking** — SimulationTab computes ranks from stockNormScores + profile weights
+- **Data pipeline raw metrics** — stockRawMetrics + stockNormScores added to JSON/SQLite/API
+- **marketData/marketRegimeEngine** — accept weight objects alongside legacy config
+- **AI awareness** — systemKnowledge + aiClient updated for profiles
+- **Strategy Sync Engine (PRD-009)** — completed Phase 1-3:
+  - Phase 1: Context Consolidation — EngineConfigContext = single source of truth, deleted BacktestContext
+  - Phase 2: Core Engine (`src/engine/`) — pure functions for ranking, crash detection, allocation, metrics
+  - Phase 3: SimulationTab refactor — replaced inline backtest with `runStrategy()`, added custom tickers UI, crash sensitivity slider, Strategy Profile card
+- **All files type-check clean** — `npm run lint` passes
 
-### Next Session
-1. Single Engine Architecture — `rank_stocks(date)` sebagai satu-satunya source of truth
-2. Daily scheduler untuk IDX monthly update
-3. Update handover
+### Next Session (On Deck)
+1. BacktestContext consolidation — merge duplicate config fields into EngineConfigContext
+2. Run `npm run build` to regenerate year files with raw metrics
+3. Profile UX improvements (ticker-level overrides, import/export)
+4. Phase 4: Sync To Portfolio — copy strategy profile from backtest to active portfolio
+5. Phase 5: Portfolio Refactor — PortfolioTracker becomes "Strategy Deployment Center"
+6. Phase 6: Market/Notification integration — MarketTab + NotificationContext use same engine
+7. Phase 7: AI integration — AI responds based on user's Strategy Profile
+
+## Next Sprint (2026-06-25)
+1. Run `npm run build` to regenerate year files with stockRawMetrics + stockNormScores
+2. Add toast notification library (sonner or react-hot-toast) for proper UX feedback
+3. Implement NotificationContext rule firing in MarketTab and PortfolioTracker
+4. Profile UX improvements (ticker-level overrides, import/export)
+5. Add more rule types to NotificationContext (price alerts, volume spikes, etc.)
+6. Connect SYNC TO PORTFOLIO button to actual portfolio sync logic
+7. Add unit tests for `src/engine/` pure functions
+8. Implement notification persistence (save notifications to localStorage/database)

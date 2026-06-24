@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
-import { setActiveUniverse, setActiveConfig, setCrashSensitivity, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
+import { setActiveUniverse, setCrashSensitivity, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -78,7 +78,7 @@ export function PortfolioTracker({
   );
   const [isEditingCash, setIsEditingCash] = useState(false);
   const [editCashStr, setEditCashStr] = useState("");
-  const { engineConfig } = useEngineConfig();
+  const { engineConfig, activeProfile } = useEngineConfig();
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -97,10 +97,9 @@ export function PortfolioTracker({
   // Sync universe + config to regime engine
   useEffect(() => {
     setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
-    setActiveConfig(engineConfig.activeConfig as "prod" | "res");
     setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
     refreshRSFromRegime();
-  }, [engineConfig.universe, engineConfig.activeConfig, engineConfig.crashSensitivity]);
+  }, [engineConfig.universe, engineConfig.activeProfile, engineConfig.crashSensitivity]);
 
   // Persist full state to backend when engine config changes
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -204,7 +203,7 @@ export function PortfolioTracker({
 
   const processedLeaders = getProcessedLeaders(
     visibleStocks,
-    engineConfig.activeConfig,
+    activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : engineConfig.activeConfig,
   ).filter((item) => {
     const rawTicker = item.ticker.replace(".JK", "");
     if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);
@@ -510,7 +509,7 @@ export function PortfolioTracker({
                 name: stock.name,
                 price: stock.currentPrice,
                 shares: finalShares,
-                reason: `Berada di peringkat premium #${target.rank} dalam Model ${engineConfig.activeConfig === "prod" ? "Config F" : "Config B"}.`,
+                reason: `Berada di peringkat premium #${target.rank} dalam Model ${activeProfile?.name || (engineConfig.activeConfig === "prod" ? "Config F" : "Config B")}.`,
                 badge: "INSTRUKSI BELI",
               });
             }
@@ -525,6 +524,39 @@ export function PortfolioTracker({
   return (
     <div id="portfolio-container" className="space-y-3">
       {/* Portfolio Tracker Content Layout */}
+
+      {/* Active Strategy Banner */}
+      <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 rounded-2xl shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 bg-emerald-500/10 rounded-lg shrink-0">
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-caption uppercase tracking-widest text-emerald-400 font-bold mb-0.5">Active Strategy</div>
+              <div className="text-base font-bold text-white truncate">{activeProfile.name}</div>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
+            <div className="text-right">
+              <div className="text-white/30 text-[10px]">QUALITY</div>
+              <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-white/30 text-[10px]">GROWTH</div>
+              <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-white/30 text-[10px]">VALUE</div>
+              <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-white/30 text-[10px]">MOMENTUM</div>
+              <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {portfolioWarnings.length > 0 && (
         <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">

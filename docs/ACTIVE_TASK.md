@@ -188,7 +188,23 @@ Sprint: Platform Stabilization & MCP
 - Yahoo fundamentals API calls removed — no more dependency on Yahoo for fundamental data.
 - Old `idx_fundamentals.json` deleted from `src/data/`.
 
-### Task 37 (Next): Backtest Config B & F Validation
+### Task 37 (Backlog): Backtest Config B & F Validation
 **Status:** PENDING
 **Files:** TBD
 **Detail:** Jalankan backtest Config B dan Config F menggunakan warehouse baru. Bandingkan hasil dengan baseline lama. Verifikasi distribusi rank masuk akal.
+
+### Task 38: Weight Profile System
+**Status:** DONE (2026-06-24)
+**Files:** EngineConfigContext.tsx, ManageProfilesModal.tsx (new), AppSidebar.tsx, PortfolioTracker.tsx, LeadersTab.tsx, AnalyticsTab.tsx, SimulationTab.tsx, App.tsx, marketData.ts, marketRegimeEngine.ts, aiClient.ts, systemKnowledge.ts, fetch_historical_data.ts, server.ts, [[path]].ts
+**Detail:**
+- **EngineConfigContext:** profiles[], WeightProfile interface, addProfile/deleteProfile/updateProfile/setActiveProfile, backward compat activeConfig getter, localStorage persistence, legacy migration
+- **ManageProfilesModal:** weight sliders per profile, add/delete custom profiles, activate button, total weight display
+- **AppSidebar:** Config F/B toggle replaced with dynamic profile buttons + Edit Profiles link
+- **ConfigSync bridge (App.tsx):** bidirectional sync between useUIState.activeConfig and EngineConfigContext.activeProfileId
+- **LeadersTab/PortfolioTracker:** accept activeProfile weights for getProcessedLeaders, display profile name
+- **AnalyticsTab:** reads activeProfile from context
+- **marketRegimeEngine:** accepts custom weight objects, used in breadth/exit scoring
+- **marketData.getProcessedLeaders:** accepts `"prod" | "res" | weight object`
+- **SimulationTab:** runtime re-ranking from stockNormScores + active profile weights (fallback to pre-computed ranks)
+- **Data pipeline:** `stockRawMetrics` + `stockNormScores` added to output JSON, SQLite schema, server/CF response
+- **AI:** systemKnowledge updated with profile docs, aiClient sends activeProfileId/name/weights

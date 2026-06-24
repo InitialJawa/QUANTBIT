@@ -43,8 +43,11 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
   };
 
   if (c) {
+    const profile = (c.profiles || []).find((p: any) => p.id === c.activeProfileId);
     ctx.config = {
-      activeConfig: c.activeConfig,
+      activeConfig: c.activeConfig ?? (c.activeProfileId === "res" ? "res" : "prod"),
+      activeProfileId: c.activeProfileId,
+      activeProfileName: profile?.name,
       safeHavenAsset: c.safeHavenAsset,
       topNCount: c.topNCount,
       reserveBufferPct: c.reserveBufferPct,
@@ -52,10 +55,19 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       singleSellTrigger: c.singleSellTrigger,
       singleBuyTrigger: c.singleBuyTrigger,
       universe: c.universe,
-      qualityWeight: c.qualityWeight,
-      growthWeight: c.growthWeight,
-      valueWeight: c.valueWeight,
-      momentumWeight: c.momentumWeight,
+      qualityWeight: profile?.qualityWeight,
+      growthWeight: profile?.growthWeight,
+      valueWeight: profile?.valueWeight,
+      momentumWeight: profile?.momentumWeight,
+      customTickers: c.customTickers,
+      lastBacktestProfile: c.lastBacktestProfile ? {
+        id: c.lastBacktestProfile.id,
+        name: c.lastBacktestProfile.name,
+        qualityWeight: c.lastBacktestProfile.qualityWeight,
+        growthWeight: c.lastBacktestProfile.growthWeight,
+        valueWeight: c.lastBacktestProfile.valueWeight,
+        momentumWeight: c.lastBacktestProfile.momentumWeight,
+      } : undefined,
     };
   }
 
