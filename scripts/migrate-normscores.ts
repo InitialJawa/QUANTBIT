@@ -82,13 +82,20 @@ function main() {
     return best >= 0 ? arr[best] : null;
   }
 
-  function findYearAgoFund(
+  function findPriorFund(
     ticker: string,
     targetDate: string
   ): FundRecord | null {
-    const d = new Date(targetDate);
-    d.setFullYear(d.getFullYear() - 1);
-    return findLatestFund(ticker, d.toISOString().slice(0, 10));
+    const arr = fundMap.get(ticker);
+    if (!arr || arr.length === 0) return null;
+    const current = findLatestFund(ticker, targetDate);
+    if (!current) return null;
+    const curIdx = arr.indexOf(current);
+    for (let i = curIdx - 1; i >= 0; i--) {
+      const fd = arr[i].fsDate;
+      if (fd < targetDate) return arr[i];
+    }
+    return null;
   }
 
   const prevPrices: Record<string, number[]> = {};
@@ -123,20 +130,28 @@ function main() {
         rawV.push({ t: ticker, v: 1 / fund.priceBV });
       }
 
-      // Growth: EPS YoY, else sales YoY
+      // Growth: EPS change from prior period (annualized), else sales change
       let growthVal: number | null = null;
-      if (fund?.eps != null && fund.eps !== 0) {
-        const fundPrev = findYearAgoFund(ticker, date);
-        if (fundPrev?.eps != null && fundPrev.eps !== 0) {
-          growthVal =
-            ((fund.eps - fundPrev.eps) / Math.abs(fundPrev.eps)) * 100;
+      const fundPrev = findPriorFund(ticker, date);
+      if (fund && fundPrev) {
+        const curFd = new Date(fund.fsDate).getTime();
+        const prevFd = new Date(fundPrev.fsDate).getTime();
+        const yearsDiff = Math.max(0.1, (curFd - prevFd) / (365.25 * 24 * 60 * 60 * 1000));
+
+        let rawGrowth: number | null = null;
+        if (fund.eps != null && fund.eps !== 0 && fundPrev.eps != null && fundPrev.eps !== 0) {
+          rawGrowth = (fund.eps - fundPrev.eps) / Math.abs(fundPrev.eps);
+        } else if (fund.sales != null && fund.sales !== 0 && fundPrev.sales != null && fundPrev.sales !== 0) {
+          rawGrowth = (fund.sales - fundPrev.sales) / Math.abs(fundPrev.sales);
         }
-      }
-      if (growthVal == null && fund?.sales != null && fund.sales !== 0) {
-        const fundPrev = findYearAgoFund(ticker, date);
-        if (fundPrev?.sales != null && fundPrev.sales !== 0) {
-          growthVal =
-            ((fund.sales - fundPrev.sales) / Math.abs(fundPrev.sales)) * 100;
+
+        if (rawGrowth != null) {
+          // Annualize: for positive growth use compound annualized, for negative use raw
+          if (rawGrowth > 0) {
+            growthVal = (Math.pow(1 + rawGrowth, 1 / yearsDiff) - 1) * 100;
+          } else {
+            growthVal = rawGrowth / yearsDiff * 100;
+          }
         }
       }
       if (growthVal != null) {
@@ -158,19 +173,18 @@ function main() {
       }
     }
 
-    // Normalize each factor to [0, 95] across available data
+    // Normalize each factor to [0, 95] using rank-based scaling (resilient to outliers)
     function normalize(
       items: { t: string; v: number }[]
     ): Map<string, number> {
       const result = new Map<string, number>();
       if (items.length === 0) return result;
-      const vals = items.map((x) => x.v);
-      const min = Math.min(...vals);
-      const max = Math.max(...vals);
-      for (const item of items) {
-        const n =
-          max > min ? Math.max(0, Math.min(95, 95 * ((item.v - min) / (max - min)))) : 50;
-        result.set(item.t, n);
+      items.sort((a, b) => a.v - b.v);
+      const n = items.length;
+      for (let i = 0; i < n; i++) {
+        // position 0 -> score 0, position n-1 -> score 95, evenly distributed
+        const score = (i / (n - 1)) * 95;
+        result.set(items[i].t, Math.max(0, Math.min(95, score)));
       }
       return result;
     }
