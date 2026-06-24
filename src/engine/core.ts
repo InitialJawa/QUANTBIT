@@ -24,7 +24,7 @@ import { computeMetrics } from "./metrics";
 export function runStrategy(input: StrategiesInput): BacktestResult {
   const { dayData: rawInput, config, profileWeights, universeTickers, fees = DEFAULT_FEES } = input;
 
-  const activeProfileKey = config.universe === "prod" ? "stockRanksProd" : "stockRanksRes";
+  const activeProfileKey = config.activeProfileId === "prod" ? "stockRanksProd" : "stockRanksRes";
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
@@ -112,9 +112,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const dailyReturns: number[] = [];
   let lastDayVal = cap;
 
-  const configName = profileWeights.quality >= 0.2
-    ? "Config F (Fundamental Focus)"
-    : "Config B (Backtest Optimized)";
+  const configName = config.activeProfileId === "res"
+    ? "Config B (Backtest Optimized)"
+    : "Config F (Fundamental Focus)";
 
   logs.push({
     date: day0.date,

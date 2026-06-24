@@ -109,7 +109,7 @@ export function PortfolioTracker({
     setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
     setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
     refreshRSFromRegime();
-  }, [engineConfig.universe, engineConfig.activeProfile, engineConfig.crashSensitivity]);
+  }, [engineConfig.universe, activeProfile, engineConfig.crashSensitivity]);
 
   // Persist full state to backend when engine config changes
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout>>();

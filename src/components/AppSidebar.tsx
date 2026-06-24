@@ -563,7 +563,7 @@ export function AppSidebar({
   };
 
   function EngineConfigSidebarContent() {
-    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked } = useEngineConfig();
+    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, updateProfile } = useEngineConfig();
     return (
       <div className="px-2 py-2 space-y-3">
         <div className="flex items-center justify-between">
@@ -678,10 +678,10 @@ export function AppSidebar({
             <div className="border-t border-white/[0.04] pt-2">
               <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
               {[
-                ["qualityWeight", "Quality (Q)", engineConfig.qualityWeight * 100],
-                ["growthWeight", "Growth (G)", engineConfig.growthWeight * 100],
-                ["valueWeight", "Value (V)", engineConfig.valueWeight * 100],
-                ["momentumWeight", "Momentum (M)", engineConfig.momentumWeight * 100],
+                ["qualityWeight", "Quality (Q)", activeProfile.qualityWeight * 100],
+                ["growthWeight", "Growth (G)", activeProfile.growthWeight * 100],
+                ["valueWeight", "Value (V)", activeProfile.valueWeight * 100],
+                ["momentumWeight", "Momentum (M)", activeProfile.momentumWeight * 100],
               ].map(([key, label, val]) => (
                 <div key={key} className="mb-1.5">
                   <div className="flex justify-between text-label mb-0.5">
@@ -689,8 +689,8 @@ export function AppSidebar({
                     <span className="text-accent font-bold">{Math.round(val as number)}%</span>
                   </div>
                   <input type="range" min="0" max="1" step="0.05"
-                    value={(engineConfig as any)[key as string]}
-                    onChange={e => updateConfigValue(key as string, parseFloat(e.target.value))}
+                    value={(activeProfile as any)[key as string]}
+                    onChange={e => updateProfile(activeProfile.id, { [key]: parseFloat(e.target.value) })}
                     className="w-full accent-emerald-500 h-1" />
                 </div>
               ))}

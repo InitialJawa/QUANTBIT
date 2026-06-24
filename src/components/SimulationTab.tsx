@@ -63,6 +63,12 @@ interface BacktestDayData {
   stockRanksProd?: Record<string, number>;
   stockRanksRes?: Record<string, number>;
   stockAdjPrices?: Record<string, number>;
+  stockNormScores?: Record<string, {
+    quality: number;
+    growth: number;
+    value: number;
+    momentum: number;
+  }>;
 }
 
 const TICKER_COLORS: Record<string, string> = {
@@ -106,12 +112,18 @@ function generateClientBacktestData(): BacktestDayData[] {
 
   const basePrices: Record<string, number> = {};
   const qualityFactors: Record<string, number> = {};
+  const growthFactors: Record<string, number> = {};
+  const valueFactors: Record<string, number> = {};
   const momentum: Record<string, number> = {};
+  const stockFactors: Record<string, { quality: number; growth: number; value: number; momentum: number }> = {};
 
   tickers.forEach(t => {
     qualityFactors[t] = 0.3 + nextRandom() * 0.6;
+    growthFactors[t] = 0.2 + nextRandom() * 0.7;
+    valueFactors[t] = 0.1 + nextRandom() * 0.8;
     basePrices[t] = 500 + qualityFactors[t] * 9500;
     momentum[t] = 0;
+    stockFactors[t] = { quality: qualityFactors[t], growth: growthFactors[t], value: valueFactors[t], momentum: 0.5 + nextRandom() * 0.4 };
   });
 
   let ihsg = 500 + nextRandom() * 500;
@@ -124,6 +136,7 @@ function generateClientBacktestData(): BacktestDayData[] {
       const dateStr = cursor.toISOString().slice(0, 10);
       const stockPrices: Record<string, number> = {};
       const stockRanks: Record<string, number> = {};
+      const stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number }> = {};
 
       tickers.forEach(t => {
         const dailyShock = (nextRandom() - 0.5) * 0.035;
@@ -131,6 +144,14 @@ function generateClientBacktestData(): BacktestDayData[] {
         const drift = (qualityFactors[t] - 0.45) * 0.003;
         basePrices[t] = Math.max(10, basePrices[t] * (1 + drift + momentum[t]));
         stockPrices[t] = Math.round(basePrices[t] * 100) / 100;
+        const normMomentum = Math.max(0, Math.min(1, (momentum[t] + 0.03) / 0.06));
+        stockFactors[t] = {
+          quality: qualityFactors[t],
+          growth: growthFactors[t] * (1 + dailyShock),
+          value: valueFactors[t] * (1 - dailyShock * 0.5),
+          momentum: normMomentum,
+        };
+        stockNormScores[t] = stockFactors[t];
       });
 
       const scores = tickers.map(t => ({
@@ -149,6 +170,7 @@ function generateClientBacktestData(): BacktestDayData[] {
         goldPrice: Math.round(gold),
         stockPrices,
         stockRanks,
+        stockNormScores,
       });
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -427,6 +449,7 @@ export function SimulationTab({
           simEndDate: engineConfig.simEndDate,
           customTickers: engineConfig.customTickers || [],
           customUniverse: engineConfig.customUniverse || [],
+          activeProfileId: engineConfig.activeProfileId as "prod" | "res",
         },
         profileWeights: {
           quality: activeProfile?.qualityWeight ?? 0.25,
