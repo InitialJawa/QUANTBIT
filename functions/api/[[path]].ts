@@ -584,10 +584,10 @@ async function handleAiChat(request: Request, env: Env, userId: string | undefin
 }
 
 async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
-  // Diagnostic endpoint — shows which API keys are configured (no values).
-  // Visit /api/ai/status in browser to debug "AI not working".
-  const { getAiStatus } = await import("../../src/server/aiChatHandler");
-  const status = getAiStatus(
+  // Diagnostic endpoint — shows which API keys are configured (no values)
+  // + OpenRouter free quota. Visit /api/ai/status in browser to debug.
+  const { getAiStatusWithQuota } = await import("../../src/server/aiChatHandler");
+  const status = await getAiStatusWithQuota(
     {
       OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
       GROQ_API_KEY: env.GROQ_API_KEY,

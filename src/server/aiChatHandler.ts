@@ -506,6 +506,21 @@ function buildProviderList(
 
 // ── Error message builder ─────────────────────────────────
 
+/** Detect OpenRouter's free-models-per-day quota exhaustion. */
+function isOpenRouterFreeModelsPerDayError(errMsg: string): boolean {
+  return /free-models-per-day/i.test(errMsg);
+}
+
+/** Detect geo-block error from Gemini or other providers. */
+function isGeoBlockError(errMsg: string): boolean {
+  return /User location is not supported|FAILED_PRECONDITION|not supported for the API/i.test(errMsg);
+}
+
+/** Detect auth error (403 Forbidden, 401 Unauthorized) from Groq or others. */
+function isAuthError(errMsg: string): boolean {
+  return /\b(401|403)\b/.test(errMsg) && /Forbidden|Unauthorized/i.test(errMsg);
+}
+
 function buildErrorMessage(
   statuses: ProviderStatus[],
   errors: string[],
@@ -522,7 +537,7 @@ function buildErrorMessage(
     lines.push("❌ Tidak ada API key yang dikonfigurasi di server.");
   } else {
     for (const s of statuses) {
-      if (!s.hasEnvVar) continue;  // skip non-existent env vars to keep output clean
+      if (!s.hasEnvVar) continue;
       const mark = s.configured ? "✅" : "❌";
       const cdMark = s.coolingDown ? " ⏳" : "";
       const envName = s.name.startsWith("openrouter") ? "OPENROUTER_API_KEY"
@@ -555,8 +570,54 @@ function buildErrorMessage(
     lines.push("");
   }
 
-  // Diagnosis
-  if (configured.length === 0) {
+  // ── Specific diagnoses for known error patterns ────────
+
+  const allErrors = errors.join(" | ");
+
+  if (isOpenRouterFreeModelsPerDayError(allErrors)) {
+    lines.push("## 🔥 Root cause: OpenRouter free-models-per-day limit HABIS");
+    lines.push("");
+    lines.push("Semua 4 model OpenRouter (free) pakai **satu quota harian yang sama** (default **50 requests/day**).");
+    lines.push("Begitu kena limit, **semua model free OpenRouter di-account lo di-block sampai reset**.");
+    lines.push("");
+    lines.push("**Cara cek sisa quota:**");
+    lines.push("- Buka https://openrouter.ai/activity → lihat 'Free Models' usage hari ini");
+    lines.push("- Atau `curl -H \"Authorization: Bearer $KEY\" https://openrouter.ai/api/v1/key` → ada `usage`, `limit`, `limit_remaining`");
+    lines.push("");
+    lines.push("**3 solusi (urut prioritas):**");
+    lines.push("");
+    lines.push("1. **Tunggu reset** (default midnight UTC, atau sesuai `X-RateLimit-Reset` di response)");
+    lines.push("   - Gratis, tapi besok kena lagi kalau traffic tinggi");
+    lines.push("");
+    lines.push("2. **Add $10 credits** ke OpenRouter → unlock **1000 free requests/day** (https://openrouter.ai/credits)");
+    lines.push("   - Sekali bayar $10, berlaku selamanya (sampai abis)");
+    lines.push("   - Recommended untuk daily use");
+    lines.push("");
+    lines.push("3. **Tambah provider alternatif** (beda quota pool, ga share dgn OpenRouter):");
+    lines.push("   - **Cohere** (https://dashboard.cohere.com/) — 1000 req/min free, generous");
+    lines.push("   - **Mistral** (https://console.mistral.ai/) — 1 req/sec free");
+    lines.push("   - **Together AI** (https://api.together.xyz/) — free tier available");
+    lines.push("   - Signup → dapat API key → set sebagai env var `COHERE_API_KEY` / `MISTRAL_API_KEY` / `TOGETHER_API_KEY`");
+    lines.push("");
+  } else if (isGeoBlockError(allErrors)) {
+    lines.push("## 🌍 Root cause: Geo-blocked dari Cloudflare Pages edge");
+    lines.push("");
+    lines.push("Provider direct (Google Gemini, Groq) **blokir request dari beberapa region CF edge**.");
+    lines.push("OpenRouter biasanya TIDAK kena karena route via pool mereka sendiri.");
+    lines.push("");
+    lines.push("**Solusi:** pakai OpenRouter (sudah ada), atau tambah provider lain (Cohere, Mistral) yang tidak geo-block.");
+    lines.push("");
+  } else if (isAuthError(allErrors)) {
+    lines.push("## 🔑 Root cause: API key di-block / invalid");
+    lines.push("");
+    lines.push("Provider mengembalikan 401/403 Forbidden. Kemungkinan:");
+    lines.push("- Key sudah di-revoke / expired");
+    lines.push("- Key tidak punya akses ke model yang diminta");
+    lines.push("- Provider IP-block CF edge");
+    lines.push("");
+    lines.push("**Solusi:** buat API key baru di dashboard provider, atau pakai OpenRouter sebagai gantinya.");
+    lines.push("");
+  } else if (configured.length === 0) {
     lines.push("**Diagnosis:** Server tidak punya API key sama sekali. Setting env var wajib diisi sebelum AI bisa dipakai.");
   } else if (cooldowns.length > 0 && cooldowns.length === configured.length) {
     lines.push(`**Diagnosis:** Semua ${configured.length} provider sedang cooling down (rate-limited / quota exceeded). Tunggu cooldown selesai, atau tambah provider baru.`);
@@ -580,14 +641,14 @@ function buildErrorMessage(
   } else {
     lines.push("**Solusi (production — Cloudflare Dashboard):**");
     lines.push("1. Buka https://dash.cloudflare.com → Pages → quantbit-terminal → Settings → Environment Variables");
-    lines.push("2. Tambah salah satu:");
+    lines.push("2. Tambah (kalau belum ada):");
     lines.push("   - `OPENROUTER_API_KEY` = `sk-or-v1-...` (https://openrouter.ai/keys)");
     lines.push("   - `GROQ_API_KEY` = `gsk_...` (https://console.groq.com/keys)");
     lines.push("   - `GEMINI_API_KEY` = `AIza...` (https://aistudio.google.com/app/apikey)");
     lines.push("3. Save → automatic redeploy");
     lines.push("");
   }
-  lines.push("**Rekomendasi**: `OPENROUTER_API_KEY` (https://openrouter.ai/keys) — 26+ free models, no geo-restriction, route via OpenRouter pool.");
+  lines.push("**Rekomendasi**: `OPENROUTER_API_KEY` (https://openrouter.ai/keys) — 26+ free models, no geo-restriction, route via OpenRouter pool. Add $10 credits untuk 1000 req/day (vs default 50/day).");
   lines.push("");
   lines.push("Untuk testing tanpa API key, aktifkan **Use Dev Mock** di Settings → AI Agent (dev only).");
 
@@ -669,4 +730,79 @@ export function getAiStatus(env: AiEnv, isDev: boolean = false) {
     configuredCount: statuses.filter((s) => s.configured).length,
     cooldowns: getAllCooldowns(),
   };
+}
+
+export interface OpenRouterQuota {
+  /** Whether quota info is available. */
+  available: boolean;
+  /** Number of free credits used. */
+  used?: number;
+  /** Total free credits limit (null = unlimited). */
+  limit?: number | null;
+  /** Free credits remaining. */
+  remaining?: number | null;
+  /** Unix timestamp (seconds) when free quota resets. */
+  resetAt?: number;
+  /** Reset time as ISO string. */
+  resetAtIso?: string;
+  /** Error message if quota check failed. */
+  error?: string;
+}
+
+/** Fetch OpenRouter free quota for the current key. Returns `available: false`
+ *  if no key, network error, or non-OpenRouter key. Cache result for 30s to
+ *  avoid hitting the endpoint on every status check. */
+let quotaCache: { at: number; result: OpenRouterQuota } | null = null;
+const QUOTA_CACHE_MS = 30 * 1000;
+
+export async function getOpenRouterQuota(apiKey: string): Promise<OpenRouterQuota> {
+  // Cache hit
+  if (quotaCache && Date.now() - quotaCache.at < QUOTA_CACHE_MS) {
+    return quotaCache.result;
+  }
+  if (!isKeySet(apiKey)) {
+    const r: OpenRouterQuota = { available: false, error: "No OPENROUTER_API_KEY set" };
+    quotaCache = { at: Date.now(), result: r };
+    return r;
+  }
+  try {
+    const resp = await fetch("https://openrouter.ai/api/v1/key", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) {
+      const r: OpenRouterQuota = { available: false, error: `HTTP ${resp.status}` };
+      quotaCache = { at: Date.now(), result: r };
+      return r;
+    }
+    const data: any = await resp.json();
+    const usage = typeof data?.usage === "number" ? data.usage : undefined;
+    const limit = data?.limit ?? null;
+    const remaining = data?.limit_remaining ?? null;
+    const resetAt = typeof data?.reset_at === "number" ? data.reset_at : undefined;
+    const r: OpenRouterQuota = {
+      available: true,
+      used: usage,
+      limit: limit,
+      remaining: remaining,
+      resetAt,
+      resetAtIso: resetAt ? new Date(resetAt * 1000).toISOString() : undefined,
+    };
+    quotaCache = { at: Date.now(), result: r };
+    return r;
+  } catch (e: any) {
+    const r: OpenRouterQuota = { available: false, error: e?.message || String(e) };
+    quotaCache = { at: Date.now(), result: r };
+    return r;
+  }
+}
+
+/** Get status + OpenRouter quota (if key set). Use this from API endpoints
+ *  that want to display quota info to the user. */
+export async function getAiStatusWithQuota(env: AiEnv, isDev: boolean = false) {
+  const base = getAiStatus(env, isDev);
+  if (isKeySet(env.OPENROUTER_API_KEY)) {
+    const quota = await getOpenRouterQuota(env.OPENROUTER_API_KEY!);
+    return { ...base, openrouterQuota: quota };
+  }
+  return { ...base, openrouterQuota: { available: false, error: "No key" } as OpenRouterQuota };
 }

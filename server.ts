@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { createTransport } from "nodemailer";
 import { handleYahooRequest } from "./src/server/yahooApi";
-import { runAiChat, getAiStatus, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
+import { runAiChat, getAiStatus, getAiStatusWithQuota, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
 
 const app = express();
 app.use(express.json());
@@ -98,9 +98,29 @@ app.post("/api/ai/chat", async (req, res) => {
   }
 });
 
-// Diagnostic endpoint — shows which API keys are configured (no key values).
-app.get("/api/ai/status", (_req, res) => {
-  res.json(getAiStatusFromEnv());
+// Diagnostic endpoint — shows which API keys are configured (no key values)
+// + OpenRouter quota if key set.
+app.get("/api/ai/status", async (_req, res) => {
+  try {
+    const status = await getAiStatusWithQuota({
+      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+      GROQ_API_KEY: process.env.GROQ_API_KEY,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      GROQ_MODEL: process.env.GROQ_MODEL,
+      GROQ_FALLBACK_MODEL: process.env.GROQ_FALLBACK_MODEL,
+      GEMINI_MODEL: process.env.GEMINI_MODEL,
+      GEMINI_FALLBACK_MODEL: process.env.GEMINI_FALLBACK_MODEL,
+      OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+      OPENROUTER_MODEL_2: process.env.OPENROUTER_MODEL_2,
+      OPENROUTER_MODEL_3: process.env.OPENROUTER_MODEL_3,
+      OPENROUTER_MODEL_4: process.env.OPENROUTER_MODEL_4,
+      COOLDOWN_429_MS: process.env.COOLDOWN_429_MS,
+      COOLDOWN_403_MS: process.env.COOLDOWN_403_MS,
+    }, true);
+    res.json(status);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── AI Memory endpoints (local dev: in-memory store) ───────
