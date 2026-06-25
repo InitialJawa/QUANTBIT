@@ -496,6 +496,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                   onApprove={async (pending) => {
                     await executeAIAction(pending);
                     approveAction(p.id);
+                    setMessages((prev) => [...prev, { role: "assistant", content: "(done)" }]);
                   }}
                   onReject={() => rejectAction(p.id)}
                 />
