@@ -23,6 +23,7 @@ import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { runStrategy } from "../engine";
+import { runBaselineDca, type BaselineResult, type DcaBaseline } from "../engine/dcaBaselines";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { isCrisisMode } from "../marketRegimeEngine";
@@ -237,6 +238,7 @@ export function SimulationTab({
 
   const [backtestProgress, setBacktestProgress] = useState(0);
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
+  const [baselineResults, setBaselineResults] = useState<BaselineResult[]>([]);
 
   const rankChartData = useMemo(() => {
     if (!backtestResult || !backtestResult.chartData) return [];
@@ -470,6 +472,48 @@ export function SimulationTab({
       setBacktestProgress(95);
 
       setBacktestResult(result);
+
+      // Adaptive DCA: also run 3 baseline simulations for comparison
+      if (backtestConfig.simulationMode === "adaptive_dca") {
+        const baselineInputs = {
+          dayData: historicalData,
+          config: {
+            capital: cap,
+            reserveBufferPct: backtestConfig.reserveBufferPct,
+            topNCount: backtestConfig.topNCount,
+            universe: backtestConfig.universe,
+            safeHavenAsset: backtestConfig.safeHavenAsset,
+            enableCrashProtection: false, // baselines are simple DCA, no crash protection
+            crashSensitivity: backtestConfig.crashSensitivity,
+            simStartDate: backtestConfig.simStartDate,
+            simEndDate: backtestConfig.simEndDate,
+            customUniverse: [],
+            enableAdaptiveWeights: false,
+          },
+          profileWeights: {
+            quality: backtestActiveProfile?.qualityWeight ?? 0.45,
+            growth: backtestActiveProfile?.growthWeight ?? 0.10,
+            value: backtestActiveProfile?.valueWeight ?? 0.05,
+            momentum: backtestActiveProfile?.momentumWeight ?? 0.40,
+          },
+          universeTickers: {
+            idx80: IDX80_TICKERS,
+            idx30: IDX30_TICKERS,
+            lq45: LQ45_TICKERS,
+          },
+        };
+        const baselines: BaselineResult[] = [];
+        for (const baseline of ["lump_sum", "monthly_dca", "quarterly_dca"] as DcaBaseline[]) {
+          try {
+            baselines.push(runBaselineDca({ ...baselineInputs, baseline }));
+          } catch (e) {
+            console.warn(`Baseline ${baseline} failed:`, e);
+          }
+        }
+        setBaselineResults(baselines);
+      } else {
+        setBaselineResults([]);
+      }
 
       setBacktesting(false);
       setBacktestProgress(100);
@@ -1047,6 +1091,79 @@ export function SimulationTab({
                       <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
                     </div>
                   </div>
+
+                  {/* 4-way DCA comparison — only for adaptive_dca mode */}
+                  {backtestConfig.simulationMode === "adaptive_dca" && baselineResults.length > 0 && (
+                    <div className="p-5 bg-[#080808] border border-emerald-500/20 rounded-xl space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b border-white/[0.05]">
+                        <span className="text-lg">⚡</span>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-emerald-400 font-mono">
+                          Adaptive DCA vs Traditional Strategies
+                        </h4>
+                        <span className="text-label text-white/40 font-mono ml-auto">
+                          {backtestConfig.simStartDate} → {backtestConfig.simEndDate}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        {/* Adaptive DCA (this run) */}
+                        <div className="p-3 bg-emerald-500/[0.05] border-2 border-emerald-500/40 rounded-xl space-y-1.5">
+                          <span className="text-caption uppercase tracking-widest font-black text-emerald-400 font-mono block">⚡ Adaptive DCA</span>
+                          <span className="text-base font-black font-mono text-white block">{formatRupiah(backtestResult.finalValue)}</span>
+                          <span className={`text-caption font-bold font-mono ${backtestResult.totalReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(1)}%
+                          </span>
+                          <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-[10px] font-mono text-white/50">
+                            <div>CAGR: {backtestResult.cagr.toFixed(1)}%</div>
+                            <div>Max DD: -{backtestResult.maxDrawdown.toFixed(1)}%</div>
+                            <div className="text-emerald-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
+                          </div>
+                        </div>
+
+                        {/* 3 baselines */}
+                        {baselineResults.map((bl) => (
+                          <div key={bl.baseline} className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl space-y-1.5">
+                            <span className="text-caption uppercase tracking-widest font-black text-white/50 font-mono block">
+                              {bl.baseline === "lump_sum" ? "💰" : bl.baseline === "monthly_dca" ? "📅" : "🗓️"} {bl.label}
+                            </span>
+                            <span className="text-base font-black font-mono text-white/80 block">{formatRupiah(bl.finalValue)}</span>
+                            <span className={`text-caption font-bold font-mono ${bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "text-emerald-400" : "text-rose-400"}`}>
+                              {bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "+" : ""}
+                              {(((bl.finalValue / (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)) - 1) * 100).toFixed(1)}%
+                            </span>
+                            <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-[10px] font-mono text-white/50">
+                              <div>CAGR: {bl.cagr.toFixed(1)}%</div>
+                              <div>Max DD: -{bl.maxDrawdown.toFixed(1)}%</div>
+                              <div>Avg Price: {formatRupiah(bl.avgBuyPrice)}</div>
+                              <div>Cash Used: {bl.cashUtilization.toFixed(0)}%</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Verdict */}
+                      {(() => {
+                        const cap = parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
+                        const adaptiveReturn = backtestResult.totalReturnPct;
+                        const bestBaseline = baselineResults.reduce((best, b) => {
+                          const r = ((b.finalValue / cap) - 1) * 100;
+                          return r > best.r ? { name: b.label, r } : best;
+                        }, { name: "", r: -Infinity });
+                        const beatsBest = adaptiveReturn > bestBaseline.r;
+                        return (
+                          <div className={`p-3 rounded-lg border ${beatsBest ? "bg-emerald-500/10 border-emerald-500/30" : "bg-amber-500/10 border-amber-500/30"}`}>
+                            <p className="text-xs text-white/80 font-sans leading-relaxed">
+                              {beatsBest ? "✅" : "⚠️"} <strong>Adaptive DCA</strong> return <span className="font-mono font-bold text-white">{adaptiveReturn.toFixed(2)}%</span> vs
+                              <strong> {bestBaseline.name}</strong> return <span className="font-mono font-bold text-white">{bestBaseline.r.toFixed(2)}%</span>.
+                              {beatsBest
+                                ? ` Adaptive DCA mengungguli strategi tradisional terbaik sebesar ${(adaptiveReturn - bestBaseline.r).toFixed(2)} poin.`
+                                : ` Adaptive DCA underperform sebesar ${(bestBaseline.r - adaptiveReturn).toFixed(2)} poin.`}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   {/* Recharts chart */}
                   <div className="space-y-4">

@@ -20,6 +20,7 @@ import {
   computeSellProceeds,
 } from "./allocator";
 import { computeMetrics } from "./metrics";
+import { computeBuyPressureFromMarket } from "./buyPressure";
 
 export function runStrategy(input: StrategiesInput): BacktestResult {
   const { dayData: rawInput, config, profileWeights: inputWeights, universeTickers, fees = DEFAULT_FEES } = input;
@@ -83,6 +84,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       day0.stockRanks, day0.stockPrices, getUniverseTickers(), config.topNCount
     );
   } else {
+    // adaptive_dca: no topTickers pre-computed; each month-end re-evaluates.
     topTickers = [];
   }
 
@@ -103,6 +105,13 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   let totalDividendsEarned = 0;
   let maxVal = cap;
   let maxDrawdownValue = 0;
+  // Adaptive DCA tracking — how much cash has been deployed and the BPS
+  // history (used by SimulationTab for charting).
+  let totalDeployed = config.simulationMode === "adaptive_dca" ? 0 : initialInvestable;
+  let lastDeploymentMonth = config.simulationMode === "adaptive_dca"
+    ? -1
+    : new Date(day0.date).getMonth();
+  const bpsHistory: Array<{ date: string; score: number; deployPct: number; action: string }> = [];
 
   const chartData: ChartPoint[] = [];
   const logs: TradeLog[] = [];
@@ -121,7 +130,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const dailyReturns: number[] = [];
   let lastDayVal = cap;
 
-  const configName = config.activeProfileId === "res"
+  const configName = config.simulationMode === "adaptive_dca"
+    ? "Adaptive DCA (BPS-driven)"
+    : config.activeProfileId === "res"
     ? "Config BG (Balanced Growth)"
     : "Config QM (Quality Momentum)";
 
@@ -308,6 +319,68 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (crashCooldown > 0) crashCooldown--;
 
+    // Adaptive DCA deployment: on month change, compute BPS from historical
+    // signals and deploy BPS.deployPct of available cash into top N. Unlike
+    // algo mode there is NO monthly rank-based rotation — once deployed,
+    // positions are held until crash triggers liquidation.
+    if (!inCrashState && config.simulationMode === "adaptive_dca" && currentMonth !== lastDeploymentMonth) {
+      lastDeploymentMonth = currentMonth;
+
+      // Compute BPS signals from rolling windows of historical data.
+      const lookback21 = Math.max(0, stepIndex - 21);
+      const lookback60 = Math.max(0, stepIndex - 60);
+      const ihsg21ago = filtered[lookback21].ihsgPrice;
+      const ihsgMonthly = day0.ihsgPrice > 0
+        ? ((day.ihsgPrice - ihsg21ago) / ihsg21ago) * 100
+        : 0;
+      const window60 = filtered.slice(lookback60, stepIndex + 1).map(d => d.ihsgPrice);
+      const peak60 = window60.length > 0 ? Math.max(...window60) : day.ihsgPrice;
+      const drawdown60 = peak60 > 0 ? ((day.ihsgPrice - peak60) / peak60) * 100 : 0;
+      const breadthAbove60 = Object.values(day.stockRanks).filter(r => r > 0 && r <= config.topNCount * 3).length;
+      const watchlistCount = Object.keys(day.stockRanks).length;
+      const riskScore = Math.min(100, Math.max(0, Math.abs(ihsgMonthly) * 4));
+      const avgValueScore = Object.keys(day.stockRanks).length > 0
+        ? Object.entries(day.stockNormScores || {})
+            .reduce((sum, [, ns]) => sum + (ns.value ?? 50), 0) / Math.max(1, Object.keys(day.stockNormScores || {}).length)
+        : 50;
+
+      const bps = computeBuyPressureFromMarket(
+        ihsgMonthly,
+        drawdown60,
+        breadthAbove60,
+        watchlistCount,
+        riskScore,
+        avgValueScore,
+        false, // isCrisisMode is checked separately; we still allow purchases during recovery
+      );
+      bpsHistory.push({
+        date: day.date,
+        score: bps.score,
+        deployPct: bps.deployPct,
+        action: bps.action,
+      });
+
+      // Deploy BPS.deployPct of AVAILABLE cash (not all cash).
+      const deployAmount = Math.floor(cash * bps.deployPct / 100);
+      if (deployAmount > 0) {
+        const topTickersMonth = pickTopTickersByRank(
+          day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount,
+        );
+        const alloc = computeInitialAllocation(deployAmount, topTickersMonth, day.stockPrices, day.stockVolumes, fees);
+        Object.entries(alloc.positions).forEach(([ticker, newShares]) => {
+          positions[ticker] = (positions[ticker] || 0) + newShares;
+        });
+        cash -= (deployAmount - alloc.cash);
+        totalDeployed += deployAmount;
+        totalTransactionVolume += alloc.totalVolume;
+        logs.push({
+          date: day.date,
+          type: "BUY",
+          message: `[Adaptive DCA] BPS ${bps.score} → ${bps.action.toUpperCase()} → deploy Rp ${deployAmount.toLocaleString("id-ID")} (${bps.deployPct}%) ke ${alloc.positions.length} emiten.`,
+        });
+      }
+    }
+
     if (!inCrashState && config.enableAdaptiveWeights && day.stockNormScores && stepIndex >= 60) {
       const isMonthChange = currentMonth !== lastRebalanceMonth;
       if (isMonthChange) {
@@ -317,6 +390,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       }
     }
 
+    // Adaptive DCA: no monthly rebalancing — positions are held until
+    // crash triggers full liquidation. Skip the rebalancing block.
     if (!inCrashState && config.enableCrossover && config.simulationMode === "algo") {
       const ownedTickers = Object.entries(positions)
         .filter(([_, shares]) => shares > 0)
@@ -445,6 +520,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     configName,
     logs: allLogs,
     chartData,
+    bpsHistory: bpsHistory.length > 0 ? bpsHistory : undefined,
+    totalDeployed: config.simulationMode === "adaptive_dca" ? totalDeployed : undefined,
   };
 }
 

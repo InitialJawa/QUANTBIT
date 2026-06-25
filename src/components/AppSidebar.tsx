@@ -775,7 +775,11 @@ export function AppSidebar({
           </div>
           <div className="px-2 py-1.5 space-y-1.5">
           <div className="flex gap-1">
-              {([["algo","Algo"],["custom","Custom"]] as const).map(([k, label]) => (
+              {([
+                ["algo", "Algo"],
+                ["custom", "Custom"],
+                ["adaptive_dca", "Adaptive"],
+              ] as const).map(([k, label]) => (
                 <button key={k} onClick={() => updateBacktestValue("simulationMode", k)}
                   className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
                   style={{ backgroundColor: backtestConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: backtestConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
@@ -786,7 +790,7 @@ export function AppSidebar({
           </div>
         </div>
 
-        {backtestConfig.simulationMode === "algo" ? (
+        {(backtestConfig.simulationMode === "algo" || backtestConfig.simulationMode === "adaptive_dca") ? (
           <>
             <div className="mx-2">
               <div className="px-2 py-1 border-b border-white/[0.04]">

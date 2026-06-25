@@ -27,7 +27,7 @@ export interface BacktestConfig {
   reserveBufferPct: number;
   topNCount: number;
   universe: string;
-  simulationMode: "algo" | "custom";
+  simulationMode: "algo" | "custom" | "adaptive_dca";
   singleTicker: string;
   enableCrashProtection: boolean;
   crashSensitivity: number;
@@ -70,6 +70,13 @@ export interface ChartPoint {
   ranks: Record<string, number>;
 }
 
+export interface BpsSnapshot {
+  date: string;
+  score: number;
+  deployPct: number;
+  action: string;
+}
+
 export interface BacktestResult {
   finalValue: number;
   ihsgFinalValue: number;
@@ -92,6 +99,10 @@ export interface BacktestResult {
   configName: string;
   logs: TradeLog[];
   chartData: ChartPoint[];
+  /** Adaptive DCA only: BPS history per month-end. Empty for algo/custom. */
+  bpsHistory?: BpsSnapshot[];
+  /** Total cash deployed into positions (Adaptive DCA tracks this explicitly). */
+  totalDeployed?: number;
 }
 
 export interface StrategiesInput {

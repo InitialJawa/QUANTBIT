@@ -19,6 +19,7 @@ import {
   getActiveUniverse,
 } from "../engine";
 import type { RuleContext } from "../engine";
+import { BuyPressureDashboard } from "./BuyPressureDashboard";
 import {
   PieChart,
   Pie,
@@ -683,6 +684,9 @@ export function PortfolioTracker({
           </div>
         </div>
       </div>
+
+      {/* Adaptive DCA Recommendation — BPS-driven deploy/cash guidance */}
+      <BuyPressureDashboard />
 
       {strategyEval.shouldExit && (
         <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
