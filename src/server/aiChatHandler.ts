@@ -9,11 +9,17 @@
 // own Response shape. No fetch, no Request/Response types, no D1.
 //
 // Provider chain (priority order, lower number = higher priority):
-//   1. Groq compound (`groq/compound`)  — agent model, no daily cap
-//   2. Google Gemma 4 26B              — 1500 RPD, unlimited TPM
-//   3. Google Gemma 4 31B              — 1500 RPD, fallback if 26B 429s
-//   4. Groq llama-3.3-70b-versatile    — 30 RPM, fast backup
-//   5. OpenRouter (free model)         — last resort (rate-limited)
+//   1. OpenRouter openai/gpt-oss-120b:free  — OpenInference pool, no rate-limit
+//   2. OpenRouter nvidia/nemotron-3-super-120b:free — Nvidia pool
+//   3. OpenRouter cohere/north-mini-code:free — Cohere pool
+//   4. OpenRouter meta-llama/llama-3.3-70b-instruct:free — Venice pool (rate-limited)
+//   5. Groq compound (direct)              — may be geo-blocked from CF edge
+//   6. Groq llama (direct, fallback)       — may be geo-blocked from CF edge
+//   7. Google Gemma 4 26B (direct)         — geo-blocked from most CF edges
+//
+// NOTE: Direct API calls (Groq, Google) are geo-blocked from many
+// Cloudflare Pages edge locations. The OpenRouter proxies route
+// through different IPs and are usually NOT geo-blocked.
 //
 // Circuit breaker: when a provider returns 429/403, we mark it as
 // "cooling down" for COOLDOWN_429_MS / COOLDOWN_403_MS. While
@@ -94,8 +100,15 @@ export interface AiEnv {
   GEMINI_MODEL?: string;
   /** Fallback Gemini model. Default: "gemma-4-31b-it". */
   GEMINI_FALLBACK_MODEL?: string;
-  /** Override default OpenRouter model. Default: "meta-llama/llama-3.3-70b-instruct:free". */
+  /** Override default OpenRouter model. Default: "openai/gpt-oss-120b:free"
+   *  (OpenInference pool — not rate-limited like Venice-pooled models). */
   OPENROUTER_MODEL?: string;
+  /** Second OpenRouter model to try (different provider pool). Default: nvidia/nemotron-3-super-120b:free. */
+  OPENROUTER_MODEL_2?: string;
+  /** Third OpenRouter model to try (different provider pool). Default: cohere/north-mini-code:free. */
+  OPENROUTER_MODEL_3?: string;
+  /** Fourth OpenRouter model (Venice pool, often rate-limited). Default: meta-llama/llama-3.3-70b-instruct:free. */
+  OPENROUTER_MODEL_4?: string;
   /** Cooldown duration after 429 (ms). Default: 5 minutes. */
   COOLDOWN_429_MS?: string;
   /** Cooldown duration after 401/403 (ms). Default: 15 minutes. */
@@ -217,7 +230,10 @@ function classifyError(errMsg: string): { type: "rate_limit" | "quota" | "auth" 
 
 /** Default models per provider — exposed for status endpoint. */
 const DEFAULTS = {
-  openrouter: "meta-llama/llama-3.3-70b-instruct:free",
+  openrouter: "openai/gpt-oss-120b:free",
+  "openrouter-2": "nvidia/nemotron-3-super-120b-a12b:free",
+  "openrouter-3": "cohere/north-mini-code:free",
+  "openrouter-4": "meta-llama/llama-3.3-70b-instruct:free",
   groq: "groq/compound",
   "groq-fallback": "llama-3.3-70b-versatile",
   gemini: "gemma-4-26b-a4b-it",
@@ -226,6 +242,14 @@ const DEFAULTS = {
 
 export function getProviderStatus(env: AiEnv): ProviderStatus[] {
   return [
+    {
+      name: "openrouter",
+      hasEnvVar: "OPENROUTER_API_KEY" in env,
+      configured: isKeySet(env.OPENROUTER_API_KEY),
+      model: env.OPENROUTER_MODEL || DEFAULTS.openrouter,
+      coolingDown: getCooldownMsLeft("openrouter") > 0,
+      cooldownMsLeft: getCooldownMsLeft("openrouter"),
+    },
     {
       name: "groq",
       hasEnvVar: "GROQ_API_KEY" in env,
@@ -241,14 +265,6 @@ export function getProviderStatus(env: AiEnv): ProviderStatus[] {
       model: env.GEMINI_MODEL || DEFAULTS.gemini,
       coolingDown: getCooldownMsLeft("gemini") > 0,
       cooldownMsLeft: getCooldownMsLeft("gemini"),
-    },
-    {
-      name: "openrouter",
-      hasEnvVar: "OPENROUTER_API_KEY" in env,
-      configured: isKeySet(env.OPENROUTER_API_KEY),
-      model: env.OPENROUTER_MODEL || DEFAULTS.openrouter,
-      coolingDown: getCooldownMsLeft("openrouter") > 0,
-      cooldownMsLeft: getCooldownMsLeft("openrouter"),
     },
   ];
 }
@@ -396,59 +412,87 @@ function buildProviderList(
 ): { name: string; run: () => Promise<string> }[] {
   const all: { name: string; priority: number; run: () => Promise<string> }[] = [];
 
-  if (isKeySet(env.GROQ_API_KEY)) {
-    all.push({
-      name: "groq",
-      priority: 1,
-      run: () => chatOpenAICompatible(
-        "https://api.groq.com/openai/v1/chat/completions",
-        env.GROQ_MODEL || DEFAULTS.groq,
-        env.GROQ_API_KEY!,
-        system,
-        messages,
-      ),
-    });
-  }
-
-  if (isKeySet(env.GEMINI_API_KEY)) {
-    all.push({
-      name: "gemini",
-      priority: 2,
-      run: () => chatGemini(
-        system,
-        messages,
-        env.GEMINI_API_KEY!,
-        env.GEMINI_MODEL || DEFAULTS.gemini,
-        env.GEMINI_FALLBACK_MODEL || DEFAULTS["gemini-fallback"],
-      ),
-    });
-  }
-
-  if (isKeySet(env.GROQ_API_KEY)) {
-    all.push({
-      name: "groq-fallback",
-      priority: 3,
-      run: () => chatOpenAICompatible(
-        "https://api.groq.com/openai/v1/chat/completions",
-        env.GROQ_FALLBACK_MODEL || DEFAULTS["groq-fallback"],
-        env.GROQ_API_KEY!,
-        system,
-        messages,
-      ),
-    });
-  }
-
+  // OpenRouter — 4 different models from 4 different provider pools.
+  // Each provider pool has independent rate limits, so if one rate-limits,
+  // the others are likely still healthy.
   if (isKeySet(env.OPENROUTER_API_KEY)) {
+    const orHeaders = { "HTTP-Referer": "https://quantbit.pages.dev", "X-Title": "Quantbit" };
     all.push({
       name: "openrouter",
-      priority: 4,
+      priority: 1,
       run: () => chatOpenAICompatible(
         "https://openrouter.ai/api/v1/chat/completions",
         env.OPENROUTER_MODEL || DEFAULTS.openrouter,
         env.OPENROUTER_API_KEY!,
-        system,
-        messages,
-        { "HTTP-Referer": "https://quantbit.pages.dev", "X-Title": "Quantbit" },
+        system, messages, orHeaders,
+      ),
+    });
+    all.push({
+      name: "openrouter-2",
+      priority: 2,
+      run: () => chatOpenAICompatible(
+        "https://openrouter.ai/api/v1/chat/completions",
+        env.OPENROUTER_MODEL_2 || DEFAULTS["openrouter-2"],
+        env.OPENROUTER_API_KEY!,
+        system, messages, orHeaders,
+      ),
+    });
+    all.push({
+      name: "openrouter-3",
+      priority: 3,
+      run: () => chatOpenAICompatible(
+        "https://openrouter.ai/api/v1/chat/completions",
+        env.OPENROUTER_MODEL_3 || DEFAULTS["openrouter-3"],
+        env.OPENROUTER_API_KEY!,
+        system, messages, orHeaders,
+      ),
+    });
+    all.push({
+      name: "openrouter-4",
+      priority: 4,
+      run: () => chatOpenAICompatible(
+        "https://openrouter.ai/api/v1/chat/completions",
+        env.OPENROUTER_MODEL_4 || DEFAULTS["openrouter-4"],
+        env.OPENROUTER_API_KEY!,
+        system, messages, orHeaders,
+      ),
+    });
+  }
+
+  // Groq direct — may be geo-blocked from some CF edges, kept as fallback.
+  // Circuit breaker will skip if 403/401.
+  if (isKeySet(env.GROQ_API_KEY)) {
+    all.push({
+      name: "groq",
+      priority: 5,
+      run: () => chatOpenAICompatible(
+        "https://api.groq.com/openai/v1/chat/completions",
+        env.GROQ_MODEL || DEFAULTS.groq,
+        env.GROQ_API_KEY!,
+        system, messages,
+      ),
+    });
+    all.push({
+      name: "groq-fallback",
+      priority: 6,
+      run: () => chatOpenAICompatible(
+        "https://api.groq.com/openai/v1/chat/completions",
+        env.GROQ_FALLBACK_MODEL || DEFAULTS["groq-fallback"],
+        env.GROQ_API_KEY!,
+        system, messages,
+      ),
+    });
+  }
+
+  // Gemini direct — may be geo-blocked from some CF edges, kept as fallback.
+  if (isKeySet(env.GEMINI_API_KEY)) {
+    all.push({
+      name: "gemini",
+      priority: 7,
+      run: () => chatGemini(
+        system, messages, env.GEMINI_API_KEY!,
+        env.GEMINI_MODEL || DEFAULTS.gemini,
+        env.GEMINI_FALLBACK_MODEL || DEFAULTS["gemini-fallback"],
       ),
     });
   }
@@ -481,8 +525,8 @@ function buildErrorMessage(
       if (!s.hasEnvVar) continue;  // skip non-existent env vars to keep output clean
       const mark = s.configured ? "✅" : "❌";
       const cdMark = s.coolingDown ? " ⏳" : "";
-      const envName = s.name === "openrouter" ? "OPENROUTER_API_KEY"
-        : s.name === "groq" ? "GROQ_API_KEY"
+      const envName = s.name.startsWith("openrouter") ? "OPENROUTER_API_KEY"
+        : s.name === "groq" || s.name === "groq-fallback" ? "GROQ_API_KEY"
         : s.name === "gemini" ? "GEMINI_API_KEY"
         : `${s.name.toUpperCase()}_API_KEY`;
       lines.push(`${mark} \`${envName}\` (${s.model || "default"})${cdMark} ${s.configured ? "configured" : "NOT set"}`);
@@ -543,7 +587,7 @@ function buildErrorMessage(
     lines.push("3. Save → automatic redeploy");
     lines.push("");
   }
-  lines.push("**Rekomendasi**: `GROQ_API_KEY` (free tier `groq/compound` model = no daily cap, agent capabilities).");
+  lines.push("**Rekomendasi**: `OPENROUTER_API_KEY` (https://openrouter.ai/keys) — 26+ free models, no geo-restriction, route via OpenRouter pool.");
   lines.push("");
   lines.push("Untuk testing tanpa API key, aktifkan **Use Dev Mock** di Settings → AI Agent (dev only).");
 

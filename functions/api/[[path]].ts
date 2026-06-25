@@ -559,6 +559,9 @@ async function handleAiChat(request: Request, env: Env, userId: string | undefin
         GEMINI_MODEL: env.GEMINI_MODEL,
         GEMINI_FALLBACK_MODEL: env.GEMINI_FALLBACK_MODEL,
         OPENROUTER_MODEL: env.OPENROUTER_MODEL,
+        OPENROUTER_MODEL_2: env.OPENROUTER_MODEL_2,
+        OPENROUTER_MODEL_3: env.OPENROUTER_MODEL_3,
+        OPENROUTER_MODEL_4: env.OPENROUTER_MODEL_4,
         COOLDOWN_429_MS: env.COOLDOWN_429_MS,
         COOLDOWN_403_MS: env.COOLDOWN_403_MS,
       },
@@ -594,6 +597,9 @@ async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
       GEMINI_MODEL: env.GEMINI_MODEL,
       GEMINI_FALLBACK_MODEL: env.GEMINI_FALLBACK_MODEL,
       OPENROUTER_MODEL: env.OPENROUTER_MODEL,
+      OPENROUTER_MODEL_2: env.OPENROUTER_MODEL_2,
+      OPENROUTER_MODEL_3: env.OPENROUTER_MODEL_3,
+      OPENROUTER_MODEL_4: env.OPENROUTER_MODEL_4,
       COOLDOWN_429_MS: env.COOLDOWN_429_MS,
       COOLDOWN_403_MS: env.COOLDOWN_403_MS,
     },
@@ -924,6 +930,9 @@ interface Env {
   GEMINI_MODEL?: string;
   GEMINI_FALLBACK_MODEL?: string;
   OPENROUTER_MODEL?: string;
+  OPENROUTER_MODEL_2?: string;
+  OPENROUTER_MODEL_3?: string;
+  OPENROUTER_MODEL_4?: string;
   // Cooldown durations (ms, optional)
   COOLDOWN_429_MS?: string;
   COOLDOWN_403_MS?: string;

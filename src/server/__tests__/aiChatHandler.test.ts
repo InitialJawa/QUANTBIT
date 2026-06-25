@@ -235,21 +235,21 @@ describe("runAiChat — OpenRouter provider", () => {
 });
 
 describe("runAiChat — provider priority order", () => {
-  it("prefers Groq over Gemini over OpenRouter", async () => {
+  it("prefers OpenRouter over Groq over Gemini", async () => {
     const r = await runAiChat(
       [{ role: "user", content: "hi" }],
       undefined,
       { GROQ_API_KEY: "gq", GEMINI_API_KEY: "gm", OPENROUTER_API_KEY: "or" },
     );
-    if (r.ok) assert.equal(r.provider, "groq");
+    if (r.ok) assert.equal(r.provider, "openrouter");
     assert.equal(fetchSpy.mock.calls.length, 1);
   });
 
-  it("falls back to Gemini when Groq fails", async () => {
+  it("falls back to Gemini when OpenRouter + Groq fail", async () => {
     let callCount = 0;
     fetchSpy = mock.fn(async (url: string) => {
       callCount++;
-      if (url.includes("groq.com")) {
+      if (url.includes("openrouter") || url.includes("groq.com")) {
         return mockTextResponse(false, "503", 503);
       }
       return mockJsonResponse(true, {
@@ -261,21 +261,21 @@ describe("runAiChat — provider priority order", () => {
     const r = await runAiChat(
       [{ role: "user", content: "hi" }],
       undefined,
-      { GROQ_API_KEY: "gq", GEMINI_API_KEY: "gm" },
+      { GROQ_API_KEY: "gq", GEMINI_API_KEY: "gm", OPENROUTER_API_KEY: "or" },
     );
+    // All 4 OpenRouter models + 2 Groq models fail (cooldown), then Gemini tries
     assert.equal(r.ok, true);
     if (r.ok) assert.equal(r.provider, "gemini");
   });
 
   it("falls back to groq-fallback model when groq/compound fails", async () => {
+    // With only Groq key, no OpenRouter providers, so just test Groq fallback
     let callCount = 0;
     fetchSpy = mock.fn(async (url: string) => {
       callCount++;
       if (callCount === 1) {
-        // First call: groq/compound 429
         return mockTextResponse(false, "429 rate limited", 429);
       }
-      // Second call: llama-3.3-70b-versatile succeeds
       return mockJsonResponse(true, { choices: [{ message: { content: "llama-ok" } }] });
     });
     globalThis.fetch = fetchSpy as any;
@@ -287,7 +287,6 @@ describe("runAiChat — provider priority order", () => {
     );
     assert.equal(r.ok, true);
     if (r.ok) {
-      // groq provider is now in cooldown (5 min), so we hit groq-fallback
       assert.equal(r.provider, "groq-fallback");
     }
     assert.equal(callCount, 2);
