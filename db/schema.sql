@@ -74,6 +74,39 @@ CREATE TABLE IF NOT EXISTS engine_state (
   updated_at TEXT NOT NULL
 );
 
+-- ─────────────────────────────────────────────────────────────
+-- AI Chat memory (Quantbit AI Depth Upgrade)
+--
+-- Each "page load" creates a new ai_sessions row. Messages from
+-- prior sessions are injected as "memory" into the system prompt
+-- so the AI can reference past conversations per-user.
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ai_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  title TEXT,
+  message_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  last_message_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ai_messages (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL,  -- 'user' | 'assistant' | 'tool'
+  content TEXT NOT NULL,
+  tool_calls TEXT,    -- JSON array of AIToolCall
+  metadata TEXT,      -- JSON (provider, action approvals, etc.)
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (session_id) REFERENCES ai_sessions(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_sessions(user_id, last_message_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_session ON ai_messages(session_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_user ON ai_messages(user_id, created_at);
+
 CREATE INDEX IF NOT EXISTS idx_portfolios_user ON portfolios(user_id);
 CREATE INDEX IF NOT EXISTS idx_watchlists_user ON watchlists(user_id);
 CREATE INDEX IF NOT EXISTS idx_trade_logs_user ON trade_logs(user_id);

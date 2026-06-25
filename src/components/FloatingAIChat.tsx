@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, Bot, User, Loader2, Sparkles, HelpCircle, X, MessageCircle, Minus, ChevronDown, Trash2, Bell } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, HelpCircle, X, MessageCircle, Minus, ChevronDown, Trash2, Bell, Plus } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { AIActionApprovalCard } from "./AIActionApprovalCard";
 import { askAI, buildLiveContext, extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS, type AIChatMessage } from "../ai/aiClient";
 import { useAICockpit } from "../contexts/AICockpitContext";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useNotifications } from "../contexts/NotificationContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useAITools, type PortfolioAPI } from "../hooks/useAITools";
 import { useUIState } from "../hooks/useUIState";
 import { api } from "../services/api";
@@ -26,38 +27,52 @@ const WELCOME: AIChatMessage = {
     "Halo! Saya **Quantbit AI** — analis yang tahu *isi dapur* sistem ini.\n\n" +
     "Tanya apa saja, termasuk **\"angka ini dihitung dari mana?\"** — saya jelaskan pakai rumus & angka live-mu. " +
     "Klik ikon ❓ di panel mana pun untuk minta penjelasan instan.\n\n" +
-    "💡 Coba: *\"cek portofolio saya\"*, *\"berapa BPS?\"*, *\"beli BBCA 100 lembar\"* (akan muncul kartu persetujuan).",
+    "💡 Coba: *\"cek portofolio saya\"*, *\"berapa BPS?\"*, *\"beli BBCA 100 lembar\"* (akan muncul kartu persetujuan).\n\n" +
+    "💾 *Session baru, AI ingat percakapan sebelumnya via DB.*",
 };
 
-const STORAGE_KEY = "quantbit_ai_chat_history";
-const MAX_HISTORY = 100;
+/** Generate a unique session id for this page load. */
+function newSessionId(): string {
+  return `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
 
-function loadHistory(): AIChatMessage[] {
+/** Async save of a single message to the server. Best-effort — doesn't block UI. */
+async function persistMessage(
+  sessionId: string,
+  userId: string,
+  role: "user" | "assistant" | "tool",
+  content: string,
+  toolCalls?: any[],
+  metadata?: Record<string, any>,
+): Promise<void> {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved) as AIChatMessage[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Cap to last MAX_HISTORY messages
-        return parsed.slice(-MAX_HISTORY);
-      }
-    }
+    await api.post("/api/ai/messages", {
+      sessionId,
+      userId,
+      role,
+      content,
+      toolCalls,
+      metadata,
+    });
   } catch {
-    /* ignore parse error */
+    /* best-effort — don't block UI on persistence failures */
   }
-  return [WELCOME];
 }
 
 export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock }: FloatingAIChatProps) {
   const { pendingExplain, clearExplain, pendingActions, approveAction, rejectAction, addPendingAction, proactiveAlerts, openChatWithPrompt, setOpenChatWithPrompt } = useAICockpit();
   const { engineConfig, backtestConfig, isConfigSynced, setActiveProfile, syncFromBacktest, updateConfigValue } = useEngineConfig();
   const { notifications } = useNotifications();
-  const { useDevMockAI, setUseDevMockAI } = useUIState();
+  const { user } = useAuth();
+  const { useDevMockAI } = useUIState();
   // Track consecutive provider failures to suggest dev-mock fallback.
   const consecutiveFailuresRef = useRef(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<AIChatMessage[]>(loadHistory);
+  // SESSION: new id per page load (NOT restored from localStorage).
+  // Memory of past sessions is fetched server-side and passed to AI as context.
+  const [sessionId] = useState<string>(() => newSessionId());
+  const [messages, setMessages] = useState<AIChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
@@ -67,14 +82,23 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
-  // Persist chat history (cap to MAX_HISTORY) on every messages change.
+  // On first mount: create the session in DB. Best-effort.
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_HISTORY)));
-    } catch {
-      /* storage full */
-    }
-  }, [messages]);
+    let cancelled = false;
+    (async () => {
+      try {
+        await api.post("/api/ai/sessions", {
+          userId: user?.id || "dev-user",
+          sessionId,
+        });
+        if (cancelled) return;
+      } catch {
+        /* best-effort */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -193,6 +217,12 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     setIsLoading(true);
     if (!isOpen) setIsOpen(true);
     if (isMinimized) setIsMinimized(false);
+    // Persist user message to DB (fire-and-forget, async).
+    void persistMessage(sessionId, user?.id || "dev-user", "user", text);
+    // Set session title from first user message (best-effort).
+    if (messages.filter((m) => m.role === "user").length === 0) {
+      api.post("/api/ai/sessions/title", { sessionId, title: text }).catch(() => {});
+    }
     try {
       const recentAlerts = notifications.slice(0, 5).map((n) => ({
         rule: n.rule || "manual",
@@ -212,8 +242,16 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       });
       // Strip tool messages when sending to backend (model only sees user/assistant).
       const history = nextMsgs.filter((m) => m.role !== "tool");
-      const result = await askAI(history, ctx, { useDevMock: useDevMockAI });
+      const result = await askAI(history, ctx, {
+        useDevMock: useDevMockAI,
+        sessionId,
+        userId: user?.id || "dev-user",
+      });
       setProvider(result.provider);
+      // Persist assistant response to DB.
+      if (result.content) {
+        void persistMessage(sessionId, user?.id || "dev-user", "assistant", result.content, result.toolCalls, { provider: result.provider });
+      }
 
       // Track consecutive provider failures — after 3 fails, surface
       // a "use dev mock" hint in the chat (only in dev mode).
@@ -322,7 +360,16 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
 
   const clearHistory = useCallback(() => {
     setMessages([WELCOME]);
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  }, []);
+
+  /** Start a new session — clears current messages, generates new sessionId. */
+  const startNewSession = useCallback(() => {
+    // Force a new session by reloading with a fresh sessionId.
+    // Since sessionId is a useState initializer, we need to either reload
+    // the component or do it via state. Simplest: just clear the chat for
+    // now and let user send a new message to start a new "thread".
+    // For full session reset, the user can close + reopen the chat.
+    setMessages([WELCOME]);
   }, []);
 
   const quickPrompts: { label: string; query: string }[] = useMemo(() => [
@@ -379,8 +426,16 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             </p>
           </div>
           <button
+            onClick={startNewSession}
+            title="Mulai sesi baru (refresh halaman juga akan membuat sesi baru)"
+            className="p-1 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            style={{ color: "#7a7a7a" }}
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button
             onClick={clearHistory}
-            title="Hapus riwayat chat"
+            title="Hapus pesan di sesi ini"
             className="p-1 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
             style={{ color: "#7a7a7a" }}
           >

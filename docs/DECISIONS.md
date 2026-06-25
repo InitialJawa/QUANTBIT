@@ -428,3 +428,45 @@ Or `npm run dev` alone runs both concurrently (cross-platform via `concurrently`
 - Tinggal `npm run dev` (atau `npm run serve-api` + `npm run dev`), chat akan pakai OpenRouter/Groq/Gemini
 - Kalau backend tetap off, dev mock kasih hint actionable bukan misleading
 - Codebase lebih DRY (1 handler bukan 2 duplicates)
+
+## 2026-06-25 — AI Session Memory (per-user, per-page-load)
+
+**Problem:** User wanted 2 things:
+1. "kenapa tidak ganti sesi saat di refresh" — chat persisted across page loads (localStorage)
+2. "mending di bikin kan seperti memori aja jadi ai masih ingat kemarin di DB per member, dan tiap refresh ya ganti sesi dong"
+
+**Fix:** Session-per-page-load + memory in DB (D1 for prod, in-memory for dev Express).
+
+### Schema migration
+**`db/schema.sql`** — added 2 tables + 3 indexes:
+- `ai_sessions` (id, user_id, title, message_count, created_at, last_message_at)
+- `ai_messages` (id, session_id, user_id, role, content, tool_calls, metadata, created_at)
+- Indexes on `(user_id, last_message_at DESC)`, `(session_id, created_at)`, `(user_id, created_at)`
+
+### Backend
+- **`src/server/aiMemory.ts`** (NEW) — runtime-agnostic persistence. `createSession`, `appendMessage`, `getRecentMemory`, `listSessions`, `getSessionMessages`, `deleteSession`, `setSessionTitle`, `suggestTitle`. Accepts `MemoryDeps` (query/exec). CF wires to D1, Express wires to in-memory Map.
+- **`src/server/aiChatHandler.ts`** — `memory?: MemoryMessage[]` option to `runAiChat`. Injected as "## 15. CONVERSATION MEMORY" section. Truncated to 10K chars. Added `isAiError` type guard.
+- **`functions/api/[[path]].ts`** — 5 new routes: `/api/ai/status`, `/api/ai/sessions`, `/api/ai/messages`, `/api/ai/sessions/title`, `/api/ai/sessions/:id/messages`, `/api/ai/sessions/:id`. `handleAiChat` accepts `userId`, fetches memory.
+- **`server.ts`** — same routes with in-memory store.
+- **`vite.config.ts`** — 3 new proxy routes.
+
+### Frontend
+- **`src/components/FloatingAIChat.tsx`** — REMOVED localStorage persist. Fresh `sessionId` per page load. "Start New Session" button (Plus icon). Each message `POST /api/ai/messages` (fire-and-forget).
+- **`src/ai/aiClient.ts`** — `AskAIOptions` accepts `sessionId` + `userId`.
+- **WELCOME message** — "Session baru, AI ingat percakapan sebelumnya via DB."
+
+### Memory injection
+Server fetches last 20 messages from past sessions (excluding current), formats as time-stamped list, injects into system prompt. AI can reference past conversations.
+
+### Tests (18 new)
+- **`src/server/__tests__/aiMemory.test.ts`** (12) — full session lifecycle
+- **`src/server/__tests__/aiChatHandler.test.ts`** (6) — memory injection + status
+
+**Total: 216 tests** (was 198, +18).
+
+### Net effect
+- Refresh = new session (fresh `sessionId`)
+- AI remembers past conversations per-user
+- User can ask "what did we discuss yesterday?" — AI has context
+- "Start New Session" button in chat header
+- 5 new API endpoints for session management

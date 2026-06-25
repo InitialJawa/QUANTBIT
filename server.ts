@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { createTransport } from "nodemailer";
 import { handleYahooRequest } from "./src/server/yahooApi";
-import { runAiChat, type ChatMessage } from "./src/server/aiChatHandler";
+import { runAiChat, getAiStatus, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
 
 const app = express();
 app.use(express.json());
@@ -55,7 +55,12 @@ app.get("/api/yahoo", handleYahooRequest);
 // Provider chain: OpenRouter → Groq → Gemini. See src/server/aiChatHandler.ts.
 app.post("/api/ai/chat", async (req, res) => {
   try {
-    const { messages, context } = req.body || {};
+    const { messages, context, sessionId, userId } = req.body || {};
+    const effectiveUserId = userId || "dev-user";
+    // Fetch recent memory (excluding current session).
+    const memory = sessionId
+      ? memGetRecent(effectiveUserId, 20, sessionId)
+      : undefined;
     const result = await runAiChat(
       (messages || []) as ChatMessage[],
       context,
@@ -64,17 +69,166 @@ app.post("/api/ai/chat", async (req, res) => {
         GROQ_API_KEY: process.env.GROQ_API_KEY,
         GEMINI_API_KEY: process.env.GEMINI_API_KEY,
       },
+      { isDev: true, memory },
     );
     if (result.ok) {
       res.json({ content: result.content, provider: result.provider });
+    } else if (isAiError(result)) {
+      res.status(result.status).json({
+        content: result.content,
+        provider: result.provider,
+        diagnostic: result.diagnostic,
+      });
     } else {
-      const errResult = result as Extract<typeof result, { ok: false }>;
-      res.status(errResult.status).json({ content: errResult.content, provider: errResult.provider });
+      res.status(500).json({ content: "Unknown error", provider: "error" });
     }
   } catch (err: any) {
     res.status(500).json({ content: `Maaf, terjadi kendala: ${err.message}`, provider: "error" });
   }
 });
+
+// Diagnostic endpoint — shows which API keys are configured (no key values).
+app.get("/api/ai/status", (_req, res) => {
+  res.json(getAiStatusFromEnv());
+});
+
+// ── AI Memory endpoints (local dev: in-memory store) ───────
+
+app.get("/api/ai/sessions", (req, res) => {
+  const userId = (req.query.userId as string) || "dev-user";
+  res.json({ sessions: memListSessions(userId, 20) });
+});
+
+app.post("/api/ai/sessions", (req, res) => {
+  const userId = (req.body?.userId as string) || "dev-user";
+  const title = req.body?.title as string | undefined;
+  const firstMessage = req.body?.firstMessage as string | undefined;
+  const id = memCreateSession(userId, title, firstMessage);
+  res.json({ sessionId: id, title: firstMessage ? firstMessage.replace(/\s+/g, " ").trim().slice(0, 57) : title ?? null });
+});
+
+app.get("/api/ai/sessions/:id/messages", (req, res) => {
+  const userId = (req.query.userId as string) || "dev-user";
+  res.json({ sessionId: req.params.id, messages: memGetSessionMessages(req.params.id, userId) });
+});
+
+app.post("/api/ai/messages", (req, res) => {
+  const { sessionId, userId, role, content, toolCalls, metadata } = req.body || {};
+  if (!sessionId || !role || !content) {
+    res.status(400).json({ error: "sessionId, role, content required" });
+    return;
+  }
+  const id = memAppendMessage({
+    sessionId,
+    userId: userId || "dev-user",
+    role,
+    content,
+  });
+  res.json({ id, ok: true });
+});
+
+app.post("/api/ai/sessions/title", (req, res) => {
+  const { sessionId, title } = req.body || {};
+  const sess = memStore.sessions.get(sessionId);
+  if (sess) {
+    const trimmed = (title || "").replace(/\s+/g, " ").trim().slice(0, 57);
+    sess.title = trimmed + ((title || "").length > 57 ? "..." : "");
+  }
+  res.json({ ok: true, title: sess?.title });
+});
+
+app.delete("/api/ai/sessions/:id", (req, res) => {
+  const userId = (req.query.userId as string) || "dev-user";
+  memDeleteSession(req.params.id, userId);
+  res.json({ ok: true });
+});
+
+// ── In-memory memory store (local dev only) ───────────────
+
+interface MemSession { id: string; user_id: string; title: string | null; message_count: number; created_at: string; last_message_at: string }
+interface MemMessage { id: string; session_id: string; user_id: string; role: "user" | "assistant" | "tool"; content: string; tool_calls: string | null; metadata: string | null; created_at: string }
+const memStore: { sessions: Map<string, MemSession>; messages: Map<string, MemMessage[]> } = {
+  sessions: new Map(),
+  messages: new Map(),
+};
+const newMemId = () => `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+function memCreateSession(userId: string, title?: string, firstMessage?: string): string {
+  const id = newMemId();
+  const now = new Date().toISOString();
+  const autoTitle = firstMessage
+    ? firstMessage.replace(/\s+/g, " ").trim().slice(0, 57) + (firstMessage.length > 57 ? "..." : "")
+    : null;
+  const sess: MemSession = { id, user_id: userId, title: title ?? autoTitle, message_count: 0, created_at: now, last_message_at: now };
+  memStore.sessions.set(id, sess);
+  memStore.messages.set(id, []);
+  return id;
+}
+function memListSessions(userId: string, limit: number): MemSession[] {
+  return Array.from(memStore.sessions.values())
+    .filter((s) => s.user_id === userId)
+    .sort((a, b) => b.last_message_at.localeCompare(a.last_message_at))
+    .slice(0, limit);
+}
+function memAppendMessage(params: { sessionId: string; userId: string; role: "user" | "assistant" | "tool"; content: string }): string {
+  const id = newMemId();
+  const msg: MemMessage = {
+    id,
+    session_id: params.sessionId,
+    user_id: params.userId,
+    role: params.role,
+    content: params.content,
+    tool_calls: null,
+    metadata: null,
+    created_at: new Date().toISOString(),
+  };
+  const arr = memStore.messages.get(params.sessionId) || [];
+  arr.push(msg);
+  memStore.messages.set(params.sessionId, arr);
+  const sess = memStore.sessions.get(params.sessionId);
+  if (sess) {
+    sess.message_count++;
+    sess.last_message_at = msg.created_at;
+  }
+  return id;
+}
+function memGetSessionMessages(sessionId: string, _userId: string): MemMessage[] {
+  return memStore.messages.get(sessionId) || [];
+}
+function memGetRecent(userId: string, limit: number, excludeSessionId: string) {
+  const all = Array.from(memStore.messages.values())
+    .flat()
+    .filter((m) => m.user_id === userId && m.session_id !== excludeSessionId)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .slice(-limit);
+  return all.map((m) => {
+    const sess = memStore.sessions.get(m.session_id);
+    return {
+      role: m.role,
+      content: m.content,
+      created_at: m.created_at,
+      session_id: m.session_id,
+      session_title: sess?.title ?? null,
+    };
+  });
+}
+function memDeleteSession(sessionId: string, userId: string): void {
+  const sess = memStore.sessions.get(sessionId);
+  if (sess && sess.user_id === userId) {
+    memStore.sessions.delete(sessionId);
+    memStore.messages.delete(sessionId);
+  }
+}
+function getAiStatusFromEnv() {
+  return getAiStatus(
+    {
+      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+      GROQ_API_KEY: process.env.GROQ_API_KEY,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    },
+    true,
+  );
+}
 
 app.get("/api/backtest-data", (req, res) => {
   try {

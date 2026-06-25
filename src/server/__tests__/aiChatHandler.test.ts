@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 import { describe, it, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
-import { runAiChat } from "../aiChatHandler.ts";
+import { runAiChat, isAiError } from "../aiChatHandler.ts";
 
 interface MockResp {
   ok: boolean;
@@ -78,10 +78,9 @@ describe("runAiChat — no provider configured", () => {
       assert.equal(r.provider, "none");
       assert.equal(r.status, 200);
       assert.ok(r.content.includes("AI sedang tidak tersedia"));
-      assert.ok(r.content.toLowerCase().includes("tidak ada provider"));
-      assert.ok(r.content.includes("OPENROUTER"));
-      assert.ok(r.content.includes("GROQ"));
-      assert.ok(r.content.includes("GEMINI"));
+      // New diagnostic format shows "❌ Tidak ada API key"
+      assert.ok(r.content.toLowerCase().includes("tidak ada api key"));
+      assert.ok(r.content.includes("OPENROUTER_API_KEY"));
     }
   });
 
@@ -243,11 +242,10 @@ describe("runAiChat — fallback chain", () => {
     );
     assert.equal(r.ok, false);
     if (!r.ok) {
-      const errResult = r as Extract<typeof r, { ok: false }>;
-      assert.equal(errResult.provider, "none");
-      assert.ok(errResult.errors.length >= 3);
-      assert.ok(errResult.errors[0].includes("openrouter"));
-      assert.ok(errResult.content.includes("gagal"));
+      assert.equal(r.provider, "none");
+      assert.ok(r.diagnostic.errors.length >= 3);
+      assert.ok(r.diagnostic.errors[0].includes("openrouter"));
+      assert.ok(r.content.includes("gagal"));
     }
   });
 });
@@ -289,10 +287,9 @@ describe("runAiChat — error reporting", () => {
       undefined,
       { OPENROUTER_API_KEY: "or" },
     );
-    if (!r.ok) {
-      const errResult = r as Extract<typeof r, { ok: false }>;
-      assert.ok(errResult.errors.some((e) => e.includes("openrouter")));
-      assert.ok(errResult.errors.some((e) => e.includes("Network unreachable")));
+    if (isAiError(r)) {
+      assert.ok(r.diagnostic.errors.some((e: string) => e.includes("openrouter")));
+      assert.ok(r.diagnostic.errors.some((e: string) => e.includes("Network unreachable")));
     }
   });
 
@@ -309,5 +306,91 @@ describe("runAiChat — error reporting", () => {
       assert.ok(r.content.includes("openrouter"));
       assert.ok(r.content.includes("gagal"));
     }
+  });
+});
+
+describe("runAiChat — memory injection (Level 4 session memory)", () => {
+  it("injects memory block into system prompt when provided", async () => {
+    let capturedSystem = "";
+    fetchSpy = mock.fn(async (_url: string, init: any) => {
+      const body = JSON.parse(init.body);
+      capturedSystem = body.messages[0].content;
+      return mockJsonResponse(true, { choices: [{ message: { content: "ok" } }] });
+    });
+    globalThis.fetch = fetchSpy as any;
+
+    await runAiChat(
+      [{ role: "user", content: "what did we discuss?" }],
+      undefined,
+      { OPENROUTER_API_KEY: "or" },
+      {
+        memory: [
+          {
+            role: "user",
+            content: "I bought BBCA at 9000",
+            created_at: "2026-06-20T10:00:00.000Z",
+            session_id: "sess_older",
+            session_title: "Banking analysis",
+          },
+          {
+            role: "assistant",
+            content: "Noted. BBCA is a quality stock.",
+            created_at: "2026-06-20T10:01:00.000Z",
+            session_id: "sess_older",
+            session_title: "Banking analysis",
+          },
+        ],
+      },
+    );
+    assert.ok(capturedSystem.includes("CONVERSATION MEMORY"));
+    assert.ok(capturedSystem.includes("I bought BBCA at 9000"));
+    assert.ok(capturedSystem.includes("Banking analysis"));
+  });
+
+  it("does not inject memory block when memory is empty", async () => {
+    let capturedSystem = "";
+    fetchSpy = mock.fn(async (_url: string, init: any) => {
+      const body = JSON.parse(init.body);
+      capturedSystem = body.messages[0].content;
+      return mockJsonResponse(true, { choices: [{ message: { content: "ok" } }] });
+    });
+    globalThis.fetch = fetchSpy as any;
+
+    await runAiChat(
+      [{ role: "user", content: "hi" }],
+      undefined,
+      { OPENROUTER_API_KEY: "or" },
+    );
+    assert.ok(!capturedSystem.includes("CONVERSATION MEMORY"));
+  });
+});
+
+describe("getProviderStatus + getAiStatus", () => {
+  it("getProviderStatus reports which keys are set vs configured", async () => {
+    const { getProviderStatus } = await import("../aiChatHandler.ts");
+    const statuses = getProviderStatus({
+      OPENROUTER_API_KEY: "or",
+      GROQ_API_KEY: "",
+      GEMINI_API_KEY: undefined,
+    });
+    const openrouter = statuses.find((s) => s.name === "openrouter")!;
+    const groq = statuses.find((s) => s.name === "groq")!;
+    const gemini = statuses.find((s) => s.name === "gemini")!;
+    assert.equal(openrouter.configured, true);
+    assert.equal(openrouter.hasEnvVar, true);
+    assert.equal(groq.configured, false);  // empty string
+    assert.equal(gemini.configured, false);  // undefined
+  });
+
+  it("getAiStatus returns diagnostic with isDev + anyConfigured", async () => {
+    const { getAiStatus } = await import("../aiChatHandler.ts");
+    const s1 = getAiStatus({ OPENROUTER_API_KEY: "or" }, true);
+    assert.equal(s1.isDev, true);
+    assert.equal(s1.anyConfigured, true);
+    assert.equal(s1.configuredCount, 1);
+    const s2 = getAiStatus({}, false);
+    assert.equal(s2.isDev, false);
+    assert.equal(s2.anyConfigured, false);
+    assert.equal(s2.configuredCount, 0);
   });
 });

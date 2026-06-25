@@ -183,6 +183,11 @@ export interface AskAIOptions {
    *  Useful when no real AI provider is reachable (e.g. Gemini
    *  geo-blocked + no OpenRouter/Groq key). */
   useDevMock?: boolean;
+  /** Current session id (per page load). Used by server to fetch
+   *  memory from past sessions. */
+  sessionId?: string;
+  /** User id (for memory retrieval). Defaults to "dev-user" if not provided. */
+  userId?: string;
 }
 
 /** Kirim percakapan + konteks ke AI unified. */
@@ -204,6 +209,8 @@ export async function askAI(
   const data = await api.post<{ content: string; provider?: string }>("/api/ai/chat", {
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
     context,
+    sessionId: options.sessionId,
+    userId: options.userId || "dev-user",
   });
   const raw = data.content || "";
   const provider = data.provider || "unknown";

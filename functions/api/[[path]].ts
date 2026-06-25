@@ -4,7 +4,7 @@
 // Replaces: Express server + Firebase Auth + Firestore + RTDB
 // ─────────────────────────────────────────────────────────────
 import { type AILiveContext } from "../../src/ai/systemKnowledge";
-import { runAiChat, type ChatMessage as SharedChatMessage } from "../../src/server/aiChatHandler";
+import { runAiChat, isAiError, type ChatMessage as SharedChatMessage } from "../../src/server/aiChatHandler";
 
 async function hashPassword(password: string, salt: string): Promise<string> {
   const enc = new TextEncoder();
@@ -399,7 +399,18 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
   }
 
   // Unified context-aware AI analyst (system-knowledge + provider fallback)
-  if (path === "/api/ai/chat" && method === "POST") return handleAiChat(request, env);
+  if (path === "/api/ai/chat" && method === "POST") return handleAiChat(request, env, userId ?? undefined);
+  if (path === "/api/ai/status" && method === "GET") return handleAiStatus(request, env);
+  if (path === "/api/ai/sessions" && method === "GET") return handleAiListSessions(request, env, userId);
+  if (path === "/api/ai/sessions" && method === "POST") return handleAiCreateSession(request, env, userId);
+  if (path === "/api/ai/messages" && method === "POST") return handleAiAppendMessage(request, env, userId);
+  if (path === "/api/ai/sessions/title" && method === "POST") return handleAiSetSessionTitle(request, env, userId);
+  if (path.startsWith("/api/ai/sessions/") && path.endsWith("/messages") && method === "GET") {
+    return handleAiGetSessionMessages(request, env, userId, path);
+  }
+  if (path.startsWith("/api/ai/sessions/") && method === "DELETE") {
+    return handleAiDeleteSession(request, env, userId, path);
+  }
 
   // Gemini AI proxies (legacy — kept for backward-compat / fallback)
   if (path === "/api/gemini/analyze" && method === "POST") return handleGeminiAnalyze(request, env);
@@ -515,9 +526,18 @@ async function handleGeminiChat(request: Request, env: Env): Promise<Response> {
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-async function handleAiChat(request: Request, env: Env): Promise<Response> {
+async function handleAiChat(request: Request, env: Env, userId: string | undefined): Promise<Response> {
   try {
-    const body = await request.json() as { messages?: ChatMsg[]; context?: AILiveContext };
+    const body = await request.json() as { messages?: ChatMsg[]; context?: AILiveContext; sessionId?: string };
+    // Fetch recent memory from past sessions (if user is authenticated).
+    let memory: any[] | undefined;
+    if (userId && body.sessionId) {
+      const { getRecentMemory } = await import("../../src/server/aiMemory");
+      memory = await getRecentMemory(d1Deps(env), userId, {
+        limit: 20,
+        excludeSessionId: body.sessionId,
+      });
+    }
     const result = await runAiChat(
       (body.messages || []) as SharedChatMessage[],
       body.context,
@@ -526,16 +546,155 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
         GROQ_API_KEY: env.GROQ_API_KEY,
         GEMINI_API_KEY: env.GEMINI_API_KEY,
       },
+      { isDev: false, memory },  // CF Pages Functions = production
     );
     if (result.ok) {
       return json({ content: result.content, provider: result.provider });
     }
-    // result.ok === false — narrow to the error variant
-    const errResult = result as Extract<typeof result, { ok: false }>;
-    return json({ content: errResult.content, provider: errResult.provider }, errResult.status);
+    if (isAiError(result)) {
+      return json({
+        content: result.content,
+        provider: result.provider,
+        diagnostic: result.diagnostic,
+      }, result.status);
+    }
+    return json({ content: "Unknown error", provider: "error" }, 500);
   } catch (e: any) {
     return json({ content: `Maaf, terjadi kendala: ${e.message}`, provider: "error" }, 200);
   }
+}
+
+async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
+  // Diagnostic endpoint — shows which API keys are configured (no values).
+  // Visit /api/ai/status in browser to debug "AI not working".
+  const { getAiStatus } = await import("../../src/server/aiChatHandler");
+  const status = getAiStatus(
+    {
+      OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
+      GROQ_API_KEY: env.GROQ_API_KEY,
+      GEMINI_API_KEY: env.GEMINI_API_KEY,
+    },
+    false,  // CF Pages = production
+  );
+  return json(status);
+}
+
+// ── AI Memory (D1-backed) ──────────────────────────────────
+
+/** Adapter that bridges CF D1 PreparedStatement to our memory
+ *  module's `query`/`exec` contract. */
+function d1Deps(env: Env) {
+  return {
+    query: async <T = any>(sql: string, params: any[]): Promise<T[]> => {
+      const stmt = env.DB.prepare(sql);
+      const result = await stmt.bind(...params).all<T>();
+      return result.results || [];
+    },
+    exec: async (sql: string, params: any[]) => {
+      const stmt = env.DB.prepare(sql);
+      const result = await stmt.bind(...params).run();
+      return { changes: result.meta?.changes ?? 0 };
+    },
+  };
+}
+
+async function handleAiListSessions(
+  _request: Request,
+  env: Env,
+  userId: string | null,
+): Promise<Response> {
+  if (!userId) return json({ error: "Not authenticated" }, 401);
+  const { listSessions } = await import("../../src/server/aiMemory");
+  const sessions = await listSessions(d1Deps(env), userId, 20);
+  return json({ sessions });
+}
+
+async function handleAiCreateSession(
+  request: Request,
+  env: Env,
+  userId: string | null,
+): Promise<Response> {
+  if (!userId) return json({ error: "Not authenticated" }, 401);
+  const { createSession, suggestTitle } = await import("../../src/server/aiMemory");
+  const body = await request.json() as { title?: string; firstMessage?: string };
+  const title = body.title
+    ?? (body.firstMessage ? suggestTitle(body.firstMessage) : null);
+  const id = await createSession(d1Deps(env), userId, title ?? undefined);
+  return json({ sessionId: id, title });
+}
+
+async function handleAiGetSessionMessages(
+  _request: Request,
+  env: Env,
+  userId: string | null,
+  path: string,
+): Promise<Response> {
+  if (!userId) return json({ error: "Not authenticated" }, 401);
+  const { getSessionMessages } = await import("../../src/server/aiMemory");
+  // path = /api/ai/sessions/<id>/messages
+  const id = path.split("/")[4];
+  const messages = await getSessionMessages(d1Deps(env), id, userId);
+  return json({ sessionId: id, messages });
+}
+
+async function handleAiDeleteSession(
+  _request: Request,
+  env: Env,
+  userId: string | null,
+  path: string,
+): Promise<Response> {
+  if (!userId) return json({ error: "Not authenticated" }, 401);
+  const { deleteSession } = await import("../../src/server/aiMemory");
+  // path = /api/ai/sessions/<id>
+  const id = path.split("/")[4];
+  await deleteSession(d1Deps(env), id, userId);
+  return json({ ok: true });
+}
+
+async function handleAiAppendMessage(
+  request: Request,
+  env: Env,
+  userId: string | null,
+): Promise<Response> {
+  // Allow unauthenticated dev-mode message saves (userId defaults to "dev-user").
+  const effectiveUserId = userId || "dev-user";
+  const body = await request.json() as {
+    sessionId: string;
+    role: "user" | "assistant" | "tool";
+    content: string;
+    toolCalls?: any[];
+    metadata?: Record<string, any>;
+  };
+  if (!body.sessionId || !body.role || !body.content) {
+    return json({ error: "sessionId, role, content required" }, 400);
+  }
+  const { appendMessage } = await import("../../src/server/aiMemory");
+  const id = await appendMessage(d1Deps(env), {
+    sessionId: body.sessionId,
+    userId: effectiveUserId,
+    role: body.role,
+    content: body.content,
+    toolCalls: body.toolCalls,
+    metadata: body.metadata,
+  });
+  return json({ id, ok: true });
+}
+
+async function handleAiSetSessionTitle(
+  request: Request,
+  env: Env,
+  userId: string | null,
+): Promise<Response> {
+  const effectiveUserId = userId || "dev-user";
+  const body = await request.json() as { sessionId: string; title: string };
+  if (!body.sessionId || !body.title) {
+    return json({ error: "sessionId and title required" }, 400);
+  }
+  const { setSessionTitle } = await import("../../src/server/aiMemory");
+  const trimmed = body.title.replace(/\s+/g, " ").trim().slice(0, 57);
+  const final = trimmed + (body.title.length > 57 ? "..." : "");
+  await setSessionTitle(d1Deps(env), body.sessionId, effectiveUserId, final);
+  return json({ ok: true, title: final });
 }
 
 async function handleGoapiPrices(env: Env): Promise<Response> {
