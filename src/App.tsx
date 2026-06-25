@@ -18,7 +18,6 @@ import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { EngineConfigProvider, useEngineConfig } from "./contexts/EngineConfigContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import { ConfigSyncIndicator } from "./components/ConfigSyncIndicator";
 import { useDataFeed } from "./hooks/useDataFeed";
 import { usePortfolioManager } from "./hooks/usePortfolioManager";
 import { useUIState } from "./hooks/useUIState";
@@ -196,7 +195,6 @@ export default function App() {
         <EngineConfigProvider>
           <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />
           <MarketRegimeSyncBridge />
-          <ConfigSyncIndicator />
           <NotificationProvider>
             <AICockpitProvider>
             <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
