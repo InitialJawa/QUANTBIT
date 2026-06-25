@@ -1,5 +1,5 @@
 {
-  "last_update": "2026-06-24",
+  "last_update": "2026-06-25",
   "market_last_update": "2026-06-23T10:10:45.480Z",
   "ihsg": {
     "value": 6101,
@@ -14,8 +14,8 @@
     "monthly": 0
   },
   "gold": {
-    "value": 2305804,
-    "daily": -1.87,
+    "value": 2327715,
+    "daily": 0.95,
     "weekly": 0,
     "monthly": 0
   },
