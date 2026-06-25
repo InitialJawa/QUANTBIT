@@ -292,8 +292,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         }
       }
 
-      // Display assistant text first.
-      if (result.content) {
+      // Display assistant text first (only if provider succeeded).
+      if (result.content && result.provider !== "none" && result.provider !== "error") {
         setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
       }
 
@@ -324,7 +324,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           const followupText = followupRaw.content || "";
           const { cleanText: followupClean, toolCalls: followupCalls } = extractToolCalls(followupText);
           setProvider(followupRaw.provider || "unknown");
-          if (followupClean) {
+          if (followupClean && followupRaw.provider !== "none" && followupRaw.provider !== "error") {
             setMessages((prev) => [...prev, { role: "assistant", content: followupClean }]);
           }
           // Surface any new action tool calls from the followup.
