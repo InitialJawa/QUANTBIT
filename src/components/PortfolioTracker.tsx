@@ -686,7 +686,23 @@ export function PortfolioTracker({
       </div>
 
       {/* Adaptive DCA Recommendation — BPS-driven deploy/cash guidance */}
-      <BuyPressureDashboard />
+      {engineConfig.dcaActive ? (
+        <BuyPressureDashboard />
+      ) : (
+        <div className="bg-[#050505] border border-white/[0.05] rounded-2xl p-5 flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-white/20 shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-caption font-bold uppercase tracking-widest text-white/40 font-mono">
+              Adaptive DCA Recommendation
+            </h3>
+            <p className="text-caption text-white/50 font-sans mt-0.5">
+              <span className="text-rose-400 font-bold">DISABLED</span> — aktifkan di
+              Active Strategy banner (<span className="text-emerald-400">DCA Rekomendasi</span>)
+              untuk melihat Buy Pressure Score & deploy recommendation.
+            </p>
+          </div>
+        </div>
+      )}
 
       {strategyEval.shouldExit && (
         <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">

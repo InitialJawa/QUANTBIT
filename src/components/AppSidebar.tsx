@@ -564,7 +564,7 @@ export function AppSidebar({
   };
 
   function EngineConfigSidebarContent() {
-    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, updateProfile } = useEngineConfig();
+    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, updateProfile, isConfigSynced } = useEngineConfig();
     return (
       <div className="px-2 py-2 space-y-3">
         <div className="flex items-center justify-between">
@@ -577,6 +577,37 @@ export function AppSidebar({
             }`}>
             {isSettingsLocked ? "Terkunci" : "Terbuka"}
           </button>
+        </div>
+
+        {/* DCA Rekomendasi on/off toggle — gates BuyPressureDashboard in Portfolio */}
+        <div className="flex items-center justify-between">
+          <span className="text-label text-tertiary">DCA Rekomendasi</span>
+          <button onClick={() => updateConfigValue("dcaActive", !engineConfig.dcaActive)}
+            className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+            style={{
+              backgroundColor: engineConfig.dcaActive !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
+              color: engineConfig.dcaActive !== false ? '#00c9a5' : '#7a7a7a',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+            {engineConfig.dcaActive !== false ? "AKTIF" : "NONAKTIF"}
+          </button>
+        </div>
+
+        {/* BPS Config — show what config the live BPS dashboard is using */}
+        <div className="px-2 py-1.5 bg-white/[0.01] border border-white/[0.03] rounded-lg space-y-0.5">
+          <span className="text-label text-tertiary block font-mono">BPS Config (Live)</span>
+          <div className="text-caption text-white/70 font-mono">
+            Profile: <span className="text-emerald-400">{activeProfile?.name || engineConfig.activeProfileId.toUpperCase()}</span>
+          </div>
+          <div className="text-caption text-white/70 font-mono">
+            Universe: <span className="text-emerald-400">{engineConfig.universe.toUpperCase()}</span>
+          </div>
+          <div className="text-caption text-white/70 font-mono">
+            Top N: <span className="text-emerald-400">{engineConfig.topNCount}</span>
+          </div>
+          {isConfigSynced === false && (
+            <div className="text-label text-amber-400 mt-1 font-mono">⚠ Backtest config differs</div>
+          )}
         </div>
 
           <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>

@@ -18,7 +18,7 @@ export interface EngineConfig {
   crashSensitivity: number;
   enableCrossover: boolean;
   reserveBufferPct: number;
-  simulationMode: "algo" | "custom";
+  simulationMode: "algo" | "custom" | "adaptive_dca";
   singleTicker: string;
   singleSellTrigger: number;
   singleBuyTrigger: number;
@@ -29,6 +29,8 @@ export interface EngineConfig {
   customUniverse: string[];
   enableAdaptiveWeights: boolean;
   lastBacktestProfile: WeightProfile | null;
+  /** When false, hide the BuyPressureDashboard in Portfolio. */
+  dcaActive: boolean;
 }
 
 export const DEFAULT_PROFILES: WeightProfile[] = [
@@ -62,6 +64,7 @@ export function createDefaultConfig(): EngineConfig {
     customUniverse: [],
     enableAdaptiveWeights: false,
     lastBacktestProfile: null,
+    dcaActive: true,
   };
 }
 
@@ -108,6 +111,8 @@ export interface EngineConfigContextType {
   backtestConfig: EngineConfig;
   updateBacktestValue: (key: string, value: any) => void;
   resetBacktestConfig: () => void;
+  /** True when critical fields of backtestConfig match engineConfig. */
+  isConfigSynced: boolean;
 }
 
 const EngineConfigContext = createContext<EngineConfigContextType | null>(null);
@@ -139,6 +144,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customUniverse) parsed.customUniverse = [];
         if (parsed.enableAdaptiveWeights === undefined) parsed.enableAdaptiveWeights = false;
+        if (parsed.dcaActive === undefined) parsed.dcaActive = true;
         // Migrate legacy "single" mode → "custom"
         if (parsed.simulationMode === "single") {
           parsed.simulationMode = "custom";
@@ -159,7 +165,9 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem("idx_engine_config");
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...createDefaultConfig(), ...parsed };
+        const merged = { ...createDefaultConfig(), ...parsed };
+        if (merged.dcaActive === undefined) merged.dcaActive = true;
+        return merged;
       }
     } catch {}
     return createDefaultConfig();
@@ -181,6 +189,21 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
 
   const activeProfile = engineConfig.profiles.find(p => p.id === engineConfig.activeProfileId) || engineConfig.profiles[0];
   const activeConfig: "prod" | "res" = engineConfig.activeProfileId === "res" ? "res" : "prod";
+
+  // Fields that the BPS dashboard + algo engine both depend on. When
+  // backtestConfig diverges from engineConfig on any of these, the
+  // AppHeader shows a yellow "SYNC" indicator so the user knows the
+  // backtest sandbox has settings the live Portfolio doesn't.
+  const isConfigSynced = (() => {
+    const KEYS: Array<keyof EngineConfig> = [
+      "activeProfileId", "universe", "topNCount", "simulationMode",
+      "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
+      "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
+    ];
+    return KEYS.every(k =>
+      JSON.stringify(backtestConfig[k]) === JSON.stringify(engineConfig[k]),
+    );
+  })();
 
   const updateConfigValue = (key: string, value: any) => {
     setEngineConfig((prev) => {
@@ -278,6 +301,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       lastBacktestProfile, setLastBacktestProfile,
       syncFromBacktest,
       backtestConfig, updateBacktestValue, resetBacktestConfig,
+      isConfigSynced,
     }}>
       {children}
     </EngineConfigContext.Provider>
