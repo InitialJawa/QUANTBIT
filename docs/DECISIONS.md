@@ -207,3 +207,173 @@ $ npx vite build     # PASS
 - 1 production security hole (C9) closed
 - O(n²) → O(n) IHSG window (A5) — 12× speedup untuk 1500-day backtest
 - 0 regression di TypeScript atau build
+
+## 2026-06-25 — Quantbit AI Depth Upgrade (Levels 1+2+3+4)
+**Keputusan:** Meng-upgrade `Quantbit AI` (FloatingAIChat) dari Q&A only menjadi **fully integrated agent** dengan 4 levels, sesuai spec di `docs/AI_DEPTH_UPGRADE_PLAN.md`. Semua keputusan sudah dikunci sejak plan; eksekusi dilakukan dalam satu sesi (S6) tanpa klarifikasi tambahan.
+
+**Filosofi:** AI = presentation/interface layer. Math tetap deterministic di `engine/`. Semua action **WAJIB** dapat approval user sebelum eksekusi (zero auto-execute). Proactive alert default ON tapi user bisa disable via Settings.
+
+### Level 1 — Smarter Q&A
+- **Chat history persist** di `localStorage` (key `quantbit_ai_chat_history`, cap 100 pesan). Welcome message prepended kalau history kosong.
+- **Richer live context**: `buildLiveContext()` sekarang kirim `bps` (Buy Pressure Score), `backtestConfigSnapshot`, `isBacktestOutOfSync`, dan 5 `alerts` terakhir ke model. Model bisa jawab "apa strategi terbaik?" dengan BPS live, regime, dan alert state.
+- **Trash button** di header chat untuk clear history.
+
+### Level 2 — Read-only Tool Use
+- **8 read-only tools** di `src/hooks/useAITools.ts`:
+  - `get_portfolio_state` — positions, cash, watchlist
+  - `get_bps_now` — Buy Pressure Score (market-level)
+  - `get_regime_details` — regime + breadth + drawdown
+  - `get_ticker_metrics` — current price, scores, rank, fundamentals
+  - `get_market_history` — last N days IHSG
+  - `get_backtest_config` / `get_engine_config` — current settings
+  - `get_active_universe` — tickers user cares about (custom mode)
+- **Mekanisme**: Backend tetap pakai `buildSystemPrompt(ctx)` yang sekarang include **Section 13 (TOOL CATALOG)** + **Section 14 (PROACTIVE RULES)**. Model emit JSON block `{"tool_call": {"name": "...", "args": {...}}}` di response text. Frontend `extractToolCalls()` regex-parse, eksekusi read-only tool via `executeTool`, append hasil sebagai "tool" message ke chat, lalu re-ask AI untuk follow-up jawaban yang incorporate tool results.
+- **Kenapa JSON-block bukan native function calling**: portability — OpenRouter, Groq, Gemini semua support text response. Backend tidak perlu maintain 3 schema function declaration yang berbeda.
+
+### Level 3 — Action API + Inline Card Approval
+- **10 actions** di `useAITools.ts` (sama dengan tool names di Section 13 actions list): `buy_stock`, `sell_stock`, `move_to_gold`, `set_active_profile`, `set_universe`, `set_topN`, `toggle_dca_active`, `add_to_watchlist`, `remove_from_watchlist`, `sync_backtest_to_portfolio`.
+- **AIActionApprovalCard** (`src/components/AIActionApprovalCard.tsx`): inline card di chat dengan `[Approve]` `[Reject]` button, display text + impact preview (cost/proceeds/grams/profile bobot).
+- **Approval flow**: `addPendingAction(pending)` masuk queue `AICockpitContext.pendingActions` → card render di bawah chat messages → user klik [Approve] → `executeAIAction(pending)` dispatch ke deterministic handler existing (`handleAddTransaction`, `handleMoveToGold`, `setActiveProfile`, `updateConfigValue`, `handleToggleWatchlist`, `syncFromBacktest`) → `approveAction(id)` remove dari queue.
+- **Critical safety**: tidak ada auto-execute. AI SELALU hanya propose, user SELALU confirm. Untuk `sync_backtest_to_portfolio`, snapshot di-rebuild manual dari `backtestConfig` (bukan reference) — jadi old snapshot tidak ter-overwrite.
+- **Error handling**: try/catch di `executeAIAction`, card menampilkan "✗ {error}" dengan status merah.
+
+### Level 4 — Proactive Agent
+- **`useProactiveAgent` hook** (`src/hooks/useProactiveAgent.ts`) — di-mount sekali via `<ProactiveAgentBridge />` di `App.tsx` (dalam AICockpitProvider).
+- **6 rules** dengan hardcoded 5-min cooldown per rule:
+  1. `bpsAggressive` — BPS 70-89
+  2. `bpsDeploy` — BPS ≥ 90 (capitulasi)
+  3. `bpsLow` — BPS < 30
+  4. `dcaOffHighBps` — BPS ≥ 80 tapi `dcaActive=false`
+  5. `crisisOverride` — `isCrisisMode()` aktif
+  6. `ihsgDrop` — IHSG monthly drop > crashSensitivity
+- **Honour toggle**: `proactiveAIEnabled` di `useUIState` (localStorage `idx_proactive_ai`, default true). Settings menu di AppHeader ada toggle "Proactive Alerts" dengan icon Bell/BellOff.
+- **Chat badge**: `FloatingAIChat` menampilkan badge Bell kuning + counter unread (proactive alerts + chat messages) di tombol chat.
+
+### Files Created (3)
+| File | Lines | Purpose |
+|------|------:|---------|
+| `src/types/ai.ts` | 65 | AIToolCall, AIAction, AIToolResult, PendingAction, ProactiveAlert |
+| `src/hooks/useAITools.ts` | 280 | 8 read-only tools + 10 actions + buildPendingAction |
+| `src/hooks/useProactiveAgent.ts` | 90 | BPS threshold monitor + 5min cooldown |
+| `src/components/AIActionApprovalCard.tsx` | 90 | Inline approval card with Approve/Reject |
+
+### Files Modified (7)
+| File | Change |
+|------|--------|
+| `src/ai/aiClient.ts` | `askAI` returns `{ content, provider, toolCalls }`; `buildLiveContext` adds bps/backtestConfigSnapshot/alerts; new `extractToolCalls()` regex parser; `READ_ONLY_TOOLS` + `ACTION_TOOLS` exports |
+| `src/ai/systemKnowledge.ts` | Section 13 (TOOL CATALOG) + Section 14 (PROACTIVE RULES); `AILiveContext` extended with bps/alerts/backtestConfigSnapshot/dcaActive |
+| `src/contexts/AICockpitContext.tsx` | Added `pendingActions`, `approveAction`, `rejectAction`, `proactiveAlerts`, `dismissProactiveAlert`, `openChatWithPrompt` |
+| `src/components/FloatingAIChat.tsx` | History persist (localStorage, cap 100), tool execution loop, action approval rendering, follow-up AI call, trash button, proactive alert badge |
+| `src/hooks/useUIState.ts` | `proactiveAIEnabled` + `setProactiveAIEnabled` (localStorage, default true) |
+| `src/components/AppHeader.tsx` | New "AI Agent" section in settings menu with Bell toggle |
+| `src/App.tsx` | `ProactiveAgentBridge` component, pass `pm` + `getDynamicStock` to FloatingAIChat, pass proactive toggle to AppHeader |
+
+### Verification
+```bash
+$ npx tsc --noEmit   # PASS (0 errors)
+$ npx vite build     # PASS
+# Bundle impact:
+# - index.js: 659.71 KB (186.57 KB gzip) — +0 KB
+# - PortfolioTracker: 50.40 KB (12.79 KB gzip) — +0.7 KB
+# - SimulationTab: 45.44 KB — no change
+# - No new chunks (tool registry bundled into existing modules)
+```
+
+### Out of Scope (Deferred)
+- Auto-execute BPS recommendation (Level 5) — violates "No AI for financial math"
+- Voice input, image understanding — not in spec
+- Cross-device chat sync — localStorage only per plan
+- BPS re-calibration, VIX-like fear indicator — separate feature
+
+## 2026-06-25 — Test Coverage for AI Features (4-Layer)
+**Keputusan:** Implementasi 4-lapis test coverage untuk Quantbit AI (Levels 1-4) per spec yang di-approve user. Effort dialokasikan berurutan dari unit tests (no infra) sampai E2E (Playwright).
+
+### Refactor untuk testability
+Sebelum menulis test, dua file di-refactor untuk expose pure logic:
+- **`src/ai/toolCallParser.ts`** (NEW, dependency-free) — `extractToolCalls()` regex parser + `READ_ONLY_TOOLS` + `ACTION_TOOLS` Sets. Di-import kembali dari `src/ai/aiClient.ts` untuk backward compat. **Bug fix**: regex `\{[\s\S]*?\}` salah-parse nested `{}`; diganti dengan brace-counting algorithm yang handles nested objects correctly.
+- **`src/hooks/useAITools.ts`** — `ACTION_REGISTRY` (10 actions) + `buildPendingActionFromContext(action, ctx, now?)` di-extract ke module-level exports (sebelumnya di dalam `useMemo` di dalam hook).
+- **`src/hooks/useProactiveAgent.ts`** — `shouldFireRule(lastFiredAt, now, cooldownMs?)` + `markRuleFired(map, ruleId, now)` di-extract sebagai pure helpers. `COOLDOWN_MS` constant juga di-export.
+
+### Lapis 1 — Unit tests (no DOM, no React, no backend)
+- `src/ai/__tests__/extractToolCalls.test.ts` — 17 tests: regex parser, multiple calls, malformed JSON, nested args, whitespace handling, unique IDs, multi-paragraph text
+- `src/ai/__tests__/systemKnowledge.test.ts` — 20 tests: `formatLiveContext` untuk semua field combinations (config, regime, market, portfolio, BPS, backtestConfig, alerts, activeUniverse)
+- `src/hooks/__tests__/useAITools.test.ts` — 39 tests: ACTION_REGISTRY (10 actions × normalization), buildPendingActionFromContext (10 action types × impact preview), formatIDR, common properties
+- `src/hooks/__tests__/proactiveCooldown.test.ts` — 19 tests: shouldFireRule (first fire, within cooldown, boundary, custom cooldown, clock skew), markRuleFired (immutability), full workflow
+
+**Total Lapis 1: 95 tests** (was 57 engine tests → 152 total)
+
+### Lapis 2 — Component tests (jsdom + @testing-library/react)
+- `vitest.config.ts` (NEW) — jsdom env, jsx via @vitejs/plugin-react, exclude existing node:test files
+- `vitest.setup.ts` (NEW) — `import.meta.env` shim, `vi.mock` for api service, `cleanup()` in afterEach
+- `src/components/__tests__/AIActionApprovalCard.test.tsx` — 12 tests: render, displayText, impact items, Approve/Reject buttons, click flows, success/reject status, error handling
+- `src/components/__tests__/FloatingAIChat.history.test.tsx` — 6 tests: localStorage round-trip, welcome fallback, corrupt JSON, cap at 100, role preservation
+
+**Total Lapis 2: 18 tests**
+
+### Lapis 3 — Manual test guide + dev test harness
+- `MANUAL_TEST_GUIDE.md` (NEW) — 30+ test cases organized by Level 1-4, with setup, expected outcomes, and cross-checks
+- `src/components/AITestHarness.tsx` (NEW) — dev-only panel (guarded by `import.meta.env.DEV`) with 4 tabs: Tools (test extractToolCalls), Actions (test all 10 action builders), Cooldown (test 5-min gate + bypass), Storage (inspect/clear localStorage)
+
+### Lapis 4 — Playwright E2E
+- `playwright.config.ts` (NEW) — Chromium, baseURL localhost:5173, auto-start dev server, retries on CI
+- `e2e/auth.setup.ts` (NEW) — dev-session localStorage seed (gated by IS_DEV in api.ts)
+- `e2e/ai-chat.spec.ts` — 10 tests: chat opens, history persist, trash button, history cap, approval card render, Approve/Reject click flows, settings toggle
+- `e2e/ai-proactive.spec.ts` — 7 tests: proactive toggle persist, fired rules tracking, notifications persist, 5-min cooldown, toast render, settings toggle ON/OFF
+- `e2e/README.md` — usage instructions, CI integration snippet
+
+**Total Lapis 4: 17 tests discoverable** (skipped when no AI provider configured)
+
+### Combined test counts
+| Lapis | Test runner | Tests | Speed |
+|-------|-------------|------:|------:|
+| Engine (existing) | `tsx --test` (node:test) | 57 | ~0.9s |
+| 1 — Unit (new) | `tsx --test` (node:test) | 95 | ~0.6s |
+| 2 — Component (new) | `vitest run` | 18 | ~1.9s |
+| 4 — E2E (new) | `playwright test` | 17 (discoverable) | TBD |
+| **Total automated** | | **170** | |
+
+### Files Created (10)
+- `src/types/ai.ts` (already from S6)
+- `src/ai/toolCallParser.ts` — refactored parser
+- `src/ai/__tests__/extractToolCalls.test.ts`
+- `src/ai/__tests__/systemKnowledge.test.ts`
+- `src/hooks/__tests__/useAITools.test.ts`
+- `src/hooks/__tests__/proactiveCooldown.test.ts`
+- `src/components/__tests__/AIActionApprovalCard.test.tsx`
+- `src/components/__tests__/FloatingAIChat.history.test.tsx`
+- `vitest.config.ts` + `vitest.setup.ts`
+- `MANUAL_TEST_GUIDE.md` + `e2e/README.md`
+- `src/components/AITestHarness.tsx`
+- `playwright.config.ts` + `e2e/auth.setup.ts` + `e2e/ai-chat.spec.ts` + `e2e/ai-proactive.spec.ts`
+
+### npm scripts added
+- `test:ui` — vitest run (component tests)
+- `test:ui:watch` — vitest watch mode
+- `test:ui:coverage` — vitest with v8 coverage
+- `test:e2e` — playwright test (auto-starts dev server)
+- `test:e2e:headed` — playwright with browser visible
+- `test:e2e:ui` — playwright interactive mode
+- `test:e2e:install` — install chromium browser
+
+### Verification
+```bash
+$ npm test                # 152/152 pass (engine + AI unit tests)
+$ npm run test:ui         # 18/18 pass (component tests)
+$ npx tsc --noEmit        # 0 errors
+$ npx vite build          # PASS, 0 warnings
+$ npx playwright test --list  # 17 tests discoverable
+```
+
+### Refactor side-effects
+- Fixed off-by-one bug in `extractToolCalls` (was missing last `}` of inner JSON)
+- Replaced fragile non-greedy regex with brace-counting algorithm (handles nested `{}` correctly)
+- Extracted `shouldFireRule` to pure function (testable in isolation)
+- Extracted `ACTION_REGISTRY` + `buildPendingActionFromContext` to module-level (no React deps for tests)
+
+### Bug found during testing
+- Original `extractToolCalls` regex failed on `{"args": {}}` empty-object case (consumed wrong `}`). Fixed by switching to brace-counting algorithm.
+
+### Out of Scope
+- Backend AI provider tests (would need mocks + provider integration)
+- Cross-browser E2E (Firefox, WebKit) — Chromium only by default
+- CI workflow (`.github/workflows/e2e.yml`) — listed in e2e/README.md as future work

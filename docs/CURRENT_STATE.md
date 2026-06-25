@@ -189,3 +189,41 @@ B3, B5, C5, C6, C10, C11, D6-D9, D12, E1-E5 — see DECISIONS.md "Deferred" sect
 ### Verification
 - `npx tsc --noEmit` → **PASS (0 errors)**
 - `npx vite build` → **PASS** + `copy-data-assets` plugin verified copying 4 source files + 27 year files to `dist/data/`
+
+## 🟢 Quantbit AI Depth Upgrade (Levels 1+2+3+4) — Shipped 2026-06-25 (Sesi 6)
+Per plan `docs/AI_DEPTH_UPGRADE_PLAN.md` (locked, eksekusi langsung tanpa re-ask).
+
+**4 Levels terurut**:
+1. **Level 1 — Smarter Q&A**: Chat history persist di localStorage (key `quantbit_ai_chat_history`, cap 100). `buildLiveContext()` sekarang kirim `bps`, `backtestConfigSnapshot`, `isBacktestOutOfSync`, dan 5 alert terakhir.
+2. **Level 2 — Read-only tools**: 8 tools via JSON-block function calling (extract regex `{"tool_call": {...}}`). Provider-agnostic (OpenRouter/Groq/Gemini). Follow-up AI call setelah tool execution agar jawaban incorporate tool results.
+3. **Level 3 — Action API + Approval Card**: 10 actions + inline `AIActionApprovalCard` dengan [Approve]/[Reject]. Zero auto-execute. Semua dispatch ke deterministic handler existing.
+4. **Level 4 — Proactive Agent**: `useProactiveAgent` hook, 6 BPS rules, 5-min cooldown per rule, default ON, Settings toggle. Mount via `<ProactiveAgentBridge />` di `App.tsx`.
+
+**Files Created (4)**: `src/types/ai.ts`, `src/hooks/useAITools.ts`, `src/hooks/useProactiveAgent.ts`, `src/components/AIActionApprovalCard.tsx`.
+
+**Files Modified (7)**: `src/ai/aiClient.ts`, `src/ai/systemKnowledge.ts`, `src/contexts/AICockpitContext.tsx`, `src/components/FloatingAIChat.tsx`, `src/hooks/useUIState.ts`, `src/components/AppHeader.tsx`, `src/App.tsx`.
+
+**Verification**: `tsc --noEmit` PASS, `vite build` PASS. Bundle +0.7 KB.
+
+## 🟢 Test Coverage 4-Lapis — Shipped 2026-06-25 (Sesi 7)
+Refactor + comprehensive test coverage untuk Quantbit AI features.
+
+**Refactor (sebelum testing)**:
+- `src/ai/toolCallParser.ts` (NEW) — extract `extractToolCalls` + `READ_ONLY_TOOLS` + `ACTION_TOOLS` ke file dependency-free. **Fixes off-by-one bug** di regex (gagal parse `{"args": {}}` empty-object case).
+- `src/hooks/useAITools.ts` — extract `ACTION_REGISTRY` + `buildPendingActionFromContext` ke module-level (sebelumnya di dalam `useMemo`).
+- `src/hooks/useProactiveAgent.ts` — extract `shouldFireRule` + `markRuleFired` + `COOLDOWN_MS` ke pure helpers.
+
+**4 Lapis Tests**:
+| Lapis | Type | Count | Tool |
+|-------|------|------:|------|
+| 1. Unit | Pure functions | 95 | `node:test` (npm test) |
+| 2. Component | DOM + jsdom | 18 | vitest + @testing-library/react |
+| 3. Manual | E2E guide + dev harness | 30+ cases | `MANUAL_TEST_GUIDE.md` + `AITestHarness` |
+| 4. E2E | Browser | 17 | Playwright |
+| **Total automated** | | **130** | |
+
+**Verification**: `npm test` 152/152 (95 new + 57 engine), `npm run test:ui` 18/18, `npx tsc --noEmit` 0 errors, `npx vite build` PASS, `npx playwright test --list` 17 tests discoverable.
+
+**New dependencies** (5 devDeps): vitest, @testing-library/react, @testing-library/dom, @testing-library/user-event, @vitest/coverage-v8, jsdom, @playwright/test.
+
+**New npm scripts**: `test:ui`, `test:ui:watch`, `test:ui:coverage`, `test:e2e`, `test:e2e:headed`, `test:e2e:ui`, `test:e2e:install`.
