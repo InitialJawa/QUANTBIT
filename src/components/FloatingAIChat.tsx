@@ -66,6 +66,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const { useDevMockAI } = useUIState();
   // Track consecutive provider failures to suggest dev-mock fallback.
   const consecutiveFailuresRef = useRef(0);
+  // Synchronous lock to prevent double-send (closures can't guard rapid clicks).
+  const sendingRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   // SESSION: new id per page load (NOT restored from localStorage).
@@ -208,7 +210,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   }, [pm, getDynamicStock, engineConfig.profiles, backtestConfig, setActiveProfile, updateConfigValue, syncFromBacktest]);
 
   const send = useCallback(async (text: string, uiContext?: string) => {
-    if (!text.trim() || isLoading) return;
+    if (!text.trim() || isLoading || sendingRef.current) return;
+    sendingRef.current = true;
     const userMsg: AIChatMessage = { role: "user", content: text };
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
@@ -349,6 +352,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         { role: "assistant", content: `Maaf, terjadi kendala: ${e.message || "gagal menghubungi AI"}.` },
       ]);
     } finally {
+      sendingRef.current = false;
       setIsLoading(false);
     }
   }, [messages, isLoading, isOpen, isMinimized, engineConfig, backtestConfig, isConfigSynced, selectedStock, portfolio, cash, notifications, executeTool, buildPendingAction, actionRegistry, addPendingAction]);
