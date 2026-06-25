@@ -28,6 +28,23 @@ function main() {
     stockOpens TEXT, stockHighs TEXT, stockLows TEXT,
     stockRanksProd TEXT, stockRanksRes TEXT
   )`);
+  // AI chat memory tables (mirror migrations/0002_ai_memory.sql so
+  // local SQLite testing matches production D1 schema).
+  db.exec(`CREATE TABLE IF NOT EXISTS ai_sessions (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, title TEXT,
+    message_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_message_at TEXT DEFAULT (datetime('now'))
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS ai_messages (
+    id TEXT PRIMARY KEY, session_id TEXT NOT NULL, user_id TEXT NOT NULL,
+    role TEXT NOT NULL, content TEXT NOT NULL,
+    tool_calls TEXT, metadata TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_sessions(user_id, last_message_at DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ai_messages_session ON ai_messages(session_id, created_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ai_messages_user ON ai_messages(user_id, created_at)`);
 
   const insert = db.prepare(`INSERT OR REPLACE INTO daily_market
     (date, ihsgPrice, goldPrice, usdidrRate, stockPrices, stockAdjPrices, stockVolumes,

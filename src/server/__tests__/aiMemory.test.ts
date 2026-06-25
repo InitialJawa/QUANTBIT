@@ -161,7 +161,7 @@ describe("appendMessage", () => {
       userId: "user1",
       role: "assistant",
       content: "ok",
-      toolCalls: [{ name: "x", args: {} }],
+      toolCalls: [{ id: "tc_test", name: "x", args: {} }],
       metadata: { provider: "openrouter" },
     });
     const m = _messages[0];
