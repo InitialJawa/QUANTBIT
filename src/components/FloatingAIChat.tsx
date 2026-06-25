@@ -259,6 +259,11 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       // a "use dev mock" hint in the chat (only in dev mode).
       if (result.provider === "none" || result.provider === "error") {
         consecutiveFailuresRef.current += 1;
+        // Show brief fail indicator mid-conversation (but only once).
+        const userCount = messages.filter((m) => m.role === "user").length;
+        if (userCount > 0 && consecutiveFailuresRef.current === 1) {
+          setMessages((prev) => [...prev, { role: "assistant", content: "(limit)" }]);
+        }
         if (
           consecutiveFailuresRef.current === 3 &&
           import.meta.env?.DEV &&
