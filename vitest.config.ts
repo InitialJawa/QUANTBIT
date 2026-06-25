@@ -24,6 +24,7 @@ export default defineConfig({
       "src/ai/__tests__/**",      // AI tool-parser tests use node:test
       "src/hooks/__tests__/useAITools.test.ts",  // Pure hook tests use node:test
       "src/hooks/__tests__/proactiveCooldown.test.ts",  // Pure hook tests use node:test
+      "src/server/__tests__/**",  // AI chat handler tests use node:test
       "node_modules/**",
       "dist/**",
     ],

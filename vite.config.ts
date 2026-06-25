@@ -125,6 +125,10 @@ export default defineConfig(() => {
       proxy: {
         '/api/backtest-data': 'http://localhost:3001',
         '/api/yahoo': 'http://localhost:3001',
+        // Local dev AI chat — Express server reads OPENROUTER_API_KEY /
+        // GROQ_API_KEY / GEMINI_API_KEY from .env.local. Requires
+        // `npm run serve-api` running in another terminal.
+        '/api/ai/chat': 'http://localhost:3001',
       },
     },
     build: {

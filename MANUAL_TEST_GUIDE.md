@@ -20,13 +20,20 @@ GEMINI_API_KEY=AIza...             # https://aistudio.google.com/app/apikey
 ### 2. Start dev servers
 
 ```bash
-# Option A: full stack (Vite + Express API)
-npm run dev:full
+# Cross-platform: runs Express (port 3001) + Vite (port 5173) concurrently
+npm run dev
 
-# Option B: separate
-npm run serve-api   # terminal 1 — Express on :3001
-npm run dev         # terminal 2 — Vite on :5173
+# Or run separately:
+npm run serve-api   # terminal 1 — Express on :3001 (baca API key dari .env.local)
+npm run dev         # terminal 2 — Vite on :5173 (proxy /api/ai/chat ke :3001)
 ```
+
+**Vite proxy list** (`vite.config.ts:125-132`):
+- `/api/backtest-data` → `http://localhost:3001`
+- `/api/yahoo` → `http://localhost:3001`
+- `/api/ai/chat` → `http://localhost:3001`
+
+Kalau Vite jalan tanpa `serve-api`, `api.ts:46-58` fallback ke dev mock dengan hint "Backend AI tidak reachable".
 
 ### 3. Open browser
 
@@ -35,6 +42,17 @@ http://localhost:5173
 ```
 
 Login dengan akun apa pun (dev mode auto-grants via localStorage `quantbit_session`).
+
+### 4. Verifikasi AI Provider
+
+Buka chat, kirim "halo". Header chat harus menunjukkan provider (mis. `openrouter`, `groq`, `gemini`).
+
+Kalau muncul error, periksa:
+- `.env.local` ada API key
+- `npm run serve-api` running (kalau pakai Vite saja)
+- Provider chain: `OPENROUTER` → `GROQ` → `GEMINI` (lihat `src/server/aiChatHandler.ts:174-209`)
+
+**Atau** aktifkan **Use Dev Mock** di Settings → AI Agent (dev only) untuk testing tanpa API key.
 
 ---
 

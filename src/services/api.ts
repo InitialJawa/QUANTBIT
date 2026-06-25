@@ -44,8 +44,21 @@ function devMock(path: string, options: RequestInit): any {
     return {};
   }
   if (path === "/api/ai/chat") {
+    // The frontend called /api/ai/chat but no backend is reachable.
+    // Likely cause: Vite dev server running without `npm run serve-api`
+    // in another terminal. We return a structured error so the chat
+    // shows a helpful hint instead of a misleading "data dari file statis"
+    // message.
     return {
-      content: "📊 Mode dev lokal — data dari file statis. Untuk live data, deploy ke Cloudflare Pages atau jalankan Express server.",
+      content:
+        "⚠ Backend AI tidak reachable. " +
+        "Kemungkinan: `npm run serve-api` belum jalan di terminal lain (port 3001).\n\n" +
+        "**Solusi dev mode:**\n" +
+        "1. Terminal 1: `npm run serve-api` (Express server, baca `OPENROUTER_API_KEY` dari `.env.local`)\n" +
+        "2. Terminal 2: `npm run dev` (Vite di port 5173)\n\n" +
+        "**Atau tanpa API key:**\n" +
+        "- Settings → AI Agent → **Use Dev Mock** → ON (pattern-matching canned responses, support tool calls)\n\n" +
+        "Lihat `MANUAL_TEST_GUIDE.md` untuk detail.",
       provider: "dev-mock",
     };
   }

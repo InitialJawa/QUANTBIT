@@ -377,3 +377,54 @@ $ npx playwright test --list  # 17 tests discoverable
 - Backend AI provider tests (would need mocks + provider integration)
 - Cross-browser E2E (Firefox, WebKit) — Chromium only by default
 - CI workflow (`.github/workflows/e2e.yml`) — listed in e2e/README.md as future work
+
+## 2026-06-25 — Fix Dev Path: Real AI in Local Development
+
+**Problem:** User reported "AI error padahal API sudah dipasang". Root cause:
+1. `functions/api/[[path]].ts:handleAiChat` was the ONLY place that read `OPENROUTER_API_KEY` / `GROQ_API_KEY` / `GEMINI_API_KEY` — and it only runs in production Cloudflare Pages
+2. Local `server.ts` (Express) had no `/api/ai/chat` handler
+3. `vite.config.ts` proxy list only had `/api/backtest-data` and `/api/yahoo` — `/api/ai/chat` was missing
+4. Vite's SPA fallback served `index.html` for `/api/ai/chat` → `api.ts:121-125` detected HTML → `devMock` returned canned "Mode dev lokal" message that was misleading (made user think AI was working in dev mode by design)
+5. `package.json:dev` used `start cmd /c "tsx server.ts" && vite` (Windows-only `start` command, broken on Linux)
+
+**Fix — share AI handler between CF Functions and Express:**
+
+### Refactor
+- **`src/server/aiChatHandler.ts`** (NEW) — extracted `runAiChat(messages, context, env)` pure function. Provider chain (OpenRouter → Groq → Gemini) + diagnostic error messages. No `Request`/`Response` types — accepts plain `AiEnv` object so it works in both CF Workers and Node Express.
+- **`functions/api/[[path]].ts`** — `handleAiChat` now thin wrapper that calls `runAiChat(body.messages, body.context, env)`. Removed duplicate `chatGemini` + `chatOpenAICompatible` (~100 lines deleted).
+- **`server.ts`** — added `app.post("/api/ai/chat", ...)` handler. Reads API keys from `process.env` (via `.env.local`).
+- **`vite.config.ts`** — added `'/api/ai/chat': 'http://localhost:3001'` to proxy list.
+- **`src/services/api.ts`** — devMock for `/api/ai/chat` now returns a helpful "Backend AI tidak reachable" hint with 2 numbered steps instead of the misleading "Mode dev lokal" message.
+- **`package.json`** — replaced Windows-only `dev` script with cross-platform `concurrently -k -n api,web "npm:serve-api" "vite"`. Added `concurrently` as devDep.
+
+### Tests
+- **`src/server/__tests__/aiChatHandler.test.ts`** (NEW, 16 tests) — input validation, no-provider diagnostic, OpenRouter/Groq/Gemini provider calls, fallback chain, system prompt integration, error reporting. Uses `mock.fn` to intercept `globalThis.fetch`.
+
+### Verification
+- `npm test` 198/198 (was 182, +16 new)
+- `npm run test:ui` 18/18
+- `npx tsc --noEmit` 0 errors
+- `npx vite build` PASS
+
+### How user uses it
+```bash
+# .env.local (any one of these)
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# Two terminals:
+npm run serve-api   # terminal 1 — reads API key, listens on :3001
+npm run dev         # terminal 2 — Vite proxies /api/ai/chat to :3001
+```
+
+Or `npm run dev` alone runs both concurrently (cross-platform via `concurrently`).
+
+### Decisions recorded
+- **Shared handler wins over duplicate code** — pure function pattern is cleaner than 2 implementations that drift over time
+- **`concurrently` over platform-specific scripts** — was `start cmd /c` (Windows-only), broke on Linux. Replaced with cross-platform npm package
+- **Helper hint in devMock** — instead of pretending the mock IS the AI, be honest that backend isn't reachable and tell user how to fix
+
+### Net effect
+- API keys di `.env.local` sekarang benar-benar dipakai di dev mode
+- Tinggal `npm run dev` (atau `npm run serve-api` + `npm run dev`), chat akan pakai OpenRouter/Groq/Gemini
+- Kalau backend tetap off, dev mock kasih hint actionable bukan misleading
+- Codebase lebih DRY (1 handler bukan 2 duplicates)

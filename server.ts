@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { createTransport } from "nodemailer";
 import { handleYahooRequest } from "./src/server/yahooApi";
+import { runAiChat, type ChatMessage } from "./src/server/aiChatHandler";
 
 const app = express();
 app.use(express.json());
@@ -48,6 +49,32 @@ app.post("/api/send-notification", async (req, res) => {
 });
 
 app.get("/api/yahoo", handleYahooRequest);
+
+// Local dev AI chat — same logic as Cloudflare Pages Functions
+// (functions/api/[[path]].ts) but reads API keys from process.env.
+// Provider chain: OpenRouter → Groq → Gemini. See src/server/aiChatHandler.ts.
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const { messages, context } = req.body || {};
+    const result = await runAiChat(
+      (messages || []) as ChatMessage[],
+      context,
+      {
+        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+        GROQ_API_KEY: process.env.GROQ_API_KEY,
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      },
+    );
+    if (result.ok) {
+      res.json({ content: result.content, provider: result.provider });
+    } else {
+      const errResult = result as Extract<typeof result, { ok: false }>;
+      res.status(errResult.status).json({ content: errResult.content, provider: errResult.provider });
+    }
+  } catch (err: any) {
+    res.status(500).json({ content: `Maaf, terjadi kendala: ${err.message}`, provider: "error" });
+  }
+});
 
 app.get("/api/backtest-data", (req, res) => {
   try {
