@@ -24,11 +24,10 @@ interface FloatingAIChatProps {
 const WELCOME: AIChatMessage = {
   role: "assistant",
   content:
-    "Halo! Saya **Quantbit AI** — analis yang tahu *isi dapur* sistem ini.\n\n" +
-    "Tanya apa saja, termasuk **\"angka ini dihitung dari mana?\"** — saya jelaskan pakai rumus & angka live-mu. " +
-    "Klik ikon ❓ di panel mana pun untuk minta penjelasan instan.\n\n" +
-    "💡 Coba: *\"cek portofolio saya\"*, *\"berapa BPS?\"*, *\"beli BBCA 100 lembar\"* (akan muncul kartu persetujuan).\n\n" +
-    "💾 *Session baru, AI ingat percakapan sebelumnya via DB.*",
+    "Yo, gue Quantbit AI -- tau semua isi dapur sistem ini.\n\n" +
+    "Tanya aja apa pun, termasuk 'angka ini dihitung dari mana?'. Gue jelasin pake rumus & data live lo.\n\n" +
+    "Coba: 'cek portofolio', 'berapa BPS?', 'beli BBCA 100' (bakal muncul kartu approval).\n\n" +
+    "Session baru, tapi AI inget percakapan sebelumnya via DB.",
 };
 
 /** Generate a unique session id for this page load. */

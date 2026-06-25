@@ -21,9 +21,8 @@ interface AICockpitProps {
 const WELCOME: AIChatMessage = {
   role: "assistant",
   content:
-    "Halo! Saya **Quantbit AI** — analis yang tahu *isi dapur* sistem ini.\n\n" +
-    "Tanya apa saja, termasuk **\"angka ini dihitung dari mana?\"** — saya jelaskan pakai rumus & angka live-mu. " +
-    "Klik ikon ❓ di panel mana pun untuk minta penjelasan instan.",
+    "Yo, gue Quantbit AI -- tau semua isi dapur sistem ini.\n\n" +
+    "Tanya aja apa pun, termasuk 'angka ini dihitung dari mana?'. Gue jelasin pake rumus & data live lo.",
 };
 
 export function AICockpit({ selectedStock, portfolio, cash, className }: AICockpitProps) {
