@@ -27,7 +27,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium",
-    "serve-api": "tsx server.ts",
+    "serve-api": "tsx --env-file=.env.local server.ts",
     "serve-mcp": "tsx src/mcp/index.ts"
   },
   "dependencies": {
