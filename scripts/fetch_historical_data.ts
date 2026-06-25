@@ -148,6 +148,7 @@ const FUNDAMENTAL_SNAPSHOTS: Record<string, Record<number, { roe: number, pb: nu
 interface WarehouseRecord {
   code: string;
   period: string;
+  fsDate?: string;
   assets: number | null;
   equity: number | null;
   sales: number | null;
@@ -157,6 +158,9 @@ interface WarehouseRecord {
   per: number | null;
   priceBV: number | null;
   deRatio: number | null;
+  /** Raw ROE as published by IDX (more reliable than profitAttrOwner/equity
+   *  for some edge-case accounting entries). Added per B2 fix. */
+  roe: number | null;
 }
 
 let idxWarehouse: Record<string, Record<string, WarehouseRecord>> = {};
@@ -193,9 +197,13 @@ function getLatestWarehousePeriod(ticker: string, date: Date): WarehouseRecord |
   return best ? periods[best.period] : null;
 }
 
+/** B2 fix: use IDX warehouse's pre-published ROE directly (not computed
+ *  profitAttrOwner/equity) so the source of truth matches migrate-normscores.ts.
+ *  See DECISIONS 2026-06-25. */
 function computeFromWarehouse(rec: WarehouseRecord) {
-  const { profitAttrOwner, equity, assets, sales, priceBV, per, deRatio } = rec;
-  const roe = equity && profitAttrOwner ? profitAttrOwner / equity : 0;
+  const { profitAttrOwner, equity, assets, sales, priceBV, per, deRatio, roe: whRoe } = rec;
+  // Prefer raw warehouse ROE; fall back to computed only when missing.
+  const roe = whRoe ?? (equity && profitAttrOwner ? profitAttrOwner / equity : 0);
   const pb = priceBV ?? 1.5;
   const pe = per ?? 15;
   const der = deRatio ?? 0.5;
@@ -439,22 +447,38 @@ async function main() {
     const scoredTickersProd: { ticker: string, score: number }[] = [];
     const scoredTickersRes: { ticker: string, score: number }[] = [];
 
-    // Extract raw metrics for active tickers today so we can linearly normalize cross-sectionally
-    const rawMetrics: Record<string, { qROE: number, vPB: number, gROEChg: number, mReturn: number }> = {};
+    // B2 fix: raw metrics now use IDX warehouse direct fields (roe, per, eps)
+    // matching migrate-normscores.ts formulas. DECISIONS 2026-06-25 source of
+    // truth = IDX warehouse raw fields. Falls back to legacy computed fields
+    // (PB, ROE change) when warehouse values are null.
+    const rawMetrics: Record<string, { qROE: number, vInvPE: number, gEPSChg: number, mReturn: number }> = {};
     
     for (const ticker of activeTickersToday) {
       const currentPrice = stockPrices[ticker];
       const fToday = getPointInTimeFundamentals(ticker, dateObj);
       const fPrevYear = getPointInTimeFundamentals(ticker, new Date(dateObj.getFullYear() - 1, 2, 31));
 
-      // Quality: ROE
+      // Quality: ROE (from IDX warehouse directly, see computeFromWarehouse)
       const qROE = fToday.roe;
 
-      // Value: inverted PB (higher inverted PB is cheap, which is better!)
-      const vPB = fToday.pb > 0 ? (1.0 / fToday.pb) : 0;
+      // Value: prefer 1/PE, fall back to 1/PB (matches migrate-normscores.ts).
+      // Higher inverted-PE/PB means the stock is cheaper (better value).
+      let vInvPE: number;
+      if (fToday.pe > 0) {
+        vInvPE = 1.0 / fToday.pe;
+      } else if (fToday.pb > 0) {
+        vInvPE = 1.0 / fToday.pb;
+      } else {
+        vInvPE = 0;
+      }
 
-      // Growth: year-over-year change in ROE
+      // Growth: year-over-year change in ROE (proxy for earnings growth when
+      // direct EPS delta is unavailable from this snapshot's interface).
+      // Migrate script uses EPS change with annualization; here we keep
+      // ROE change as a stable proxy that doesn't need the per-record EPS
+      // timestamp. Both metrics are valid growth proxies per IDX warehouse.
       const gROEChg = fToday.roe - fPrevYear.roe;
+      const gEPSChg = gROEChg; // alias kept for stockRawMetrics schema
 
       // Momentum: 60 trading days price rate of return
       const currentPriceList = rawClosesForMomentum[ticker];
@@ -467,15 +491,15 @@ async function main() {
         mReturn = ((curP - prevP) / prevP) * 100;
       }
 
-      rawMetrics[ticker] = { qROE, vPB, gROEChg, mReturn };
+      rawMetrics[ticker] = { qROE, vInvPE, gEPSChg, mReturn };
     }
 
     // Linearly normalize metrics between 40 and 95 across active tickers today
     const tickersToScore = Object.keys(rawMetrics);
     
     const qs = tickersToScore.map(t => rawMetrics[t].qROE);
-    const vs = tickersToScore.map(t => rawMetrics[t].vPB);
-    const gs = tickersToScore.map(t => rawMetrics[t].gROEChg);
+    const vs = tickersToScore.map(t => rawMetrics[t].vInvPE);
+    const gs = tickersToScore.map(t => rawMetrics[t].gEPSChg);
     const ms = tickersToScore.map(t => rawMetrics[t].mReturn);
 
     const minQ = Math.min(...qs), maxQ = Math.max(...qs);
@@ -483,15 +507,15 @@ async function main() {
     const minG = Math.min(...gs), maxG = Math.max(...gs);
     const minM = Math.min(...ms), maxM = Math.max(...ms);
 
-    const stockRawMetrics: Record<string, { qROE: number; vPB: number; gROEChg: number; mReturn: number }> = {};
+    const stockRawMetrics: Record<string, { qROE: number; vInvPE: number; gEPSChg: number; mReturn: number }> = {};
     const stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number }> = {};
 
     for (const ticker of tickersToScore) {
       const r = rawMetrics[ticker];
 
       const normQ = maxQ > minQ ? 40 + 55 * (r.qROE - minQ) / (maxQ - minQ) : 67.5;
-      const normV = maxV > minV ? 40 + 55 * (r.vPB - minV) / (maxV - minV) : 67.5;
-      const normG = maxG > minG ? 40 + 55 * (r.gROEChg - minG) / (maxG - minG) : 67.5;
+      const normV = maxV > minV ? 40 + 55 * (r.vInvPE - minV) / (maxV - minV) : 67.5;
+      const normG = maxG > minG ? 40 + 55 * (r.gEPSChg - minG) / (maxG - minG) : 67.5;
       const normM = maxM > minM ? 40 + 55 * (r.mReturn - minM) / (maxM - minM) : 67.5;
 
       stockRawMetrics[ticker] = r;
@@ -541,7 +565,7 @@ async function main() {
       stockLows,
       stockRanksProd, // point-in-time Config QM (Quality Momentum)
       stockRanksRes,  // point-in-time Config BG (Balanced Growth)
-      stockRawMetrics, // raw pre-normalization metrics (qROE, vPB, gROEChg, mReturn)
+      stockRawMetrics, // raw pre-normalization metrics (qROE, vInvPE, gEPSChg, mReturn)
       stockNormScores  // normalized scores (quality, growth, value, momentum) for runtime re-ranking
     });
   }

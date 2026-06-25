@@ -111,7 +111,11 @@ export function useDataFeed() {
           if (dataFeed === "goapi" && goapiPrices[stock.ticker]) base = goapiPrices[stock.ticker].close;
           else if (dataFeed === "yahoo" && yahooPrices[stock.ticker]) base = yahooPrices[stock.ticker].close;
           const offset = next[stock.ticker] || 0;
-          const newOffset = offset + 0;
+          // Small mean-reverting random walk so the price "breathes" inside the trading band.
+          // Damped toward 0 so it cannot drift unboundedly outside ±5% cap.
+          const meanReversion = -offset * 0.15;
+          const noise = (Math.random() - 0.5) * base * 0.002;
+          const newOffset = offset + meanReversion + noise;
           const cap = base * 0.05;
           next[stock.ticker] = Math.max(-cap, Math.min(cap, newOffset));
         });

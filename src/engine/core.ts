@@ -25,11 +25,20 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const { dayData: rawInput, config, profileWeights: inputWeights, universeTickers, fees = DEFAULT_FEES } = input;
   let currentWeights = { ...inputWeights };
 
-  const activeProfileKey: "stockRanksProd" | "stockRanksRes" = config.activeProfileId === "res" ? "stockRanksRes" : "stockRanksProd";
+  // Fallback rank key for legacy data that lacks `stockNormScores`. Custom
+  // profiles (activeProfileId starts with "custom_") have no pre-baked rank —
+  // they fall back to QM ranks as a defensive default. Newer data generated
+  // by migrate-normscores.ts always has stockNormScores, so the rank recompute
+  // branch below handles custom profiles with the user's actual weights.
+  const activeProfileKey: "stockRanksProd" | "stockRanksRes" =
+    config.activeProfileId === "res" ? "stockRanksRes" : "stockRanksProd";
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
-      const stockRanks = computeDayRankings(d.stockNormScores, inputWeights);
+      // A4 fix: always recompute rank from normalised scores using the
+      // caller's profileWeights so custom profiles (and adaptive weights)
+      // are honoured — not just the stockRanksProd/Res pre-baked values.
+      const stockRanks = computeDayRankings(d.stockNormScores, currentWeights);
       return { ...d, stockRanks };
     }
     return {
@@ -101,6 +110,13 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const initialIhsgPrice = day0.ihsgPrice;
   const initialGoldPrice = day0.goldPrice;
 
+  // A5 fix: incremental IHSG price window — was O(n²) because we called
+  // filtered.slice(0, stepIndex + 1).map(...) on every day. For a 1500-day
+  // backtest this was ~1.1M iterations. The crash detector only needs the
+  // last 60 prices (its own internal slice), so we maintain a single rolling
+  // buffer of (up to 60) closing prices that we push to as the loop advances.
+  const ihsgRollingWindow: number[] = [day0.ihsgPrice];
+
   let lastJulyYear = 2019;
   const dailyReturns: number[] = [];
   let lastDayVal = cap;
@@ -124,6 +140,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     const dateObj = new Date(day.date);
     const currentYear = dateObj.getFullYear();
     const currentMonth = dateObj.getMonth();
+
+    // A5: append current IHSG to the rolling window. Cap at 60 to match
+    // detectCrashAlgo's own 60-day lookback — anything older is irrelevant.
+    ihsgRollingWindow.push(day.ihsgPrice);
+    if (ihsgRollingWindow.length > 60) ihsgRollingWindow.shift();
 
     if (pendingTickers.length > 0) {
       for (let pi = pendingTickers.length - 1; pi >= 0; pi--) {
@@ -197,8 +218,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (config.enableCrashProtection) {
       if (config.simulationMode === "algo" || config.simulationMode === "custom") {
-        const ihsgPricesWindow = filtered.slice(0, stepIndex + 1).map(d => d.ihsgPrice);
-        const result = detectCrashAlgo(ihsgPricesWindow, day.ihsgPrice, config.crashSensitivity);
+        const result = detectCrashAlgo(ihsgRollingWindow, day.ihsgPrice, config.crashSensitivity);
         crashSignaled = result.signaled;
         crashReason = result.reason;
       }
@@ -230,8 +250,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       let recoverySignaled = false;
 
       if (config.simulationMode === "algo" || config.simulationMode === "custom") {
-        const ihsgPricesWindow = filtered.slice(0, stepIndex + 1).map(d => d.ihsgPrice);
-        const result = detectRecoveryAlgo(ihsgPricesWindow, day.ihsgPrice);
+        const result = detectRecoveryAlgo(ihsgRollingWindow, day.ihsgPrice);
         recoverySignaled = result.signaled;
 
         if (result.signaled) {

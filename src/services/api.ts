@@ -1,4 +1,11 @@
+/// <reference types="vite/client" />
 const SESSION_KEY = "quantbit_session";
+
+/** C9 fix: dev-mode guard. The `dev-session` shortcut must NEVER grant
+ *  access in production builds, even if localStorage was somehow seeded
+ *  with that value (e.g. a previous dev session left over after switching
+ *  environments, or a user manually setting it to probe the app). */
+const IS_DEV = import.meta.env?.DEV === true;
 
 function getSession(): string | null {
   return localStorage.getItem(SESSION_KEY);
@@ -14,18 +21,21 @@ function clearSession() {
 
 function devMock(path: string, options: RequestInit): any {
   if (path === "/api/auth/login" && options.method === "POST") {
+    if (!IS_DEV) throw new Error("Dev mock disabled in production");
     const body = JSON.parse(options.body as string);
     return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
   }
   if (path === "/api/auth/signup" && options.method === "POST") {
+    if (!IS_DEV) throw new Error("Dev mock disabled in production");
     const body = JSON.parse(options.body as string);
     return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
   }
   if (path === "/api/auth/me") {
-    if (getSession() === "dev-session") {
+    if (IS_DEV && getSession() === "dev-session") {
       return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod", engine_config: "{}" } };
     }
-    throw new Error("No dev session");
+    // C9 fix: in production, never accept the dev-session shortcut.
+    throw new Error("Not authenticated");
   }
   if (path === "/api/auth/logout") {
     return {};
@@ -104,8 +114,13 @@ async function request<T = any>(path: string, options: RequestInit = {}): Promis
   }
 
   const text = await res.text();
-  // Dev fallback: API route returned HTML (no backend running)
-  if (text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<!doctype")) {
+  // D10 fix: dev fallback triggers when the API route is not actually
+  // serving JSON — could be HTML (Vite SPA fallback, no backend running)
+  // or a 5xx error page. In production, devMock is already gated by
+  // IS_DEV so this branch won't grant dev access to real users.
+  const looksLikeHtml = text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<!doctype");
+  const isServerError = res.status >= 500;
+  if (IS_DEV && (looksLikeHtml || isServerError)) {
     return devMock(path, options);
   }
   try {

@@ -818,6 +818,10 @@ async function runIdx80Scan(env: Env): Promise<any[]> {
   await Promise.all(Array.from({ length: 15 }, () => worker()));
 
   if (results.length > 0) {
+    // C8 fix: replace-only retention. The scan table only needs the latest
+    // snapshot — historical scans would just be re-running state. Insert
+    // would grow unbounded at 1 row per 15-min cron.
+    await env.DB.prepare("DELETE FROM idx_scan_data").run();
     await env.DB.prepare(
       "INSERT INTO idx_scan_data (data, last_updated) VALUES (?, datetime('now'))"
     ).bind(JSON.stringify(results)).run();

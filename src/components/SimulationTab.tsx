@@ -26,7 +26,7 @@ import { runStrategy } from "../engine";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
 import { isCrisisMode } from "../marketRegimeEngine";
-import { getSession, api } from "../services/api";
+import { api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
 
@@ -193,15 +193,6 @@ export function SimulationTab({
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
 
-  useEffect(() => {
-    api.get<{ success: boolean; data: any[] }>("/api/backtest-data?configType=prod")
-      .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
-      .catch(() => {
-        setHistoricalData(generateClientBacktestData());
-      });
-  }, []);
-
-
   const isMarketClosedDate = (dateStr: string) => {
     if (!dateStr) return null;
     const day = new Date(dateStr).getDay();
@@ -216,6 +207,19 @@ export function SimulationTab({
   };
   const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest, backtestConfig, updateBacktestValue } = useEngineConfig();
   const backtestActiveProfile = useMemo(() => engineConfig.profiles.find(p => p.id === backtestConfig.activeProfileId) || engineConfig.profiles[0], [engineConfig.profiles, backtestConfig.activeProfileId]);
+
+  // A2 fix: re-fetch historical data when the active profile changes so the
+  // engine runs against the right stockRanksProd/Res dataset. Previously this
+  // was hardcoded to configType=prod, which silently fed QM ranks into BG
+  // backtests and vice versa.
+  useEffect(() => {
+    const configType = backtestConfig.activeProfileId === "res" ? "res" : "prod";
+    api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}`)
+      .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
+      .catch(() => {
+        setHistoricalData(generateClientBacktestData());
+      });
+  }, [backtestConfig.activeProfileId]);
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");

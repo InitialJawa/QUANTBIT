@@ -8,6 +8,7 @@ import { StockDrawer } from "./components/StockDrawer";
 import { AppSidebar } from "./components/AppSidebar";
 import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
+import { useMarketRegimeSync } from "./hooks/useMarketRegimeSync";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
@@ -40,6 +41,13 @@ function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: "prod" | 
       setActiveConfig(ctxActiveConfig);
     }
   }, [ctxActiveConfig]);
+  return null;
+}
+
+/** A3: Centralised bridge so marketRegimeEngine stays in sync with
+ *  EngineConfigContext regardless of which tab the user is viewing. */
+function MarketRegimeSyncBridge() {
+  useMarketRegimeSync();
   return null;
 }
 
@@ -186,6 +194,7 @@ export default function App() {
         />
         <EngineConfigProvider>
           <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />
+          <MarketRegimeSyncBridge />
           <NotificationProvider>
             <AICockpitProvider>
             <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">

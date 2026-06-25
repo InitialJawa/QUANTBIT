@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
-import { setActiveUniverse, setCrashSensitivity, setCrashProtectionEnabled, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
+import { getIhsgDrawdown60 } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -102,13 +102,9 @@ export function PortfolioTracker({
     }
   }, [notification]);
 
-  // Sync universe + config to regime engine
-  useEffect(() => {
-    setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
-    setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
-    setCrashProtectionEnabled(engineConfig.enableCrashProtection);
-    refreshRSFromRegime();
-  }, [engineConfig.universe, activeProfile, engineConfig.crashSensitivity]);
+  // (A3 fix) Sync universe + config to regime engine is now handled by
+  // useMarketRegimeSync() mounted at App.tsx level so toggling
+  // enableCrashProtection in the AppSidebar reflects immediately.
 
   // Persist full state to backend when engine config changes
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -211,21 +207,36 @@ export function PortfolioTracker({
   let totalInvestment = 0;
   let totalCurrentValue = 0;
 
-  // Sync market rank with Leaders tab actively based on exact active config weights
-  const cleanIdx80 = IDX80_TICKERS.map((t) => t.replace(".JK", ""));
-  const cleanIdx30 = IDX30_TICKERS.map((t) => t.replace(".JK", ""));
-  const cleanLq45 = LQ45_TICKERS.map((t) => t.replace(".JK", ""));
+  // D1 fix: memoize processedLeaders so the O(n log n) sort + filter only
+  // runs when active profile or universe actually change (not every render).
+  const processedLeaders = useMemo(() => {
+    const cleanIdx80 = IDX80_TICKERS.map((t) => t.replace(".JK", ""));
+    const cleanIdx30 = IDX30_TICKERS.map((t) => t.replace(".JK", ""));
+    const cleanLq45 = LQ45_TICKERS.map((t) => t.replace(".JK", ""));
+    const profileWeights = activeProfile
+      ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight }
+      : (engineConfig.activeProfileId === "res" ? "res" as const : "prod" as const);
+    return getProcessedLeaders(visibleStocks, profileWeights).filter((item) => {
+      const rawTicker = item.ticker.replace(".JK", "");
+      if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);
+      if (engineConfig.universe === "idx30") return cleanIdx30.includes(rawTicker);
+      if (engineConfig.universe === "lq45") return cleanLq45.includes(rawTicker);
+      return true;
+    });
+  }, [activeProfile, engineConfig.universe, engineConfig.activeProfileId, visibleStocks]);
 
-  const processedLeaders = getProcessedLeaders(
-    visibleStocks,
-    activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : (engineConfig.activeProfileId === "res" ? "res" : "prod"),
-  ).filter((item) => {
-    const rawTicker = item.ticker.replace(".JK", "");
-    if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);
-    if (engineConfig.universe === "idx30") return cleanIdx30.includes(rawTicker);
-    if (engineConfig.universe === "lq45") return cleanLq45.includes(rawTicker);
-    return true;
-  });
+  // D11 fix: pre-build a Map<ticker, {rank, score}> once per render so the
+  // getStockRankAndScore call becomes O(1) instead of O(leaders) per
+  // portfolio item. With 50 holdings × 80 leaders this drops 4000 lookups
+  // to 50 lookups per render.
+  const rankMap = useMemo(() => {
+    const map = new Map<string, { rank: number; score: string }>();
+    processedLeaders.forEach((leader, idx) => {
+      const key = leader.ticker.replace(".JK", "").toUpperCase();
+      map.set(key, { rank: idx + 1, score: leader.score.toFixed(1) });
+    });
+    return map;
+  }, [processedLeaders]);
 
   const peak60Price = ihsgDrawdown60 !== null ? MKT.ihsg.value / (1 + ihsgDrawdown60 / 100) : undefined;
 
@@ -292,14 +303,10 @@ export function PortfolioTracker({
     }
   }, [engineConfig, portfolio, processedLeaders, notif]);
 
+  // D11 fix: O(1) lookup via pre-built rankMap (built above with useMemo).
   const getStockRankAndScore = (ticker: string) => {
-    const leaderIdx = processedLeaders.findIndex(
-      (r) => r.ticker.replace(".JK", "").toUpperCase() === ticker.toUpperCase(),
-    );
-    const rank = leaderIdx !== -1 ? leaderIdx + 1 : 99;
-    const score =
-      leaderIdx !== -1 ? processedLeaders[leaderIdx].score.toFixed(1) : "50.0";
-    return { rank, score };
+    const key = ticker.replace(".JK", "").toUpperCase();
+    return rankMap.get(key) ?? { rank: 99, score: "50.0" };
   };
 
   const enrichedPortfolio = portfolio
@@ -381,7 +388,10 @@ export function PortfolioTracker({
   // Automated Rebalancing Alerts Generator
   const topNTargetStocks = processedLeaders.slice(0, engineConfig.topNCount);
 
-  const activeAlerts = (() => {
+  // D2 fix: memoize the activeAlerts IIFE so the 200+ lines of alert
+  // generation only re-runs when one of its inputs changes (not on every
+  // render, including renders triggered by unrelated state updates).
+  const activeAlerts = useMemo(() => {
     const list: {
       id: string;
       type: "BUY" | "SELL" | "EXIT_SIGNAL";
@@ -590,7 +600,22 @@ export function PortfolioTracker({
     }
 
     return list;
-  })();
+  }, [
+    isIHSGInCrisis,
+    engineConfig.simulationMode,
+    engineConfig.customUniverse,
+    engineConfig.enableCrossover,
+    engineConfig.safeHavenAsset,
+    engineConfig.reserveBufferPct,
+    engineConfig.topNCount,
+    activeProfile,
+    portfolio,
+    totalCurrentValue,
+    cash,
+    topNTargetStocks,
+    ihsgDrawdown60,
+    MKT.gold.value,
+  ]);
 
   return (
     <div id="portfolio-container" className="space-y-3">

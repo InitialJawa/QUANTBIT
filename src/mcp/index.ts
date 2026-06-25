@@ -159,4 +159,16 @@ server.registerResource("stock_detail", new ResourceTemplate("quantbit://stocks/
 });
 
 const transport = new StdioServerTransport();
-await server.connect(transport);
+
+// C1 fix: only start the MCP server when this file is run directly (e.g.
+// `npx tsx src/mcp/index.ts`). Previously the connect call was top-level,
+// which meant importing this module from anywhere in the app would spin
+// up a Stdio transport as a side-effect — useless and noisy in tests.
+if (process.argv[1] && process.argv[1].endsWith("mcp/index.ts")) {
+  await server.connect(transport);
+  console.log("QuantBit MCP server connected via stdio");
+} else if (process.env.QUANTBIT_MCP_AUTOSTART === "1") {
+  // Opt-in auto-start for environments that explicitly want it
+  await server.connect(transport);
+  console.log("QuantBit MCP server connected via stdio (autostart)");
+}
