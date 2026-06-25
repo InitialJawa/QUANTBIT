@@ -497,11 +497,11 @@ async function main() {
       stockRawMetrics[ticker] = r;
       stockNormScores[ticker] = { quality: normQ, growth: normG, value: normV, momentum: normM };
 
-      // Composite Config F (Prod): weights = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 }
-      const scoreProd = normQ * 0.25 + normG * 0.10 + normV * 0.30 + normM * 0.35;
+      // Composite Config QM (Prod): weights = { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 }
+      const scoreProd = normQ * 0.45 + normG * 0.10 + normV * 0.05 + normM * 0.40;
 
-      // Composite Config B (Res): weights = { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 }
-      const scoreRes = normQ * 0.25 + normG * 0.30 + normV * 0.10 + normM * 0.35;
+      // Composite Config BG (Res): weights = { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 }
+      const scoreRes = normQ * 0.40 + normG * 0.25 + normV * 0.05 + normM * 0.30;
 
       scoredTickersProd.push({ ticker, score: scoreProd });
       scoredTickersRes.push({ ticker, score: scoreRes });
@@ -539,8 +539,8 @@ async function main() {
       stockOpens,
       stockHighs,
       stockLows,
-      stockRanksProd, // point-in-time Config F
-      stockRanksRes,  // point-in-time Config B
+      stockRanksProd, // point-in-time Config QM (Quality Momentum)
+      stockRanksRes,  // point-in-time Config BG (Balanced Growth)
       stockRawMetrics, // raw pre-normalization metrics (qROE, vPB, gROEChg, mReturn)
       stockNormScores  // normalized scores (quality, growth, value, momentum) for runtime re-ranking
     });

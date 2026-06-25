@@ -61,6 +61,12 @@ backtestConfig (draft, isolated from engineConfig)
 - `tsc --noEmit` — passes (0 errors)
 - `vite build` — passes (0 errors)
 
+### 🟢 Outdated Config References Cleaned (2026-06-25)
+- `data/data.js` — CW_B/CW_F weights updated, `production_config` → Config QM
+- `scripts/fetch_historical_data.ts` — comments & composite weights updated to QM/BG
+- `debug_ranks.cjs` — renamed Config F/B → QM/BG
+- `src/components/MarketTab.tsx` — scenario text Config F → Config QM
+
 ## Remaining (P2/Deferred)
 - Profile UX (ticker-level overrides, import/export)
 - Unit tests for `src/engine/`
