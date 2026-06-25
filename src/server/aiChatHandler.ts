@@ -66,9 +66,10 @@ function formatMemoryBlock(messages: MemoryMessage[]): string {
   const lines: string[] = [
     "",
     "## 15. CONVERSATION MEMORY (recent past sessions)",
-    "User has chatted with you before. Below is a summary of recent exchanges.",
-    "Use this to recall context, references, and preferences. Do NOT repeat the same greetings.",
-    "If user asks 'what did we discuss', reference specific messages here.",
+    "Below are summaries from past sessions. Current conversation is already visible in the chat history above.",
+    "If user asks about 'tadi' or this session, answer from the chat history (you can see it).",
+    "If user asks about older/previous sessions, use the memory below.",
+    "Do NOT repeat the same greetings or say 'no previous chat'.",
     "",
   ];
   for (const m of messages) {
