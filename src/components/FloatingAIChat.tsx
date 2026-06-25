@@ -291,17 +291,18 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         }
       }
 
-      // Display assistant text first (only if provider succeeded).
-      if (result.content && result.provider !== "none" && result.provider !== "error") {
-        setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
-      }
-
-      // Append tool results inline so the user sees what was read.
-      for (const r of followupResults) {
-        const summary = r.error
-          ? `⚠ ${r.name}: ${r.error}`
-          : `📊 ${r.name} → ${summariseToolResult(r.name, r.result)}`;
-        setMessages((prev) => [...prev, { role: "tool", content: summary, toolCallId: r.toolCallId }]);
+      // When follow-up will run, skip initial text + tool result display
+      // to avoid duplicate messages (follow-up produces one cohesive response).
+      if (!hasFollowup) {
+        if (result.content && result.provider !== "none" && result.provider !== "error") {
+          setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+        }
+        for (const r of followupResults) {
+          const summary = r.error
+            ? `⚠ ${r.name}: ${r.error}`
+            : `📊 ${r.name} → ${summariseToolResult(r.name, r.result)}`;
+          setMessages((prev) => [...prev, { role: "tool", content: summary, toolCallId: r.toolCallId }]);
+        }
       }
 
       // Re-ask AI for a follow-up answer that incorporates the tool results.
@@ -325,12 +326,17 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           setProvider(followupRaw.provider || "unknown");
           if (followupClean && followupRaw.provider !== "none" && followupRaw.provider !== "error") {
             setMessages((prev) => [...prev, { role: "assistant", content: followupClean }]);
-          }
-          // Surface any new action tool calls from the followup.
-          for (const tc of followupCalls) {
-            if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
-              const action = actionRegistry[tc.name](tc.args);
-              addPendingAction(buildPendingAction(action));
+            // Surface any new action tool calls from the followup.
+            for (const tc of followupCalls) {
+              if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
+                const action = actionRegistry[tc.name](tc.args);
+                addPendingAction(buildPendingAction(action));
+              }
+            }
+          } else {
+            // Follow-up failed — show original text as fallback.
+            if (result.content && result.provider !== "none" && result.provider !== "error") {
+              setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
             }
           }
         } catch {
