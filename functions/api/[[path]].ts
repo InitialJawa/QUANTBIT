@@ -155,7 +155,7 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
         cash: 100000000,
         config: {
           activeConfig: "prod", safeHavenAsset: "emas", topNCount: 5,
-          qualityWeight: 0.25, growthWeight: 0.10, valueWeight: 0.30, momentumWeight: 0.35,
+          qualityWeight: 0.45, growthWeight: 0.10, valueWeight: 0.05, momentumWeight: 0.40,
           enableCrashProtection: true, crashSensitivity: 10, enableCrossover: true,
           reserveBufferPct: 10, simulationMode: "algo", singleTicker: "BBCA",
           singleSellTrigger: 8, singleBuyTrigger: 5,
@@ -323,8 +323,8 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
         isCarriedForward: day.isCarriedForward || false,
       }));
       const defaultWeights = {
-        prod: { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 },
-        res: { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 },
+        prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
+        res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
       };
       return json({ success: true, count: data.length, configType, weights: defaultWeights, data });
     } catch (err: any) {

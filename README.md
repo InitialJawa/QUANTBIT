@@ -113,8 +113,8 @@ QUANTBIT mengintegrasikan data sekunder dari sumber-sumber berikut melalui `fetc
 Bobot konfigurasi pemeringkat saham dapat diatur secara dinamis melalui antarmuka terminal. Angka bobot ini akan langsung dikalikan dengan matriks finansial riil emiten:
 
 > [!NOTE]
-> *   **Strategi Fundamental (Config F / "Prod")**: `Quality: 25%` | `Growth: 10%` | `Value: 30%` | `Momentum: 35%`.
-> *   **Strategi Teknis / Momentum (Config B / "Res")**: `Quality: 25%` | `Growth: 30%` | `Value: 10%` | `Momentum: 35%`.
+> *   **Strategi Quality Momentum (Config QM / "Prod")**: `Quality: 45%` | `Growth: 10%` | `Value: 5%` | `Momentum: 40%`.
+> *   **Strategi Balanced Growth (Config BG / "Res")**: `Quality: 40%` | `Growth: 25%` | `Value: 5%` | `Momentum: 30%`.
 
 ---
 

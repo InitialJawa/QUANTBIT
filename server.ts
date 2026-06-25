@@ -81,8 +81,8 @@ app.get("/api/backtest-data", (req, res) => {
       isCarriedForward: day.isCarriedForward || false,
     }));
     const defaultWeights = {
-      prod: { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 },
-      res: { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 },
+      prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
+      res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
     };
     res.json({
       success: true, count: data.length, configType,
