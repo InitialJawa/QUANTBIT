@@ -84,7 +84,7 @@ function formatMemoryBlock(messages: MemoryMessage[]): string {
 }
 
 export interface ChatMessage {
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" | "system" | "tool";
   content: string;
 }
 
@@ -328,6 +328,31 @@ async function tryProvider(
   }
 }
 
+/** Strip `{"tool_call": {...}}` JSON blocks from assistant message content.
+ *  Cohere and Mistral auto-detect these as tool call invocations and reject
+ *  the request because no tool definitions are provided. Since Quantbit uses
+ *  a custom `{"tool_call": ...}` format in assistant responses, we must
+ *  remove it before sending to these providers. */
+function stripToolCallJson(text: string): string {
+  // Matches {"tool_call": {"name": "...", "args": {...}}}
+  // including multiline whitespace
+  return text.replace(/\{\s*"tool_call"\s*:\s*\{[^}]*\}\s*\}\s*/g, "").trim();
+}
+
+/** Sanitize messages to remove any tool-related artifacts that would confuse
+ *  providers like Cohere and Mistral (which don't share Quantbit's custom
+ *  tool_call JSON format). */
+function sanitizeMessages(msgs: ChatMessage[]): ChatMessage[] {
+  return msgs
+    .filter((m) => m.role !== "tool")
+    .map((m) => {
+      if (m.role === "assistant") {
+        return { role: "assistant", content: stripToolCallJson(m.content) };
+      }
+      return { role: m.role, content: m.content } as ChatMessage;
+    });
+}
+
 /** OpenAI-compatible POST to /chat/completions. Used by OpenRouter + Groq. */
 async function chatOpenAICompatible(
   url: string,
@@ -346,7 +371,7 @@ async function chatOpenAICompatible(
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: "system", content: system }, ...messages],
+      messages: [{ role: "system", content: system }, ...sanitizeMessages(messages)],
       temperature: 0.4,
     }),
   });
