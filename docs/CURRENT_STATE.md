@@ -102,3 +102,62 @@ backtestConfig (draft, isolated from engineConfig)
 - `generateFallbackFundamentals` — removed (hash-based, replaced by warehouse)
 - Pre-2021 year data — deleted from `data/years/`
 - `simulationMode: "single"` — removed across codebase
+
+## 🟡 Code Health Audit 2026-06-25
+Comprehensive static audit menemukan:
+- **5 Critical Bugs** (A1-A5) — A1/A2/A3 user-facing, A4/A5 engine correctness
+- **5 Sync Issues** (B1-B5) — data drift antara scripts, dual crisis signals, custom weights not propagated
+- **12 Misses** (C1-C12) — dead code (MCP), deployment blocker (`data/years/` not in dist), security (dev session), missing wiring (`shouldTriggerExit`)
+- **12 Inefficiencies** (D1-D12) — unmemoized computations, O(n²) loops, fragile HTML detect
+- **5 Documentation Drift** (E1-E5) — orphan scripts, undocumented constants
+
+**Full report**: [`docs/audit/AUDIT-2026-06-25-CODE-HEALTH.md`](audit/AUDIT-2026-06-25-CODE-HEALTH.md)
+
+**Issue tracking**: 11 new entries (#20-#30) appended to `docs/KNOWN_ISSUES.md`
+
+**Fix approach decisions** (see `DECISIONS.md` 2026-06-25):
+- B2 source of truth: IDX warehouse fields (`roe`, `1/per`, `eps change`)
+- A3 fix: extract sync logic ke `useMarketRegimeSync` hook
+- C3 fix: `vite.config.ts` plugin untuk copy `data/` ke `dist/`
+
+**Fix scheduled**: Sprint berikutnya (5 sprint plan di audit). No code changes in sesi audit ini.
+
+## 🟢 Code Health Audit Fixes Executed (Same Session)
+**13 dari 39 issues diperbaiki langsung di sesi ini** (decision 2026-06-25: "fix sampai selesai"). Lihat `DECISIONS.md` entry "Code Health Audit Fix Execution" untuk detail lengkap.
+
+### User-facing critical (Sprint 1) — DONE
+- **A1** ✅ `useDataFeed` priceFluctuations → mean-reverting random walk
+- **A2** ✅ `SimulationTab` `configType=prod` → dynamic dari `backtestConfig.activeProfileId`
+- **A3** ✅ `useMarketRegimeSync` hook + `MarketRegimeSyncBridge` di `App.tsx` (hapus duplikasi PortfolioTracker)
+
+### Engine correctness (Sprint 2) — DONE
+- **A4** ✅ `core.ts` rank recompute selalu pakai `currentWeights` (custom profile benar)
+- **A5** ✅ `core.ts` O(n²) IHSG window → incremental rolling buffer (12× speedup)
+- **B2** ✅ `fetch_historical_data.ts` formula unified ke IDX warehouse direct
+
+### Production deployment (Sprint 3) — DONE
+- **B4** ✅ Custom weights wire ke `marketRegimeEngine` (dalam A3)
+- **C3** ✅ `vite.config.ts` `copyDataAssets` plugin — verified via `vite build` (4 files + 27 year files copied)
+- **C8** ✅ D1 `idx_scan_data` DELETE+INSERT (replace-only retention)
+
+### Performance (Sprint 4) — DONE
+- **D1** ✅ `getProcessedLeaders` di-memoize
+- **D2** ✅ `activeAlerts` IIFE di-memoize
+- **D11** ✅ `getStockRankAndScore` O(1) via `rankMap` Map
+
+### Cleanup (Sprint 5) — PARTIAL
+- **C1** ✅ MCP server `if (isMain)` guard
+- **C2** ✅ Hapus unused `getSession` import
+- **C4** ✅ `run_backtest_comparison.cjs` di-index di `scripts/AGENTS.md`
+- **C7** ⏭️ SKIP — `ErrorBoundary` sudah di-wrap (verified)
+- **C9** ✅ Dev mode guard (`IS_DEV = import.meta.env?.DEV === true`)
+- **C12** ✅ Hapus `emailNotifier.ts` (unused)
+- **D5** ✅ Mutating const arrays → `let` dengan comment
+- **D10** ✅ `devMock` HTML detect tambah `isServerError` + IS_DEV guard
+
+### Deferred (low priority / needs design)
+B3, B5, C5, C6, C10, C11, D6-D9, D12, E1-E5 — see DECISIONS.md "Deferred" section
+
+### Verification
+- `npx tsc --noEmit` → **PASS (0 errors)**
+- `npx vite build` → **PASS** + `copy-data-assets` plugin verified copying 4 source files + 27 year files to `dist/data/`

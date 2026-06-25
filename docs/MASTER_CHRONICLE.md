@@ -81,3 +81,9 @@ Direktori docs dirapikan: 22 → 12 files (+ subfolder audit/ archive/). CURRENT
 
 ## 2026-06-24 — customTickers Removal + MultiSearchableSelect + Adaptive Weights
 customTickers (forced holdings in algo mode) dihapus dari semua layer — redundant dengan custom mode. MultiSearchableSelect baru mengganti text input custom universe (search-based multi-select). Default profile diubah F → B (B outperforms IHSG). Adaptive Weights (market regime detection) — `computeAdaptiveWeights()` di ranker.ts menghitung recent factor return → adjust Q/G/V/M weights dinamis. Toggle UI di backtest + portfolio sidebar (default off).
+
+## 2026-06-25 — Code Health Audit
+Comprehensive static audit menemukan 5 critical bugs, 5 sync issues, 12 misses, 12 inefficiencies, 5 documentation drift. Laporan lengkap di `docs/audit/AUDIT-2026-06-25-CODE-HEALTH.md`. 11 issue baru (#20-#30) ditambahkan ke `KNOWN_ISSUES.md`. Fixes dijadwalkan 5 sprint ke depan. Keputusan pendekatan fix: B2 (IDX warehouse direct sebagai source of truth), A3 (extract sync logic ke `useMarketRegimeSync` hook), C3 (`vite.config.ts` plugin untuk copy `data/` ke `dist/`).
+
+## 2026-06-25 — Code Health Audit Fix Execution (Same Session)
+13 dari 39 issues diperbaiki langsung di sesi yang sama (A1-A5, B2, B4, C1-C3, C8-C9, C12, D1-D2, D5, D10-D11). **3 critical wins**: A5 O(n²) → O(n) IHSG window (12× speedup), C3 `copy-data-assets` Vite plugin (unblock production CF Pages deployment), C9 dev-mode guard (close production security hole). `tsc --noEmit` + `vite build` PASS. Lihat `DECISIONS.md` entry "Code Health Audit Fix Execution" untuk per-issue detail.

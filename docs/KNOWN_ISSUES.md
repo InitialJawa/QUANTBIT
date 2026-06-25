@@ -106,3 +106,118 @@
 - `PortfolioTracker.tsx` sync `engineConfig.enableCrashProtection` ke module state
 - `computeMarketRegime()` hormati `_crashProtectionEnabled`
 - Semua komponen kini pakai `isCrisisMode()` yang menggunakan 60-day drawdown + config
+
+## 20. `useDataFeed` priceFluctuations Dead Code
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `src/hooks/useDataFeed.ts:114` — `const newOffset = offset + 0` selalu menghasilkan 0.
+**Fix:** Diganti dengan mean-reverting random walk: `newOffset = offset + meanReversion + noise` di mana `meanReversion = -offset * 0.15` (damping ke 0) dan `noise = (random() - 0.5) * base * 0.002`. Cap tetap ±5% via `Math.max(-cap, Math.min(cap, newOffset))`. Sekarang harga live benar-benar ber-fluktuasi dalam band.
+
+## 21. `SimulationTab` Hardcoded `configType=prod`
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `api.get("/api/backtest-data?configType=prod")` hardcoded.
+**Fix:** Ganti ke `` `/api/backtest-data?configType=${backtestConfig.activeProfileId === "res" ? "res" : "prod"}` `` dengan dependency `[backtestConfig.activeProfileId]`. Re-fetch otomatis saat user ganti profile. UseEffect dipindah ke setelah `useEngineConfig()` destructure untuk fix TypeScript error.
+
+## 22. `enableCrashProtection` Sidebar Toggle Not Synced
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `setCrashProtectionEnabled()` hanya dipanggil di `PortfolioTracker.tsx`.
+**Fix:**
+- New hook `src/hooks/useMarketRegimeSync.ts` — bridge `EngineConfigContext` ↔ `marketRegimeEngine` module state
+- Mount sekali di `App.tsx` via `<MarketRegimeSyncBridge />` wrapper (setelah `EngineConfigProvider`)
+- Hapus duplicated `useEffect` + import dari `PortfolioTracker.tsx`
+- Sekarang toggle di sidebar propagate ke `AlertBanner` & `RS.status` instantly
+
+## 23. `core.ts` `activeProfileKey` Fallback Salah untuk Custom Profile
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Custom profile silently fallback ke `stockRanksProd` (QM ranks).
+**Fix:** `runStrategy` di `core.ts:30-46` — ketika `d.stockNormScores` ada, SELALU recompute via `computeDayRankings(d.stockNormScores, currentWeights)` menggunakan `currentWeights` (bukan hardcoded `inputWeights`). Custom profile sekarang benar-benar dapat rank sesuai bobot user. Fallback ke `activeProfileKey` hanya untuk legacy data tanpa `stockNormScores`.
+
+## 24. `core.ts` O(n²) IHSG Window Rebuild
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `filtered.slice(0, stepIndex + 1).map(d => d.ihsgPrice)` di setiap hari = O(n²).
+**Fix:** Incremental `ihsgRollingWindow` array di `core.ts:108-110`. Push `day.ihsgPrice` di awal loop, `if (length > 60) shift()`. `detectCrashAlgo` dan `detectRecoveryAlgo` sekarang baca rolling window O(1) per hari. Backtest 1500-hari turun dari 1.1M iterasi ke ~90K (1500 × 60).
+
+## 25. Dua Formula Value & Growth — `fetch` vs `migrate` Drift
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Dua script pakai formula berbeda (Value, Growth, Normalisasi).
+**Fix:**
+- `WarehouseRecord` di `fetch_historical_data.ts` tambah field `roe` dan `fsDate`
+- `computeFromWarehouse()` sekarang prefer `wh.roe` (raw IDX warehouse) daripada computed `profitAttrOwner/equity`
+- `getPointInTimeFundamentals()` + scoring: Value = `1/per else 1/pb`, Growth = `gROEChg` (alias `gEPSChg`), Normalisasi tetap linear 40-95 (migrate-normscores.ts overwrites anyway)
+- Field rename: `vPB` → `vInvPE`, `gROEChg` → `gEPSChg` di `stockRawMetrics` schema
+- Sesuai DECISIONS 2026-06-25: IDX warehouse direct = source of truth
+
+## 26. Dua Sumber Sinyal Krisis — Drawdown vs Monthly
+**Status:** DEFERRED
+**Root Cause:** `isCrisisMode` (drawdown) vs `computeMarketRegime` (monthly).
+**Dampak:** Keduanya bisa konflik.
+**Fix Plan:** Bukan bug kode — tambahkan tooltip penjelasan di kedua UI. Out of scope untuk sprint ini.
+
+## 27. Custom Profile Weights Tidak Propagate ke `marketRegimeEngine`
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `_activeWeights` di regime engine tidak di-set.
+**Fix:** Wired di `useMarketRegimeSync.ts` (A3) — `setActiveConfig({q,g,v,m})` ketika `activeProfile.id !== "prod"/"res"`. Reset ke `"prod"` untuk QM/BG. Sekarang radar/breadth scoring honours custom profile weights.
+
+## 28. `data/years/` Tidak Ter-Deploy ke CF Pages dist/
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Vite tidak copy `data/` ke `dist/`.
+**Fix:** New Vite plugin `copyDataAssets` di `vite.config.ts`. `closeBundle()` hook copy `data/idx80_scan.json` (190 KB), `data/fundamental_idx_all.json` (40 MB), `data/live_market.json`, dan `data/years/` (27 files) ke `dist/data/`. Verified via `npm run build` — semua file muncul di output.
+**Files:** `vite.config.ts:21-82`
+
+## 29. MCP Server Dead Code
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `await server.connect(transport)` di top-level.
+**Fix:** Wrap dengan `if (process.argv[1].endsWith("mcp/index.ts"))` untuk CLI invocation, plus opt-in `QUANTBIT_MCP_AUTOSTART=1` env var. Import tidak lagi side-effect-connect ke stdio transport.
+
+## 30. `_prevRanks` Memory Leak di `marketData.ts`
+**Status:** DEFERRED
+**Root Cause:** `_prevRanks` grow unbounded.
+**Dampak:** Long-running session = memory leak.
+**Fix Plan:** Trim ke top 100 atau LRU cache max 200. Out of scope untuk sprint ini (low priority, leak growth ~100 bytes/call).
+
+## 31. Dev Mode `dev-session` Token Auth Bypass
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `src/services/api.ts:24-29` — `dev-session` token di localStorage grants access di semua environment.
+**Dampak:** Production security hole — attacker tinggal set `localStorage.setItem("quantbit_session", "dev-session")` di console browser untuk bypass login.
+**Fix:**
+- `IS_DEV = import.meta.env?.DEV === true` flag (dengan `/// <reference types="vite/client" />`)
+- `devMock` untuk `/api/auth/login|signup` & `/api/auth/me` guard dengan `if (!IS_DEV) throw`
+- `devMock` HTML fallback juga guard dengan `IS_DEV && (looksLikeHtml || isServerError)`
+- Production: dev mock tidak pernah dipanggil, real API only
+
+## 32. `data/years/` Tidak Ter-Deploy ke CF Pages dist/ + Vite Copy Plugin
+**Status:** FIXED (2026-06-25) — moved to #28
+
+## 33. Performance: `getProcessedLeaders` Unmemoized + Linear Rank Lookup
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `PortfolioTracker.tsx:215-224` — `getProcessedLeaders()` dipanggil per render. `getStockRankAndScore` linear O(n) per portfolio item.
+**Dampak:** 50 holdings × 80 leaders = 4000 comparisons per render. Sort O(n log n) juga setiap render.
+**Fix:**
+- `processedLeaders` di-wrap `useMemo` (depend: `activeProfile`, `engineConfig.universe`, `engineConfig.activeProfileId`, `visibleStocks`)
+- Pre-build `rankMap: Map<ticker, {rank, score}>` sekali per render
+- `getStockRankAndScore` jadi O(1) via Map.get()
+- D2: `activeAlerts` IIFE juga di-memoize (14 dependencies)
+
+## 34. D1 `idx_scan_data` Unbounded Growth
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `functions/api/[[path]].ts:821-823` — `INSERT` tanpa `DELETE`. Cron 15 menit × 365 hari = 35K rows/tahun.
+**Fix:** Tambah `await env.DB.prepare("DELETE FROM idx_scan_data").run()` sebelum `INSERT`. Table jadi selalu 1 row (latest snapshot).
+
+## 35. Mutating `const` Arrays di `marketData.ts` (Confusing Pattern)
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `EX` dan `T` di-declare `const` tapi di-mutate via `length=0` + `push` di `setScanData`.
+**Fix:** Ganti ke `let` dengan comment menjelaskan mutability intent. `L` tetap `const` (read-only).
+
+## 36. `api.ts:devMock` Fragile HTML Detect
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Detect `<!DOCTYPE|<html|<!doctype` prefix tanpa status check.
+**Fix:** Tambah `isServerError = res.status >= 500` + `IS_DEV` guard. Production tidak akan fall back ke dev mock.
+
+## 37. `emailNotifier.ts` Unused
+**Status:** FIXED (2026-06-25)
+**Root Cause:** File exists tapi tidak ada import.
+**Fix:** Hapus file.
+
+## 38. `getSession` Unused Import di `SimulationTab.tsx`
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Import `{ getSession, api }` tapi `getSession` tidak digunakan.
+**Fix:** Hapus dari import.

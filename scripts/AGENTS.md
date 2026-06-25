@@ -25,4 +25,10 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - Verify output files exist after execution
 
 ## Child DOX Index
-(None — individual scripts are self-contained)
+- `fetch_historical_data.ts` — master pipeline (Yahoo prices + IDX Warehouse scoring)
+- `migrate-normscores.ts` — rank-based normalization recompute + stockRanksProd/Res (B2 fix)
+- `split-data.ts` — year chunking of historical_market_data.json
+- `build-db.ts` / `build-cf.ts` — D1/CF Pages bundling
+- `post_process_live_market.py` — derive live_market.json dari idx80_scan + GC=F fetch
+- `scrape_idx_fundamentals.py` — legacy, superseded by `collectors/fetch_idx_fundamental.py`
+- `run_backtest_comparison.cjs` — backtest weight-config comparison (used during rebalancing fix)
