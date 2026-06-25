@@ -49,8 +49,9 @@ FIELDS_NUMERIC = [
     "per", "priceBV", "deRatio", "roa", "roe", "npm",
 ]
 
+CURRENT_YEAR = datetime.now().year
 ALL_MONTHS = []
-for y in range(2021, 2026):
+for y in range(2021, CURRENT_YEAR + 1):
     for m in range(1, 13):
         ALL_MONTHS.append((y, m))
 
@@ -58,7 +59,7 @@ for y in range(2021, 2026):
 def parse_args():
     parser = argparse.ArgumentParser(description="Fetch IDX fundamental data")
     parser.add_argument("--year-from", type=int, default=2021, help="Start year (default: 2021)")
-    parser.add_argument("--year-to", type=int, default=2025, help="End year (default: 2025)")
+    parser.add_argument("--year-to", type=int, default=CURRENT_YEAR, help=f"End year (default: {CURRENT_YEAR})")
     parser.add_argument("--month", type=str, help="Single month to pull, e.g. 2024-12")
     parser.add_argument("--output", type=str, default="data/fundamental_idx", help="Output path stem (without extension)")
     parser.add_argument("--page-size", type=int, default=9999, help="Page size for API (default: 9999)")
