@@ -2,11 +2,50 @@
 import express from "express";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { createTransport } from "nodemailer";
 import { handleYahooRequest } from "./src/server/yahooApi";
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 3001;
+
+function getEmailTransport() {
+  const host = process.env.EMAIL_HOST;
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+  if (!host || !user || !pass) return null;
+  return createTransport({
+    host,
+    port: parseInt(process.env.EMAIL_PORT || "587"),
+    secure: process.env.EMAIL_SECURE === "true",
+    auth: { user, pass },
+  });
+}
+
+app.post("/api/send-notification", async (req, res) => {
+  try {
+    const transport = getEmailTransport();
+    if (!transport) {
+      res.status(503).json({ error: "Email not configured (set EMAIL_HOST, EMAIL_USER, EMAIL_PASS)" });
+      return;
+    }
+    const { subject, body } = req.body;
+    if (!subject || !body) {
+      res.status(400).json({ error: "Missing subject or body" });
+      return;
+    }
+    const to = process.env.EMAIL_TO || process.env.EMAIL_USER;
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to,
+      subject: `[QuantBit] ${subject}`,
+      text: body,
+    });
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get("/api/yahoo", handleYahooRequest);
 

@@ -450,10 +450,10 @@ export function SimulationTab({
           enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
         },
         profileWeights: {
-          quality: backtestActiveProfile?.qualityWeight ?? 0.25,
+          quality: backtestActiveProfile?.qualityWeight ?? 0.45,
           growth: backtestActiveProfile?.growthWeight ?? 0.10,
-          value: backtestActiveProfile?.valueWeight ?? 0.30,
-          momentum: backtestActiveProfile?.momentumWeight ?? 0.35,
+          value: backtestActiveProfile?.valueWeight ?? 0.05,
+          momentum: backtestActiveProfile?.momentumWeight ?? 0.40,
         },
         universeTickers: {
           idx80: IDX80_TICKERS,
@@ -904,10 +904,10 @@ export function SimulationTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-label font-bold text-white block">
-                  {backtestConfig.activeProfileId === "prod" ? "Config F (Fundamental Focus)" : "Config B (Backtest Optimized)"}
+                  {backtestActiveProfile?.name ?? (backtestConfig.activeProfileId === "prod" ? "Config QM (Quality Momentum)" : "Config BG (Balanced Growth)")}
                 </span>
                 <span className="text-caption text-white/40 font-mono block mt-0.5">
-                  Quality: {backtestActiveProfile?.qualityWeight ?? 0.25} | Growth: {backtestActiveProfile?.growthWeight ?? 0.10} | Value: {backtestActiveProfile?.valueWeight ?? 0.30} | Momentum: {backtestActiveProfile?.momentumWeight ?? 0.35}
+                  Quality: {backtestActiveProfile?.qualityWeight ?? 0.45} | Growth: {backtestActiveProfile?.growthWeight ?? 0.10} | Value: {backtestActiveProfile?.valueWeight ?? 0.05} | Momentum: {backtestActiveProfile?.momentumWeight ?? 0.40}
                 </span>
               </div>
               

@@ -1,4 +1,24 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+
+const STORAGE_KEY = "quantbit_notifications";
+const FIRED_RULES_KEY = "quantbit_fired_rules";
+
+function loadPersisted<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function persist(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* storage full or unavailable */
+  }
+}
 
 export interface Notification {
   id: string;
@@ -26,8 +46,16 @@ export interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [firedRules, setFiredRules] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<Notification[]>(() => loadPersisted<Notification[]>(STORAGE_KEY, []));
+  const [firedRules, setFiredRules] = useState<Set<string>>(() => new Set(loadPersisted<string[]>(FIRED_RULES_KEY, [])));
+
+  useEffect(() => {
+    persist(STORAGE_KEY, notifications);
+  }, [notifications]);
+
+  useEffect(() => {
+    persist(FIRED_RULES_KEY, [...firedRules]);
+  }, [firedRules]);
 
   const addNotification = useCallback((notification: Omit<Notification, "id" | "timestamp">) => {
     const newNotification: Notification = {

@@ -1,6 +1,8 @@
 // marketData.ts
 // Ported from target_data.js to provide real, robust, production-level IDX metrics
 
+import { setDividendCache } from "./engine/core.ts";
+
 export interface LeaderStock {
   rank: string;
   ticker: string;
@@ -84,7 +86,7 @@ export const RS = {
   rationale: "Score gap 40.6 poin menunjukkan pemisahan kualitas yang jelas antara top5 dan bottom5. Faktor dominan: Growth (80.0). Faktor terlemah: Quality (60.0). Breadth terbatas (1 saham >=70). 2 dari 5 saham watchlist volume sepi - likuiditas rendah.",
   detail_message: "Score gap 40.6 poin menunjukkan pemisahan kualitas yang jelas antara top5 dan bottom5. Faktor dominan: Growth (80.0). Faktor terlemah: Quality (60.0). Breadth terbatas (1 saham >=70). 2 dari 5 saham watchlist volume sepi - likuiditas rendah.",
   radar_context: {
-    production_config: "Config F",
+    production_config: "Config QM",
     top5_avg_score: 66.8,
     bot5_avg_score: 26.2,
     score_gap: 40.6,
@@ -151,9 +153,9 @@ export const BT = {
 export const RK: Record<string, number> = {};
 let _prevRanks: Record<string, number> = {};
 
-// Factor Config weight coefficients
-export const CW_F = { quality: 0.25, growth: 0.1, value: 0.3, momentum: 0.35 };
-export const CW_B = { quality: 0.25, growth: 0.3, value: 0.1, momentum: 0.35 };
+// Factor Config weight coefficients (2026-06-25: Value proven negative-alpha in IDX80 2021-2026 → reduced to 5%)
+export const CW_F = { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 };
+export const CW_B = { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 };
 
 // Scan data cache from idx80_scan.json (loaded from /api/engine/idx80)
 interface ScanStock {
@@ -200,13 +202,29 @@ export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } |
     syncExitsFromScan(data);
     syncTurnaroundFromScan(data);
     syncRadarContext(data);
+    buildDividendCache(data.stocks);
   }
+}
+
+function buildDividendCache(stocks: ScanStock[]) {
+  const cache: Record<string, Record<string, number>> = {};
+  const currentYear = new Date().getFullYear().toString();
+  for (const s of stocks) {
+    const ticker = s.ticker.replace(".JK", "");
+    if (s.dividendYield && s.dividendYield > 0 && s.currentPrice > 0) {
+      const dps = (s.dividendYield / 100) * s.currentPrice;
+      if (dps > 0) {
+        cache[ticker] = { [currentYear]: dps };
+      }
+    }
+  }
+  setDividendCache(cache);
 }
 
 function syncExitsFromScan(scanData: { stocks: ScanStock[]; lastUpdated: string }) {
   const sorted = [...scanData.stocks].sort((a, b) => {
-    const sa = a.quality * 0.25 + a.growth * 0.3 + a.value * 0.1 + a.momentum * 0.35;
-    const sb = b.quality * 0.25 + b.growth * 0.3 + b.value * 0.1 + b.momentum * 0.35;
+    const sa = a.quality * 0.40 + a.growth * 0.25 + a.value * 0.05 + a.momentum * 0.30;
+    const sb = b.quality * 0.40 + b.growth * 0.25 + b.value * 0.05 + b.momentum * 0.30;
     return sb - sa;
   });
 
@@ -308,7 +326,7 @@ function syncRadarContext(scanData: { stocks: ScanStock[]; lastUpdated: string }
       return `${tickerClean}.JK: Volume ${ratio}x (${label})`;
     });
 
-  const scores = stocks.map(s => s.quality * 0.25 + s.growth * 0.3 + s.value * 0.1 + s.momentum * 0.35);
+  const scores = stocks.map(s => s.quality * 0.40 + s.growth * 0.25 + s.value * 0.05 + s.momentum * 0.30);
   const sortedScores = [...scores].sort((a, b) => b - a);
   const above70 = scores.filter(s => s >= 70).length;
   const above60 = scores.filter(s => s >= 60).length;

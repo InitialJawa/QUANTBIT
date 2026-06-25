@@ -579,7 +579,7 @@ export function PortfolioTracker({
                 name: stock.name,
                 price: stock.currentPrice,
                 shares: finalShares,
-                reason: `Berada di peringkat premium #${target.rank} dalam Model ${activeProfile?.name || (engineConfig.activeProfileId === "res" ? "Config B" : "Config F")}.`,
+                reason: `Berada di peringkat premium #${target.rank} dalam Model ${activeProfile?.name || (engineConfig.activeProfileId === "res" ? "Config BG" : "Config QM")}.`,
                 badge: "INSTRUKSI BELI",
               });
             }

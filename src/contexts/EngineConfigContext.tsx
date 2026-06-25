@@ -32,8 +32,8 @@ export interface EngineConfig {
 }
 
 export const DEFAULT_PROFILES: WeightProfile[] = [
-  { id: "res", name: "Backtest Optimized (B)", qualityWeight: 0.25, growthWeight: 0.3, valueWeight: 0.1, momentumWeight: 0.35 },
-  { id: "prod", name: "Fundamental Focus (F)", qualityWeight: 0.25, growthWeight: 0.1, valueWeight: 0.3, momentumWeight: 0.35 },
+  { id: "prod", name: "Quality Momentum (QM)", qualityWeight: 0.45, growthWeight: 0.1, valueWeight: 0.05, momentumWeight: 0.40 },
+  { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.40, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.30 },
 ];
 
 const getTodayWIB = () => {

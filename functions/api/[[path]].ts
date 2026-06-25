@@ -371,6 +371,27 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     }
   }
 
+  // POST /api/send-notification (unauthenticated — triggered from client)
+  if (path === "/api/send-notification" && method === "POST") {
+    try {
+      const resendKey = env.RESEND_API_KEY;
+      if (!resendKey) return error("Email not configured (set RESEND_API_KEY)", 503);
+      const { subject, body } = await request.json() as any;
+      if (!subject || !body) return error("Missing subject or body", 400);
+      const from = env.EMAIL_FROM || "QuantBit <onboarding@resend.dev>";
+      const to = env.EMAIL_TO || env.EMAIL_USER || "user@example.com";
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to, subject: `[QuantBit] ${subject}`, text: body }),
+      });
+      if (!resp.ok) return error(`Resend API error ${resp.status}: ${await resp.text()}`, 500);
+      return json({ ok: true });
+    } catch (e: any) {
+      return error(e.message, 500);
+    }
+  }
+
   // POST /api/market/sync
   if (path === "/api/market/sync" && method === "POST") {
     return json({ success: false, error: "Direct market sync not available in cloud environment. Run sync locally and redeploy." });
@@ -839,4 +860,8 @@ interface Env {
   GOAPI_API_KEY?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  EMAIL_TO?: string;
+  EMAIL_USER?: string;
 }

@@ -81,3 +81,19 @@
 **Status:** FIXED (2026-06-23)
 **Details:** `runIdx80Scan()` di CF function pake `Math.random() * 40 + 60` untuk quality/value/growth/momentum. Produksi ranking saham acak.
 **Fix:** Diganti compute deterministik dari chart data Yahoo 6 bulan. Momentum dari MA cross, quality dari stabilitas harga, value dari percentile posisi harga, growth dari total return 6mo. Untuk fundamental akurat, perlu `quoteSummary` endpoint (saat ini pake `chart` API).
+
+## 16. `getRanks()` di `scripts/run_backtest_comparison.cjs` — Formula Rank Rusak
+**Status:** FIXED (2026-06-25)
+**Root Cause:** Fungsi `getRanks()` menggunakan `ranks[t] = 1 - score` dimana score range 40-95. Akibatnya rank selalu negatif (-94 sampai -39) dan exit condition `currentRank >= 10` tidak pernah terpenuhi → 0 swaps terjadi.
+**Fix:** Diganti dengan metode `computeDayRankings()` dari `ranker.ts`: weighted composite score → sort descending → rank = index + 1. Lihat ADR-009.
+
+## 17. `stockNormScores` vs `stockRanksProd` Inkonsisten
+**Status:** FIXED (2026-06-25)
+**Root Cause:** `fetch_historical_data.ts` menyimpan `stockNormScores` dengan linear min-max normalization (40-95). `migrate-normscores.ts` menimpa `stockNormScores` dengan rank-based percentile (0-95) tanpa mengupdate `stockRanksProd`. Overlap top-10 hanya 1/10 ticker.
+**Fix:** `migrate-normscores.ts` sekarang compute `stockRanksProd` & `stockRanksRes` dari `stockNormScores` + profile weights setiap hari — konsisten dengan `computeDayRankings()` di engine. Lihat ADR-009.
+
+## 18. Value Factor (1/PB) Negatif di IDX 80 (2021-2026)
+**Status:** CLOSED (Design Decision — lihat ADR-009)
+**Root Cause:** Single-factor test menunjukkan Value (1/PB) return -26.26% (CAGR -5.42%), lebih buruk dari IHSG (-3.62%). Saham murah cenderung value trap di emerging market.
+**Fix:** Semua profile default ditekan ke 5% value weight. Config QM (prod): Q45 V5 M40 G10. Config BG (res): Q40 V5 M30 G25.
+**Rekomendasi:** Value tidak boleh diberi bobot >5%. Jika mau, ganti dengan faktor earning yield (inverse PER) sudah di-capture sebagai Value di stockNormScores — tapi tetap negative-alpha.

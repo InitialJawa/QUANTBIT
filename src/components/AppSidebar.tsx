@@ -831,12 +831,12 @@ export function AppSidebar({
                   <button onClick={() => updateBacktestValue("activeProfileId", "prod")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
                     style={{ backgroundColor: backtestConfig.activeProfileId === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === "prod" ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                    Config F
+                    Config QM
                   </button>
                   <button onClick={() => updateBacktestValue("activeProfileId", "res")}
                     className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
                     style={{ backgroundColor: backtestConfig.activeProfileId === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === "res" ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                    Config B
+                    Config BG
                   </button>
                 </div>
               </div>

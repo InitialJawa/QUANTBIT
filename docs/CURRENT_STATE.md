@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Tanggal | 2026-06-24 |
+| Tanggal | 2026-06-25 |
 | Status | Development |
 | Progress | ~96% |
 | Sprint | Platform Stabilization & MCP |
@@ -11,7 +11,7 @@
 
 ```
 EngineConfigContext (source of truth for LIVE strategy)
-  ├── profiles[] — F, B, Custom N (weight profiles)
+  ├── profiles[] — QM, BG, Custom N (weight profiles)
   ├── activeProfileId — profile aktif (getter: activeProfile)
   ├── activeConfig — backward compat getter ("prod"/"res")
   ├── topNCount, universe, crash/crossover settings
@@ -35,62 +35,40 @@ backtestConfig (draft, isolated from engineConfig)
 
 ## Current Focus
 
-**Session 2026-06-24 (session 2): Backtest/Portfolio isolation + Custom mode fixes** — Backtest config draft separated from engineConfig:
+**Session 2026-06-25 (session 3): Factor analysis, weight rebalancing, data consistency fix**
 
-### 🔴 Bug 1 Fix: Backtest Auto-Sync ke Porto
-- **`backtestConfig` draft state** ditambahkan di `EngineConfigContext` — terpisah dari `engineConfig` (live)
-- **`updateBacktestValue()`** — function untuk modify draft tanpa sentuh live config
-- **`renderBacktestContent()`** di `AppSidebar` — semua input baca/tulis `backtestConfig` (bukan `engineConfig`)
-- **`SimulationTab.tsx`** — auto-run useEffect, `handleRunAlgoBacktest()`, dan SYNC button semua pakai `backtestConfig`
-- **PortfolioTracker tetap baca `engineConfig`** — tidak kena perubahan backtest sampai SYNC diklik
-- **`syncFromBacktest()`** — satu-satunya jalan draft → engineConfig (via SYNC TO PORTO button)
+### 🔴 Data Fix: stockNormScores ↔ stockRanksProd/Res Inkonsisten (FIXED)
+- **Akarnya**: `fetch_historical_data.ts` pake linear min-max (40-95), `migrate-normscores.ts` overwrite pake rank-based (0-95) tanpa update `stockRanksProd/Res`
+- **Fix**: `migrate-normscores.ts` sekarang compute `stockRanksProd` & `stockRanksRes` dari `stockNormScores` + profile weights (sama kaya `computeDayRankings()` di engine)
+- **Data restored**: `fundamental_idx_all.json` di-revert ke versi sebelumnya — collector overwrite dengan data baru yg cuma punya 13 ticker pre-2021. Versi restore punya **751** ticker pre-2021 data.
 
-### 🟢 Data Fix: stockNormScores — Profile Weights Sekarang Berfungsi
-- **Akar masalah**: `stockNormScores` tidak ada di `data/historical_market_data.json` → engine selalu fallback ke `stockRanksProd` fixed → profile weights slider tidak berpengaruh
-- **Fix**: Migration script `scripts/migrate-normscores.ts` — komputasi quality (ROE), growth (EPS growth), value (inverse PER/PBV), momentum (20d price return) dari IDX warehouse + normalized min-max per hari
-- **6482/6582** records enriched (2000-2026). Semua year files update. Build pass.
+### 🟢 Weight Rebalancing: Value ditekan ke 5%, Quality dinaikkan
+- **Dasar**: ADR-009 — Value (1/PB) adalah negative-alpha factor (-26% CAGR) di IDX80 2021-2026
+- **Config QM** (id="prod", menggantikan Config F): Q45 G10 V5 M40 — fokus ke 2 faktor terkuat
+- **Config BG** (id="res", menggantikan Config B): Q40 G25 V5 M30 — balanced, growth tetap dipertahankan
+- **Single-factor confirmed**: Quality (ROE) = +246% CAGR 25.5%, Momentum = +63%, Growth = +49%, Value = -26%
+- **QM backtest**: +150% CAGR 18.23% (vs old Config B +79%, old Config F -0.7%)
 
-### 🔴 Bug 2 Fix: Custom Mode Gagal Total
-- **`BacktestConfig.activeProfileId`** — type diubah dari `"prod" | "res"` → `string` (engine/types.ts)
-- **`core.ts`** — handle custom profile ID: fallback ke `stockRanksProd` untuk non-"res" ID
-- **Dead `"single"` branches dihapus** — `core.ts` (crash/recovery/reentry), `detectCrashSingle`/`detectRecoverySingle` imports
-- **Legacy field di custom sidebar dihapus** — `singleTicker`, `singleSellTrigger`, `singleBuyTrigger` tidak muncul lagi di custom mode
-- **`MarketTab.tsx`** — dead `"single"` checks dihapus
-
-### 🔴 Bug 4 Fix: Rebalancing Engine — 4 Bug di core.ts:92-323
-- **Bug 4a (day-1 false trigger)**: `lastRebalanceMonth = -1` → `new Date(day0.date).getMonth()` — day 1 tidak lagi trigger rebalance yang nggak perlu
-- **Bug 4b (custom mode rank exit)**: Custom mode dikeluarkan dari blok rebalancing rank-based — custom stock di-hold, exit hanya via crash protection
-- **Bug 4c (hardcoded top 4)**: `pickTopTickersByRank(..., 4)` → `pickTopTickersByRank(..., config.topNCount)` — swap kandidat sesuai setting user
-- **Bug 4d (self-swap/duplicate)**: `swapInTicker` sekarang exclude ticker yang baru dijual + tidak fallback ke `topCandidates[0]` — hold cash jika tidak ada kandidat suitable
-- **Dead code removed**: Custom `if` branch di blok swap dihapus (tidak pernah tercapai setelah fix 4b)
-- **ADR-008** dibuat untuk record keputusan
-
-### 🔴 Bug 4 Fix: Rebalancing Engine — 4 Bug di core.ts:92-323
-- **Bug 4a (day-1 false trigger)**: `lastRebalanceMonth = -1` → `new Date(day0.date).getMonth()` — day 1 tidak lagi trigger rebalance yang nggak perlu
-- **Bug 4b (custom mode rank exit)**: Custom mode dikeluarkan dari blok rebalancing rank-based — custom stock di-hold, exit hanya via crash protection
-- **Bug 4c (hardcoded top 4)**: `pickTopTickersByRank(..., 4)` → `pickTopTickersByRank(..., config.topNCount)` — swap kandidat sesuai setting user
-- **Bug 4d (self-swap/duplicate)**: `swapInTicker` sekarang exclude ticker yang baru dijual + tidak fallback ke `topCandidates[0]` — hold cash jika tidak ada kandidat suitable
-- **Dead code removed**: Custom `if` branch di blok swap dihapus (tidak pernah tercapai setelah fix 4b)
-- **ADR-008** dibuat untuk record keputusan
-
-### Feature: Remove customTickers + MultiSearchableSelect + Adaptive Weights
-- **customTickers removed** dari semua layer (types, context, engine, UI, AI) — algo mode tidak punya lagi forced holdings; custom mode dengan customUniverse sudah cukup
-- **MultiSearchableSelect** komponen baru — ganti text input comma-separated dengan search-based multi-select (TickerLogo, filter, pills)
-- **Default profile** diubah dari F ("prod") → B ("res") — B beats IHSG, F underperforms
-- **Adaptive Weights** (`enableAdaptiveWeights`) — engine otomatis adjust Q/G/V/M weights berdasarkan recent factor return; `computeAdaptiveWeights()` di ranker.ts; integrated di core.ts rebalancing loop; toggle UI di backtest + portfolio sidebar
+### 🟢 All Naming Updated
+- `EngineConfigContext.tsx` — DEFAULT_PROFILES weights & names
+- `marketData.ts` — CW_F/CW_B, hardcoded weights di `syncExitsFromScan`, `syncRadarContext`
+- `systemKnowledge.ts` — AI prompt profile descriptions
+- `core.ts` — configName untuk backtest result
+- `AppSidebar.tsx`, `AppHeader.tsx`, `DiagnosticsTab.tsx`, `PortfolioTracker.tsx` — display labels
+- `run_backtest_comparison.cjs` — weight configs
 
 ## Verification
 - `tsc --noEmit` — passes (0 errors)
 - `vite build` — passes (0 errors)
 
 ## Remaining (P2/Deferred)
-- `npm run build` to regenerate year files with raw metrics
 - Profile UX (ticker-level overrides, import/export)
 - Unit tests for `src/engine/`
 - Notification persistence (localStorage/database)
 - `setDividendCache()` wiring
 - Telegram bot
-- Pre-2021 data backfill
+- Pre-2021 data backfill (IDX warehouse collector perlu historical archive)
+- Bootstrap `npm run build` / `npm run split-data` untuk fresh data
 
 ## Known Gap
 `shouldTriggerExit` per-ticker exit evaluation exists in engine but not yet wired per-portfolio-item in the notification loop.

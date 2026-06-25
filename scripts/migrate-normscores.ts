@@ -207,6 +207,32 @@ function main() {
     (day as Record<string, unknown>).stockNormScores = norms;
     recordsUpdated++;
 
+    // Compute stockRanksProd and stockRanksRes matching current default profiles
+    // prod = Quality Momentum (QM): Q45 G10 V5 M40
+    // res  = Balanced Growth (BG):  Q40 G25 V5 M30
+    const prodWeights = { quality: 0.45, growth: 0.10, value: 0.05, momentum: 0.40 };
+    const resWeights = { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 };
+
+    function computeRanks(weights: typeof prodWeights): Record<string, number> {
+      const scored = tickers
+        .map(t => {
+          const ns = norms[t];
+          const score =
+            (ns.quality ?? 50) * weights.quality +
+            (ns.growth ?? 50) * weights.growth +
+            (ns.value ?? 50) * weights.value +
+            (ns.momentum ?? 50) * weights.momentum;
+          return { ticker: t, score };
+        })
+        .sort((a, b) => b.score - a.score);
+      const ranks: Record<string, number> = {};
+      scored.forEach((item, idx) => { ranks[item.ticker] = idx + 1; });
+      return ranks;
+    }
+
+    (day as Record<string, unknown>).stockRanksProd = computeRanks(prodWeights);
+    (day as Record<string, unknown>).stockRanksRes = computeRanks(resWeights);
+
     if ((i + 1) % 1000 === 0) {
       console.log(`  Processed ${i + 1}/${marketData.length}`);
     }

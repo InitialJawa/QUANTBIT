@@ -106,8 +106,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   let lastDayVal = cap;
 
   const configName = config.activeProfileId === "res"
-    ? "Config B (Backtest Optimized)"
-    : "Config F (Fundamental Focus)";
+    ? "Config BG (Balanced Growth)"
+    : "Config QM (Quality Momentum)";
 
   logs.push({
     date: day0.date,

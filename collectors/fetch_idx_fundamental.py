@@ -117,6 +117,21 @@ def pull_month(scraper, year, month, page_size=9999):
     }
 
 
+def archive_existing(output_stem):
+    """Backup existing fundamental JSON to data/archive/ with timestamp before overwriting."""
+    json_path = Path(f"{output_stem}_all.json")
+    if not json_path.exists():
+        return
+    archive_dir = json_path.parent / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"{json_path.stem}_{timestamp}.json"
+    backup_path = archive_dir / backup_name
+    import shutil
+    shutil.copy2(str(json_path), str(backup_path))
+    log.info("Archived existing %s -> %s (%s)", json_path.name, backup_path, _size_str(backup_path))
+
+
 def save_results(all_results, output_stem, json_only=False):
     records = []
     for r in all_results:
@@ -225,6 +240,7 @@ def main():
         return
 
     if results:
+        archive_existing(output_stem)
         save_results(results, output_stem, args.json_only)
 
     summary = {
