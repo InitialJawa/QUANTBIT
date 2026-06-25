@@ -262,7 +262,11 @@ export function usePortfolioManager(
 
   const handleMoveToGold = (rupiahAmount: number) => {
     const goldPrice = MKT.gold.value;
-    const grams = rupiahAmount / goldPrice;
+    // Gold has 2% slippage — cap amount so net cost doesn't exceed cash.
+    const GOLD_SLIPPAGE = 0.02;
+    const maxSpend = cash / (1 + GOLD_SLIPPAGE);
+    const spend = Math.min(rupiahAmount, maxSpend);
+    const grams = spend / goldPrice;
     const details = calculateTradeDetails("BUY", "EMAS", grams, goldPrice);
 
     if (details.net > cash) {
@@ -284,7 +288,7 @@ export function usePortfolioManager(
       shares: grams,
       price: goldPrice,
       timestamp: new Date().toISOString(),
-      message: `Konversi Kas ke Safe Haven Emas Fisik sebesar Rp ${rupiahAmount.toLocaleString("id-ID")}`,
+      message: `Konversi Kas ke Safe Haven Emas Fisik sebesar Rp ${spend.toLocaleString("id-ID")}`,
     };
     api.post("/api/trade-logs", newLog).catch(() => {});
     setTradeLogs(prev => [newLog, ...prev]);
