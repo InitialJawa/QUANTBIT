@@ -9,7 +9,8 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 
 ## Local Contracts
 - **Deterministic engine**: `src/engine/`, `src/marketRegimeEngine.ts`, `src/marketData.ts` — NO AI involvement in calculations
-- **AI layer**: `src/ai/`, `src/components/AIAssistant.tsx`, `src/components/AICockpit.tsx` — presentation only
+- **AI layer**: `src/ai/`, `src/components/AIAssistant.tsx`, `src/components/AICockpit.tsx`, `src/components/AIActionApprovalCard.tsx` — presentation only. AI is interface; math stays in `engine/`.
+- **AI agent actions**: All `AIAction` executions require user `[Approve]` click in `AIActionApprovalCard` before dispatch to deterministic handlers. Zero auto-execute.
 - **Data status**: Every data point must use `DataStatus` enum (LIVE/CACHED/STALE/ESTIMATED)
 - **Components**: Follow existing patterns (functional components, Tailwind CSS, lucide-react icons)
 
@@ -50,15 +51,37 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 ## Verification
 - `npm run lint` — TypeScript type checking
 - `npm run dev` — manual UI verification
+- `npm test` — 152 unit tests (engine + AI pure functions, via `tsx --test`)
+- `npm run test:ui` — 18 component tests (vitest + @testing-library/react, jsdom)
+- `npm run test:e2e` — 17 Playwright E2E tests (auto-starts dev server)
+
+## AI Agent (Quantbit AI Depth Upgrade, Levels 1+2+3+4)
+- **FloatingAIChat.tsx** — entry point. Chat history persist (localStorage, cap 100), tool execution loop, action approval rendering, follow-up AI call.
+- **AIActionApprovalCard.tsx** — inline [Approve]/[Reject] card. Zero auto-execute — all `AIAction` must be approved by user.
+- **useAITools.ts** — 8 read-only tools + 10 actions registry. JSON-block function calling (`{"tool_call": {...}}` regex-parse).
+- **useProactiveAgent.ts** — Level 4 proactive monitor. 6 BPS rules + 5-min hardcoded cooldown per rule. Default ON, toggleable via Settings.
+- **systemKnowledge.ts** Sections 13 (TOOL CATALOG) + 14 (PROACTIVE RULES) — model instructions.
+- **aiClient.ts** — `askAI()` returns `{ content, provider, toolCalls }`. `extractToolCalls()` regex parser. `READ_ONLY_TOOLS` + `ACTION_TOOLS` constants.
+- **AICockpitContext** — `pendingActions` queue (Level 3), `proactiveAlerts` queue (Level 4, wired but not yet rendered as chip).
 
 ## Child DOX Index
 - `src/components/` — React UI components
 - `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
+- `src/components/AIActionApprovalCard.tsx` — Inline approval card for AI-suggested actions (Level 3)
 - `src/contexts/` — React state contexts (Auth, EngineConfig, Notification, AI)
 - `src/contexts/EngineConfigContext.tsx` — **Single source of truth** for all strategy settings
 - `src/contexts/NotificationContext.tsx` — Global notification system with rule engine
 - `src/hooks/` — Custom React hooks
+- `src/hooks/useAITools.ts` — AI tool + action registry (Levels 2+3)
+- `src/hooks/useProactiveAgent.ts` — Proactive agent monitor (Level 4)
 - `src/ai/` — AI client and system knowledge
+- `src/ai/systemKnowledge.ts` — System prompt + Sections 13/14 tool catalog
+- `src/ai/toolCallParser.ts` — Pure extractToolCalls + READ_ONLY_TOOLS + ACTION_TOOLS (testable in isolation)
+- `src/types/ai.ts` — AIToolCall, AIAction, PendingAction, ProactiveAlert type definitions
+- `src/ai/__tests__/` — 37 unit tests (extractToolCalls, systemKnowledge)
+- `src/hooks/__tests__/` — 58 unit tests (useAITools, proactiveCooldown)
+- `src/components/__tests__/` — 18 component tests (AIActionApprovalCard, FloatingAIChat history)
+- `src/components/AITestHarness.tsx` — Dev-only test panel (4 tabs: Tools/Actions/Cooldown/Storage)
 - `src/engine/` — Sync engine (pure functions, no React deps)
 - `src/engine/core.ts` — `runStrategy()`, `shouldTriggerExit()`, `evaluateStrategy()`
   - **Rebalancing rules**: algo mode only (custom mode excluded from rank-based exit). `lastRebalanceMonth` init from day0 month (no day-1 false trigger). Swap candidates = `config.topNCount` (not hardcoded). Self-swap & duplicate positions prevented.

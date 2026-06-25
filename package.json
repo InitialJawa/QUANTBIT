@@ -12,7 +12,14 @@
     "start": "npx wrangler pages dev dist",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true });\"",
     "lint": "tsc --noEmit",
-    "test": "tsx --test src/engine/__tests__/*.test.ts",
+    "test": "tsx --test src/engine/__tests__/*.test.ts src/ai/__tests__/*.test.ts src/hooks/__tests__/*.test.ts",
+    "test:ui": "vitest run",
+    "test:ui:watch": "vitest",
+    "test:ui:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install --with-deps chromium",
     "serve-api": "tsx server.ts",
     "serve-mcp": "tsx src/mcp/index.ts"
   },
@@ -43,13 +50,20 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
+    "@playwright/test": "^1.61.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^8.0.1",
     "@types/papaparse": "^5.5.2",
+    "@vitest/coverage-v8": "^4.1.9",
+    "jsdom": "^29.1.1",
     "playwright": "^1.61.1",
     "rollup-plugin-visualizer": "^7.0.1",
-    "tsx": "^4.22.4"
+    "tsx": "^4.22.4",
+    "vitest": "^4.1.9"
   }
 }
