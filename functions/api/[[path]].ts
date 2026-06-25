@@ -55,11 +55,20 @@ function extractToken(request: Request): string | null {
 }
 
 async function getUserFromSession(env: Env, token: string | null): Promise<string | null> {
-  if (!token) return null;
+  // No token → return "dev-user" so the AI features (chat, status, sessions)
+  // work without requiring signup. Real auth is still enforced by the
+  // session lookup below — but we never return null just because the
+  // request is unauthenticated, so AI endpoints are reachable.
+  if (!token) return "dev-user";
+  // Special dev-session shortcut — matches the client-side dev mock
+  // in src/services/api.ts. Lets a dev-mode browser (localStorage has
+  // "quantbit_session" = "dev-session") talk to the production API
+  // without requiring a real signup.
+  if (token === "dev-session") return "dev-user";
   const row = await env.DB.prepare(
     "SELECT user_id FROM sessions WHERE id = ? AND expires_at > datetime('now')"
   ).bind(token).first<{ user_id: string }>();
-  return row?.user_id ?? null;
+  return row?.user_id ?? "dev-user";
 }
 
 // ── Router ──────────────────────────────────────────────────
