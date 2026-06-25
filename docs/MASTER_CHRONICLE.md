@@ -87,3 +87,6 @@ Comprehensive static audit menemukan 5 critical bugs, 5 sync issues, 12 misses, 
 
 ## 2026-06-25 — Code Health Audit Fix Execution (Same Session)
 13 dari 39 issues diperbaiki langsung di sesi yang sama (A1-A5, B2, B4, C1-C3, C8-C9, C12, D1-D2, D5, D10-D11). **3 critical wins**: A5 O(n²) → O(n) IHSG window (12× speedup), C3 `copy-data-assets` Vite plugin (unblock production CF Pages deployment), C9 dev-mode guard (close production security hole). `tsc --noEmit` + `vite build` PASS. Lihat `DECISIONS.md` entry "Code Health Audit Fix Execution" untuk per-issue detail.
+
+## 2026-06-25 — Adaptive DCA Engine (Phase 1 + 2)
+Per PRD `Adaptive_DCA_Engine_QuantBit.md`. Buy Pressure Score (BPS) replaces traditional DCA — 5-faktor weighted score (Valuasi 30% + Momentum 25% + Breadth 15% + Drawdown 20% + Fear 10%) determines deploy % of available cash. Dashboard dengan circular SVG gauge di Portfolio tab. Backtest simulator baru (`adaptive_dca` mode) dengan 4-way comparison vs Lump Sum / Monthly DCA / Quarterly DCA. 3 file baru + 5 file modified.

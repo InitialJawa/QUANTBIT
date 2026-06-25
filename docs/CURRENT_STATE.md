@@ -122,7 +122,35 @@ Comprehensive static audit menemukan:
 
 **Fix scheduled**: Sprint berikutnya (5 sprint plan di audit). No code changes in sesi audit ini.
 
-## 🟢 Code Health Audit Fixes Executed (Same Session)
+## 🟢 Adaptive DCA Engine (Phase 1 + 2) — Shipped 2026-06-25
+Per PRD `Adaptive_DCA_Engine_QuantBit.md`. Buy Pressure Score (BPS) replaces traditional DCA — data-driven deploy %.
+
+**BPS Formula** (weighted 0-100):
+- Valuasi 30% (avg 1/PE) + Momentum 25% (IHSG turun = tinggi) + Breadth 15% (few healthy = tinggi) + Drawdown 20% (-drawdown × 4) + Fear 10% (RS.risk)
+
+**Action mapping** (per PRD):
+- 0-30: tidak beli · 30-50: kecil 25% · 50-70: normal 50% · 70-90: agresif 75% · 90-100: deploy 90%
+- Override: `isCrisisMode()` → action=none, "CASH DEFENSE" overlay
+
+**Files**:
+- NEW `src/engine/buyPressure.ts` — pure function + `useBuyPressure()` hook
+- NEW `src/components/BuyPressureDashboard.tsx` — circular SVG gauge + 5 factor bars
+- NEW `src/engine/dcaBaselines.ts` — Lump Sum / Monthly DCA / Quarterly DCA simulators
+- MODIFIED `src/engine/types.ts` — `simulationMode: "algo" | "custom" | "adaptive_dca"` + BpsSnapshot
+- MODIFIED `src/engine/core.ts` — adaptive_dca branch di runStrategy (no rebalancing, monthly BPS deploy)
+- MODIFIED `src/components/PortfolioTracker.tsx` — dashboard di atas Holdings
+- MODIFIED `src/components/SimulationTab.tsx` — 4-way comparison card + verdict
+- MODIFIED `src/components/AppSidebar.tsx` — mode toggle 2→3 button (Adaptive added)
+
+**Visual delivered**:
+- Portfolio: gauge + Deploy X% / Save Y% recommendation + "Kenapa?" expand with 5 sub-factor bars
+- Backtest: 4-card grid (Adaptive vs Lump Sum vs Monthly DCA vs Quarterly DCA) + per-strategy metrics (CAGR, Max DD, Avg Buy Price, Cash Used) + verdict
+
+**Verification**: tsc + vite build PASS. SimulationTab bundle +7 KB, PortfolioTracker +7 KB.
+
+**Phase 3 (deferred)**: Auto-execute BPS recommendation. Butuh UX decision (recurring deploy? one-click approve pattern?).
+
+
 **13 dari 39 issues diperbaiki langsung di sesi ini** (decision 2026-06-25: "fix sampai selesai"). Lihat `DECISIONS.md` entry "Code Health Audit Fix Execution" untuk detail lengkap.
 
 ### User-facing critical (Sprint 1) — DONE

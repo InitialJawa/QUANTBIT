@@ -108,7 +108,51 @@
 - **Sprint 4**: D1-D4, D11 — performance
 - **Sprint 5**: C1, C2, C4-C7, C9-C12, D5-D12, B5, E1-E5 — cleanup
 
-## 2026-06-25 — Code Health Audit Fix Execution (Same Session)
+## 2026-06-25 — Adaptive DCA Engine (Phase 1 + 2)
+**Keputusan:** Implementasi Adaptive DCA Engine per PRD `Adaptive_DCA_Engine_QuantBit.md`. Dua fase sekaligus: BPS dashboard + backtest simulator dengan 4-way comparison.
+
+**Filosofi:** "Data menentukan pembelian, bukan kalender." Buy Pressure Score (BPS) dihitung dari 5 faktor pasar, menentukan berapa % kas yang harus di-deploy.
+
+**Buy Pressure Score (BPS)**:
+- **Valuasi (30%)**: avg value score (1/PE atau 1/PB) dari leader universe
+- **Momentum (25%)**: `clamp(50 - ihsgMonthly * 2, 0, 100)` — IHSG turun = skor tinggi
+- **Breadth (15%)**: `(1 - breadth_above_60 / watchlist_count) * 100` — few healthy = skor tinggi
+- **Drawdown (20%)**: `min(100, -drawdown60 * 4)` — deeper drop = skor tinggi
+- **Fear (10%)**: langsung `RS.risk` (0-100) — high regime risk = high fear
+
+**Action mapping** (per PRD):
+- 0-30: tidak beli
+- 30-50: beli kecil (25% kas)
+- 50-70: beli normal (50% kas)
+- 70-90: beli agresif (75% kas)
+- 90-100: deploy hampir semua (90% kas)
+
+**Override**: jika `isCrisisMode()` → BPS invalid, action = "none". Cash defense lebih penting dari buy opportunity.
+
+**File yang dibuat/diubah**:
+- **NEW** `src/engine/buyPressure.ts` (180 lines) — pure function + React hook `useBuyPressure()`
+- **NEW** `src/components/BuyPressureDashboard.tsx` (220 lines) — circular SVG gauge + 5 factor bars + reason card
+- **NEW** `src/engine/dcaBaselines.ts` (230 lines) — 3 baseline simulators (Lump Sum, Monthly DCA, Quarterly DCA)
+- **MODIFIED** `src/engine/types.ts` — `simulationMode: "algo" | "custom" | "adaptive_dca"`, add `BpsSnapshot`, `bpsHistory?`, `totalDeployed?` ke BacktestResult
+- **MODIFIED** `src/engine/core.ts` — adaptive_dca branch di `runStrategy`:
+  - Initial: 100% cash, 0 positions
+  - On month change: compute BPS dari historical data (ihsgMonthly 21d, drawdown 60d rolling, breadth, risk = abs(momentum)*4, avgValueScore)
+  - Deploy `BPS.deployPct` of available cash ke Top N
+  - **NO** monthly rebalancing (positions held until crash)
+  - Crash detection & recovery tetap aktif (exit ke gold)
+- **MODIFIED** `src/components/PortfolioTracker.tsx` — embed `<BuyPressureDashboard />` di atas Holdings
+- **MODIFIED** `src/components/SimulationTab.tsx` — ketika `simulationMode === "adaptive_dca"`, run 3 baselines + 4-way comparison card (Adaptive vs Lump Sum vs Monthly DCA vs Quarterly DCA) + verdict
+- **MODIFIED** `src/components/AppSidebar.tsx` — mode toggle 2-button → 3-button (Algo | Custom | Adaptive)
+
+**Visual delivered**:
+- Portfolio tab: gauge + 5 sub-factor bars + "Deploy X% of cash" recommendation, dengan CASH DEFENSE overlay saat krisis
+- Backtest tab: 4-card grid (Adaptive vs 3 baselines) + verdict "Adaptive DCA mengungguli Lump Sum sebesar X.X poin"
+
+**Verification**: `tsc --noEmit` PASS, `vite build` PASS (SimulationTab +7 KB, PortfolioTracker +7 KB untuk dashboard + 4-way comparison).
+
+**Phase 3 (deferred)**: Auto-execute BPS recommendation. Butuh UX decision (one-click approve → recurring deploy? manual tiap bulan?).
+
+
 **Keputusan:** Daripada menunggu sprint berikut, langsung eksekusi semua critical/high issues di sesi yang sama. Hasil verifikasi: `tsc --noEmit` pass + `vite build` pass (termasuk copy-data-assets plugin).
 
 ### Issues Fixed (13 dari 39)
