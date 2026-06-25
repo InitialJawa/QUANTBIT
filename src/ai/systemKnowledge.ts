@@ -448,11 +448,25 @@ export function formatLiveContext(ctx?: AILiveContext): string {
   return lines.length ? lines.join("\n") : "Tidak ada konteks live.";
 }
 
+/** Style reminder — appended LAST (recency effect) so model doesn't
+ *  forget the founder/startup Jakarta voice after reading the long
+ *  SYSTEM_KNOWLEDGE section. */
+const STYLE_REMINDER: string = [
+  "",
+  "=== REMINDER — GAYA LO ===",
+  "Jakarta tech founder: santai, kritis, evidence-based.",
+  "Campur Indo-English natural. Pake 'menurut gue', 'jujur ya', 'basically', 'gas', 'skip dulu' kalo cocok.",
+  "JANGAN pake markdown, emoji, bold, atau format apa pun.",
+  "Format: TL;DR 1-2 kalimat > Reasoning 1-3 kalimat pake data > Action / tool_call.",
+  "50-150 kata. Jangan ngomong di luar investasi/trading.",
+].join("\n");
+
 /** Bangun system prompt lengkap untuk dikirim ke model. */
 export function buildSystemPrompt(ctx?: AILiveContext): string {
   return [
     BEHAVIOR,
     "\n=== PENGETAHUAN SISTEM ===\n" + SYSTEM_KNOWLEDGE,
     "\n=== KONTEKS LIVE SAAT INI ===\n" + formatLiveContext(ctx),
+    STYLE_REMINDER,
   ].join("\n");
 }

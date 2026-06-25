@@ -453,7 +453,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           <>
             {/* Messages */}
             <div ref={containerRef} className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin" style={{ minHeight: "300px", maxHeight: "400px" }}>
-              {messages.map((msg, i) => (
+              {messages.filter((m) => m.role !== "tool").map((msg, i) => (
                 <div key={i} className={`flex gap-2 w-full ${msg.role === "user" ? "ml-auto flex-row-reverse max-w-[88%]" : msg.role === "tool" ? "mx-auto max-w-[92%]" : "mr-auto max-w-[96%]"}`}>
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-cyan-500 text-black" : msg.role === "tool" ? "bg-white/5" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
                     {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : msg.role === "tool" ? <HelpCircle className="w-3 h-3 text-cyan-400" /> : <Bot className="w-3.5 h-3.5" />}
