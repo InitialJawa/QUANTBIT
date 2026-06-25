@@ -554,6 +554,13 @@ async function handleAiChat(request: Request, env: Env, userId: string | undefin
         OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
         GROQ_API_KEY: env.GROQ_API_KEY,
         GEMINI_API_KEY: env.GEMINI_API_KEY,
+        GROQ_MODEL: env.GROQ_MODEL,
+        GROQ_FALLBACK_MODEL: env.GROQ_FALLBACK_MODEL,
+        GEMINI_MODEL: env.GEMINI_MODEL,
+        GEMINI_FALLBACK_MODEL: env.GEMINI_FALLBACK_MODEL,
+        OPENROUTER_MODEL: env.OPENROUTER_MODEL,
+        COOLDOWN_429_MS: env.COOLDOWN_429_MS,
+        COOLDOWN_403_MS: env.COOLDOWN_403_MS,
       },
       { isDev: false, memory },  // CF Pages Functions = production
     );
@@ -582,6 +589,13 @@ async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
       OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
       GROQ_API_KEY: env.GROQ_API_KEY,
       GEMINI_API_KEY: env.GEMINI_API_KEY,
+      GROQ_MODEL: env.GROQ_MODEL,
+      GROQ_FALLBACK_MODEL: env.GROQ_FALLBACK_MODEL,
+      GEMINI_MODEL: env.GEMINI_MODEL,
+      GEMINI_FALLBACK_MODEL: env.GEMINI_FALLBACK_MODEL,
+      OPENROUTER_MODEL: env.OPENROUTER_MODEL,
+      COOLDOWN_429_MS: env.COOLDOWN_429_MS,
+      COOLDOWN_403_MS: env.COOLDOWN_403_MS,
     },
     false,  // CF Pages = production
   );
@@ -904,6 +918,15 @@ interface Env {
   GEMINI_API_KEY?: string;
   GROQ_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
+  // Model overrides (optional — defaults used if unset)
+  GROQ_MODEL?: string;
+  GROQ_FALLBACK_MODEL?: string;
+  GEMINI_MODEL?: string;
+  GEMINI_FALLBACK_MODEL?: string;
+  OPENROUTER_MODEL?: string;
+  // Cooldown durations (ms, optional)
+  COOLDOWN_429_MS?: string;
+  COOLDOWN_403_MS?: string;
   GOAPI_API_KEY?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;

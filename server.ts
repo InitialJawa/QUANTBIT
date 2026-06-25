@@ -52,7 +52,8 @@ app.get("/api/yahoo", handleYahooRequest);
 
 // Local dev AI chat — same logic as Cloudflare Pages Functions
 // (functions/api/[[path]].ts) but reads API keys from process.env.
-// Provider chain: OpenRouter → Groq → Gemini. See src/server/aiChatHandler.ts.
+// Provider chain: Groq → Gemini → Groq-fallback → OpenRouter.
+// See src/server/aiChatHandler.ts.
 app.post("/api/ai/chat", async (req, res) => {
   try {
     const { messages, context, sessionId, userId } = req.body || {};
@@ -68,6 +69,13 @@ app.post("/api/ai/chat", async (req, res) => {
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
         GROQ_API_KEY: process.env.GROQ_API_KEY,
         GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+        GROQ_MODEL: process.env.GROQ_MODEL,
+        GROQ_FALLBACK_MODEL: process.env.GROQ_FALLBACK_MODEL,
+        GEMINI_MODEL: process.env.GEMINI_MODEL,
+        GEMINI_FALLBACK_MODEL: process.env.GEMINI_FALLBACK_MODEL,
+        OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+        COOLDOWN_429_MS: process.env.COOLDOWN_429_MS,
+        COOLDOWN_403_MS: process.env.COOLDOWN_403_MS,
       },
       { isDev: true, memory },
     );
@@ -225,6 +233,13 @@ function getAiStatusFromEnv() {
       OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
       GROQ_API_KEY: process.env.GROQ_API_KEY,
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      GROQ_MODEL: process.env.GROQ_MODEL,
+      GROQ_FALLBACK_MODEL: process.env.GROQ_FALLBACK_MODEL,
+      GEMINI_MODEL: process.env.GEMINI_MODEL,
+      GEMINI_FALLBACK_MODEL: process.env.GEMINI_FALLBACK_MODEL,
+      OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+      COOLDOWN_429_MS: process.env.COOLDOWN_429_MS,
+      COOLDOWN_403_MS: process.env.COOLDOWN_403_MS,
     },
     true,
   );
