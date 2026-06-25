@@ -13,11 +13,22 @@ import { resolve, join } from 'path';
  * by default. Without this plugin, /api/backtest-data in production returns
  * 503 because `/data/years/*.json` doesn't exist in the deployed bundle.
  *
- * This plugin copies:
- *   - data/years/                 (chunked historical market data)
- *   - data/idx80_scan.json        (latest IDX80 scan cache)
- *   - data/fundamental_idx_all.json  (IDX fundamental warehouse JSON)
- *   - data/live_market.json       (post-processed live market snapshot)
+ * IMPORTANT: only the files ACTUALLY read at runtime must be copied. The
+ * `data/` directory contains both runtime data AND pipeline source data
+ * (e.g. `fundamental_idx_all.json` is the source-of-truth for the Python
+ * collector — it's 40 MB and not used at runtime). Copying the wrong file
+ * pushes the build over the 25 MiB CF Pages per-file limit.
+ *
+ * Files needed at runtime (verified by grep on functions/api/[[path]].ts):
+ *   - data/years/*.json           — chunked historical market data
+ *   - data/idx80_scan.json        — latest IDX80 scan cache (191 KB)
+ *   - data/idx_fundamentals_all.json  — IDX fundamental warehouse for /api/fundamentals (4.2 MB)
+ *
+ * Files NOT copied (deliberately):
+ *   - data/fundamental_idx_all.json (40 MB) — pipeline source, not runtime
+ *   - data/live_market.json       — only used by post_process_live_market.py
+ *   - data/historical_market_data.json (73 MB) — source for split-data, not runtime
+ *   - data/*.parquet              — same, pipeline-only
  *
  * Runs on `closeBundle()` so the dist/ tree is fully assembled first.
  */
@@ -26,24 +37,35 @@ function copyDataAssets(): Plugin {
   const distData = resolve(root, 'dist/data');
   const sources = [
     { from: resolve(root, 'data/idx80_scan.json'), to: 'idx80_scan.json' },
-    { from: resolve(root, 'data/fundamental_idx_all.json'), to: 'fundamental_idx_all.json' },
-    { from: resolve(root, 'data/live_market.json'), to: 'live_market.json' },
+    { from: resolve(root, 'data/idx_fundamentals_all.json'), to: 'idx_fundamentals_all.json' },
   ];
   const yearDirs = [
     { from: resolve(root, 'data/years'), to: 'years' },
   ];
 
   function copyFile(src: string, dest: string) {
-    if (!existsSync(src)) return;
+    if (!existsSync(src)) {
+      console.warn(`[copy-data-assets] SKIP (not found): ${src.replace(root + '/', '')}`);
+      return;
+    }
+    const stat = statSync(src);
+    if (stat.size > 25 * 1024 * 1024) {
+      // CF Pages per-file limit is 25 MiB. Refuse to copy oversized files
+      // because they'll fail validation at deploy time.
+      console.error(`[copy-data-assets] REFUSE (over 25 MiB limit): ${src.replace(root + '/', '')} (${(stat.size / 1024 / 1024).toFixed(1)} MiB)`);
+      return;
+    }
     const destDir = resolve(dest, '..');
     if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
     copyFileSync(src, dest);
-    const size = statSync(src).size;
-    console.log(`[copy-data-assets] ${src.replace(root + '/', '')} → dist/data/${dest.replace(distData + '/', '')} (${(size / 1024).toFixed(1)} KB)`);
+    console.log(`[copy-data-assets] ${src.replace(root + '/', '')} → dist/data/${dest.replace(distData + '/', '')} (${(stat.size / 1024).toFixed(1)} KB)`);
   }
 
   function copyDir(srcDir: string, destDir: string) {
-    if (!existsSync(srcDir)) return;
+    if (!existsSync(srcDir)) {
+      console.warn(`[copy-data-assets] SKIP (not found): ${srcDir.replace(root + '/', '')}`);
+      return;
+    }
     if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
     for (const entry of readdirSync(srcDir)) {
       const s = join(srcDir, entry);
@@ -51,6 +73,11 @@ function copyDataAssets(): Plugin {
       if (statSync(s).isDirectory()) {
         copyDir(s, d);
       } else {
+        const stat = statSync(s);
+        if (stat.size > 25 * 1024 * 1024) {
+          console.error(`[copy-data-assets] REFUSE (over 25 MiB limit): ${s.replace(root + '/', '')} (${(stat.size / 1024 / 1024).toFixed(1)} MiB)`);
+          continue;
+        }
         copyFileSync(s, d);
       }
     }
