@@ -92,6 +92,8 @@ export interface AiEnv {
   OPENROUTER_API_KEY?: string;
   GROQ_API_KEY?: string;
   GEMINI_API_KEY?: string;
+  COHERE_API_KEY?: string;
+  MISTRAL_API_KEY?: string;
   /** Override default Groq model. Default: "groq/compound" (no daily cap, agent). */
   GROQ_MODEL?: string;
   /** Fallback Groq model. Default: "llama-3.3-70b-versatile". */
@@ -109,6 +111,10 @@ export interface AiEnv {
   OPENROUTER_MODEL_3?: string;
   /** Fourth OpenRouter model (Venice pool, often rate-limited). Default: meta-llama/llama-3.3-70b-instruct:free. */
   OPENROUTER_MODEL_4?: string;
+  /** Override default Cohere model. Default: "command-a-plus-05-2026" (newest, 436K ctx). */
+  COHERE_MODEL?: string;
+  /** Override default Mistral model. Default: "mistral-small-latest". */
+  MISTRAL_MODEL?: string;
   /** Cooldown duration after 429 (ms). Default: 5 minutes. */
   COOLDOWN_429_MS?: string;
   /** Cooldown duration after 401/403 (ms). Default: 15 minutes. */
@@ -234,6 +240,8 @@ const DEFAULTS = {
   "openrouter-2": "nvidia/nemotron-3-super-120b-a12b:free",
   "openrouter-3": "cohere/north-mini-code:free",
   "openrouter-4": "meta-llama/llama-3.3-70b-instruct:free",
+  cohere: "command-a-plus-05-2026",
+  mistral: "mistral-small-latest",
   groq: "groq/compound",
   "groq-fallback": "llama-3.3-70b-versatile",
   gemini: "gemma-4-26b-a4b-it",
@@ -249,6 +257,22 @@ export function getProviderStatus(env: AiEnv): ProviderStatus[] {
       model: env.OPENROUTER_MODEL || DEFAULTS.openrouter,
       coolingDown: getCooldownMsLeft("openrouter") > 0,
       cooldownMsLeft: getCooldownMsLeft("openrouter"),
+    },
+    {
+      name: "cohere",
+      hasEnvVar: "COHERE_API_KEY" in env,
+      configured: isKeySet(env.COHERE_API_KEY),
+      model: env.COHERE_MODEL || DEFAULTS.cohere,
+      coolingDown: getCooldownMsLeft("cohere") > 0,
+      cooldownMsLeft: getCooldownMsLeft("cohere"),
+    },
+    {
+      name: "mistral",
+      hasEnvVar: "MISTRAL_API_KEY" in env,
+      configured: isKeySet(env.MISTRAL_API_KEY),
+      model: env.MISTRAL_MODEL || DEFAULTS.mistral,
+      coolingDown: getCooldownMsLeft("mistral") > 0,
+      cooldownMsLeft: getCooldownMsLeft("mistral"),
     },
     {
       name: "groq",
@@ -464,7 +488,7 @@ function buildProviderList(
   if (isKeySet(env.GROQ_API_KEY)) {
     all.push({
       name: "groq",
-      priority: 5,
+      priority: 7,
       run: () => chatOpenAICompatible(
         "https://api.groq.com/openai/v1/chat/completions",
         env.GROQ_MODEL || DEFAULTS.groq,
@@ -474,7 +498,7 @@ function buildProviderList(
     });
     all.push({
       name: "groq-fallback",
-      priority: 6,
+      priority: 8,
       run: () => chatOpenAICompatible(
         "https://api.groq.com/openai/v1/chat/completions",
         env.GROQ_FALLBACK_MODEL || DEFAULTS["groq-fallback"],
@@ -488,11 +512,40 @@ function buildProviderList(
   if (isKeySet(env.GEMINI_API_KEY)) {
     all.push({
       name: "gemini",
-      priority: 7,
+      priority: 9,
       run: () => chatGemini(
         system, messages, env.GEMINI_API_KEY!,
         env.GEMINI_MODEL || DEFAULTS.gemini,
         env.GEMINI_FALLBACK_MODEL || DEFAULTS["gemini-fallback"],
+      ),
+    });
+  }
+
+  // Cohere direct — generous free tier (~1000 req/min), OpenAI-compat endpoint.
+  // Inserted AFTER OpenRouter but BEFORE Groq/Gemini (which may be geo-blocked).
+  if (isKeySet(env.COHERE_API_KEY)) {
+    all.push({
+      name: "cohere",
+      priority: 5,
+      run: () => chatOpenAICompatible(
+        "https://api.cohere.ai/compatibility/v1/chat/completions",
+        env.COHERE_MODEL || DEFAULTS.cohere,
+        env.COHERE_API_KEY!,
+        system, messages,
+      ),
+    });
+  }
+
+  // Mistral direct — generous free tier, OpenAI-compatible.
+  if (isKeySet(env.MISTRAL_API_KEY)) {
+    all.push({
+      name: "mistral",
+      priority: 6,
+      run: () => chatOpenAICompatible(
+        "https://api.mistral.ai/v1/chat/completions",
+        env.MISTRAL_MODEL || DEFAULTS.mistral,
+        env.MISTRAL_API_KEY!,
+        system, messages,
       ),
     });
   }
@@ -541,6 +594,8 @@ function buildErrorMessage(
       const mark = s.configured ? "✅" : "❌";
       const cdMark = s.coolingDown ? " ⏳" : "";
       const envName = s.name.startsWith("openrouter") ? "OPENROUTER_API_KEY"
+        : s.name === "cohere" ? "COHERE_API_KEY"
+        : s.name === "mistral" ? "MISTRAL_API_KEY"
         : s.name === "groq" || s.name === "groq-fallback" ? "GROQ_API_KEY"
         : s.name === "gemini" ? "GEMINI_API_KEY"
         : `${s.name.toUpperCase()}_API_KEY`;

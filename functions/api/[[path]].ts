@@ -554,6 +554,8 @@ async function handleAiChat(request: Request, env: Env, userId: string | undefin
         OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
         GROQ_API_KEY: env.GROQ_API_KEY,
         GEMINI_API_KEY: env.GEMINI_API_KEY,
+        COHERE_API_KEY: env.COHERE_API_KEY,
+        MISTRAL_API_KEY: env.MISTRAL_API_KEY,
         GROQ_MODEL: env.GROQ_MODEL,
         GROQ_FALLBACK_MODEL: env.GROQ_FALLBACK_MODEL,
         GEMINI_MODEL: env.GEMINI_MODEL,
@@ -562,6 +564,8 @@ async function handleAiChat(request: Request, env: Env, userId: string | undefin
         OPENROUTER_MODEL_2: env.OPENROUTER_MODEL_2,
         OPENROUTER_MODEL_3: env.OPENROUTER_MODEL_3,
         OPENROUTER_MODEL_4: env.OPENROUTER_MODEL_4,
+        COHERE_MODEL: env.COHERE_MODEL,
+        MISTRAL_MODEL: env.MISTRAL_MODEL,
         COOLDOWN_429_MS: env.COOLDOWN_429_MS,
         COOLDOWN_403_MS: env.COOLDOWN_403_MS,
       },
@@ -592,6 +596,8 @@ async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
       OPENROUTER_API_KEY: env.OPENROUTER_API_KEY,
       GROQ_API_KEY: env.GROQ_API_KEY,
       GEMINI_API_KEY: env.GEMINI_API_KEY,
+      COHERE_API_KEY: env.COHERE_API_KEY,
+      MISTRAL_API_KEY: env.MISTRAL_API_KEY,
       GROQ_MODEL: env.GROQ_MODEL,
       GROQ_FALLBACK_MODEL: env.GROQ_FALLBACK_MODEL,
       GEMINI_MODEL: env.GEMINI_MODEL,
@@ -600,6 +606,8 @@ async function handleAiStatus(_request: Request, env: Env): Promise<Response> {
       OPENROUTER_MODEL_2: env.OPENROUTER_MODEL_2,
       OPENROUTER_MODEL_3: env.OPENROUTER_MODEL_3,
       OPENROUTER_MODEL_4: env.OPENROUTER_MODEL_4,
+      COHERE_MODEL: env.COHERE_MODEL,
+      MISTRAL_MODEL: env.MISTRAL_MODEL,
       COOLDOWN_429_MS: env.COOLDOWN_429_MS,
       COOLDOWN_403_MS: env.COOLDOWN_403_MS,
     },
@@ -924,6 +932,8 @@ interface Env {
   GEMINI_API_KEY?: string;
   GROQ_API_KEY?: string;
   OPENROUTER_API_KEY?: string;
+  COHERE_API_KEY?: string;
+  MISTRAL_API_KEY?: string;
   // Model overrides (optional — defaults used if unset)
   GROQ_MODEL?: string;
   GROQ_FALLBACK_MODEL?: string;
@@ -933,6 +943,8 @@ interface Env {
   OPENROUTER_MODEL_2?: string;
   OPENROUTER_MODEL_3?: string;
   OPENROUTER_MODEL_4?: string;
+  COHERE_MODEL?: string;
+  MISTRAL_MODEL?: string;
   // Cooldown durations (ms, optional)
   COOLDOWN_429_MS?: string;
   COOLDOWN_403_MS?: string;
