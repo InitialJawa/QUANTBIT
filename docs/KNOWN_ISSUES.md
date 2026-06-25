@@ -97,3 +97,12 @@
 **Root Cause:** Single-factor test menunjukkan Value (1/PB) return -26.26% (CAGR -5.42%), lebih buruk dari IHSG (-3.62%). Saham murah cenderung value trap di emerging market.
 **Fix:** Semua profile default ditekan ke 5% value weight. Config QM (prod): Q45 V5 M40 G10. Config BG (res): Q40 V5 M30 G25.
 **Rekomendasi:** Value tidak boleh diberi bobot >5%. Jika mau, ganti dengan faktor earning yield (inverse PER) sudah di-capture sebagai Value di stockNormScores — tapi tetap negative-alpha.
+
+## 19. Crisis Signal Tetap Nyala Meski Proteksi Crash NONAKTIF
+**Status:** FIXED (2026-06-25)
+**Root Cause:** 5 dari 6 komponen menggunakan hardcoded `MKT.ihsg.monthly < -10` sebagai threshold krisis, mengabaikan setting `enableCrashProtection` user. Hanya `PortfolioTracker.tsx` yang sudah benar membaca config.
+**Fix:** 
+- Ditambahkan `setCrashProtectionEnabled(bool)` dan `isCrisisMode()` di `marketRegimeEngine.ts`
+- `PortfolioTracker.tsx` sync `engineConfig.enableCrashProtection` ke module state
+- `computeMarketRegime()` hormati `_crashProtectionEnabled`
+- Semua komponen kini pakai `isCrisisMode()` yang menggunakan 60-day drawdown + config

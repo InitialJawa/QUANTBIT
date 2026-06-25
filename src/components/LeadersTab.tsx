@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { L, CW_F, CW_B, EX, getProcessedLeaders } from "../marketData";
+import { L, CW_QM, CW_BG, EX, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
@@ -102,7 +102,7 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
 
   const activeStocksList = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const processedLeaders = getProcessedLeaders(activeStocksList, activeProfile ?? activeConfig);
-  const weights = activeProfile ?? (activeConfig === "prod" ? CW_F : CW_B);
+  const weights = activeProfile ?? (activeConfig === "prod" ? CW_QM : CW_BG);
 
   let filteredLeaders = processedLeaders.filter((item) => {
     const rawTicker = item.ticker.replace(".JK", "").toUpperCase();

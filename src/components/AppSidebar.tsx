@@ -2,7 +2,7 @@
 import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2 } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { getIhsgData, computeRSI, computeMACD } from "../marketRegimeEngine";
+import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
 import type { PortfolioItem, StockData } from "../types";
 import { useState, useMemo } from "react";
 import { ManageProfilesModal } from "./ManageProfilesModal";
@@ -62,7 +62,7 @@ export function AppSidebar({
   onClearPortfolio,
   getDynamicStock,
 }: AppSidebarProps) {
-  const isIHSGInCrisis = MKT.ihsg.monthly < -10;
+  const isIHSGInCrisis = isCrisisMode();
   const [showProfileManager, setShowProfileManager] = useState(false);
 
   const totalInvestment = portfolio.reduce((sum, p) => sum + p.shares * p.buyPrice, 0);

@@ -112,7 +112,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   logs.push({
     date: day0.date,
     type: "BUY",
-    message: `Inisialisasi portofolio ${topTickers.length} emiten`,
+    message: `Inisialisasi portofolio ${topTickers.length} emiten dari ${Object.keys(day0.stockPrices).length} kandidat — alokasi ${(initialAlloc.cash / cap * 100).toFixed(0)}% kas, ${(100 - initialAlloc.cash / cap * 100).toFixed(0)}% saham`,
   });
 
   const getPointInTimeDate = (date: Date): Date => {
@@ -141,7 +141,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
             logs.push({
               date: day.date,
               type: "BUY",
-              message: `Eksekusi pembelian ditunda #${pt.ticker} ${sharesToBuy} lembar @ ${Math.round(entryPrice).toLocaleString("id-ID")}`,
+              message: `Eksekusi #${pt.ticker} ${sharesToBuy} lembar @ Rp ${Math.round(entryPrice).toLocaleString("id-ID")} = Rp ${(sharesToBuy * Math.round(entryPrice)).toLocaleString("id-ID")}`,
             });
           }
           pendingTickers.splice(pi, 1);
@@ -186,7 +186,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         logs.push({
           date: day.date,
           type: "REBALANCE",
-          message: `Dividen Tahunan Dikreditkan: Rp ${yearlyDividends.toLocaleString("id-ID")} (net 90% setelah pajak)`,
+          message: `Dividen tahunan dikreditkan: Rp ${yearlyDividends.toLocaleString("id-ID")} (net 90%) — portfolio value saat ini Rp ${todayPortfolioVal.toLocaleString("id-ID")}`,
         });
       }
       lastJulyYear = currentYear;
@@ -205,13 +205,12 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     }
 
     if (crashSignaled && !inCrashState && crashCooldown <= 0) {
+      const liq = liquidateHoldings(positions, day.stockPrices, fees);
       logs.push({
         date: day.date,
         type: "CRASH_TRIGGER",
-        message: `⚠️ CRASH: ${crashReason}`,
+        message: `CRASH: ${crashReason} — likuidasi ${Object.keys(positions).length} posisi, proceeds Rp ${liq.proceeds.toLocaleString("id-ID")} → ${config.safeHavenAsset === "emas" ? "konversi ke emas" : "cash"}`,
       });
-
-      const liq = liquidateHoldings(positions, day.stockPrices, fees);
       positions = {};
       cash += liq.proceeds;
       totalTransactionVolume += liq.totalVolume;
@@ -239,7 +238,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           logs.push({
             date: day.date,
             type: "CRASH_RECOVERY",
-            message: `✅ RECOVERY: ${result.reason}`,
+            message: `RECOVERY: ${result.reason} — IHSG ${day.ihsgPrice.toLocaleString("id-ID")}`,
           });
         }
       }
@@ -281,7 +280,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         logs.push({
           date: day.date,
           type: "CRASH_RECOVERY",
-          message: `Re-entry ${reentryTickers.length} emiten setelah recovery pasar`,
+          message: `Re-entry ${reentryTickers.length} emiten setelah recovery pasar — alokasi Rp ${recoveryCash.toLocaleString("id-ID")}`,
         });
 
         crashCooldown = 20;
@@ -334,7 +333,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
               logs.push({
                 date: day.date,
                 type: "REBALANCE",
-                message: `Swap #${ticker}→${swapInTicker} (Rank ${currentRank}), ${swapResult.shares} lot @ Rp ${(day.stockPrices[swapInTicker] || 0).toLocaleString("id-ID")}`,
+                message: `Swap #${ticker} (rank ${currentRank}) → #${swapInTicker} (rank ${day.stockRanks[swapInTicker] || "?"}), ${swapResult.shares} lot @ Rp ${(day.stockPrices[swapInTicker] || 0).toLocaleString("id-ID")}, proceeds Rp ${swapProceeds.toLocaleString("id-ID")}`,
               });
             } else {
               cash += swapProceeds;
@@ -397,12 +396,12 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const goldFinalValue = Math.round((lastDayObj.goldPrice / initialGoldPrice) * cap);
 
   const allLogs: TradeLog[] = [
+    ...logs,
     {
       date: lastDayObj.date,
       type: "REBALANCE",
-      message: `Portfolio akhir: Rp ${currentPortfolioVal.toLocaleString("id-ID")} (${metrics.totalReturnPct >= 0 ? "+" : ""}${metrics.totalReturnPct.toFixed(2)}%)`,
+      message: `Portfolio akhir: Rp ${currentPortfolioVal.toLocaleString("id-ID")} (${metrics.totalReturnPct >= 0 ? "+" : ""}${metrics.totalReturnPct.toFixed(2)}%) — CAGR ${metrics.cagr.toFixed(2)}% | Sharpe ${metrics.sharpe.toFixed(3)} | Max DD ${maxDrawdownValue.toFixed(2)}%`,
     },
-    ...logs,
   ];
 
   return {

@@ -1,4 +1,4 @@
-import { MKT, L, EX, RS, CW_F, CW_B, getProcessedLeaders } from "./marketData";
+import { MKT, L, EX, RS, CW_QM, CW_BG, getProcessedLeaders } from "./marketData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "./constants/idx80";
 
 export type RegimeState =
@@ -47,6 +47,7 @@ let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeConfig: "prod" | "res" = "prod";
 let _activeWeights: { quality: number; growth: number; value: number; momentum: number } | null = null;
 let _crashSensitivity = 10;
+let _crashProtectionEnabled = true;
 
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
   _lastIhsgData = data;
@@ -67,6 +68,17 @@ export function setActiveConfig(c: "prod" | "res" | { quality: number; growth: n
 
 export function setCrashSensitivity(n: number) {
   _crashSensitivity = n;
+}
+
+export function setCrashProtectionEnabled(v: boolean) {
+  _crashProtectionEnabled = v;
+}
+
+/** Unified crisis check — hormati enableCrashProtection + gunakan 60d drawdown, bukan monthly */
+export function isCrisisMode(): boolean {
+  if (!_crashProtectionEnabled) return false;
+  const dd = getIhsgDrawdown60();
+  return dd !== null && dd <= -_crashSensitivity;
 }
 
 export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {
@@ -175,7 +187,7 @@ export function computeMarketRegime(): RegimeOutput {
   const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
 
   const lenL = universeL.length || 1;
-  const configWeights = _activeWeights ?? (_activeConfig === "prod" ? CW_F : CW_B);
+  const configWeights = _activeWeights ?? (_activeConfig === "prod" ? CW_QM : CW_BG);
   const scores = universeL.map(s =>
     (parseFloat(s.quality) || 0) * configWeights.quality +
     (parseFloat(s.growth) || 0) * configWeights.growth +
@@ -190,7 +202,7 @@ export function computeMarketRegime(): RegimeOutput {
   const healthyCount = universeEX.filter(e => e.exit_state === "HEALTHY").length;
   const totalEx = universeEX.length || 1;
 
-  const crisisThreshold = ihsgMonthly < -_crashSensitivity;
+  const crisisThreshold = _crashProtectionEnabled && ihsgMonthly < -_crashSensitivity;
   const bearishTrend = !aboveMa20 && !aboveMa50;
   const bullishTrend = aboveMa20 && aboveMa50;
   const recoveringTrend = aboveMa20 && !aboveMa50;

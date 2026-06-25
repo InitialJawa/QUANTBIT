@@ -79,6 +79,23 @@ backtestConfig (draft, isolated from engineConfig)
 ## Known Gap
 `shouldTriggerExit` per-ticker exit evaluation exists in engine but not yet wired per-portfolio-item in the notification loop.
 
+## Sesi Ini — 2026-06-25
+
+### Fix: Crisis Signal Hormati enableCrashProtection
+- **Problem:** 5 komponen pakai threshold `MKT.ihsg.monthly < -10` hardcoded, mengabaikan setting "Proteksi Crash" user
+- **Fix:** Satu sumber kebenaran `isCrisisMode()` di `marketRegimeEngine.ts` — baca `_crashProtectionEnabled` + 60d drawdown
+- **Files:** `marketRegimeEngine.ts`, `App.tsx`, `AppSidebar.tsx`, `MarketTab.tsx`, `SimulationTab.tsx`, `PortfolioTracker.tsx`
+
+### Fix: Config F/B → QM/BG Rename
+- **Problem:** Konstant `CW_F`/`CW_B` dan data key `config_b`/`config_f` masih pakai naming lama
+- **Fix:** Rename ke `CW_QM`/`CW_BG`, `qm`/`bg` di `marketData.ts`, semua referensi di komponen
+- **Files:** `marketData.ts`, `LeadersTab.tsx`, `marketRegimeEngine.ts`, `EngineConfigContext.tsx`
+
+### Fix: Buku Jurnal — Akurasi + Intuitif
+- **Problem:** Log summary di awal (membingungkan), pesan kurang detail, CSV 3 kolom minim
+- **Fix:** Summary di akhir, pesan dengan harga/qty/value, CSV 4 kolom + BOM Excel, UI lebih rapi
+- **Files:** `engine/core.ts`, `SimulationTab.tsx`
+
 ## Archive — Legacy Cleanup
 - `BacktestContext.tsx` — deleted, config migrated to EngineConfigContext
 - `STOCK_FACTORS` — removed

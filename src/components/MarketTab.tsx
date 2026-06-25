@@ -2,7 +2,7 @@
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
-import { getAuditTrail } from "../marketRegimeEngine";
+import { getAuditTrail, isCrisisMode } from "../marketRegimeEngine";
 import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
@@ -240,7 +240,7 @@ export function MarketTab({
   const totalBidVol = bids.reduce((acc, b) => acc + b.vol, 0);
   const totalAskVol = asks.reduce((acc, a) => acc + a.vol, 0);
 
-  const isIHSGInCrisis = MKT.ihsg.monthly < -10;
+  const isIHSGInCrisis = isCrisisMode();
   const currentStatus = isIHSGInCrisis ? "RISK OFF" : RS.status;
   const currentAction = isIHSGInCrisis ? "LIQUIDATE / CASH OUT" : RS.action;
 

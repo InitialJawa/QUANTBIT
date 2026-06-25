@@ -124,6 +124,15 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
           if (!parsed.activeProfileId) {
             parsed.activeProfileId = parsed.activeConfig === "res" ? "res" : "prod";
           }
+        } else {
+          // Migrate legacy default profile weights to latest values
+          parsed.profiles = parsed.profiles.map((p: WeightProfile) => {
+            const defaults = DEFAULT_PROFILES.find(d => d.id === p.id);
+            if (defaults) {
+              return { ...defaults };
+            }
+            return p;
+          });
         }
         if (!parsed.simStartDate) parsed.simStartDate = "2021-01-04";
         if (!parsed.simEndDate) parsed.simEndDate = getTodayWIB();

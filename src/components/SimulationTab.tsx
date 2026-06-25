@@ -25,6 +25,7 @@ import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { runStrategy } from "../engine";
 import { SearchableSelect } from "./SearchableSelect";
 import { EX, RS, MKT } from "../marketData";
+import { isCrisisMode } from "../marketRegimeEngine";
 import { getSession, api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
@@ -403,7 +404,7 @@ export function SimulationTab({
       }
     });
 
-    const isIHSGInCrisis = MKT.ihsg.monthly < -10;
+    const isIHSGInCrisis = isCrisisMode();
 
     return {
       stockAlerts,
@@ -550,14 +551,14 @@ export function SimulationTab({
     if (!backtestResult || !backtestResult.logs) return;
 
     try {
-      const header = ["Tanggal", "Tipe_Transaksi", "Rincian_Transaksi_Detail_Fees_Spread"].map(h => `"${h}"`).join(",");
-      const rows = backtestResult.logs.map((log: any) => {
-        const sanitizedMsg = (log.message || "").replace(/"/g, '""'); // escape double-quotes for CSV compliance
-        return `"${log.date}","${log.type}","${sanitizedMsg}"`;
+      const header = ["No", "Tanggal", "Tipe", "Keterangan"].join(",");
+      const rows = backtestResult.logs.map((log: any, idx: number) => {
+        const sanitizedMsg = (log.message || "").replace(/"/g, '""');
+        return `${idx + 1},"${log.date}","${log.type}","${sanitizedMsg}"`;
       });
 
       const csvString = [header, ...rows].join("\n");
-      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([`\uFEFF${csvString}`], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
@@ -1211,22 +1212,32 @@ export function SimulationTab({
                     </div>
                     <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-caption border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
                       
-                      {backtestResult.logs.map((log: any, idx: number) => (
-                        <div key={idx} className="border-b border-white/5 pb-2 last:border-0 hover:text-white/90">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
-                            <span className="text-white/40 block sm:inline">[{log.date}]</span>
-                            <span className={`px-1.5 py-0.5 rounded text-label font-extrabold uppercase font-sans tracking-wide shrink-0 ${
-                              log.type === "BUY" ? "bg-blue-500/20 text-blue-400" :
-                              log.type === "CRASH_TRIGGER" ? "bg-red-500/25 text-red-400" :
-                              log.type === "CRASH_RECOVERY" ? "bg-amber-500/20 text-amber-400" :
-                              "bg-emerald-500/20 text-emerald-400"
-                            }`}>
-                              {log.type}
-                            </span>
+                      {backtestResult.logs.map((log: any, idx: number) => {
+                        const dateStr = log.date && log.date.length >= 10 ? log.date.slice(0, 10) : log.date;
+                        const [, typeColor] = {
+                          BUY: ["bg-blue-500/20 text-blue-400 border-blue-500/20", "text-blue-300"],
+                          SELL: ["bg-rose-500/20 text-rose-400 border-rose-500/20", "text-rose-300"],
+                          REBALANCE: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
+                          CRASH_TRIGGER: ["bg-red-500/25 text-red-400 border-red-500/30", "text-red-300"],
+                          CRASH_RECOVERY: ["bg-amber-500/20 text-amber-400 border-amber-500/20", "text-amber-300"],
+                        }[log.type] || ["bg-white/5 text-white/60 border-white/10", "text-white/60"];
+                        return (
+                          <div key={idx} className="border-b border-white/5 pb-2.5 last:border-0 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
+                            <div className="flex items-start gap-2.5">
+                              <span className="text-[10px] text-zinc-600 font-mono shrink-0 mt-0.5 w-6 text-right">{idx + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase font-sans tracking-wider shrink-0 border ${typeColor}`}>
+                                    {log.type === "CRASH_TRIGGER" ? "CRASH" : log.type === "CRASH_RECOVERY" ? "RECOVERY" : log.type}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 font-mono">{dateStr}</span>
+                                </div>
+                                <p className="text-xs leading-relaxed text-zinc-300">{log.message}</p>
+                              </div>
+                            </div>
                           </div>
-                          <p className="pl-0 sm:pl-3">{log.message}</p>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                     </div>
                   </div>

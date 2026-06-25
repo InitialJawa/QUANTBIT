@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
 import { DataBadge } from "./DataBadge";
-import { setActiveUniverse, setCrashSensitivity, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
+import { setActiveUniverse, setCrashSensitivity, setCrashProtectionEnabled, getIhsgDrawdown60, refreshRSFromRegime } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -106,6 +106,7 @@ export function PortfolioTracker({
   useEffect(() => {
     setActiveUniverse(engineConfig.universe as "all" | "idx80" | "idx30" | "lq45");
     setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
+    setCrashProtectionEnabled(engineConfig.enableCrashProtection);
     refreshRSFromRegime();
   }, [engineConfig.universe, activeProfile, engineConfig.crashSensitivity]);
 

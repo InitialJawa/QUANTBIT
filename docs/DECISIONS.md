@@ -61,3 +61,13 @@
 - RTI/Stockbit — ditahan sebagai backfill 2015-2020 saja
 - Arsitektur baru: IDX API → warehouse_fundamental_idx.parquet → Factor Engine
 - Perlu build `collectors/fetch_idx_fundamental.py` untuk pull bulanan
+
+## 2026-06-25 — Unified Crisis Signal (Hormati enableCrashProtection)
+**Keputusan:** Semua komponen sekarang menggunakan `isCrisisMode()` dari `marketRegimeEngine.ts` sebagai satu-satunya sumber kebenaran untuk sinyal krisis, bukan hardcoded `MKT.ihsg.monthly < -10`.
+**Alasan:** Saat user mematikan "Proteksi Crash" di settings, 5 dari 6 komponen masih menyalakan sinyal krisis (AlertBanner, Sidebar, MarketTab, SimulationTab, marketRegimeEngine) karena pakai threshold hardcoded yang mengabaikan `enableCrashProtection`. Hanya PortfolioTracker yang sudah benar.
+**Konsekuensi:**
+- Ditambahkan `setCrashProtectionEnabled(bool)` dan `isCrisisMode()` di `marketRegimeEngine.ts`
+- `PortfolioTracker.tsx` memanggil `setCrashProtectionEnabled(engineConfig.enableCrashProtection)` di useEffect
+- `computeMarketRegime()` sekarang cek `_crashProtectionEnabled` sebelum masuk mode GOLD/CASH DEFENSE
+- 4 komponen (App, AppSidebar, MarketTab, SimulationTab) diubah dari `MKT.ihsg.monthly < -10` → `isCrisisMode()`
+- `isCrisisMode()` menggunakan 60-day drawdown (bukan monthly return) agar konsisten dengan `evaluateStrategy()` di engine
