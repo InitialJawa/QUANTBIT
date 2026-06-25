@@ -52,7 +52,7 @@ export function AppHeader({
   onSearchSubmit,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 bg-header-gradient px-2 py-0.5 shrink-0 flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-40 bg-header-gradient px-2 py-1.5 shrink-0 flex items-center justify-between gap-2">
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-2.5 shrink-0">
           <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,13 +68,13 @@ export function AppHeader({
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className={`flex items-center gap-1.5 px-2.5 h-7 rounded text-caption font-medium transition-colors cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3.5 h-9 rounded-md text-label font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === id
                   ? "text-[#00c9a5] bg-[#00c9a5]/10"
                   : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               <span>{label}</span>
             </button>
           ))}

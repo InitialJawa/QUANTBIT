@@ -7,22 +7,23 @@ import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  ChevronDown, 
-  ChevronUp, 
-  Newspaper, 
-  ExternalLink, 
-  MessageSquare, 
-  Send, 
-  Check, 
-  Sparkles, 
-  Globe, 
-  BookOpen, 
+import {
+  TrendingUp,
+  TrendingDown,
+  ChevronDown,
+  ChevronUp,
+  Newspaper,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  Check,
+  Sparkles,
+  Globe,
+  BookOpen,
   Search,
   Eye,
-  Trash2
+  Trash2,
+  BarChart3,
 } from "lucide-react";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
@@ -58,6 +59,14 @@ export function MarketTab({
 }: MarketTabProps) {
   const [marketSubTab, setMarketSubTab] = useState<"overview" | "charts" | "watchlist">("overview");
   const { engineConfig } = useEngineConfig();
+
+  // Match AnalyticsTab sub-tab style (flex-1 + icon + emerald underline).
+  // See AppSidebar.tsx for the same pattern in BacktestContent.
+  const MARKET_SUB_TABS = [
+    { id: "overview" as const, icon: Globe, label: "Overview" },
+    { id: "charts" as const, icon: BarChart3, label: "Charts" },
+    { id: "watchlist" as const, icon: BookOpen, label: "Watchlist" },
+  ];
   const allVisibleStocks = useMemo(
     () => STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s),
     [getDynamicStock]
@@ -278,21 +287,21 @@ export function MarketTab({
         </div>
       )}
 
-      {/* Sub-tab bar */}
-      <div className="flex border-b border-white/[0.04] -mt-1">
-        {(["overview", "charts", "watchlist"] as const).map((id) => (
-            <button
-              key={id}
-              onClick={() => setMarketSubTab(id)}
-              className={`px-2.5 py-1.5 text-caption font-medium rounded-lg transition-colors cursor-pointer ${
-                marketSubTab === id
-                  ? "text-[#00c9a5] bg-[#00c9a5]/10"
-                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
-              }`}
-            >
-              {id === "overview" ? "Overview" : id === "charts" ? "Charts" : "Watchlist"}
-            </button>
-          ))}
+      {/* Sub-tab bar — match AnalyticsTab (flex-1 + icon + emerald underline) */}
+      <div className="flex border-b border-white/[0.04] mb-4">
+        {MARKET_SUB_TABS.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setMarketSubTab(id)}
+            className={`flex-1 py-2.5 text-body font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+              marketSubTab === id
+                ? "text-emerald-500 border-b-2 border-emerald-500"
+                : "text-white/30 hover:text-white/60"
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> {label}
+          </button>
+        ))}
       </div>
 
       {marketSubTab === "overview" && (
