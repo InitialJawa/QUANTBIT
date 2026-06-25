@@ -28,6 +28,7 @@ export interface AILiveContext {
     simulationMode?: "algo" | "custom";
     singleTicker?: string;
     enableCrashProtection?: boolean;
+    dcaActive?: boolean;
     lastBacktestProfile?: {
       id: string;
       name: string;
@@ -77,6 +78,30 @@ export interface AILiveContext {
   activeUniverse?: string[];
   /** Panel/konteks UI yang sedang dibuka (untuk fitur "Jelaskan ini"). */
   uiContext?: string;
+  /** Buy Pressure Score live (Adaptive DCA recommendation) */
+  bps?: {
+    score: number;
+    action: string;
+    deployPct: number;
+    cashPct: number;
+    valid: boolean;
+    reason: string;
+    factors: { valuation: number; momentum: number; breadth: number; drawdown: number; fear: number };
+  };
+  /** Last few fired notification rules (proactive signals that already fired) */
+  alerts?: { rule: string; title: string; message: string; timestamp: number }[];
+  /** Snapshot of backtest draft config (separate from live engineConfig) */
+  backtestConfigSnapshot?: {
+    activeProfileId?: string;
+    simulationMode?: string;
+    universe?: string;
+    topNCount?: number;
+    enableCrashProtection?: boolean;
+    crashSensitivity?: number;
+    dcaActive?: boolean;
+  };
+  /** True iff backtestConfig diverges from engineConfig on critical fields */
+  isBacktestOutOfSync?: boolean;
 }
 
 /**
@@ -196,6 +221,45 @@ export const SYSTEM_KNOWLEDGE: string = [
   "   - Jika X ada di activeUniverse: 'ya, X adalah bagian dari strategi Anda'.",
   "   - Jika X tidak ada di activeUniverse: 'tidak, X tidak dalam strategi custom Anda'.",
   "6. Untuk pertanyaan 'kenapa exit ke emas?': jelaskan safeHavenAsset + IHSG drop > sensitivity.",
+
+  "## 13. TOOL CATALOG (you can call these)",
+  "You have 8 read-only tools and 10 actions available. ALWAYS prefer calling a tool",
+  "over guessing when data is available.",
+  "",
+  "Read-only tools (call immediately, no approval):",
+  "- get_portfolio_state() — return current positions, cash, P&L",
+  "- get_bps_now({ticker?}) — current Buy Pressure Score (market-level)",
+  "- get_regime_details() — regime status, breadth, exit risk",
+  "- get_ticker_metrics({ticker}) — live price, scores, rank",
+  "- get_market_history({days?}) — last N days IHSG",
+  "- get_backtest_config() — current backtest settings",
+  "- get_engine_config() — current live strategy settings",
+  "- get_active_universe() — tickers user cares about (custom mode)",
+  "",
+  "Action tools (REQUIRE user [Approve] before execution):",
+  "- buy_stock({ticker, shares, price?}) — execute buy",
+  "- sell_stock({ticker, shares}) — execute sell",
+  "- move_to_gold({rupiahAmount}) — convert cash to gold",
+  "- set_active_profile({profileId}) — change active weight profile",
+  "- set_universe({universe}) — change universe filter",
+  "- set_topN({n}) — change Top N",
+  "- toggle_dca_active({active}) — toggle DCA recommendations",
+  "- add_to_watchlist({ticker}) / remove_from_watchlist({ticker})",
+  "- sync_backtest_to_portfolio() — push backtest config to live",
+  "",
+  "When you want to call a tool, emit a JSON block on its own line:",
+  '`{"tool_call": {"name": "buy_stock", "args": {"ticker": "BBCA", "shares": 100}}}`',
+  "The system will execute the tool and append the result to context.",
+  "For actions, the system will show an approval card to the user.",
+  "ONLY actions the user explicitly approves will be executed.",
+
+  "## 14. PROACTIVE AGENT RULES",
+  "The system can notify the user about market opportunities.",
+  "Do not attempt to call proactive notifications yourself.",
+  "If the user asks 'what should I do?' or 'any opportunity?' — call",
+  "get_bps_now() and get_regime_details() and respond with analysis.",
+  "Recommend actions, but let the user initiate them through the",
+  "chat (which will show the approval card automatically).",
 ].join("\n");
 
 /** Instruksi perilaku: ringkas default, detail bila diminta. */
@@ -274,6 +338,24 @@ export function formatLiveContext(ctx?: AILiveContext): string {
     );
   } else if (ctx.cash != null) {
     lines.push(`Cash: ${ctx.cash}`);
+  }
+  if (ctx.bps) {
+    const b = ctx.bps;
+    lines.push(
+      `BPS (Adaptive DCA): score=${b.score}/100, action=${b.action}, deployPct=${b.deployPct}%${b.valid ? "" : " [CASH DEFENSE]"}` +
+      (b.reason ? ` — ${b.reason}` : "")
+    );
+  }
+  if (ctx.backtestConfigSnapshot) {
+    const b = ctx.backtestConfigSnapshot;
+    lines.push(
+      `Backtest draft: profile=${b.activeProfileId}, mode=${b.simulationMode}, universe=${b.universe}, topN=${b.topNCount}, ` +
+      `crash=${b.enableCrashProtection ? "on" : "off"} @${b.crashSensitivity}%, dca=${b.dcaActive ? "on" : "off"}` +
+      (ctx.isBacktestOutOfSync ? " (OUT OF SYNC with engineConfig)" : " (synced)")
+    );
+  }
+  if (ctx.alerts?.length) {
+    lines.push(`Active alerts: ${ctx.alerts.map((a) => `[${a.rule}] ${a.title}`).join("; ")}`);
   }
   return lines.length ? lines.join("\n") : "Tidak ada konteks live.";
 }

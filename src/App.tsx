@@ -9,6 +9,8 @@ import { AppSidebar } from "./components/AppSidebar";
 import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
 import { useMarketRegimeSync } from "./hooks/useMarketRegimeSync";
+import { useProactiveAgent } from "./hooks/useProactiveAgent";
+import { AITestHarness } from "./components/AITestHarness";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
@@ -48,6 +50,12 @@ function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: "prod" | 
  *  EngineConfigContext regardless of which tab the user is viewing. */
 function MarketRegimeSyncBridge() {
   useMarketRegimeSync();
+}
+
+/** AI Depth Upgrade: Level 4 — proactive agent monitor.
+ *  Mounts useProactiveAgent() inside all required providers. */
+function ProactiveAgentBridge() {
+  useProactiveAgent();
   return null;
 }
 
@@ -191,12 +199,15 @@ export default function App() {
           searchQuery={ui.searchQuery}
           onSearchChange={ui.setSearchQuery}
           onSearchSubmit={handleSearchSubmit}
+          proactiveAIEnabled={ui.proactiveAIEnabled}
+          setProactiveAIEnabled={ui.setProactiveAIEnabled}
         />
         <EngineConfigProvider>
           <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />
           <MarketRegimeSyncBridge />
           <NotificationProvider>
             <AICockpitProvider>
+              <ProactiveAgentBridge />
             <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
               <AppSidebar
                 activeTab={ui.activeTab}
@@ -345,6 +356,8 @@ export default function App() {
   selectedStock={activeStock}
   portfolio={pm.portfolio}
   cash={pm.cash}
+  pm={pm}
+  getDynamicStock={df.getDynamicStock}
 />
       <StockDrawer
         isOpen={ui.isDrawerOpen}
@@ -364,6 +377,7 @@ export default function App() {
         onToggleWatchlist={pm.handleToggleWatchlist}
         chartTheme={ui.getChartTheme()}
       />
+{import.meta.env?.DEV && <AITestHarness />}
 </AICockpitProvider>
           </NotificationProvider>
         </EngineConfigProvider>

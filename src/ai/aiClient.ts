@@ -6,23 +6,33 @@
 import { api } from "../services/api";
 import { MKT, RS } from "../marketData";
 import { getIhsgDrawdown60 } from "../marketRegimeEngine";
+import { computeBuyPressureFromMarket } from "../engine/buyPressure";
+import { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS } from "./toolCallParser";
 import type { AILiveContext } from "./systemKnowledge";
 import type { StockData, PortfolioItem } from "../types";
+import type { AIToolCall, AIAction } from "../types/ai";
 
-export type AIChatMessage = { role: "user" | "assistant"; content: string };
+// Re-export parser helpers so existing imports (`from "../ai/aiClient"`) keep working.
+export { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS };
+
+export type AIChatMessage = { role: "user" | "assistant" | "tool"; content: string; toolCallId?: string };
 
 export interface BuildContextInputs {
   engineConfig?: any;
+  backtestConfig?: any;
+  isBacktestOutOfSync?: boolean;
   selectedStock?: StockData;
   portfolio?: PortfolioItem[];
   cash?: number;
   /** Label panel yang sedang dibuka — dipakai tombol "Jelaskan ini". */
   uiContext?: string;
+  /** Recent fired notifications (Level 4 proactive) */
+  alerts?: { rule: string; title: string; message: string; timestamp: number }[];
 }
 
 /** Rakit konteks live dari objek-objek app jadi AILiveContext. */
 export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext {
-  const { engineConfig: c, selectedStock: s, portfolio, cash, uiContext } = inputs;
+  const { engineConfig: c, backtestConfig, isBacktestOutOfSync, selectedStock: s, portfolio, cash, uiContext, alerts } = inputs;
 
   const ctx: AILiveContext = {
     regime: {
@@ -63,6 +73,8 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       customUniverse: c.customUniverse,
       enableAdaptiveWeights: c.enableAdaptiveWeights,
       simulationMode: c.simulationMode,
+      enableCrashProtection: c.enableCrashProtection,
+      dcaActive: c.dcaActive,
       lastBacktestProfile: c.lastBacktestProfile ? {
         id: c.lastBacktestProfile.id,
         name: c.lastBacktestProfile.name,
@@ -93,6 +105,41 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
     }
   }
 
+  if (backtestConfig) {
+    ctx.backtestConfigSnapshot = {
+      activeProfileId: backtestConfig.activeProfileId,
+      simulationMode: backtestConfig.simulationMode,
+      universe: backtestConfig.universe,
+      topNCount: backtestConfig.topNCount,
+      enableCrashProtection: backtestConfig.enableCrashProtection,
+      crashSensitivity: backtestConfig.crashSensitivity,
+      dcaActive: backtestConfig.dcaActive,
+    };
+    ctx.isBacktestOutOfSync = !!isBacktestOutOfSync;
+  }
+
+  // BPS (Adaptive DCA) — always include when MKT is loaded.
+  if (typeof MKT.ihsg?.monthly === "number") {
+    const bps = computeBuyPressureFromMarket(
+      MKT.ihsg.monthly,
+      getIhsgDrawdown60(),
+      RS.radar_context?.breadth_above_60 ?? 0,
+      RS.radar_context?.watchlist_count ?? 0,
+      RS.risk ?? 50,
+      50, /* avgValueScore — use 50 as default; precise per-universe score requires leader scan */
+      false,
+    );
+    ctx.bps = {
+      score: bps.score,
+      action: bps.action,
+      deployPct: bps.deployPct,
+      cashPct: bps.cashPct,
+      valid: bps.valid,
+      reason: bps.reason,
+      factors: bps.factors,
+    };
+  }
+
   if (s) {
     ctx.selectedStock = {
       ticker: s.ticker,
@@ -117,6 +164,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
   }
   if (cash != null) ctx.cash = cash;
   if (uiContext) ctx.uiContext = uiContext;
+  if (alerts?.length) ctx.alerts = alerts.slice(0, 5);
 
   return ctx;
 }
@@ -124,6 +172,8 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
 export interface AskAIResult {
   content: string;
   provider: string;
+  /** Tools the model wants to call. Mix of read-only + actions. */
+  toolCalls: AIToolCall[];
 }
 
 /** Kirim percakapan + konteks ke AI unified. */
@@ -132,8 +182,11 @@ export async function askAI(
   context?: AILiveContext
 ): Promise<AskAIResult> {
   const data = await api.post<{ content: string; provider?: string }>("/api/ai/chat", {
-    messages,
+    messages: messages.map((m) => ({ role: m.role, content: m.content })),
     context,
   });
-  return { content: data.content, provider: data.provider || "unknown" };
+  const raw = data.content || "";
+  const provider = data.provider || "unknown";
+  const { cleanText, toolCalls } = extractToolCalls(raw);
+  return { content: cleanText, provider, toolCalls };
 }

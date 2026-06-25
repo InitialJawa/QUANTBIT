@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, History, Search } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, Sparkles } from "lucide-react";
 
 interface AppHeaderProps {
   activeTab: string;
@@ -21,6 +21,8 @@ interface AppHeaderProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onSearchSubmit?: (q: string) => void;
+  proactiveAIEnabled: boolean;
+  setProactiveAIEnabled: (v: boolean) => void;
 }
 
 const TABS = [
@@ -50,6 +52,8 @@ export function AppHeader({
   searchQuery,
   onSearchChange,
   onSearchSubmit,
+  proactiveAIEnabled,
+  setProactiveAIEnabled,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-header-gradient px-2 py-1.5 shrink-0 flex items-center justify-between gap-2">
@@ -181,6 +185,23 @@ export function AppHeader({
                       {activeConfig === c && <span className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
                     </button>
                   ))}
+                </div>
+
+                <div className="h-px bg-white/[0.04] my-0.5" />
+
+                <div className="px-1.5 py-1">
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">AI Agent</div>
+                  <button
+                    onClick={() => setProactiveAIEnabled(!proactiveAIEnabled)}
+                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
+                    title={proactiveAIEnabled ? "Matikan notifikasi peluang pasar" : "Aktifkan notifikasi peluang pasar"}
+                  >
+                    {proactiveAIEnabled ? <Bell className="w-3.5 h-3.5 text-cyan-400" /> : <BellOff className="w-3.5 h-3.5" />}
+                    <span className="flex-1 text-left">Proactive Alerts</span>
+                    <span className={`text-label font-mono ${proactiveAIEnabled ? "text-emerald-400" : "text-white/30"}`}>
+                      {proactiveAIEnabled ? "ON" : "OFF"}
+                    </span>
+                  </button>
                 </div>
 
                 <div className="h-px bg-white/[0.04] my-0.5" />

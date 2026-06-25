@@ -12,6 +12,19 @@ export function useUIState() {
     return (saved === "prod" || saved === "res") ? saved : "prod";
   });
 
+  // Level 4 — proactive AI agent toggle (default ON, persisted in localStorage).
+  const [proactiveAIEnabled, setProactiveAIEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("idx_proactive_ai");
+      return saved === null ? true : saved === "1";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("idx_proactive_ai", proactiveAIEnabled ? "1" : "0"); } catch {}
+  }, [proactiveAIEnabled]);
+
   const [selectedTicker, setSelectedTicker] = useState("BBCA");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "forecast">("chart");
@@ -69,6 +82,7 @@ export function useUIState() {
     isSettingsOpen, setIsSettingsOpen,
     settingsDropdownRef,
     appNotification, setAppNotification,
+    proactiveAIEnabled, setProactiveAIEnabled,
     getChartTheme,
     handleSelectTicker,
     handleChangeActiveTicker,
