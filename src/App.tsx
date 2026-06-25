@@ -201,6 +201,8 @@ export default function App() {
           onSearchSubmit={handleSearchSubmit}
           proactiveAIEnabled={ui.proactiveAIEnabled}
           setProactiveAIEnabled={ui.setProactiveAIEnabled}
+          useDevMockAI={ui.useDevMockAI}
+          setUseDevMockAI={ui.setUseDevMockAI}
         />
         <EngineConfigProvider>
           <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />

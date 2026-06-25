@@ -7,6 +7,7 @@ import { useAICockpit } from "../contexts/AICockpitContext";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import { useAITools, type PortfolioAPI } from "../hooks/useAITools";
+import { useUIState } from "../hooks/useUIState";
 import { api } from "../services/api";
 import type { StockData, PortfolioItem } from "../types";
 import type { AIAction, PendingAction } from "../types/ai";
@@ -51,6 +52,9 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const { pendingExplain, clearExplain, pendingActions, approveAction, rejectAction, addPendingAction, proactiveAlerts, openChatWithPrompt, setOpenChatWithPrompt } = useAICockpit();
   const { engineConfig, backtestConfig, isConfigSynced, setActiveProfile, syncFromBacktest, updateConfigValue } = useEngineConfig();
   const { notifications } = useNotifications();
+  const { useDevMockAI, setUseDevMockAI } = useUIState();
+  // Track consecutive provider failures to suggest dev-mock fallback.
+  const consecutiveFailuresRef = useRef(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<AIChatMessage[]>(loadHistory);
@@ -208,8 +212,32 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       });
       // Strip tool messages when sending to backend (model only sees user/assistant).
       const history = nextMsgs.filter((m) => m.role !== "tool");
-      const result = await askAI(history, ctx);
+      const result = await askAI(history, ctx, { useDevMock: useDevMockAI });
       setProvider(result.provider);
+
+      // Track consecutive provider failures — after 3 fails, surface
+      // a "use dev mock" hint in the chat (only in dev mode).
+      if (result.provider === "none" || result.provider === "error") {
+        consecutiveFailuresRef.current += 1;
+        if (
+          consecutiveFailuresRef.current === 3 &&
+          import.meta.env?.DEV &&
+          !useDevMockAI
+        ) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                "⚠ Semua provider AI gagal (3x berturut-turut). Mungkin Gemini geo-blocked dan tidak ada OPENROUTER_API_KEY.\n\n" +
+                "**Aktifkan `Use Dev Mock`** di Settings → AI Agent untuk testing tanpa API key. " +
+                "Atau tambahkan OPENROUTER_API_KEY di `.env.local` lalu restart dev server.",
+            },
+          ]);
+        }
+      } else {
+        consecutiveFailuresRef.current = 0;
+      }
 
       // Level 2 — execute read-only tool calls immediately.
       // Level 3 — collect action calls into the pending queue.

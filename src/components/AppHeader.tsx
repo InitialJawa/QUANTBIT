@@ -23,6 +23,8 @@ interface AppHeaderProps {
   onSearchSubmit?: (q: string) => void;
   proactiveAIEnabled: boolean;
   setProactiveAIEnabled: (v: boolean) => void;
+  useDevMockAI: boolean;
+  setUseDevMockAI: (v: boolean) => void;
 }
 
 const TABS = [
@@ -54,6 +56,8 @@ export function AppHeader({
   onSearchSubmit,
   proactiveAIEnabled,
   setProactiveAIEnabled,
+  useDevMockAI,
+  setUseDevMockAI,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-header-gradient px-2 py-1.5 shrink-0 flex items-center justify-between gap-2">
@@ -202,6 +206,22 @@ export function AppHeader({
                       {proactiveAIEnabled ? "ON" : "OFF"}
                     </span>
                   </button>
+                  {import.meta.env?.DEV && (
+                    <button
+                      onClick={() => setUseDevMockAI(!useDevMockAI)}
+                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
+                      title={useDevMockAI
+                        ? "Dev mock aktif — Quantbit AI pakai canned responses. Set OPENROUTER_API_KEY lalu matikan toggle ini untuk real AI."
+                        : "Aktifkan canned responses (untuk demo tanpa API key)"
+                      }
+                    >
+                      <Sparkles className={`w-3.5 h-3.5 ${useDevMockAI ? "text-amber-400" : ""}`} />
+                      <span className="flex-1 text-left">Use Dev Mock</span>
+                      <span className={`text-label font-mono ${useDevMockAI ? "text-amber-400" : "text-white/30"}`}>
+                        {useDevMockAI ? "ON" : "OFF"}
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="h-px bg-white/[0.04] my-0.5" />

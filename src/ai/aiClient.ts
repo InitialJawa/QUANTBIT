@@ -8,6 +8,7 @@ import { MKT, RS } from "../marketData";
 import { getIhsgDrawdown60 } from "../marketRegimeEngine";
 import { computeBuyPressureFromMarket } from "../engine/buyPressure";
 import { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS } from "./toolCallParser";
+import { generateMockResponse } from "./devMockAI";
 import type { AILiveContext } from "./systemKnowledge";
 import type { StockData, PortfolioItem } from "../types";
 import type { AIToolCall, AIAction } from "../types/ai";
@@ -176,11 +177,30 @@ export interface AskAIResult {
   toolCalls: AIToolCall[];
 }
 
+export interface AskAIOptions {
+  /** When true, skip the network call and return a canned dev-mock
+   *  response (pattern-matches the user message to emit tool calls).
+   *  Useful when no real AI provider is reachable (e.g. Gemini
+   *  geo-blocked + no OpenRouter/Groq key). */
+  useDevMock?: boolean;
+}
+
 /** Kirim percakapan + konteks ke AI unified. */
 export async function askAI(
   messages: AIChatMessage[],
-  context?: AILiveContext
+  context?: AILiveContext,
+  options: AskAIOptions = {},
 ): Promise<AskAIResult> {
+  if (options.useDevMock) {
+    // Use the most recent user message as input to the mock.
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const mock = generateMockResponse(lastUser?.content || "", context);
+    return {
+      content: mock.content,
+      provider: mock.provider,
+      toolCalls: mock.toolCalls,
+    };
+  }
   const data = await api.post<{ content: string; provider?: string }>("/api/ai/chat", {
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
     context,

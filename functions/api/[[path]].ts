@@ -646,16 +646,36 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
       if (content) return json({ content, provider: p.name });
     }
 
-    const reason = errors.length ? errors.join(" | ") : "No AI provider configured (set GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY di Cloudflare dashboard)";
+    // Build a per-provider diagnostic block so the user knows exactly
+    // which providers were tried and which failed (and why).
+    const tried: string[] = [];
+    if (env.OPENROUTER_API_KEY) tried.push("openrouter");
+    if (env.GROQ_API_KEY) tried.push("groq");
+    if (env.GEMINI_API_KEY) tried.push("gemini");
+
+    const noKeyConfigured = tried.length === 0;
+    const reason = errors.length ? errors.join(" | ") : "No AI provider configured";
+
+    const triedBlock = tried.length
+      ? tried.map((p) => `- **${p}**: gagal`).join("\n")
+      : "- Tidak ada provider yang dikonfigurasi";
+
     return json({
-      content: `Maaf, AI sedang tidak tersedia. Penyebab: Gemini API tidak mendukung lokasi server Cloudflare. 
+      content: `Maaf, AI sedang tidak tersedia.
 
-**Solusi:** Tambah API key alternatif di Cloudflare Dashboard → \`quantbit-terminal\` → Settings → Environment Variables:
+**Provider yang dicoba:**
+${triedBlock}
 
-- **OPENROUTER_API_KEY** (rekomendasi) — daftar gratis di https://openrouter.ai/keys, lalu create key. Ini akan proxy ke Gemini tanpa kendala lokasi.
+**Penyebab:** ${reason}
+
+**Solusi (production — Cloudflare Dashboard):**
+Tambah API key di \`quantbit-terminal\` → Settings → Environment Variables:
+
+- **OPENROUTER_API_KEY** (rekomendasi) — daftar gratis di https://openrouter.ai/keys, lalu create key. OpenRouter proxy ke banyak model (termasuk Gemini) **tanpa kendala lokasi**.
 - **GROQ_API_KEY** — daftar gratis di https://console.groq.com/keys, model \`llama-3.3-70b-versatile\`.
+- **GEMINI_API_KEY** — https://aistudio.google.com/app/apikey. ⚠ Gemini langsung dari Cloudflare edge sering kena geo-block.
 
-Setelah key ditambah, AI akan otomatis pakai provider yang tersedia. (${reason})`,
+Setelah key ditambah, redeploy → AI otomatis pakai provider yang tersedia.${noKeyConfigured ? " Untuk development lokal, tambahkan di `.env.local`." : ""}`,
       provider: "none"
     }, 200);
   } catch (e: any) {

@@ -25,6 +25,22 @@ export function useUIState() {
     try { localStorage.setItem("idx_proactive_ai", proactiveAIEnabled ? "1" : "0"); } catch {}
   }, [proactiveAIEnabled]);
 
+  // Dev-only — use canned AI responses when no real provider is reachable.
+  // Persisted in localStorage so the user doesn't have to re-enable it.
+  const [useDevMockAI, setUseDevMockAI] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("idx_ai_dev_mock");
+      // Default OFF in dev (user can opt in), always OFF in production.
+      if (saved === "1") return true;
+      return false;
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("idx_ai_dev_mock", useDevMockAI ? "1" : "0"); } catch {}
+  }, [useDevMockAI]);
+
   const [selectedTicker, setSelectedTicker] = useState("BBCA");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "forecast">("chart");
@@ -83,6 +99,7 @@ export function useUIState() {
     settingsDropdownRef,
     appNotification, setAppNotification,
     proactiveAIEnabled, setProactiveAIEnabled,
+    useDevMockAI, setUseDevMockAI,
     getChartTheme,
     handleSelectTicker,
     handleChangeActiveTicker,
