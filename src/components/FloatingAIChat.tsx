@@ -201,7 +201,6 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       }
       case "sync_backtest_to_portfolio": {
         const profile = engineConfig.profiles.find((p) => p.id === backtestConfig.activeProfileId)
-          || engineConfig.profiles.find((p) => p.id === "res")
           || engineConfig.profiles[0];
         syncFromBacktest({
           profile,

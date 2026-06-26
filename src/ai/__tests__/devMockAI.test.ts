@@ -120,9 +120,9 @@ describe("devMockAI — action matching", () => {
     const r2 = generateMockResponse("profile bg");
     const r3 = generateMockResponse("set profile prod");
     assert.equal(r1.toolCalls[0].name, "set_active_profile");
-    assert.equal(r1.toolCalls[0].args.profileId, "prod");
-    assert.equal(r2.toolCalls[0].args.profileId, "res");
-    assert.equal(r3.toolCalls[0].args.profileId, "prod");
+    assert.equal(r1.toolCalls[0].args.profileId, "aman");
+    assert.equal(r2.toolCalls[0].args.profileId, "agresif");
+    assert.equal(r3.toolCalls[0].args.profileId, "aman");
   });
 
   it("matches 'universe idx30/idx80/lq45/all' to set_universe", () => {

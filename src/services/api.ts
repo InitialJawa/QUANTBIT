@@ -23,16 +23,16 @@ function devMock(path: string, options: RequestInit): any {
   if (path === "/api/auth/login" && options.method === "POST") {
     if (!IS_DEV) throw new Error("Dev mock disabled in production");
     const body = JSON.parse(options.body as string);
-    return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+    return { user: { id: "dev-user", email: body.email, name: body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "aman" }, session: "dev-session" };
   }
   if (path === "/api/auth/signup" && options.method === "POST") {
     if (!IS_DEV) throw new Error("Dev mock disabled in production");
     const body = JSON.parse(options.body as string);
-    return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod" }, session: "dev-session" };
+    return { user: { id: "dev-user", email: body.email, name: body.name || body.email?.split("@")[0] || "Dev", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "aman" }, session: "dev-session" };
   }
   if (path === "/api/auth/me") {
     if (IS_DEV && getSession() === "dev-session") {
-      return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "prod", engine_config: "{}" } };
+      return { user: { id: "dev-user", email: "demo@quantbit.local", name: "Demo", cash: 100000000, theme: "dark", data_feed: "yahoo", active_config: "aman", engine_config: "{}" } };
     }
     // C9 fix: in production, never accept the dev-session shortcut.
     throw new Error("Not authenticated");

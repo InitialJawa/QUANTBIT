@@ -30,19 +30,18 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
 
-function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: "prod" | "res"; setActiveConfig: (c: "prod" | "res") => void }) {
+function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: string; setActiveConfig: (c: string) => void }) {
   const { engineConfig, setActiveProfile } = useEngineConfig();
-  const ctxActiveConfig: "prod" | "res" = engineConfig.activeProfileId === "res" ? "res" : "prod";
   useEffect(() => {
-    if (activeConfig !== ctxActiveConfig) {
+    if (engineConfig.activeProfileId !== activeConfig) {
       setActiveProfile(activeConfig);
     }
-  }, [activeConfig]);
+  }, [activeConfig, engineConfig.activeProfileId]);
   useEffect(() => {
-    if (ctxActiveConfig !== activeConfig) {
-      setActiveConfig(ctxActiveConfig);
+    if (engineConfig.activeProfileId !== activeConfig) {
+      setActiveConfig(engineConfig.activeProfileId);
     }
-  }, [ctxActiveConfig]);
+  }, [engineConfig.activeProfileId]);
   return null;
 }
 

@@ -127,18 +127,23 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (!parsed.profiles) {
-          parsed.profiles = DEFAULT_PROFILES;
+          parsed.profiles = DEFAULT_PROFILES.map(p => ({ ...p }));
           if (!parsed.activeProfileId) {
             parsed.activeProfileId = "aman";
           }
         } else {
-          // Migrate legacy default profile weights to latest values
-          parsed.profiles = parsed.profiles.map((p: WeightProfile) => {
-            const defaults = DEFAULT_PROFILES.find(d => d.id === p.id);
-            if (defaults) {
-              return { ...defaults };
+          // Drop legacy "prod"/"res" profiles, keep only new IDs or user-defined custom_* profiles
+          parsed.profiles = parsed.profiles
+            .filter((p: WeightProfile) => DEFAULT_PROFILES.some(d => d.id === p.id) || p.id.startsWith("custom_"))
+            .map((p: WeightProfile) => {
+              const defaults = DEFAULT_PROFILES.find(d => d.id === p.id);
+              return defaults ? { ...defaults } : p;
+            });
+          // Ensure all 3 default profiles exist
+          DEFAULT_PROFILES.forEach(d => {
+            if (!parsed.profiles.find((p: WeightProfile) => p.id === d.id)) {
+              parsed.profiles.push({ ...d });
             }
-            return p;
           });
         }
         if (!parsed.simStartDate) parsed.simStartDate = "2021-01-04";
@@ -153,6 +158,12 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
           if (parsed.singleTicker && (!parsed.customUniverse || parsed.customUniverse.length === 0)) {
             parsed.customUniverse = [parsed.singleTicker];
           }
+        }
+        // Migrate legacy "prod"/"res" activeProfileId → new default IDs
+        if (parsed.activeProfileId === "prod") parsed.activeProfileId = "aman";
+        else if (parsed.activeProfileId === "res") parsed.activeProfileId = "agresif";
+        else if (!DEFAULT_PROFILES.some(d => d.id === parsed.activeProfileId) && !parsed.activeProfileId.startsWith("custom_")) {
+          parsed.activeProfileId = "aman";
         }
         return parsed;
       }
@@ -169,6 +180,9 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(saved);
         const merged = { ...createDefaultConfig(), ...parsed };
         if (merged.dcaActive === undefined) merged.dcaActive = true;
+        // Same legacy migration for the backtest draft
+        if (merged.activeProfileId === "prod") merged.activeProfileId = "aman";
+        else if (merged.activeProfileId === "res") merged.activeProfileId = "agresif";
         return merged;
       }
     } catch {}

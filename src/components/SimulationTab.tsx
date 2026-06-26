@@ -214,7 +214,7 @@ export function SimulationTab({
   // was hardcoded to configType=prod, which silently fed QM ranks into BG
   // backtests and vice versa.
   useEffect(() => {
-    const configType = backtestConfig.activeProfileId === "res" ? "res" : "prod";
+    const configType = backtestConfig.activeProfileId === "agresif" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
     api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}`)
       .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
       .catch(() => {

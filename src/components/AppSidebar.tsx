@@ -597,13 +597,16 @@ export function AppSidebar({
         <div className="px-2 py-1.5 bg-white/[0.01] border border-white/[0.03] rounded-lg space-y-0.5">
           <span className="text-label text-tertiary block font-mono">BPS Config (Live)</span>
           <div className="text-caption text-white/70 font-mono">
-            Profile: <span className="text-emerald-400">{activeProfile?.name || engineConfig.activeProfileId.toUpperCase()}</span>
+            Profile: <span className="text-emerald-400">{activeProfile?.name || engineConfig.activeProfileId}</span>
           </div>
           <div className="text-caption text-white/70 font-mono">
             Universe: <span className="text-emerald-400">{engineConfig.universe.toUpperCase()}</span>
           </div>
           <div className="text-caption text-white/70 font-mono">
             Top N: <span className="text-emerald-400">{engineConfig.topNCount}</span>
+          </div>
+          <div className="text-caption text-white/70 font-mono">
+            Q/G/V/M/D: <span className="text-emerald-400">{Math.round((activeProfile?.qualityWeight ?? 0) * 100)}/{Math.round((activeProfile?.growthWeight ?? 0) * 100)}/{Math.round((activeProfile?.valueWeight ?? 0) * 100)}/{Math.round((activeProfile?.momentumWeight ?? 0) * 100)}/{Math.round((activeProfile?.dividendWeight ?? 0) * 100)}</span>
           </div>
           {isConfigSynced === false && (
             <div className="text-label text-amber-400 mt-1 font-mono">⚠ Backtest config differs</div>
@@ -734,6 +737,7 @@ export function AppSidebar({
                 ["growthWeight", "Growth (G)", activeProfile.growthWeight * 100],
                 ["valueWeight", "Value (V)", activeProfile.valueWeight * 100],
                 ["momentumWeight", "Momentum (M)", activeProfile.momentumWeight * 100],
+                ["dividendWeight", "Dividend (D)", activeProfile.dividendWeight * 100],
               ].map(([key, label, val]) => (
                 <div key={key} className="mb-1.5">
                   <div className="flex justify-between text-label mb-0.5">

@@ -7,9 +7,14 @@ export function useUIState() {
   const [activeTab, setActiveTab] = useState<Tab>("market");
   const [hideAlertBanner, setHideAlertBanner] = useState(false);
 
-  const [activeConfig, setActiveConfig] = useState<"prod" | "res">(() => {
-    const saved = localStorage.getItem("idx_activeconfig");
-    return (saved === "prod" || saved === "res") ? saved : "prod";
+  const [activeConfig, setActiveConfig] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem("idx_activeconfig");
+      if (saved === "aman" || saved === "agresif" || saved === "dividen") return saved;
+      if (saved === "prod") return "aman";
+      if (saved === "res") return "agresif";
+    } catch {}
+    return "aman";
   });
 
   // Level 4 — proactive AI agent toggle (default ON, persisted in localStorage).

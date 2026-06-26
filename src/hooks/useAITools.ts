@@ -48,9 +48,10 @@ export interface UseAIToolsParams {
 
 type ToolHandler = (args: any) => Promise<any> | any;
 
-function getProcessedLeadersSafe() {
+function getProcessedLeadersSafe(profileId: string = "aman") {
   try {
-    return getProcessedLeaders(STOCKS_DATA as any, "prod") as any[];
+    const profile = profileId && profileId !== "custom" && !profileId.startsWith("custom_") ? profileId : "aman";
+    return getProcessedLeaders(STOCKS_DATA as any, profile) as any[];
   } catch {
     return [];
   }
@@ -70,13 +71,13 @@ function buildMarketHistory(days: number) {
   };
 }
 
-function buildTickerMetrics(ticker: string) {
+function buildTickerMetrics(ticker: string, profileId: string = "aman") {
   const cleanTicker = ticker.toUpperCase().replace(/\.JK$/, "");
   const stock = STOCKS_DATA.find((s) => s.ticker === cleanTicker || s.ticker === `${cleanTicker}.JK`);
   if (!stock) return { ticker: cleanTicker, found: false };
   const fund = (FD as any)[`${cleanTicker}.JK`] || (FD as any)[cleanTicker] || null;
   const profile = (PF as any)[cleanTicker] || null;
-  const leaders = getProcessedLeadersSafe();
+  const leaders = getProcessedLeadersSafe(profileId);
   const lead = leaders.find((l: any) => (l.ticker || "").toUpperCase().replace(/\.JK$/, "") === cleanTicker);
   return {
     ticker: stock.ticker,
@@ -265,7 +266,7 @@ export function useAITools({ pm, getDynamicStock }: UseAIToolsParams) {
 
     get_ticker_metrics: async ({ ticker }: { ticker: string }) => {
       if (!ticker) return { error: "ticker required" };
-      return buildTickerMetrics(ticker);
+      return buildTickerMetrics(ticker, activeProfile?.id);
     },
 
     get_market_history: async ({ days = 30 }: { days?: number } = {}) =>
