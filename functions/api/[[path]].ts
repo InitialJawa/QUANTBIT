@@ -361,7 +361,31 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
       const row = await env.DB.prepare(
         "SELECT data, last_updated FROM idx_scan_data ORDER BY id DESC LIMIT 1"
       ).first<{ data: string; last_updated: string }>();
-      if (row) return json({ stocks: JSON.parse(row.data), lastUpdated: row.last_updated });
+      if (row) {
+        // D1 data (from runIdx80Scan via Yahoo chart API) is fresh for prices
+        // but lacks fields like dividendYield. Merge with bundled static
+        // idx80_scan.json so missing fields are filled in.
+        const dbStocks: any[] = JSON.parse(row.data);
+        const bundledResp = await env.ASSETS.fetch(new URL("/data/idx80_scan.json", url));
+        const bundledMap: Record<string, any> = {};
+        if (bundledResp.ok) {
+          const bundled: any = await bundledResp.clone().json();
+          for (const s of bundled.stocks || []) {
+            bundledMap[(s.ticker || "").replace(".JK", "")] = s;
+          }
+        }
+        for (const s of dbStocks) {
+          const key = (s.ticker || "").replace(".JK", "");
+          const bund = bundledMap[key];
+          if (!bund) continue;
+          for (const k of ["dividendYield", "peRatio", "pbRatio", "trailingEps", "fiftyDayAverage", "twoHundredDayAverage", "returnOnEquity", "revenueGrowth", "earningsGrowth", "marketCap"]) {
+            if ((s[k] === undefined || s[k] === null) && bund[k] !== undefined) {
+              s[k] = bund[k];
+            }
+          }
+        }
+        return json({ stocks: dbStocks, lastUpdated: row.last_updated });
+      }
       // Fallback to static file
       const resp = await env.ASSETS.fetch(new URL("/data/idx80_scan.json", url));
       if (resp.ok) return resp.clone();
