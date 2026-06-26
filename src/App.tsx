@@ -11,6 +11,7 @@ import { AppHeader } from "./components/AppHeader";
 import { useMarketRegimeSync } from "./hooks/useMarketRegimeSync";
 import { useProactiveAgent } from "./hooks/useProactiveAgent";
 import { AITestHarness } from "./components/AITestHarness";
+import { useNotifications } from "./contexts/NotificationContext";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
@@ -30,18 +31,19 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
 
-function ConfigSync({ activeConfig, setActiveConfig }: { activeConfig: string; setActiveConfig: (c: string) => void }) {
+function ConfigSync() {
   const { engineConfig, setActiveProfile } = useEngineConfig();
+  const { activeConfig, setActiveConfig } = useUIState();
   useEffect(() => {
     if (engineConfig.activeProfileId !== activeConfig) {
       setActiveProfile(activeConfig);
     }
-  }, [activeConfig, engineConfig.activeProfileId]);
+  }, [activeConfig, engineConfig.activeProfileId, setActiveProfile]);
   useEffect(() => {
     if (engineConfig.activeProfileId !== activeConfig) {
       setActiveConfig(engineConfig.activeProfileId);
     }
-  }, [engineConfig.activeProfileId]);
+  }, [engineConfig.activeProfileId, activeConfig, setActiveConfig]);
   return null;
 }
 
@@ -61,9 +63,46 @@ function ProactiveAgentBridge() {
 export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
 
+  if (authLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0d0d0d", color: "#e0e0e0" }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  return (
+    <EngineConfigProvider>
+      <ConfigSync />
+      <MarketRegimeSyncBridge />
+      <NotificationProvider>
+        <AICockpitProvider>
+          <ProactiveAgentBridge />
+          <AppContent logout={logout} />
+        </AICockpitProvider>
+      </NotificationProvider>
+    </EngineConfigProvider>
+  );
+}
+
+/** Inner component — must live inside <NotificationProvider> so it can
+ *  call useNotifications() and pass the notif API into usePortfolioManager.
+ *  Previously App called usePortfolioManager at the top level which threw
+ *  "useNotifications must be used within NotificationProvider". */
+function AppContent({ logout }: { logout: () => void }) {
+  const { user } = useAuth();
+
   const df = useDataFeed();
   const ui = useUIState();
-  const pm = usePortfolioManager(user, df.getDynamicStock, ui.setAppNotification);
+  const notif = useNotifications();
+  const pm = usePortfolioManager(user, df.getDynamicStock, ui.setAppNotification, notif);
 
   useEffect(() => {
     if (!user) return;
@@ -132,21 +171,6 @@ export default function App() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#0d0d0d", color: "#e0e0e0" }}
-      >
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginScreen />;
-  }
-
   return (
     <div
       id="applet-main-canvas"
@@ -211,13 +235,7 @@ export default function App() {
           showToasts={ui.showToasts}
           setShowToasts={ui.setShowToasts}
         />
-        <EngineConfigProvider>
-          <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />
-          <MarketRegimeSyncBridge />
-          <NotificationProvider>
-            <AICockpitProvider>
-              <ProactiveAgentBridge />
-            <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
+        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
               <AppSidebar
                 activeTab={ui.activeTab}
                 isMobileMenuOpen={ui.isMobileMenuOpen}
@@ -387,9 +405,6 @@ export default function App() {
         chartTheme={ui.getChartTheme()}
       />
 {import.meta.env?.DEV && <AITestHarness />}
-</AICockpitProvider>
-          </NotificationProvider>
-        </EngineConfigProvider>
     </div>
   );
 }

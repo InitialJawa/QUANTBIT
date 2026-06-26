@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { MKT } from "../marketData";
 import type { StockData, AnalysisResult, PortfolioItem, WatchlistItem } from "../types";
-import { useNotifications } from "../contexts/NotificationContext";
+import type { NotificationContextType } from "../contexts/NotificationContext";
 
 interface TradeLog {
   id: string;
@@ -18,8 +18,8 @@ export function usePortfolioManager(
   user: any | null,
   getDynamicStock: (ticker: string) => StockData | undefined,
   setAppNotification?: (n: { message: string; type: "success" | "error" | "info" } | null) => void,
+  notif?: NotificationContextType,
 ) {
-  const notif = useNotifications();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [cash, setCash] = useState<number>(100000000);
@@ -116,7 +116,7 @@ export function usePortfolioManager(
       const details = calculateTradeDetails("BUY", ticker, shares, buyPrice);
       if (details.net > cash) {
         setAppNotification?.({ message: `Saldo kas tidak mencukupi untuk membeli ${ticker === "EMAS" ? "Emas" : ticker}!`, type: "error" });
-        notif.addNotification({ title: "Saldo Kurang", message: `Saldo kas tidak mencukupi untuk membeli ${ticker === "EMAS" ? "Emas" : ticker}!`, type: "error" });
+        notif?.addNotification({ title: "Saldo Kurang", message: `Saldo kas tidak mencukupi untuk membeli ${ticker === "EMAS" ? "Emas" : ticker}!`, type: "error" });
         return;
       }
 
@@ -145,7 +145,7 @@ export function usePortfolioManager(
         ? `Berhasil membeli ${shares.toFixed(4)} Gram Emas!`
         : `Berhasil membeli ${shares / 100} Lot ${ticker}!`;
       setAppNotification?.({ message: successMsg, type: "success" });
-      notif.addNotification({ title: ticker === "EMAS" ? "Beli Emas" : `Beli ${ticker}`, message: successMsg, type: "success" });
+      notif?.addNotification({ title: ticker === "EMAS" ? "Beli Emas" : `Beli ${ticker}`, message: successMsg, type: "success" });
     }
 
     const existing = portfolio.find(p => p.ticker === ticker);
@@ -169,7 +169,7 @@ export function usePortfolioManager(
     try { await api.del("/api/portfolio", { ticker }); } catch { /* ignore */ }
     setPortfolio(prev => prev.filter(p => p.ticker !== ticker));
     setAppNotification?.({ message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
-    notif.addNotification({ title: `Hapus ${ticker}`, message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
+    notif?.addNotification({ title: `Hapus ${ticker}`, message: `${ticker} berhasil dihapus dari portofolio.`, type: "info" });
   };
 
   const handleClearPortfolio = async () => {
@@ -180,7 +180,7 @@ export function usePortfolioManager(
     }
     setPortfolio([]);
     setAppNotification?.({ message: `Semua ${tickers.length} posisi portofolio berhasil dihapus.`, type: "info" });
-    notif.addNotification({ title: "Clear Portfolio", message: `Semua ${tickers.length} posisi portofolio berhasil dihapus.`, type: "info" });
+    notif?.addNotification({ title: "Clear Portfolio", message: `Semua ${tickers.length} posisi portofolio berhasil dihapus.`, type: "info" });
   };
 
   const handleSellTransaction = async (ticker: string, sharesToSell: number, silent: boolean = false) => {
@@ -215,7 +215,7 @@ export function usePortfolioManager(
           ? `Berhasil menjual ${sharesToSell.toFixed(4)} gram Emas!`
           : `Berhasil menjual ${sharesToSell / 100} Lot ${ticker}!`;
         setAppNotification?.({ message: successMsg, type: "success" });
-        notif.addNotification({ title: ticker === "EMAS" ? `Jual Emas` : `Jual ${ticker}`, message: successMsg, type: "success" });
+        notif?.addNotification({ title: ticker === "EMAS" ? `Jual Emas` : `Jual ${ticker}`, message: successMsg, type: "success" });
       }
 
       if (existing.shares <= sharesToSell) {
@@ -278,7 +278,7 @@ export function usePortfolioManager(
 
     if (details.net > cash) {
       setAppNotification?.({ message: "Saldo kas tidak mencukupi untuk membeli emas!", type: "error" });
-      notif.addNotification({ title: "Saldo Kurang", message: "Saldo kas tidak mencukupi untuk membeli emas!", type: "error" });
+      notif?.addNotification({ title: "Saldo Kurang", message: "Saldo kas tidak mencukupi untuk membeli emas!", type: "error" });
       return;
     }
 
@@ -301,7 +301,7 @@ export function usePortfolioManager(
     api.post("/api/trade-logs", newLog).catch(() => {});
     setTradeLogs(prev => [newLog, ...prev]);
     setAppNotification?.({ message: `Berhasil membeli ${grams.toFixed(4)} gram Emas!`, type: "success" });
-    notif.addNotification({ title: "Beli Emas", message: `Berhasil membeli ${grams.toFixed(4)} gram Emas!`, type: "success" });
+    notif?.addNotification({ title: "Beli Emas", message: `Berhasil membeli ${grams.toFixed(4)} gram Emas!`, type: "success" });
   };
 
   const handleSellGoldToCashInput = (enteredVal: number) => {
@@ -327,7 +327,7 @@ export function usePortfolioManager(
     api.post("/api/trade-logs", newLog).catch(() => {});
     setTradeLogs(prev => [newLog, ...prev]);
     setAppNotification?.({ message: `Berhasil mencairkan ${enteredVal} gram Emas!`, type: "success" });
-    notif.addNotification({ title: "Jual Emas", message: `Berhasil mencairkan ${enteredVal} gram Emas!`, type: "success" });
+    notif?.addNotification({ title: "Jual Emas", message: `Berhasil mencairkan ${enteredVal} gram Emas!`, type: "success" });
   };
 
   const handleGenerateAIReport = async (stock: StockData, customFocus?: string) => {
