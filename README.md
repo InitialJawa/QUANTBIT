@@ -674,7 +674,7 @@ QUANTBIT/
 
 ## 📜 Pesan Untuk Pengembang Berikutnya (LEGACY NOTE)
 
-> *Ditulis oleh maintainer sebelum移交 project ini. Kalau kamu menemukan repo ini dan pemimpin sebelumnya sudah "angkat tangan" karena pusing — kamu tidak sendirian. Tapi sebelum nyerah, baca dulu ini.*
+> *Ditulis oleh maintainer sebelum project ini. Kalau kamu menemukan repo ini dan pemimpin sebelumnya sudah "angkat tangan" karena pusing — kamu tidak sendirian. Tapi sebelum nyerah, baca dulu ini.*
 
 ### Apa yang terjadi?
 
