@@ -19,7 +19,9 @@ import {
   FileSpreadsheet,
   AlertCircle,
   AlertTriangle,
-  Download
+  Download,
+  ShieldAlert,
+  Wallet
 } from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
@@ -1057,6 +1059,48 @@ export function SimulationTab({
                       <span className="text-caption font-mono text-[#A0A0A0] block">
                         Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
+                    </div>
+
+                    {/* Final state indicator — what is the algo actually holding at the END? */}
+                    <div className={`p-4 rounded-xl space-y-1.5 border ${
+                      backtestResult.finalInCrashState
+                        ? "bg-amber-500/[0.06] border-amber-500/25"
+                        : Object.keys(backtestResult.finalPositions || {}).length > 0
+                          ? "bg-emerald-500/[0.04] border-emerald-500/20"
+                          : "bg-white/[0.02] border-white/10"
+                    }`}>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Status Akhir Backtest</span>
+                      {backtestResult.finalInCrashState ? (
+                        <>
+                          <div className="text-sm font-black font-mono text-amber-400 flex items-center gap-1.5">
+                            <ShieldAlert className="w-4 h-4" /> Di Safe Haven
+                          </div>
+                          <span className="text-caption font-mono text-white/50 block">
+                            Crash #{(backtestResult.crashCount ?? 0)} aktif. Saham sudah dilikuidasi, modal di EMAS.
+                          </span>
+                        </>
+                      ) : Object.keys(backtestResult.finalPositions || {}).length > 0 ? (
+                        <>
+                          <div className="text-sm font-black font-mono text-emerald-400 flex items-center gap-1.5">
+                            <Briefcase className="w-4 h-4" /> Di {Object.keys(backtestResult.finalPositions).length} Saham
+                          </div>
+                          <span className="text-caption font-mono text-white/50 block">
+                            {backtestResult.crashCount
+                              ? `Recovered dari ${backtestResult.crashCount} crash. `
+                              : "Tidak ada crash trigger. "}
+                            Top: {Object.keys(backtestResult.finalPositions).slice(0, 3).join(", ")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-sm font-black font-mono text-white/60 flex items-center gap-1.5">
+                            <Wallet className="w-4 h-4" /> 100% Kas
+                          </div>
+                          <span className="text-caption font-mono text-white/50 block">
+                            Modal mengendap. Tidak ada posisi aktif.
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     <div className="p-4 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl space-y-1.5">

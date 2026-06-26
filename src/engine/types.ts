@@ -107,6 +107,18 @@ export interface BacktestResult {
   bpsHistory?: BpsSnapshot[];
   /** Total cash deployed into positions (Adaptive DCA tracks this explicitly). */
   totalDeployed?: number;
+  /** Final stock positions held at end of backtest (empty if in crash state). */
+  finalPositions?: Record<string, number>;
+  /** Final gold grams held at end of backtest. */
+  finalGoldGrams?: number;
+  /** Final residual cash at end of backtest. */
+  finalCash?: number;
+  /** True if at least one crash protection trigger fired during the period. */
+  crashTriggered?: boolean;
+  /** Total number of crash triggers fired. */
+  crashCount?: number;
+  /** True if backtest ended while still in crash state (i.e., still holding safe haven). */
+  finalInCrashState?: boolean;
 }
 
 export interface StrategiesInput {

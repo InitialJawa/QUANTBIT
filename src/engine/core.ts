@@ -130,6 +130,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   let goldGrams = 0;
   let inCrashState = false;
   let crashCooldown = 0;
+  let crashCount = 0;
   let totalTransactionVolume = initialAlloc.totalVolume;
   let lastRebalanceMonth = new Date(day0.date).getMonth();
   let pendingTickers = [...initialAlloc.pendingTickers];
@@ -294,6 +295,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       totalTransactionVolume += liq.totalVolume;
 
       inCrashState = true;
+      crashCount += 1;
 
       if (config.safeHavenAsset === "emas") {
         const gold = computeGoldPurchase(cash, day.goldPrice);
@@ -570,6 +572,12 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     chartData,
     bpsHistory: bpsHistory.length > 0 ? bpsHistory : undefined,
     totalDeployed: config.simulationMode === "adaptive_dca" ? totalDeployed : undefined,
+    finalPositions: positions,
+    finalGoldGrams: goldGrams,
+    finalCash: cash,
+    crashTriggered: crashCount > 0,
+    crashCount,
+    finalInCrashState: inCrashState,
   };
 }
 
