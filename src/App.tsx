@@ -13,6 +13,7 @@ import { useProactiveAgent } from "./hooks/useProactiveAgent";
 import { AITestHarness } from "./components/AITestHarness";
 import { BackToTop } from "./components/BackToTop";
 import { useNotifications } from "./contexts/NotificationContext";
+import { useShortcuts } from "./hooks/useShortcuts";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
@@ -95,6 +96,14 @@ function AppContent({ logout }: { logout: () => void }) {
   const pm = usePortfolioManager(user, df.getDynamicStock, ui.setAppNotification, notif);
   // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
   const { engineConfig, setActiveProfile } = useEngineConfig();
+
+  // A2 — Keyboard shortcuts: 1/2/3/4 switch tabs, / focus search, Esc close drawers/modals
+  useShortcuts({
+    "1": () => ui.setActiveTab("market"),
+    "2": () => ui.setActiveTab("portfolio"),
+    "3": () => ui.setActiveTab("backtest"),
+    "4": () => ui.setActiveTab("analytics"),
+  });
 
   useEffect(() => {
     if (!user) return;

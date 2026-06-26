@@ -82,6 +82,8 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 ## Child DOX Index
 - `src/components/` — React UI components
 - `src/components/BackToTop.tsx` — Floating scroll-to-top button, mounted di AppContent
+- `src/components/ConfirmModal.tsx` — Reusable confirmation dialog (danger/warning/info variants)
+- `src/components/LastUpdatedChip.tsx` — "Updated 14:23 WIB · 5 menit lalu" chip dengan auto-refresh
 - `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
 - `src/components/AIActionApprovalCard.tsx` — Inline approval card for AI-suggested actions (Level 3)
 - `src/components/_archive/` — Archived dead components (DashboardGrid.tsx)
@@ -89,6 +91,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/contexts/EngineConfigContext.tsx` — **Single source of truth** for all strategy settings (activeProfileId, profiles, universe, topN, simulationMode, customUniverse, adaptiveWeights, crash settings)
 - `src/contexts/NotificationContext.tsx` — Global notification system. API: `notifications`, `addNotification`, `fireRule` (3 method, slimmed 2026-06-26)
 - `src/hooks/` — Custom React hooks
+- `src/hooks/useShortcuts.ts` — Global keyboard shortcuts (1/2/3/4 tabs, ignores input focus)
 - `src/hooks/useAITools.ts` — AI tool + action registry (Levels 2+3)
 - `src/hooks/useProactiveAgent.ts` — Proactive agent monitor (Level 4). Rule 6 pakai `getIhsgDrawdown60()` (FASE 1.1)
 - `src/ai/` — AI client and system knowledge

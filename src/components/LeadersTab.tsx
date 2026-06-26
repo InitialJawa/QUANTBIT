@@ -3,7 +3,7 @@ import { L, CW_MAP, CW_AMAN, EX, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter } from "lucide-react";
+import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter, Download } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
@@ -232,6 +232,41 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
               <LayoutGrid className="w-3 h-3" /> Cards
             </button>
           </div>
+
+          {/* E5 — Export CSV */}
+          <button
+            onClick={() => {
+              const rows = [
+                ["Rank", "Ticker", "Name", "Score", "Quality", "Growth", "Value", "Momentum", "Dividend", "InPortfolio", "InWatchlist"],
+                ...filteredLeaders.map((item, idx) => [
+                  String(idx + 1),
+                  item.ticker,
+                  (item as any).name || "",
+                  item.score.toFixed(1),
+                  (item as any).quality?.toFixed?.(1) ?? "",
+                  (item as any).growth?.toFixed?.(1) ?? "",
+                  (item as any).value?.toFixed?.(1) ?? "",
+                  (item as any).momentum?.toFixed?.(1) ?? "",
+                  (item as any).dividend?.toFixed?.(1) ?? "",
+                  portfolio.some(p => p.ticker === item.ticker) ? "Yes" : "No",
+                  watchlist.some(w => w.ticker === item.ticker) ? "Yes" : "No",
+                ]),
+              ];
+              const csv = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `quantbit_leaders_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            disabled={filteredLeaders.length === 0}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            title="Export ke CSV"
+          >
+            <Download className="w-3 h-3" /> CSV
+          </button>
         </div>
 
       </div>

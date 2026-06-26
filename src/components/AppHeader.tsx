@@ -35,10 +35,10 @@ interface AppHeaderProps {
 }
 
 const TABS = [
-  { id: "market", icon: Activity, label: "Pasar" },
-  { id: "portfolio", icon: Briefcase, label: "Portofolio" },
-  { id: "analytics", icon: BarChart3, label: "Analitik" },
-  { id: "backtest", icon: History, label: "Backtest" },
+  { id: "market", icon: Activity, label: "Pasar", shortcut: "1" },
+  { id: "portfolio", icon: Briefcase, label: "Portofolio", shortcut: "2" },
+  { id: "analytics", icon: BarChart3, label: "Analitik", shortcut: "4" },
+  { id: "backtest", icon: History, label: "Backtest", shortcut: "3" },
 
 ] as const;
 
@@ -83,10 +83,11 @@ export function AppHeader({
         </span>
 
         <div className="flex items-center gap-0.5 border-l border-white/[0.06] pl-3 ml-1">
-          {TABS.map(({ id, icon: Icon, label }) => (
+          {TABS.map(({ id, icon: Icon, label, shortcut }) => (
             <button
               key={id}
               onClick={() => onTabChange(id)}
+              title={`${label} (tekan ${shortcut})`}
               className={`flex items-center gap-2 px-3.5 h-9 rounded-md text-label font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === id
                   ? "text-[#00c9a5] bg-[#00c9a5]/10"
@@ -95,6 +96,9 @@ export function AppHeader({
             >
               <Icon className="w-4 h-4" />
               <span>{label}</span>
+              <kbd className="hidden lg:inline-block text-[9px] font-mono text-white/20 border border-white/10 rounded px-1 py-0.5 leading-none">
+                {shortcut}
+              </kbd>
             </button>
           ))}
         </div>
@@ -105,11 +109,11 @@ export function AppHeader({
         {/* FASE 1.4 — Total Wealth (stocks + cash + gold). Klik = buka tab Portfolio. */}
         <button
           onClick={() => onTabChange("portfolio")}
-          title="Total Wealth = Saham + Kas + Emas. Klik untuk buka Portfolio."
-          className="hidden md:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-emerald-500/[0.08] border border-emerald-500/15 hover:bg-emerald-500/[0.14] transition-colors cursor-pointer"
+          title="Total Wealth = Saham + Kas + Emas. Klik untuk buka Portofolio."
+          className="flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-emerald-500/[0.08] border border-emerald-500/15 hover:bg-emerald-500/[0.14] transition-colors cursor-pointer"
         >
           <Wallet className="w-3 h-3 text-emerald-400" />
-          <span className="text-caption font-mono font-bold text-emerald-300">
+          <span className="text-caption font-mono font-bold text-emerald-300 whitespace-nowrap">
             {formatRupiahShort(totalWealth(portfolio, cash, getDynamicStock))}
           </span>
         </button>

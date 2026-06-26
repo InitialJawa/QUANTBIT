@@ -28,6 +28,7 @@ import {
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { getDataStatus } from "../utils/getDataStatus";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
+import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 
 interface MarketTabProps {
@@ -599,7 +600,10 @@ export function MarketTab({
         </div>
       </motion.div>
 
-      <h3 className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 px-1 pt-2 flex items-center gap-1.5">Ringkasan Parameter Real-Time<ExplainButton label="Ringkasan Parameter Real-Time (regime, breadth, exit, IHSG vs MA20/MA50)" /></h3>
+      <div className="flex items-center justify-between gap-2 px-1 pt-2">
+        <h3 className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 flex items-center gap-1.5">Ringkasan Parameter Real-Time<ExplainButton label="Ringkasan Parameter Real-Time (regime, breadth, exit, IHSG vs MA20/MA50)" /></h3>
+        <LastUpdatedChip iso={MKT.market_last_update} />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">

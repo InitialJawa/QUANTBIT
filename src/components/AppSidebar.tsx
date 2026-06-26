@@ -9,6 +9,7 @@ import { ManageProfilesModal } from "./ManageProfilesModal";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { ExplainButton } from "./ExplainButton";
 import { MultiSearchableSelect } from "./MultiSearchableSelect";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -64,6 +65,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const isIHSGInCrisis = isCrisisMode();
   const [showProfileManager, setShowProfileManager] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const totalInvestment = portfolio.reduce((sum, p) => sum + p.shares * p.buyPrice, 0);
   const totalCurrentValue = portfolio.reduce((sum, p) => {
@@ -509,12 +511,15 @@ export function AppSidebar({
               <span className="text-caption text-secondary">{totalStocks > 0 ? ((winners / totalStocks) * 100).toFixed(0) : 0}%</span>
             </div>
             {totalStocks > 0 && (
-              <button
-                onClick={onClearPortfolio}
-                className="w-full mt-1 py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-white/[0.03] hover:bg-rose-900/20 rounded-lg border border-white/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
-              >
-                Reset Portofolio
-              </button>
+              <div className="mt-2 pt-2 border-t border-rose-500/20">
+                <span className="text-label font-bold uppercase tracking-widest text-rose-400/60 block mb-1">Danger Zone</span>
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  className="w-full py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-white/[0.03] hover:bg-rose-900/20 rounded-lg border border-white/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
+                >
+                  Reset Portofolio
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1089,6 +1094,21 @@ export function AppSidebar({
         )}
       </aside>
       {showProfileManager && <ManageProfilesModal onClose={() => setShowProfileManager(false)} />}
+      <ConfirmModal
+        open={showResetConfirm}
+        title="Reset Portofolio"
+        message={
+          <>
+            Tindakan ini akan menghapus <strong>SEMUA posisi saham</strong> dari
+            portofolio Anda. Tindakan ini <strong>tidak bisa dibatalkan</strong>.
+            Lanjutkan?
+          </>
+        }
+        confirmLabel="Hapus Permanen"
+        variant="danger"
+        onConfirm={() => onClearPortfolio?.()}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { 
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   TrendingUp, 
@@ -17,6 +18,7 @@ import {
   Percent, 
   FileSpreadsheet,
   AlertCircle,
+  AlertTriangle,
   Download
 } from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
@@ -239,6 +241,24 @@ export function SimulationTab({
   const [backtestProgress, setBacktestProgress] = useState(0);
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
   const [baselineResults, setBaselineResults] = useState<BaselineResult[]>([]);
+
+  // D7 — track last-run config so we can show "Config changed" banner
+  const lastRunConfigRef = useRef<string>("");
+  const configFingerprint = useMemo(() => JSON.stringify({
+    profile: backtestConfig.activeProfileId,
+    mode: backtestConfig.simulationMode,
+    universe: backtestConfig.universe,
+    topN: backtestConfig.topNCount,
+    capital: backtestConfig.algoCapital,
+    start: backtestConfig.simStartDate,
+    end: backtestConfig.simEndDate,
+    crash: backtestConfig.crashSensitivity,
+    trigger: backtestConfig.singleSellTrigger,
+    buffer: backtestConfig.reserveBufferPct,
+  }), [backtestConfig]);
+  const configChanged =
+    lastRunConfigRef.current !== "" &&
+    lastRunConfigRef.current !== configFingerprint;
 
   const rankChartData = useMemo(() => {
     if (!backtestResult || !backtestResult.chartData) return [];
@@ -519,6 +539,7 @@ export function SimulationTab({
 
       setBacktesting(false);
       setBacktestProgress(100);
+      lastRunConfigRef.current = configFingerprint;
     } catch (err: any) {
       console.error("Backtest failed:", err);
       alert(err.message || "Backtest gagal. Periksa tanggal mulai.");
@@ -604,7 +625,25 @@ export function SimulationTab({
 
   return (
     <div className="space-y-6">
-      
+      {/* D7 — Config changed banner */}
+      {configChanged && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-caption text-amber-200 font-sans leading-snug">
+              <strong>Config berubah.</strong> Hasil di bawah belum di-update. Klik Jalankan untuk lihat hasil terbaru.
+            </span>
+          </div>
+          <button
+            onClick={() => handleRunAlgoBacktest()}
+            disabled={isBacktesting || historicalData.length === 0}
+            className="shrink-0 px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-amber-500 hover:bg-amber-400 text-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            {isBacktesting ? "Berjalan..." : "Jalankan"}
+          </button>
+        </div>
+      )}
+
       {/* 1. Header Information Panel */}
       <div className="p-5 md:p-6 bg-[#050505] border border-white/[0.03] rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -619,7 +658,16 @@ export function SimulationTab({
         </div>
         
         {!hideTabs && (
-          <div className="flex border-b border-white/[0.04] self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto md:min-w-[280px]">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto">
+            {/* D1 — Run button inside tab */}
+            <button
+              onClick={() => handleRunAlgoBacktest()}
+              disabled={isBacktesting || historicalData.length === 0}
+              className="px-4 py-2 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+            >
+              {isBacktesting ? `Berjalan ${backtestProgress}%` : "Jalankan Backtest"}
+            </button>
+            <div className="flex border-b border-white/[0.04] w-full md:w-auto md:min-w-[200px]">
             <button
               onClick={() => {
                 setActiveSubTab("algo");
@@ -645,6 +693,7 @@ export function SimulationTab({
             >
               <Coins className="w-3.5 h-3.5" /> Historis
             </button>
+            </div>
           </div>
         )}
       </div>
@@ -1383,10 +1432,17 @@ export function SimulationTab({
 
                 </div>
               ) : (
-                <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-2">
+                <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-3">
                   <span className="text-2xl">⚡</span>
                   <p className="text-xs text-white/50 font-sans">Belum ada hasil backtest.</p>
-                  <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Silakan klik tombol <strong className="text-emerald-400">JALANKAN QUANT BACKTEST</strong> untuk menghitung trajectory rotasi portofolio Anda.</p>
+                  <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Klik tombol di bawah atau gunakan tombol "Jalankan Backtest" di header untuk menghitung trajectory rotasi portofolio Anda.</p>
+                  <button
+                    onClick={() => handleRunAlgoBacktest()}
+                    disabled={isBacktesting || historicalData.length === 0}
+                    className="mt-2 px-4 py-2 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  >
+                    {isBacktesting ? "Berjalan..." : "Jalankan Backtest"}
+                  </button>
                 </div>
               )}
 

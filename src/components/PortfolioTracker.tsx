@@ -47,6 +47,8 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
+type SortKey = "ticker" | "rank" | "shares" | "buyPrice" | "currentPrice" | "valueNow" | "profitOrLoss" | "percentChange" | "annualDividend" | "dividendYield";
+
 interface PortfolioTrackerProps {
   portfolio: PortfolioItem[];
   watchlist: WatchlistItem[];
@@ -374,6 +376,43 @@ export function PortfolioTracker({
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
+  // B2 — Holdings table: text filter + column sort
+  const [holdingsFilter, setHoldingsFilter] = useState("");
+  const [holdingsSort, setHoldingsSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
+    key: "valueNow",
+    dir: "desc",
+  });
+  const sortedEnrichedPortfolio = useMemo(() => {
+    const f = holdingsFilter.trim().toLowerCase();
+    const filtered = f
+      ? enrichedPortfolio.filter(
+          (it) => it.ticker.toLowerCase().includes(f) || it.companyName.toLowerCase().includes(f),
+        )
+      : enrichedPortfolio;
+    const dir = holdingsSort.dir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = a[holdingsSort.key];
+      const bv = b[holdingsSort.key];
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }, [enrichedPortfolio, holdingsFilter, holdingsSort]);
+
+  const toggleSort = (key: SortKey) => {
+    setHoldingsSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" }));
+  };
+  const SortHeader = ({ k, label, align = "right" }: { k: SortKey; label: string; align?: "left" | "center" | "right" }) => (
+    <th
+      onClick={() => toggleSort(k)}
+      className={`pb-3 px-3 font-sans cursor-pointer select-none hover:text-white/60 transition-colors text-${align}`}
+    >
+      {label}
+      {holdingsSort.key === k && (
+        <span className="ml-1 text-emerald-400">{holdingsSort.dir === "asc" ? "↑" : "↓"}</span>
+      )}
+    </th>
+  );
+
   const COLORS = [
     "#10B981",
     "#3B82F6",
@@ -384,6 +423,9 @@ export function PortfolioTracker({
     "#14B8A6",
     "#6366F1",
   ];
+
+  // B5 — track which warnings user has dismissed in this session
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
 
   const portfolioWarnings = enrichedPortfolio.filter((item) => {
     const liveStock = visibleStocks.find((s) => s.ticker === item.ticker);
@@ -403,6 +445,8 @@ export function PortfolioTracker({
 
   // Automated Rebalancing Alerts Generator
   const topNTargetStocks = processedLeaders.slice(0, engineConfig.topNCount);
+
+  const visibleWarnings = portfolioWarnings.filter((w) => !dismissedWarnings.has(w.ticker));
 
   // D2 fix: memoize the activeAlerts IIFE so the 200+ lines of alert
   // generation only re-runs when one of its inputs changes (not on every
@@ -769,15 +813,26 @@ export function PortfolioTracker({
         </div>
       )}
 
-      {portfolioWarnings.length > 0 && (
+      {visibleWarnings.length > 0 && (
         <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
-          <div className="flex items-center gap-2 text-rose-400">
-            <AlertTriangle className="w-5 h-5 animate-pulse" />
-            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
-              Peringatan Portofolio: Sinyal Keluar / Turun Peringkat
-              <ExplainButton label="Rebalancing & Exit Alerts (singleSellTrigger, reserveBufferPct, Exit Ops EXIT/EXIT RISK)" />
-            </h3>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-rose-400">
+              <AlertTriangle className="w-5 h-5 animate-pulse" />
+              <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
+                Peringatan Portofolio: Sinyal Keluar / Turun Peringkat
+                <ExplainButton label="Rebalancing & Exit Alerts (singleSellTrigger, reserveBufferPct, Exit Ops EXIT/EXIT RISK)" />
+              </h3>
+            </div>
+            {visibleWarnings.length > 1 && (
+              <button
+                onClick={() => setDismissedWarnings(new Set(visibleWarnings.map((w) => w.ticker)))}
+                className="text-caption text-rose-300/60 hover:text-rose-300 font-bold uppercase tracking-widest shrink-0"
+                title="Tandai semua sebagai sudah dibaca"
+              >
+                Tandai Dibaca
+              </button>
+            )}
           </div>
           <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
             Sistem mendeteksi satu atau lebih saham dalam portofolio Anda telah
@@ -821,9 +876,17 @@ export function PortfolioTracker({
                   <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-rose-500/20">
                     {item.ticker}
                   </div>
-                  <span className="text-xs text-rose-300 font-semibold">
+                  <span className="text-xs text-rose-300 font-semibold flex-1">
                     {reason}
                   </span>
+                  <button
+                    onClick={() => setDismissedWarnings((prev) => new Set(prev).add(item.ticker))}
+                    className="text-rose-300/40 hover:text-rose-300 text-caption font-bold px-1.5 py-0.5 rounded transition-colors shrink-0"
+                    title="Tandai sudah dibaca"
+                    aria-label={`Dismiss warning for ${item.ticker}`}
+                  >
+                    ×
+                  </button>
                 </div>
               );
             })}
@@ -975,14 +1038,22 @@ export function PortfolioTracker({
 
           {/* LEFT: HOLDING SAHAM AKTIF */}
           <div className="flex-1 min-w-0 p-4 space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.05]">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.05] gap-2">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-white/50" />
                 Holding Saham Aktif
               </h3>
-              <span className="text-caption font-bold font-mono text-white/40 bg-white/5 px-2 py-1 rounded">
-                {portfolio.length} Tickers
-              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  value={holdingsFilter}
+                  onChange={(e) => setHoldingsFilter(e.target.value)}
+                  placeholder="Filter ticker / nama..."
+                  className="w-32 sm:w-40 h-7 px-2 text-caption bg-white/[0.04] border border-white/[0.06] rounded text-white/70 placeholder:text-white/20 outline-none focus:border-white/20"
+                />
+                <span className="text-caption font-bold font-mono text-white/40 bg-white/5 px-2 py-1 rounded whitespace-nowrap">
+                  {sortedEnrichedPortfolio.length}/{portfolio.length}
+                </span>
+              </div>
             </div>
 
             {enrichedPortfolio.length === 0 ? (
@@ -1009,21 +1080,21 @@ export function PortfolioTracker({
                 </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
                 <table className="w-full text-left min-w-max border-collapse">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-[#050505]">
                     <tr className="border-b border-white/[0.05] text-label font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">
-                      <th className="pb-3 pr-3 font-sans">Emiten Saham</th>
-                      <th className="pb-3 px-3 text-center font-sans">Model Rank</th>
-                      <th className="pb-3 px-3 text-right font-sans">Volume (Lembar)</th>
-                      <th className="pb-3 px-3 text-right font-sans">Entry vs Live (Rp)</th>
-                      <th className="pb-3 pl-3 text-right font-sans">Net Value (Rp) &amp; P&amp;L</th>
-                      <th className="pb-3 pl-3 text-right font-sans hidden md:table-cell">Dividen/thn</th>
+                      <SortHeader k="ticker" label="Emiten Saham" align="left" />
+                      <SortHeader k="rank" label="Model Rank" align="center" />
+                      <SortHeader k="shares" label="Volume (Lembar)" align="right" />
+                      <SortHeader k="currentPrice" label="Entry vs Live (Rp)" align="right" />
+                      <SortHeader k="valueNow" label="Net Value (Rp) & P&L" align="right" />
+                      <SortHeader k="annualDividend" label="Dividen/thn" align="right" />
                       <th className="pb-3 w-[110px]"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05] text-body">
-                    {enrichedPortfolio.map((item, index) => {
+                    {sortedEnrichedPortfolio.map((item, index) => {
                       const isPos = item.profitOrLoss >= 0;
                       return (
                         <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
@@ -1078,7 +1149,7 @@ export function PortfolioTracker({
                               {isPos ? "+" : ""}{item.profitOrLoss.toLocaleString()} ({isPos ? "+" : ""}{item.percentChange.toFixed(1)}%)
                             </div>
                           </td>
-                          <td className="py-3.5 pl-3 text-right hidden md:table-cell">
+                          <td className="py-3.5 pl-3 text-right">
                             {item.dividendYield > 0 ? (
                               <>
                                 <div className="text-emerald-400 font-bold text-xs font-mono">

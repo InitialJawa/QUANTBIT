@@ -5,7 +5,7 @@
 | Tanggal | 2026-06-26 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | UI/UX Polish + Color Consolidation (selesai 2026-06-26) |
+| Sprint | UX Phase 2 — Power Features (selesai 2026-06-26) |
 
 ## Active Architecture
 
@@ -186,3 +186,52 @@ in the notification loop. (Tidak berubah dari sesi sebelumnya.)
 - `npx tsc --noEmit` PASS 0 errors
 - `npx vitest run` 18/18 tests passing
 - `npx vite build` 14.5s, no errors
+
+## Session 2026-06-26 (session 10): UX Phase 2 — Power Features — COMPLETED
+
+### Phase 2 UX Improvements
+- **A2 Keyboard shortcuts**: Hook baru `useShortcuts()`. `1`/`2`/`3`/`4` switch
+  tab Pasar/Portofolio/Backtest/Analitik. Tab button di header dapat kbd hint
+  badge "1"/"2"/"3"/"4" (hidden di < lg).
+- **A3 Total Wealth pill on mobile**: Dihapus `hidden md:flex`, sekarang visible
+  di semua viewport. `formatRupiahShort` sudah short ("Rp XXjt") jadi muat di mobile.
+- **A4 Last updated chip**: Komponen baru `LastUpdatedChip` dengan auto-refresh
+  relative time. Dipasang di header Market overview ("Ringkasan Parameter").
+- **A10 Confirmation modal**: Komponen baru `ConfirmModal` (variants: danger/
+  warning/info). Dipasang di sidebar Reset Portofolio.
+- **B2 Holdings table sort/filter**: Input filter di header table + click column
+  header untuk sort. Sticky `thead` + max-height scroll area. SortKey type baru.
+  Visible count "X/Y" di header.
+- **B5 Dismissable warnings**: Per-row `×` button + "Tandai Dibaca" bulk button
+  di Portfolio warnings.
+- **D1 Run button in tab**: "Jalankan Backtest" button prominent di header
+  Backtest tab (sebelumnya hanya di sidebar).
+- **D7 Config changed banner**: Amber banner muncul di top Backtest saat config
+  berubah sejak last run. Inline "Jalankan" button di banner.
+- **E5 CSV export**: Tombol CSV di LeadersTab, RecoveryOpsTab, CapitalProtectionTab.
+  Format: rank, ticker, scores, in_portfolio, in_watchlist.
+- **F4 Danger Zone**: Reset Portofolio button di-group dengan label "Danger Zone"
+  + border rose accent.
+- **A7 Backtest empty state**: Empty state Backtest tab sekarang punya inline
+  "Jalankan Backtest" button (sebelumnya cuma teks instruksi).
+
+### Files Added
+- `src/hooks/useShortcuts.ts`
+- `src/components/LastUpdatedChip.tsx`
+- `src/components/ConfirmModal.tsx`
+
+### Files Modified (11)
+- `src/App.tsx` — useShortcuts wiring
+- `src/components/AppHeader.tsx` — kbd badges, mobile pill
+- `src/components/AppSidebar.tsx` — ConfirmModal, Danger Zone
+- `src/components/MarketTab.tsx` — LastUpdatedChip
+- `src/components/PortfolioTracker.tsx` — sort/filter, dismissable warnings
+- `src/components/SimulationTab.tsx` — Run button in tab, Config banner
+- `src/components/LeadersTab.tsx` — CSV export
+- `src/components/RecoveryOpsTab.tsx` — CSV export
+- `src/components/CapitalProtectionTab.tsx` — CSV export
+
+### Verification
+- `npx tsc --noEmit` PASS 0 errors
+- `npx vitest run` 18/18 tests passing
+- `npx vite build` 10.9s PASS

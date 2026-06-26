@@ -2,7 +2,7 @@ import { useState } from "react";
 import { EX, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
-import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck, Bookmark, TrendingUp, TrendingDown } from "lucide-react";
+import { ShieldAlert, Search, ShieldCheck, Flame, Info, Check, BookmarkCheck, Bookmark, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { motion } from "motion/react";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
@@ -153,6 +153,38 @@ export function CapitalProtectionTab({ isIHSGInCrisis, onSelectTicker, portfolio
               {sortOrder === "desc" ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
             </button>
           </div>
+
+          {/* E5 — Export CSV */}
+          <button
+            onClick={() => {
+              const rows = [
+                ["Ticker", "Exit State", "Drawdown from entry (%)", "RS 20d", "RS change 20d (%)", "Triggered rules", "InPortfolio", "InWatchlist"],
+                ...filtered.map((it) => [
+                  it.ticker,
+                  it.exit_state,
+                  it.drawdown_from_entry,
+                  it.rs_20d,
+                  it.rs_change_20d,
+                  it.triggered_rules,
+                  portfolio.some(p => p.ticker === it.ticker) ? "Yes" : "No",
+                  watchlist.some(w => w.ticker === it.ticker) ? "Yes" : "No",
+                ]),
+              ];
+              const csv = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `quantbit_capital_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            title="Export ke CSV"
+          >
+            <Download className="w-3 h-3" /> CSV
+          </button>
         </div>
       </div>
 
