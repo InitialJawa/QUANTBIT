@@ -822,6 +822,38 @@ export function PortfolioTracker({
         </div>
       )}
 
+      {/* Safe Haven Exit Signal — IHSG recovered, time to leave EMAS back to stocks */}
+      {strategyEval.shouldExitSafeHaven && !strategyEval.shouldExit && (() => {
+        const hasSafeHaven = portfolio.some(
+          (p) => p.ticker === "EMAS" || p.ticker === "GOLD",
+        );
+        if (!hasSafeHaven) return null;
+        return (
+          <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+            <div className="flex items-center gap-2 text-emerald-400">
+              <CheckCircle2 className="w-5 h-5" />
+              <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
+                Strategy Says: Exit Safe Haven → Stock
+                <ExplainButton label="IHSG recovered above 60d-peak by recoveryBuffer (default 5%). Waktunya jual EMAS dan rotasi kembali ke Top N saham." />
+              </h3>
+            </div>
+            <p className="text-xs text-emerald-200/70 font-sans max-w-3xl">
+              {strategyEval.reason}. Jual posisi EMAS/GOLD dan redeploy ke
+              Top {engineConfig.topNCount} saham sesuai profil aktif.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                RECOVERY: {strategyEval.recoveryBuffer ?? 5}%
+              </div>
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+                MODE: {engineConfig.simulationMode.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {visibleWarnings.length > 0 && (
         <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />

@@ -577,6 +577,13 @@ export interface StrategyEvaluation {
   shouldExit: boolean;
   reason: string;
   targetSafeHaven: "emas" | "kas" | null;
+  /** True when IHSG recovered above 60d-peak by enough to exit safe haven.
+   *  Only meaningful in algo mode. UI should show "Exit Safe Haven → Stock"
+   *  banner if user still holds the safe haven asset. */
+  shouldExitSafeHaven?: boolean;
+  /** Recovery buffer (%) — IHSG drawdown must be >= -this to trigger exitSafeHaven.
+   *  Default 5% (i.e. drawdown -5% to 0% is "recovering", drawdown >= 0% is "recovered"). */
+  recoveryBuffer?: number;
 }
 
 export function evaluateStrategy(
@@ -598,6 +605,21 @@ export function evaluateStrategy(
         shouldExit: true,
         reason: `IHSG dropped ${Math.abs(drop).toFixed(1)}% from 60d peak (threshold: ${config.crashSensitivity}%)`,
         targetSafeHaven: config.safeHavenAsset,
+      };
+    }
+    // Recovery: IHSG drawdown is shallower than the recovery buffer
+    // (default 5%). This signals "time to leave the safe haven and go back
+    // to stocks" if the user is still holding one.
+    const recoveryBuffer = 5;
+    if (drop >= -recoveryBuffer) {
+      return {
+        shouldExit: false,
+        reason: drop >= 0
+          ? `IHSG recovered above 60d peak (${drop >= 0 ? "+" : ""}${drop.toFixed(1)}%) — safe haven exit zone`
+          : `IHSG recovering (drawdown ${drop.toFixed(1)}% within ${recoveryBuffer}% buffer) — safe haven exit zone`,
+        targetSafeHaven: null,
+        shouldExitSafeHaven: true,
+        recoveryBuffer,
       };
     }
   }
