@@ -76,17 +76,23 @@ export default function App() {
       .catch(() => {});
   }, [user]);
 
+  // Debounced profile sync — without debounce, pm.cash changes trigger a PATCH
+  // per transaction and quickly exhaust the browser's 6-conn/host pool,
+  // surfacing as `net::ERR_INSUFFICIENT_RESOURCES` in the console.
   useEffect(() => {
     if (!user || !pm.isDbLoaded) return;
-    api
-      .patch("/api/user/profile", {
-        cash: pm.cash,
-        theme: ui.theme,
-        dataFeed: df.dataFeed,
-        activeConfig: ui.activeConfig,
-      })
-      .catch(() => {});
-  }, [ui.theme, df.dataFeed, ui.activeConfig, pm.cash]);
+    const timer = setTimeout(() => {
+      api
+        .patch("/api/user/profile", {
+          cash: pm.cash,
+          theme: ui.theme,
+          dataFeed: df.dataFeed,
+          activeConfig: ui.activeConfig,
+        })
+        .catch(() => {});
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [ui.theme, df.dataFeed, ui.activeConfig, pm.cash, user, pm.isDbLoaded]);
 
   const activeStock = df.getDynamicStock(ui.selectedTicker) || STOCKS_DATA[0];
   const isIHSGInCrisis = isCrisisMode();
