@@ -287,7 +287,7 @@ export function MarketOverviewCharts() {
           </div>
 
           <div className="flex flex-wrap gap-3 text-caption text-white/50">
-            <span>Breadth: {RS.radar_context.breadth_above_60}/{RS.radar_context.watchlist_count} ≥60</span>
+            <span>Breadth: {RS.radar_context.breadth_above_60}/{RS.radar_context.idx_universe_size ?? 80} ≥60</span>
             <span>Score Gap: {RS.radar_context.score_gap}</span>
             <span>Faktor: {RS.radar_context.strongest_factor} ({RS.radar_context.strongest_factor_score})</span>
           </div>

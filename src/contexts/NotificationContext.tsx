@@ -32,15 +32,8 @@ export interface Notification {
 export interface NotificationContextType {
   notifications: Notification[];
   addNotification: (notification: Omit<Notification, "id" | "timestamp">) => void;
-  removeNotification: (id: string) => void;
-  clearAll: () => void;
-  /** Check if a rule has been triggered (used by the UI to determine when to fire alerts) */
-  shouldFireRule: (rule: string) => boolean;
-  markRuleFired: (rule: string) => void;
-  /** Fire a rule — dedupes via shouldFireRule + markRuleFired, then adds notification */
-  fireRule: (rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule" | "timestamp">) => boolean;
-  /** Reset a fired rule so it can fire again */
-  resetRule: (rule: string) => void;
+  /** Fire a rule — dedupes via firedRules set, then adds notification. Returns true if fired. */
+  fireRule: (rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule">) => boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -66,52 +59,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) => [newNotification, ...prev].slice(0, 50));
   }, []);
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
-
-  const clearAll = useCallback(() => {
-    setNotifications([]);
-  }, []);
-
-  const shouldFireRule = useCallback((rule: string) => {
-    return !firedRules.has(rule);
-  }, [firedRules]);
-
-  const markRuleFired = useCallback((rule: string) => {
+  const fireRule = useCallback((rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule">) => {
+    if (firedRules.has(rule)) return false;
+    addNotification({ ...notification, rule });
     setFiredRules((prev) => {
       const next = new Set(prev);
       next.add(rule);
       return next;
     });
-  }, []);
-
-  const resetRule = useCallback((rule: string) => {
-    setFiredRules((prev) => {
-      const next = new Set(prev);
-      next.delete(rule);
-      return next;
-    });
-  }, []);
-
-  const fireRule = useCallback((rule: string, notification: Omit<Notification, "id" | "timestamp" | "rule">) => {
-    if (firedRules.has(rule)) return false;
-    addNotification({ ...notification, rule });
-    markRuleFired(rule);
     return true;
-  }, [firedRules, addNotification, markRuleFired]);
+  }, [firedRules, addNotification]);
 
   return (
     <NotificationContext.Provider
       value={{
         notifications,
         addNotification,
-        removeNotification,
-        clearAll,
-        shouldFireRule,
-        markRuleFired,
         fireRule,
-        resetRule,
       }}
     >
       {children}

@@ -1,27 +1,43 @@
 # NEXT ACTION
 
-## P0 — 3 Faktor Investasi — AMAN, AGRESIF, DIVIDEN (2026-06-26, Sesi 8)
+## P0 — VERIFY (2026-06-26, Sesi 8)
 **Status**: Code changes done, docs updated. Perlu verification.
 
 Delivered:
-- **3 profil baru hasil backtest**: AMAN (Q30/G45/V10/M0/D15), AGRESIF (Q20/G60/V10/M10/D0), DIVIDEN (Q15/G20/V5/M0/D60)
-- **`activeConfig` type**: `"prod" | "res"` → `string` (profile id) — backward compat via `CW_MAP` lookup
-- **Dividend Cache** dipisah ke `src/engine/dividendCache.ts`
-- **Adaptive Weights**: dividend fixed, hanya 4 sub-weight lain yang di-adjust
-- **AI Context**: `dividendWeight` di `AILiveContext` + prompt updated
+- **5 sync drifts fixed** (FASE 1.1-1.5)
+- **9 feature simplifications** (FASE 2.1-2.9)
+- **7 dead components removed** (~470 LOC)
+- **Single source of truth** untuk activeProfileId (ADR-003)
 
 **Verification**:
-- [ ] `npx tsc --noEmit` — harus PASS 0 errors
+- [x] `npx tsc --noEmit` — PASS 0 errors
 - [ ] `npx vite build` — harus PASS
 - [ ] `npm test` — full test suite
+- [ ] `npm run test:ui` — component tests
 
 ## P2 — Deferred / Future
-- [ ] Run `npm run build` (regenerate year files with stockRawMetrics + stockNormScores)
+- [ ] Run `npm run build` (regenerate year files)
 - [ ] Profile UX (ticker-level overrides, import/export)
-- [ ] Notification persistence — already persists, but TTL not enforced
+- [ ] Notification persistence — TTL not enforced
 - [ ] Telegram bot
-- [ ] Pre-2021 data backfill (IDX warehouse collector perlu historical archive)
-- [ ] Proactive alert chip in chat (uses AICockpitContext.proactiveAlerts which is wired but not yet rendered)
+- [ ] Pre-2021 data backfill
+- [ ] Proactive alert chip in chat (wired but not yet rendered)
 - [ ] Auto-execute BPS recommendation (Level 5, requires UX decision)
-- [ ] CI workflow untuk Playwright E2E (`.github/workflows/e2e.yml`)
+- [ ] CI workflow untuk Playwright E2E
 - [ ] Cross-browser E2E (Firefox, WebKit)
+
+## Done Recently (Sesi 8)
+- ✅ FASE 1.1 — Crisis detection unified to 60d-drawdown
+- ✅ FASE 1.2 — MKT.ihsg.monthly computed (not hardcoded)
+- ✅ FASE 1.3 — Portfolio value calculation standardized
+- ✅ FASE 1.4 — Total Wealth view (stocks + cash + gold) in AppHeader
+- ✅ FASE 1.5 — watchlist_count → idx_universe_size
+- ✅ FASE 2.1 — 7 dead components removed
+- ✅ FASE 2.2 — NotificationContext slimmed (3 methods instead of 8)
+- ✅ FASE 2.3 — Fine-Tune sliders removed from sidebar
+- ✅ FASE 2.4 — Advanced safeguards collapsed into `<details>`
+- ✅ FASE 2.5 — Settings dropdown profile picker removed
+- ✅ FASE 2.6 — SSOT activeProfileId (removed ui.activeConfig + idx_activeconfig)
+- ✅ FASE 2.7 — Backtest no longer auto-runs (explicit button only)
+- ✅ FASE 2.8 — Sticky "Beli Cepat" CTA in Portfolio
+- ✅ FASE 2.9 — Jargon labels simplified

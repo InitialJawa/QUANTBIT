@@ -513,7 +513,7 @@ export function AppSidebar({
                 onClick={onClearPortfolio}
                 className="w-full mt-1 py-1.5 text-label font-bold uppercase tracking-wider text-rose-400/70 hover:text-rose-300 bg-white/[0.03] hover:bg-rose-900/20 rounded-lg border border-white/[0.04] hover:border-rose-800/30 transition-all cursor-pointer"
               >
-                Hapus Semua
+                Reset Portofolio
               </button>
             )}
           </div>
@@ -564,7 +564,7 @@ export function AppSidebar({
   };
 
   function EngineConfigSidebarContent() {
-    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, updateProfile, isConfigSynced } = useEngineConfig();
+    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, isConfigSynced } = useEngineConfig();
     return (
       <div className="px-2 py-2 space-y-3">
         <div className="flex items-center justify-between">
@@ -595,7 +595,7 @@ export function AppSidebar({
 
         {/* BPS Config — show what config the live BPS dashboard is using */}
         <div className="px-2 py-1.5 bg-white/[0.01] border border-white/[0.03] rounded-lg space-y-0.5">
-          <span className="text-label text-tertiary block font-mono">BPS Config (Live)</span>
+          <span className="text-label text-tertiary block font-mono">Profil Strategi Aktif</span>
           <div className="text-caption text-white/70 font-mono">
             Profile: <span className="text-emerald-400">{activeProfile?.name || engineConfig.activeProfileId}</span>
           </div>
@@ -641,26 +641,6 @@ export function AppSidebar({
               ) : (
                 <span className="text-caption text-tertiary italic">Set di panel Backtest</span>
               )}
-            </div>
-            <div className="border-t border-white/[0.04] pt-2">
-              <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
-              {[
-                ["qualityWeight", "Quality (Q)", activeProfile.qualityWeight * 100],
-                ["growthWeight", "Growth (G)", activeProfile.growthWeight * 100],
-                ["valueWeight", "Value (V)", activeProfile.valueWeight * 100],
-                ["momentumWeight", "Momentum (M)", activeProfile.momentumWeight * 100],
-              ].map(([key, label, val]) => (
-                <div key={key} className="mb-1.5">
-                  <div className="flex justify-between text-label mb-0.5">
-                    <span className="text-tertiary">{label as string}</span>
-                    <span className="text-accent font-bold">{Math.round(val as number)}%</span>
-                  </div>
-                  <input type="range" min="0" max="1" step="0.05"
-                    value={(activeProfile as any)[key as string]}
-                    onChange={e => updateProfile(activeProfile.id, { [key]: parseFloat(e.target.value) })}
-                    className="w-full accent-emerald-500 h-1" />
-                </div>
-              ))}
             </div>
           </div>
         ) : (
@@ -730,27 +710,6 @@ export function AppSidebar({
                 {engineConfig.enableAdaptiveWeights ? "ON — Auto-adjust Q/G/V/M" : "OFF — Static Profile Weights"}
               </button>
             </div>
-            <div className="border-t border-white/[0.04] pt-2">
-              <span className="text-label text-tertiary block mb-2">Fine-Tune Rasio</span>
-              {[
-                ["qualityWeight", "Quality (Q)", activeProfile.qualityWeight * 100],
-                ["growthWeight", "Growth (G)", activeProfile.growthWeight * 100],
-                ["valueWeight", "Value (V)", activeProfile.valueWeight * 100],
-                ["momentumWeight", "Momentum (M)", activeProfile.momentumWeight * 100],
-                ["dividendWeight", "Dividend (D)", activeProfile.dividendWeight * 100],
-              ].map(([key, label, val]) => (
-                <div key={key} className="mb-1.5">
-                  <div className="flex justify-between text-label mb-0.5">
-                    <span className="text-tertiary">{label as string}</span>
-                    <span className="text-accent font-bold">{Math.round(val as number)}%</span>
-                  </div>
-                  <input type="range" min="0" max="1" step="0.05"
-                    value={(activeProfile as any)[key as string]}
-                    onChange={e => updateProfile(activeProfile.id, { [key]: parseFloat(e.target.value) })}
-                    className="w-full accent-emerald-500 h-1" />
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
@@ -770,30 +729,39 @@ export function AppSidebar({
               </button>
             </div>
           </div>
-          <div>
-            <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
-            <div className="flex gap-1 items-center">
-              <button onClick={() => updateConfigValue("enableCrashProtection", engineConfig.enableCrashProtection === false ? true : false)}
-                className="px-2 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
-              </button>
-              <input type="range" min="5" max="30" step="1" value={engineConfig.crashSensitivity ?? 10}
-                onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
-                disabled={engineConfig.enableCrashProtection === false}
-                className="flex-1 accent-emerald-500 h-1.5" />
-              <span className="text-caption text-tertiary ml-1">{engineConfig.crashSensitivity ?? 10}%</span>
+          {/* FASE 2.4 — Advanced Safeguards (Crash + Buffer) collapsed by default */}
+          <details className="border-t border-white/[0.04] pt-2">
+            <summary className="text-label font-medium text-tertiary cursor-pointer hover:text-secondary transition-colors py-1 list-none flex items-center gap-1">
+              <span className="text-caption">▸</span>
+              Pengaturan Lanjutan
+            </summary>
+            <div className="mt-2 space-y-2">
+              <div>
+                <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
+                <div className="flex gap-1 items-center">
+                  <button onClick={() => updateConfigValue("enableCrashProtection", engineConfig.enableCrashProtection === false ? true : false)}
+                    className="px-2 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
+                    style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
+                  </button>
+                  <input type="range" min="5" max="30" step="1" value={engineConfig.crashSensitivity ?? 10}
+                    onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
+                    disabled={engineConfig.enableCrashProtection === false}
+                    className="flex-1 accent-emerald-500 h-1.5" />
+                  <span className="text-caption text-tertiary ml-1">{engineConfig.crashSensitivity ?? 10}%</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-label mb-0.5">
+                  <span className="text-tertiary">Buffer Kas</span>
+                  <span className="text-accent font-bold">{engineConfig.reserveBufferPct ?? 10}%</span>
+                </div>
+                <input type="range" min="0" max="30" step="5" value={engineConfig.reserveBufferPct ?? 10}
+                  onChange={e => updateConfigValue("reserveBufferPct", Number(e.target.value))}
+                  className="w-full accent-emerald-500 h-1" />
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-label mb-0.5">
-              <span className="text-tertiary">Buffer Kas</span>
-              <span className="text-accent font-bold">{engineConfig.reserveBufferPct ?? 10}%</span>
-            </div>
-            <input type="range" min="0" max="30" step="5" value={engineConfig.reserveBufferPct ?? 10}
-              onChange={e => updateConfigValue("reserveBufferPct", Number(e.target.value))}
-              className="w-full accent-emerald-500 h-1" />
-          </div>
+          </details>
         </div>
       </div>
     );

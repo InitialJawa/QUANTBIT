@@ -185,7 +185,7 @@ export function useBuyPressure(): BuyPressureResult {
       : 50;
 
     const breadthAbove60 = RS.radar_context?.breadth_above_60 ?? 0;
-    const watchlistCount = RS.radar_context?.watchlist_count ?? leaders.length;
+    const watchlistCount = RS.radar_context?.idx_universe_size ?? leaders.length;
     const riskScore = RS.risk ?? 50;
 
     const bps = computeBuyPressure({

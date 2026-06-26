@@ -32,18 +32,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
 
 function ConfigSync() {
-  const { engineConfig, setActiveProfile } = useEngineConfig();
-  const { activeConfig, setActiveConfig } = useUIState();
-  useEffect(() => {
-    if (engineConfig.activeProfileId !== activeConfig) {
-      setActiveProfile(activeConfig);
-    }
-  }, [activeConfig, engineConfig.activeProfileId, setActiveProfile]);
-  useEffect(() => {
-    if (engineConfig.activeProfileId !== activeConfig) {
-      setActiveConfig(engineConfig.activeProfileId);
-    }
-  }, [engineConfig.activeProfileId, activeConfig, setActiveConfig]);
+  // FASE 2.6 — DELETED. activeConfig (UIState) removed; engineConfig.activeProfileId adalah
+  // sumber kebenaran tunggal. Lihat ADR-003.
   return null;
 }
 
@@ -80,7 +70,6 @@ export default function App() {
 
   return (
     <EngineConfigProvider>
-      <ConfigSync />
       <MarketRegimeSyncBridge />
       <NotificationProvider>
         <AICockpitProvider>
@@ -103,6 +92,8 @@ function AppContent({ logout }: { logout: () => void }) {
   const ui = useUIState();
   const notif = useNotifications();
   const pm = usePortfolioManager(user, df.getDynamicStock, ui.setAppNotification, notif);
+  // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
+  const { engineConfig, setActiveProfile } = useEngineConfig();
 
   useEffect(() => {
     if (!user) return;
@@ -110,7 +101,7 @@ function AppContent({ logout }: { logout: () => void }) {
       .get<{ user: any }>("/api/auth/me")
       .then((d) => {
         if (d.user.data_feed) df.setDataFeed(d.user.data_feed);
-        if (d.user.active_config) ui.setActiveConfig(d.user.active_config);
+        if (d.user.active_config) setActiveProfile(d.user.active_config);
       })
       .catch(() => {});
   }, [user]);
@@ -126,12 +117,12 @@ function AppContent({ logout }: { logout: () => void }) {
           cash: pm.cash,
           theme: ui.theme,
           dataFeed: df.dataFeed,
-          activeConfig: ui.activeConfig,
+          activeConfig: engineConfig.activeProfileId,
         })
         .catch(() => {});
     }, 1000);
     return () => clearTimeout(timer);
-  }, [ui.theme, df.dataFeed, ui.activeConfig, pm.cash, user, pm.isDbLoaded]);
+  }, [ui.theme, df.dataFeed, engineConfig.activeProfileId, pm.cash, user, pm.isDbLoaded]);
 
   const activeStock = df.getDynamicStock(ui.selectedTicker) || STOCKS_DATA[0];
   const isIHSGInCrisis = isCrisisMode();
@@ -219,8 +210,7 @@ function AppContent({ logout }: { logout: () => void }) {
           setSettingsOpen={ui.setIsSettingsOpen}
           theme={ui.theme}
           setTheme={ui.setTheme}
-          activeConfig={ui.activeConfig}
-          setActiveConfig={ui.setActiveConfig}
+          activeConfig={engineConfig.activeProfileId}
           isMobileMenuOpen={ui.isMobileMenuOpen}
           setMobileMenuOpen={ui.setIsMobileMenuOpen}
           setDataFeed={df.setDataFeed}
@@ -234,6 +224,9 @@ function AppContent({ logout }: { logout: () => void }) {
           setUseDevMockAI={ui.setUseDevMockAI}
           showToasts={ui.showToasts}
           setShowToasts={ui.setShowToasts}
+          portfolio={pm.portfolio}
+          cash={pm.cash}
+          getDynamicStock={df.getDynamicStock}
         />
         <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
               <AppSidebar
@@ -352,7 +345,7 @@ function AppContent({ logout }: { logout: () => void }) {
                       >
                         <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat analitik...</div>}>
                         <AnalyticsTab
-                          activeConfig={ui.activeConfig}
+                          activeConfig={engineConfig.activeProfileId}
                           onSelectTicker={ui.handleSelectTicker}
                           portfolio={pm.portfolio}
                           watchlist={pm.watchlist}

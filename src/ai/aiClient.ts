@@ -124,7 +124,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       MKT.ihsg.monthly,
       getIhsgDrawdown60(),
       RS.radar_context?.breadth_above_60 ?? 0,
-      RS.radar_context?.watchlist_count ?? 0,
+      RS.radar_context?.idx_universe_size ?? 0,
       RS.risk ?? 50,
       50, /* avgValueScore — use 50 as default; precise per-universe score requires leader scan */
       false,

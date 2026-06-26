@@ -312,7 +312,6 @@ export function PortfolioTracker({
   };
 
   const enrichedPortfolio = portfolio
-    .filter((item) => item.ticker !== "EMAS" && item.ticker !== "GOLD")
     .map((item) => {
       const liveStock = visibleStocks.find((s) => s.ticker === item.ticker);
       const currentPrice = liveStock ? liveStock.currentPrice : item.buyPrice;
@@ -691,6 +690,26 @@ export function PortfolioTracker({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* FASE 2.8 — Sticky buy CTA di top Portfolio (sebelum BPS) */}
+      <div className="sticky top-9 z-20 bg-[#0A0A0A]/95 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-lg">
+        <div className="flex-1 min-w-0">
+          <div className="text-caption font-bold text-emerald-400 uppercase tracking-widest">Beli Cepat</div>
+          <div className="text-label text-white/50 truncate">Pilih saham → set jumlah → eksekusi</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const form = document.getElementById("manual-buy-form");
+            form?.scrollIntoView({ behavior: "smooth", block: "center" });
+            (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
+          }}
+          className="shrink-0 px-3 py-2 text-caption font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+          style={{ backgroundColor: '#00c9a5', color: '#000' }}
+        >
+          <Plus className="w-3.5 h-3.5" /> Buka Form
+        </button>
       </div>
 
       {/* Adaptive DCA Recommendation — BPS-driven deploy/cash guidance */}
@@ -1166,19 +1185,20 @@ export function PortfolioTracker({
                   Tambah Manual
                 </h4>
                 <span className="text-label font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
-                  Custom Trade
+                  Beli Manual
                 </span>
               </div>
 
               <form
+                id="manual-buy-form"
                 onSubmit={handleAdd}
                 className="flex flex-col gap-4 pt-2"
               >
                 {/* Dropdown Saham Individual */}
                 <div className="space-y-2">
-                  <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
-                    Sandi Saham (Ticker)
-                  </label>
+                    <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                      Pilih Saham
+                    </label>
                   <SearchableSelect
                     value={selectedTicker}
                     options={visibleStocks.map((s) => ({
@@ -1238,7 +1258,7 @@ export function PortfolioTracker({
                     type="submit"
                     className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
                   >
-                    <Plus className="w-4 h-4 shrink-0" /> Eksekusi Beli Saham
+                    <Plus className="w-4 h-4 shrink-0" /> Beli Sekarang
                   </button>
                 </div>
               </form>
@@ -1368,7 +1388,7 @@ export function PortfolioTracker({
                   }}
                   className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-white"}`}
                 >
-                  {isConfirmingClear ? "⚠️ Klik Konfirmasi" : "Bersihkan Entri"}
+                  {isConfirmingClear ? "⚠️ Klik Konfirmasi" : "Hapus Riwayat"}
                 </button>
               </div>
             </div>

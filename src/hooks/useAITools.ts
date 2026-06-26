@@ -260,7 +260,7 @@ export function useAITools({ pm, getDynamicStock }: UseAIToolsParams) {
         above70: RS.radar_context?.breadth_above_70 ?? null,
         above60: RS.radar_context?.breadth_above_60 ?? null,
         below40: RS.radar_context?.breadth_below_40 ?? null,
-        watchlist_count: RS.radar_context?.watchlist_count ?? null,
+        watchlist_count: RS.radar_context?.idx_universe_size ?? null,
       },
     }),
 

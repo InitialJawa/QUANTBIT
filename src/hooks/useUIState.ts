@@ -7,15 +7,8 @@ export function useUIState() {
   const [activeTab, setActiveTab] = useState<Tab>("market");
   const [hideAlertBanner, setHideAlertBanner] = useState(false);
 
-  const [activeConfig, setActiveConfig] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem("idx_activeconfig");
-      if (saved === "aman" || saved === "agresif" || saved === "dividen") return saved;
-      if (saved === "prod") return "aman";
-      if (saved === "res") return "agresif";
-    } catch {}
-    return "aman";
-  });
+  // FASE 2.6 — activeConfig removed. Sumber kebenaran tunggal = engineConfig.activeProfileId
+  // (lihat ADR-003: Single Source of Truth untuk active profile)
 
   // Level 4 — proactive AI agent toggle (default ON, persisted in localStorage).
   const [proactiveAIEnabled, setProactiveAIEnabled] = useState<boolean>(() => {
@@ -105,7 +98,6 @@ export function useUIState() {
   return {
     activeTab, setActiveTab,
     hideAlertBanner, setHideAlertBanner,
-    activeConfig, setActiveConfig,
     selectedTicker, setSelectedTicker,
     isDrawerOpen, setIsDrawerOpen,
     drawerTab, setDrawerTab,

@@ -32,7 +32,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 
 **Flow:**
 1. User configures Backtest (algo/custom/single, profile, universe, crash settings)
-2. Run backtest via `runStrategy()` in `src/engine/`
+2. Run backtest via `runStrategy()` in `src/engine/` — FASE 2.7: **triggered by explicit "Jalankan Backtest" button** (sidebar), not auto-run on config change
 3. User clicks "SYNC TO PORTFOLIO" → `engineConfig.syncFromBacktest(snapshot)`
 4. Portfolio reads `engineConfig` → cascades to Market, Notifications, AI
 5. Setting changes in Portfolio → re-cascade
@@ -48,8 +48,23 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `rule_customUniverseBreach` — ticker in portfolio not in customUniverse
 - `rule_singleModeTrigger` — single ticker drop > singleSellTrigger
 
+## Active Profile — Single Source of Truth (ADR-003, diperkuat 2026-06-26 / FASE 2.6)
+
+- `engineConfig.activeProfileId` adalah **satu-satunya** state untuk active profile.
+- `useUIState.activeConfig` + `idx_activeconfig` localStorage + `ConfigSync` bridge **DIHAPUS** (2026-06-26).
+- Profile diubah via sidebar chips (`AppSidebar.tsx:EngineConfigSidebarContent`) atau `ManageProfilesModal`.
+- Settings dropdown profile picker dihapus (FASE 2.5) — satu tempat saja.
+
+## Crisis Detection (ADR-010 / FASE 1.1)
+
+- **Unified formula**: `getIhsgDrawdown60() <= -crashSensitivity` (60d-drawdown based).
+- `isCrisisMode()`, `computeMarketRegime()`, dan `useProactiveAgent.Rule6` semua pakai rumus yang sama.
+- `MKT.ihsg.monthly/weekly/daily` di-compute dari `_lastIhsgData` via `getIhsgMonthlyReturn()` (FASE 1.2).
+  Hardcoded values di `marketData.ts` jadi fallback 0.
+- Lihat `marketRegimeEngine.ts` untuk detail.
+
 ## Verification
-- `npm run lint` — TypeScript type checking
+- `npx tsc --noEmit` — TypeScript type checking
 - `npm run dev` — manual UI verification
 - `npm test` — 152 unit tests (engine + AI pure functions, via `tsx --test`)
 - `npm run test:ui` — 18 component tests (vitest + @testing-library/react, jsdom)
@@ -68,12 +83,13 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/components/` — React UI components
 - `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
 - `src/components/AIActionApprovalCard.tsx` — Inline approval card for AI-suggested actions (Level 3)
+- `src/components/_archive/` — Archived dead components (DashboardGrid.tsx)
 - `src/contexts/` — React state contexts (Auth, EngineConfig, Notification, AI)
-- `src/contexts/EngineConfigContext.tsx` — **Single source of truth** for all strategy settings
-- `src/contexts/NotificationContext.tsx` — Global notification system with rule engine
+- `src/contexts/EngineConfigContext.tsx` — **Single source of truth** for all strategy settings (activeProfileId, profiles, universe, topN, simulationMode, customUniverse, adaptiveWeights, crash settings)
+- `src/contexts/NotificationContext.tsx` — Global notification system. API: `notifications`, `addNotification`, `fireRule` (3 method, slimmed 2026-06-26)
 - `src/hooks/` — Custom React hooks
 - `src/hooks/useAITools.ts` — AI tool + action registry (Levels 2+3)
-- `src/hooks/useProactiveAgent.ts` — Proactive agent monitor (Level 4)
+- `src/hooks/useProactiveAgent.ts` — Proactive agent monitor (Level 4). Rule 6 pakai `getIhsgDrawdown60()` (FASE 1.1)
 - `src/ai/` — AI client and system knowledge
 - `src/ai/systemKnowledge.ts` — System prompt + Sections 13/14 tool catalog
 - `src/ai/toolCallParser.ts` — Pure extractToolCalls + READ_ONLY_TOOLS + ACTION_TOOLS (testable in isolation)
@@ -86,11 +102,21 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/engine/core.ts` — `runStrategy()`, `shouldTriggerExit()`, `evaluateStrategy()`
 - `src/engine/dividendCache.ts` — `setDividendCache()`, `getDividendPerShare()` (extracted from core.ts)
   - **Rebalancing rules**: algo mode only (custom mode excluded from rank-based exit). `lastRebalanceMonth` init from day0 month (no day-1 false trigger). Swap candidates = `config.topNCount` (not hardcoded). Self-swap & duplicate positions prevented.
+- `src/marketRegimeEngine.ts` — `computeMarketRegime`, `refreshRSFromRegime`, `isCrisisMode`, `getIhsgDrawdown60`, `getIhsgMonthlyReturn/Weekly/Daily` (FASE 1.1-1.2)
 - `src/data/` — Data files (historical market data, IDX warehouse fundamental_idx_all.json)
 - `src/data/archive/` — Archived legacy data (FUNDAMENTAL_SNAPSHOTS, STOCK_FACTORS)
 - `src/services/` — API client
 - `src/server/` — Express API handlers
-- `src/utils/` — Utility functions
+- `src/utils/portfolioValue.ts` — FASE 1.4: `positionValue`, `stocksValue`, `totalCost`, `totalReturnPercent`, `goldValue`, `totalWealth`, `formatRupiahShort`
 - `src/types/` — TypeScript type definitions
 - `src/constants/` — Constant data (IDX lists)
 - `src/mcp/` — MCP server (Model Context Protocol) for AI agent integration
+
+## Dead Code (Removed 2026-06-26 / FASE 2.1)
+- ~~`DashboardGrid.tsx`~~ → archived to `_archive/`
+- ~~`BottomNav.tsx`~~ → deleted
+- ~~`NavDrawer.tsx`~~ → deleted
+- ~~`DiagnosticsTab.tsx`~~ → deleted
+- ~~`AIAssistant.tsx`~~ → deleted (called defunct `/api/gemini/chat`)
+- ~~`DeepReport.tsx`~~ → deleted
+- ~~`AICockpit.tsx`~~ → deleted (superseded by `FloatingAIChat`)

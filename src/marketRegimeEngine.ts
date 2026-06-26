@@ -143,6 +143,33 @@ export function getIhsgDrawdown60(): number | null {
   return ((current - peak) / peak) * 100;
 }
 
+/** 30-day IHSG return (%), computed dari _lastIhsgData. Null kalau data <2 hari. */
+export function getIhsgMonthlyReturn(): number | null {
+  if (_lastIhsgData.length < 2) return null;
+  const closes = _lastIhsgData.map(d => d.close);
+  const current = closes[closes.length - 1];
+  const lookback = closes[Math.max(0, closes.length - 30)];
+  return ((current - lookback) / lookback) * 100;
+}
+
+/** 7-day IHSG return (%). */
+export function getIhsgWeeklyReturn(): number | null {
+  if (_lastIhsgData.length < 2) return null;
+  const closes = _lastIhsgData.map(d => d.close);
+  const current = closes[closes.length - 1];
+  const lookback = closes[Math.max(0, closes.length - 7)];
+  return ((current - lookback) / lookback) * 100;
+}
+
+/** 1-day IHSG return (%). */
+export function getIhsgDailyReturn(): number | null {
+  if (_lastIhsgData.length < 2) return null;
+  const closes = _lastIhsgData.map(d => d.close);
+  const current = closes[closes.length - 1];
+  const prev = closes[closes.length - 2];
+  return ((current - prev) / prev) * 100;
+}
+
 function filterTickersForUniverse(tickers: string[]): string[] {
   if (_activeUniverse === "idx30") {
     const set = new Set(IDX30_TICKERS);
@@ -197,7 +224,9 @@ export function computeMarketRegime(): RegimeOutput {
   const healthyCount = universeEX.filter(e => e.exit_state === "HEALTHY").length;
   const totalEx = universeEX.length || 1;
 
-  const crisisThreshold = _crashProtectionEnabled && ihsgMonthly < -_crashSensitivity;
+  // Unified: pakai 60d-drawdown (sama dengan isCrisisMode()) bukan monthly
+  const drawdown60 = getIhsgDrawdown60();
+  const crisisThreshold = _crashProtectionEnabled && drawdown60 !== null && drawdown60 <= -_crashSensitivity;
   const bearishTrend = !aboveMa20 && !aboveMa50;
   const bullishTrend = aboveMa20 && aboveMa50;
   const recoveringTrend = aboveMa20 && !aboveMa50;
@@ -212,11 +241,11 @@ export function computeMarketRegime(): RegimeOutput {
   if (crisisThreshold && bearishTrend) {
     regime = "GOLD_DEFENSE";
     decision = "HOLD_GOLD";
-    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% melebihi threshold krisis (${_crashSensitivity}%). Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
+    rationale = `IHSG drawdown 60-hari ${drawdown60!.toFixed(1)}% melebihi threshold krisis (${_crashSensitivity}%). Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
   } else if (crisisThreshold) {
     regime = "CASH_DEFENSE";
     decision = "HOLD_CASH";
-    rationale = `IHSG bulanan ${ihsgMonthly.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
+    rationale = `IHSG drawdown 60-hari ${drawdown60!.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
   } else if (bearishTrend && highExitRisk) {
     regime = "RISK_OFF";
     decision = "WAIT_RECOVERY";
@@ -315,6 +344,14 @@ export function computeMarketRegime(): RegimeOutput {
 
 export function refreshRSFromRegime(): void {
   const regime = computeMarketRegime();
+  // Update MKT.ihsg monthly/weekly/daily from historical data (single source of truth).
+  const daily = getIhsgDailyReturn();
+  const weekly = getIhsgWeeklyReturn();
+  const monthly = getIhsgMonthlyReturn();
+  if (daily !== null) MKT.ihsg.daily = Math.round(daily * 100) / 100;
+  if (daily !== null) MKT.ihsg.daily_pct = Math.round(daily * 100) / 100;
+  if (weekly !== null) MKT.ihsg.weekly = Math.round(weekly * 100) / 100;
+  if (monthly !== null) MKT.ihsg.monthly = Math.round(monthly * 100) / 100;
   RS.last_update = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) + " WIB";
   RS.status =
     regime.regime === "GOLD_DEFENSE" ? "DANGER" :

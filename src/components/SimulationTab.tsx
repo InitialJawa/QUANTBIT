@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -526,35 +526,16 @@ export function SimulationTab({
     }
   };
 
-  // Auto-run backtest when parameters change to keep everything dynamically in sync
+  // FASE 2.7 — Backtest TIDAK auto-run lagi. User klik tombol "Jalankan Backtest"
+  // eksplisit di sidebar. Mengurangi flicker + backtest sia-sia saat drag slider.
+  // Initial run: jalankan sekali saat historicalData pertama kali dimuat.
+  const initialRunRef = useRef(false);
   useEffect(() => {
-    if (historicalData.length === 0) return;
+    if (historicalData.length === 0 || initialRunRef.current) return;
+    initialRunRef.current = true;
     handleRunAlgoBacktest();
-  }, [
-    backtestConfig.singleTicker,
-    backtestConfig.simStartDate,
-    backtestConfig.simEndDate,
-    backtestConfig.algoCapital,
-    backtestConfig.simulationMode,
-    backtestConfig.universe,
-    backtestConfig.topNCount,
-    backtestConfig.enableCrossover,
-    backtestConfig.enableCrashProtection,
-    backtestConfig.crashSensitivity,
-    backtestConfig.safeHavenAsset,
-    backtestConfig.singleSellTrigger,
-    backtestConfig.singleBuyTrigger,
-    backtestConfig.reserveBufferPct,
-    backtestConfig.activeProfileId,
-    backtestConfig.customUniverse,
-    backtestConfig.enableAdaptiveWeights,
-    backtestActiveProfile?.qualityWeight,
-    backtestActiveProfile?.growthWeight,
-    backtestActiveProfile?.valueWeight,
-    backtestActiveProfile?.momentumWeight,
-    triggerRun,
-    historicalData,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historicalData.length]);
 
   useEffect(() => {
     const handler = () => {

@@ -1,6 +1,8 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Sliders, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, Sparkles } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, Sparkles, Wallet } from "lucide-react";
+import { totalWealth, formatRupiahShort } from "../utils/portfolioValue";
+import type { PortfolioItem, StockData } from "../types";
 
 interface AppHeaderProps {
   activeTab: string;
@@ -13,7 +15,6 @@ interface AppHeaderProps {
   theme: string;
   setTheme: (theme: string) => void;
   activeConfig: string;
-  setActiveConfig: (config: string) => void;
   isMobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
   setDataFeed: (feed: "yahoo" | "goapi" | "simulated") => void;
@@ -27,6 +28,10 @@ interface AppHeaderProps {
   setUseDevMockAI: (v: boolean) => void;
   showToasts: boolean;
   setShowToasts: (v: boolean) => void;
+  // FASE 1.4 — Total Wealth (single source of truth = stocks + cash + gold)
+  portfolio: PortfolioItem[];
+  cash: number;
+  getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
 const TABS = [
@@ -48,7 +53,6 @@ export function AppHeader({
   theme,
   setTheme,
   activeConfig,
-  setActiveConfig,
   isMobileMenuOpen,
   setMobileMenuOpen,
   setDataFeed,
@@ -62,6 +66,9 @@ export function AppHeader({
   setUseDevMockAI,
   showToasts,
   setShowToasts,
+  portfolio,
+  cash,
+  getDynamicStock,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-header-gradient px-2 py-1.5 shrink-0 flex items-center justify-between gap-2">
@@ -94,7 +101,19 @@ export function AppHeader({
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center relative">
-        
+
+        {/* FASE 1.4 — Total Wealth (stocks + cash + gold). Klik = buka tab Portfolio. */}
+        <button
+          onClick={() => onTabChange("portfolio")}
+          title="Total Wealth = Saham + Kas + Emas. Klik untuk buka Portfolio."
+          className="hidden md:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-emerald-500/[0.08] border border-emerald-500/15 hover:bg-emerald-500/[0.14] transition-colors cursor-pointer"
+        >
+          <Wallet className="w-3 h-3 text-emerald-400" />
+          <span className="text-caption font-mono font-bold text-emerald-300">
+            {formatRupiahShort(totalWealth(portfolio, cash, getDynamicStock))}
+          </span>
+        </button>
+
         {/* Search */}
         <div className="relative hidden sm:block">
           <Search className="w-3 h-3 text-white/30 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -177,24 +196,7 @@ export function AppHeader({
                 </div>
 
                 <div className="h-px bg-white/[0.04] my-0.5" />
-
-                <div className="px-1.5 py-1">
-                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
-                  {([
-                    ["aman", "Aman"],
-                    ["agresif", "Agresif"],
-                    ["dividen", "Dividen"],
-                  ] as const).map(([c, label]) => (
-                    <button
-                      key={c}
-                      onClick={() => setActiveConfig(c)}
-                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
-                    >
-                      <Sliders className="w-3.5 h-3.5" /> {label}
-                      {activeConfig === c && <span className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
-                    </button>
-                  ))}
-                </div>
+                {/* FASE 2.5 — duplicate profile picker REMOVED. Gunakan chip di sidebar. */}
 
                 <div className="h-px bg-white/[0.04] my-0.5" />
 

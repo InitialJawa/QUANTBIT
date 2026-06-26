@@ -12,8 +12,7 @@ import { useBuyPressure } from "../engine/buyPressure";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useUIState } from "./useUIState";
 import { useNotifications } from "../contexts/NotificationContext";
-import { isCrisisMode } from "../marketRegimeEngine";
-import { MKT } from "../marketData";
+import { isCrisisMode, getIhsgDrawdown60 } from "../marketRegimeEngine";
 
 export const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes per rule (legacy)
 
@@ -129,13 +128,13 @@ export function useProactiveAgent(): void {
       });
     }
 
-    // ── Rule 6: IHSG monthly drop beyond crashSensitivity ────────
-    const monthly = MKT.ihsg?.monthly;
+    // ── Rule 6: IHSG 60d-drawdown beyond crashSensitivity (unified with isCrisisMode) ─
+    const drawdown60 = getIhsgDrawdown60();
     const sens = engineConfig.crashSensitivity ?? 10;
-    const r6 = typeof monthly === "number" && monthly <= -sens && engineConfig.enableCrashProtection;
+    const r6 = drawdown60 !== null && drawdown60 <= -sens && engineConfig.enableCrashProtection;
     if (transition("ihsgDrop", r6)) {
       addNotification({
-        title: `IHSG turun ${monthly.toFixed(1)}% (bulanan)`,
+        title: `IHSG drawdown 60h ${drawdown60.toFixed(1)}%`,
         message: `Threshold crashSensitivity ${sens}% terlampaui. Tinjau portofolio + pertimbangkan safe haven.`,
         type: "error",
       });

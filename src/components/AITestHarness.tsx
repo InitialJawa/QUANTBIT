@@ -23,7 +23,7 @@ const STORAGE_KEYS = [
   "quantbit_fired_rules",
   "idx_proactive_ai",
   "idx_engine_config",
-  "idx_activeconfig",
+  // FASE 2.6 — idx_activeconfig DIHAPUS. Sumber kebenaran: idx_engine_config.activeProfileId
 ];
 
 export function AITestHarness() {

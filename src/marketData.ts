@@ -104,7 +104,8 @@ export const RS = {
     weakest_factor: "Quality",
     weakest_factor_score: 60.0,
     top5_turnover: 0,
-    watchlist_count: 5
+    watchlist_count: 5,  // LEGACY: gunakan idx_universe_size (size of IDX80 universe)
+    idx_universe_size: 80,  // FASE 1.5 — ukuran universe (IDX80 default)
   },
   volume_details: [
     "PTBA.JK: Volume 1.6x (Wajar)",
@@ -118,10 +119,12 @@ export const RS = {
 export const MKT = {
   last_update: "2026-06-23",
   market_last_update: "2026-06-23 17:00:00 WIB",
-  ihsg: { value: 6101.0, daily: -0.26, daily_pct: -0.26, weekly: 1.55, monthly: -15.42 },
-  usdidr: { value: 17840.0, daily: 0.26, weekly: 0.33, monthly: 1.63 },
-  gold: { value: 2371593, daily: -0.2, weekly: 0, monthly: -4.9 },
-  oil: { value: 88, daily: -3.68, weekly: -5.0, monthly: -10.3 }
+  // NOTE: daily/weekly/monthly di-overwrite oleh refreshRSFromRegime() dari historical IHSG data.
+  // Nilai di bawah hanya dipakai sebagai fallback pre-data-load.
+  ihsg: { value: 6101.0, daily: 0, daily_pct: 0, weekly: 0, monthly: 0 },
+  usdidr: { value: 17840.0, daily: 0, weekly: 0, monthly: 0 },
+  gold: { value: 2371593, daily: 0, weekly: 0, monthly: 0 },
+  oil: { value: 88, daily: 0, weekly: 0, monthly: 0 }
 };
 
 export const WI = {
@@ -397,6 +400,8 @@ function syncRadarContext(scanData: { stocks: ScanStock[]; lastUpdated: string }
   RS.radar_context.breadth_above_60 = above60;
   RS.radar_context.breadth_above_70 = above70;
   RS.radar_context.watchlist_count = stocks.length;
+  // FASE 1.5 — Gunakan field yang lebih jelas untuk ukuran universe
+  RS.radar_context.idx_universe_size = stocks.length;
   RS.volume_details = volDetails;
 }
 

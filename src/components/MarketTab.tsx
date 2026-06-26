@@ -639,7 +639,7 @@ export function MarketTab({
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
           <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Breadth &gt;60</span>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.watchlist_count || 5}</span>
+            <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.idx_universe_size || 80}</span>
             <span className="text-caption font-bold tracking-widest uppercase text-white/20">Assets</span>
           </div>
           <span className="text-caption text-emerald-400/60 block font-bold tracking-wide uppercase">Broad Market Support</span>

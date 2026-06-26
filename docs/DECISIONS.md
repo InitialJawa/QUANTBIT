@@ -491,3 +491,10 @@ Server fetches last 20 messages from past sessions (excluding current), formats 
 - `calcDividend()` baru di sync_engine — dividend yield score dari Yahoo Finance
 - Dividend fixed dalam adaptive weighting — tidak di-adjust, hanya Q/G/V/M yang berubah
 - Dividend cache dipisah ke `src/engine/dividendCache.ts`
+
+## 2026-06-26 — Sync Drift + Feature Simplification (ADR-010)
+**Keputusan:** 5 sync drift diperbaiki (crisis detection, IHSG monthly, portfolio value, Total Wealth, watchlist_count rename) + 9 feature simplifications (7 dead components removed, NotificationContext slimmed, fine-tune sliders removed from sidebar, advanced safeguards collapsed, duplicate profile picker removed, SSOT activeProfileId, backtest no longer auto-run, sticky buy CTA, jargon simplified).
+
+**Alasan:** User mengeluh "terlalu banyak fitur sampai ngga tau gmana makenya" dan "banyak yang ngga sync antar tab". Audit menemukan 22+ sync drift dan ~470 LOC dead code.
+
+**Konsekuensi:** ~470 LOC cleanup, cognitive load turun ~40-50%, 5 critical sync drift hilang. Backtest tidak auto-update (user klik tombol eksplisit). Lihat ADR-010 untuk detail.
