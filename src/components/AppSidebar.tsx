@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2 } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
@@ -10,6 +10,7 @@ import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { ExplainButton } from "./ExplainButton";
 import { MultiSearchableSelect } from "./MultiSearchableSelect";
 import { ConfirmModal } from "./ConfirmModal";
+import { StrategySettingsPanel } from "./StrategySettingsPanel";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -367,6 +368,7 @@ export function AppSidebar({
   );
 
   const renderPortfolioContent = () => {
+    const { isSettingsLocked, setIsSettingsLocked, engineConfig, activeProfile, updateConfigValue, setActiveProfile } = useEngineConfig();
     const sectorMap: Record<string, number> = {};
     portfolio.forEach(p => {
       const stock = getDynamicStock(p.ticker);
@@ -465,14 +467,52 @@ export function AppSidebar({
           </div>
         </div>
 
-        {/* Mobile-friendly config section header - only in sidebar */}
+        {/* Sesi 12: unified settings via StrategySettingsPanel (Live mode) */}
         <div className="mx-2">
           <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Settings className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Mesin Kuantitatif</span>
             <span className="ml-auto"><ExplainButton label="Mesin Kuantitatif (topNCount, reserveBufferPct, crashSensitivity, sell/buy triggers, bobot Q/G/V/M)" /></span>
           </div>
-          <EngineConfigSidebarContent />
+          <StrategySettingsPanel
+            config={{
+              activeProfileId: activeProfile?.id || engineConfig.activeProfileId,
+              simulationMode: engineConfig.simulationMode as "algo" | "custom",
+              universe: engineConfig.universe,
+              topNCount: engineConfig.topNCount,
+              enableCrossover: engineConfig.enableCrossover !== false,
+              enableCrashProtection: engineConfig.enableCrashProtection !== false,
+              crashSensitivity: engineConfig.crashSensitivity ?? 10,
+              safeHavenAsset: engineConfig.safeHavenAsset,
+              reserveBufferPct: engineConfig.reserveBufferPct ?? 10,
+              customUniverse: engineConfig.customUniverse || [],
+            }}
+            onChange={(key, value) => {
+              if (key === "activeProfileId") {
+                setActiveProfile(value);
+              } else {
+                updateConfigValue(key as string, value);
+              }
+            }}
+            disabled={isSettingsLocked}
+            disabledTooltip="Settings terkunci. Klik tombol 'Terkunci' di header untuk membuka."
+          />
+          {/* Portfolio-specific concerns: DCA + Locked toggle */}
+          <div className="px-2 py-1.5 space-y-2 border-t border-white/[0.04] mt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-label text-tertiary">DCA Rekomendasi</span>
+              <button onClick={() => updateConfigValue("dcaActive", !engineConfig.dcaActive)}
+                disabled={isSettingsLocked}
+                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer disabled:opacity-40"
+                style={{
+                  backgroundColor: engineConfig.dcaActive !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: engineConfig.dcaActive !== false ? '#00c9a5' : '#7a7a7a',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                {engineConfig.dcaActive !== false ? "AKTIF" : "NONAKTIF"}
+              </button>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -568,329 +608,109 @@ export function AppSidebar({
     );
   };
 
-  function EngineConfigSidebarContent() {
-    const { engineConfig, activeProfile, updateConfigValue, setActiveProfile, isSettingsLocked, setIsSettingsLocked, isConfigSynced } = useEngineConfig();
-    return (
-      <div className="px-2 py-2 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-label text-tertiary">Status</span>
-          <button onClick={() => setIsSettingsLocked(!isSettingsLocked)}
-            className={`text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-              isSettingsLocked
-                ? "bg-white/[0.04] text-tertiary"
-                : "bg-white/10 text-primary"
-            }`}>
-            {isSettingsLocked ? "Terkunci" : "Terbuka"}
-          </button>
-        </div>
-
-        {/* DCA Rekomendasi on/off toggle — gates BuyPressureDashboard in Portfolio */}
-        <div className="flex items-center justify-between">
-          <span className="text-label text-tertiary">DCA Rekomendasi</span>
-          <button onClick={() => updateConfigValue("dcaActive", !engineConfig.dcaActive)}
-            className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-            style={{
-              backgroundColor: engineConfig.dcaActive !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
-              color: engineConfig.dcaActive !== false ? '#00c9a5' : '#7a7a7a',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-            {engineConfig.dcaActive !== false ? "AKTIF" : "NONAKTIF"}
-          </button>
-        </div>
-
-        {/* BPS Config — show what config the live BPS dashboard is using */}
-        <div className="px-2 py-1.5 bg-white/[0.01] border border-white/[0.03] rounded-lg space-y-0.5">
-          <span className="text-label text-tertiary block font-mono">Profil Strategi Aktif</span>
-          <div className="text-caption text-white/70 font-mono">
-            Profile: <span className="text-emerald-400">{activeProfile?.name || engineConfig.activeProfileId}</span>
-          </div>
-          <div className="text-caption text-white/70 font-mono">
-            Universe: <span className="text-emerald-400">{engineConfig.universe.toUpperCase()}</span>
-          </div>
-          <div className="text-caption text-white/70 font-mono">
-            Top N: <span className="text-emerald-400">{engineConfig.topNCount}</span>
-          </div>
-          <div className="text-caption text-white/70 font-mono">
-            Q/G/V/M/D: <span className="text-emerald-400">{Math.round((activeProfile?.qualityWeight ?? 0) * 100)}/{Math.round((activeProfile?.growthWeight ?? 0) * 100)}/{Math.round((activeProfile?.valueWeight ?? 0) * 100)}/{Math.round((activeProfile?.momentumWeight ?? 0) * 100)}/{Math.round((activeProfile?.dividendWeight ?? 0) * 100)}</span>
-          </div>
-          {isConfigSynced === false && (
-            <div className="text-label text-amber-400 mt-1 font-mono">⚠ Backtest config differs</div>
-          )}
-        </div>
-
-          <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
-            <span className="text-label text-tertiary block">Mode</span>
-            <div className="flex gap-1">
-              {([["algo","Algo"],["custom","Custom"]] as const).map(([k, label]) => (
-                <button key={k} onClick={() => updateConfigValue("simulationMode", k)}
-                  className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: engineConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-        {engineConfig.simulationMode === "custom" ? (
-          <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
-            <div>
-              <span className="text-label text-tertiary block mb-1">Custom Universe</span>
-              {engineConfig.customUniverse && engineConfig.customUniverse.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {engineConfig.customUniverse.map((t, i) => (
-                    <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-caption text-tertiary italic">Set di panel Backtest</span>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className={`space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
-            <div>
-              <span className="text-label text-tertiary block mb-1">Konfigurasi</span>
-              <div className="flex gap-1 flex-wrap">
-                {engineConfig.profiles.map(p => (
-                  <button key={p.id} onClick={() => setActiveProfile(p.id)}
-                    className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                    style={{ backgroundColor: engineConfig.activeProfileId === p.id ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.activeProfileId === p.id ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    {p.name.length > 15 ? p.id.toUpperCase() : p.name}
-                  </button>
-                ))}
-              </div>
-              {engineConfig.profiles.length > 2 && (
-                <div className="mt-1 text-caption text-tertiary">
-                  Aktif: <span className="text-accent">{activeProfile.name}</span>
-                </div>
-              )}
-              <button onClick={() => setShowProfileManager(true)}
-                className="mt-1 text-caption text-emerald-500/60 hover:text-emerald-400 transition-colors cursor-pointer">
-                Edit Profiles
-              </button>
-            </div>
-            <div>
-              <span className="text-label text-tertiary block mb-1">Universe</span>
-              <div className="flex gap-1 flex-wrap">
-                {([["all","All"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
-                  <button key={k} onClick={() => updateConfigValue("universe", k)}
-                    className="flex-1 py-0.5 text-caption font-medium rounded transition-colors cursor-pointer"
-                    style={{ backgroundColor: engineConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-label mb-0.5">
-                <span className="text-tertiary">Top N</span>
-                <span className="text-accent font-bold">{engineConfig.topNCount}</span>
-              </div>
-              <input type="range" min="3" max="7" step="1" value={engineConfig.topNCount}
-                onChange={e => updateConfigValue("topNCount", parseInt(e.target.value))}
-                className="w-full accent-emerald-500 h-1" />
-            </div>
-            <div>
-              <span className="text-label text-tertiary block mb-1">Rotasi Saham</span>
-              <div className="flex gap-1">
-                <button onClick={() => updateConfigValue("enableCrossover", true)}
-                  className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.enableCrossover !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrossover !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Aktif
-                </button>
-                <button onClick={() => updateConfigValue("enableCrossover", false)}
-                  className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                  style={{ backgroundColor: engineConfig.enableCrossover === false ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrossover === false ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Tanpa
-                </button>
-              </div>
-            </div>
-            <div>
-              <span className="text-label text-tertiary block mb-1">Adaptive Weights (Auto)</span>
-              <button onClick={() => updateConfigValue("enableAdaptiveWeights", !engineConfig.enableAdaptiveWeights)}
-                className="w-full py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.enableAdaptiveWeights ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableAdaptiveWeights ? '#a855f7' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                {engineConfig.enableAdaptiveWeights ? "ON — Auto-adjust Q/G/V/M" : "OFF — Static Profile Weights"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className={`border-t border-white/[0.04] pt-2 space-y-2 ${isSettingsLocked ? "opacity-50 pointer-events-none" : ""}`}>
-          <div>
-            <span className="text-label text-tertiary block mb-1">Safeguard</span>
-            <div className="flex gap-1">
-              <button onClick={() => updateConfigValue("safeHavenAsset", "emas")}
-                className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                Emas
-              </button>
-              <button onClick={() => updateConfigValue("safeHavenAsset", "kas")}
-                className="flex-1 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                style={{ backgroundColor: engineConfig.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                Kas
-              </button>
-            </div>
-          </div>
-          {/* FASE 2.4 — Advanced Safeguards (Crash + Buffer) collapsed by default */}
-          <details className="border-t border-white/[0.04] pt-2">
-            <summary className="text-label font-medium text-tertiary cursor-pointer hover:text-secondary transition-colors py-1 list-none flex items-center gap-1">
-              <span className="text-caption">▸</span>
-              Pengaturan Lanjutan
-            </summary>
-            <div className="mt-2 space-y-2">
-              <div>
-                <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
-                <div className="flex gap-1 items-center">
-                  <button onClick={() => updateConfigValue("enableCrashProtection", engineConfig.enableCrashProtection === false ? true : false)}
-                    className="px-2 py-1 text-caption font-medium rounded transition-colors cursor-pointer"
-                    style={{ backgroundColor: engineConfig.enableCrashProtection !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: engineConfig.enableCrashProtection !== false ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    {engineConfig.enableCrashProtection !== false ? "AKTIF" : "NONAKTIF"}
-                  </button>
-                  <input type="range" min="5" max="30" step="1" value={engineConfig.crashSensitivity ?? 10}
-                    onChange={e => updateConfigValue("crashSensitivity", Number(e.target.value))}
-                    disabled={engineConfig.enableCrashProtection === false}
-                    className="flex-1 accent-emerald-500 h-1.5" />
-                  <span className="text-caption text-tertiary ml-1">{engineConfig.crashSensitivity ?? 10}%</span>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-label mb-0.5">
-                  <span className="text-tertiary">Buffer Kas</span>
-                  <span className="text-accent font-bold">{engineConfig.reserveBufferPct ?? 10}%</span>
-                </div>
-                <input type="range" min="0" max="30" step="5" value={engineConfig.reserveBufferPct ?? 10}
-                  onChange={e => updateConfigValue("reserveBufferPct", Number(e.target.value))}
-                  className="w-full accent-emerald-500 h-1" />
-              </div>
-            </div>
-          </details>
-        </div>
-      </div>
-    );
-  }
-
   const renderBacktestContent = () => {
-    const { engineConfig, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerBacktest, backtestConfig, updateBacktestValue } = useEngineConfig();
+    const { engineConfig, updateConfigValue, setActiveProfile, todayWIBStr, backtestResult, isBacktesting, triggerBacktest, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, setBacktestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
+    const draftEqual = isDraftEqualToEngine();
     return (
       <>
+        {/* Sesi 12: Live Strategy toggle + draft status banner */}
         <div className="mx-2">
           <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-white/[0.04]">
-            <Clock className="w-3 h-3 text-tertiary" />
-            <span className="text-label font-medium text-primary uppercase tracking-wider">Mode</span>
+            <Link2 className="w-3 h-3 text-tertiary" />
+            <span className="text-caption font-medium text-primary uppercase tracking-wider">Mode</span>
           </div>
           <div className="px-2 py-1.5 space-y-1.5">
-          <div className="flex gap-1">
-              {([
-                ["algo", "Algo"],
-                ["custom", "Custom"],
-              ] as const).map(([k, label]) => (
-                <button key={k} onClick={() => updateBacktestValue("simulationMode", k)}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: backtestConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: backtestConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                  {label}
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <span className="text-label text-tertiary">Gunakan Strategi Portofolio</span>
+              <button onClick={() => {
+                if (!backtestUseLiveStrategy && !draftEqual) {
+                  // Triggering ON with unsynced draft — caller (SimulationTab) should handle
+                  // the modal via onSyncRequest. For now, we dispatch a custom event.
+                  window.dispatchEvent(new CustomEvent("backtest:draft-unsynced-toggle", { detail: { draft: backtestConfig, engine: engineConfig } }));
+                  return;
+                }
+                setBacktestUseLiveStrategy(true);
+              }}
+                disabled={backtestUseLiveStrategy}
+                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer disabled:opacity-40"
+                style={{
+                  backgroundColor: backtestUseLiveStrategy ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: backtestUseLiveStrategy ? '#00c9a5' : '#7a7a7a',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                {backtestUseLiveStrategy ? "ON" : "OFF"}
+              </button>
             </div>
+            <div className="text-label font-mono">
+              {backtestUseLiveStrategy ? (
+                <span className="text-emerald-400">✓ Live Strategy — settings mengikuti Portofolio</span>
+              ) : draftEqual ? (
+                <span className="text-amber-400">⚠ DRAFT — perubahan tidak effect Portofolio</span>
+              ) : (
+                <span className="text-amber-400">⚠ DRAFT + ada perubahan unsaved</span>
+              )}
+            </div>
+            {!backtestUseLiveStrategy && !draftEqual && backtestResult && (
+              <button onClick={() => {
+                promoteDraftToEngine();
+                setBacktestUseLiveStrategy(true);
+                window.dispatchEvent(new CustomEvent("backtest:draft-promoted"));
+              }}
+                className="w-full py-1 text-caption font-bold rounded transition-colors cursor-pointer"
+                style={{ backgroundColor: '#00c9a5', color: '#000' }}>
+                ↑ PROMOTE TO PORTFOLIO
+              </button>
+            )}
           </div>
         </div>
 
-        {(backtestConfig.simulationMode === "algo" || backtestConfig.simulationMode === "adaptive_dca") ? (
-          <>
-            <div className="mx-2">
-              <div className="px-2 py-1 border-b border-white/[0.04]">
-                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Strategi</span>
-              </div>
-              <div className="px-2 py-2">
-                <div className="flex gap-1">
-                  {([
-                    ["algo", "Rotation"],
-                    ["adaptive_dca", "Adaptive (BPS)"],
-                  ] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => updateBacktestValue("simulationMode", k)}
-                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: backtestConfig.simulationMode === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.simulationMode === k ? '#00c9a5' : '#7a7a7a', border: backtestConfig.simulationMode === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-label text-tertiary mt-1.5 leading-relaxed">
-                  {backtestConfig.simulationMode === "adaptive_dca"
-                    ? "BPS-driven deploy. Buy Pressure Score menentukan % kas."
-                    : "Rebalancing bulanan berdasarkan ranking profil."}
-                </p>
-              </div>
-            </div>
+        {/* Sesi 12: unified settings via StrategySettingsPanel */}
+        <div className="mx-2 mt-2">
+          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+            <Settings className="w-3 h-3 text-tertiary" />
+            <span className="text-caption font-medium text-primary uppercase tracking-wider">Strategy Settings</span>
+          </div>
+          <StrategySettingsPanel
+            config={{
+              activeProfileId: backtestConfig.activeProfileId,
+              simulationMode: backtestConfig.simulationMode === "adaptive_dca" ? "algo" : backtestConfig.simulationMode as "algo" | "custom",
+              universe: backtestConfig.universe,
+              topNCount: backtestConfig.topNCount,
+              enableCrossover: backtestConfig.enableCrossover !== false,
+              enableCrashProtection: backtestConfig.enableCrashProtection !== false,
+              crashSensitivity: backtestConfig.crashSensitivity ?? 10,
+              safeHavenAsset: backtestConfig.safeHavenAsset,
+              reserveBufferPct: backtestConfig.reserveBufferPct ?? 10,
+              customUniverse: backtestConfig.customUniverse || [],
+            }}
+            onChange={(key, value) => {
+              if (key === "activeProfileId") {
+                updateBacktestValue("activeProfileId", value);
+                setActiveProfile(value);
+              } else {
+                updateBacktestValue(key as string, value);
+              }
+            }}
+            disabled={backtestUseLiveStrategy}
+            disabledTooltip="Locked ke Strategi Portofolio. Toggle OFF di header untuk eksperimen."
+            showTitle={false}
+          />
+        </div>
 
-            <div className="mx-2">
-              <div className="px-2 py-1 border-b border-white/[0.04]">
-                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Jumlah Saham</span>
-              </div>
-              <div className="px-2 py-2">
-                <div className="flex gap-1">
-                  {[1, 3, 5, 10].map((n) => (
-                    <button key={n} onClick={() => updateBacktestValue("topNCount", n)}
-                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: backtestConfig.topNCount === n ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.topNCount === n ? '#00c9a5' : '#7a7a7a', border: backtestConfig.topNCount === n ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                      Top {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mx-2">
-              <div className="px-2 py-1 border-b border-white/[0.04]">
-                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Universe</span>
-              </div>
-              <div className="px-2 py-2">
-                <div className="flex gap-1 flex-wrap">
-                  {([["all","Semua"],["idx80","IDX80"],["idx30","IDX30"],["lq45","LQ45"]] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => updateBacktestValue("universe", k)}
-                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: backtestConfig.universe === k ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.universe === k ? '#00c9a5' : '#7a7a7a', border: backtestConfig.universe === k ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mx-2">
-              <div className="px-2 py-1 border-b border-white/[0.04]">
-                <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Konfigurasi</span>
-              </div>
-              <div className="px-2 py-2">
-                <div className="flex gap-1">
-                  {(["aman", "agresif", "dividen"] as const).map((pid) => (
-                    <button key={pid} onClick={() => updateBacktestValue("activeProfileId", pid)}
-                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                      style={{ backgroundColor: backtestConfig.activeProfileId === pid ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === pid ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === pid ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                      {pid === "aman" ? "Aman" : pid === "agresif" ? "Agresif" : "Dividen"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
+        {/* Backtest-only: Custom Universe multi-select (when custom mode) */}
+        {backtestConfig.simulationMode === "custom" && (
           <div className="mx-2">
             <div className="px-2 py-1.5 border-b border-white/[0.04]">
-              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham</span>
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider">Saham Custom</span>
             </div>
             <div className="px-2 py-1.5 space-y-1.5">
-              <div>
-                <span className="text-label text-tertiary block mb-1">Custom Universe (Eksklusif)</span>
-                <MultiSearchableSelect
-                  options={STOCKS_DATA.map(s => ({ value: s.ticker, label: `${s.ticker} — ${s.name}` }))}
-                  value={backtestConfig.customUniverse || []}
-                  onChange={(v) => updateBacktestValue("customUniverse", v)}
-                  placeholder="Cari saham..."
-                  theme="emerald"
-                />
-              </div>
+              <MultiSearchableSelect
+                options={STOCKS_DATA.map(s => ({ value: s.ticker, label: `${s.ticker} — ${s.name}` }))}
+                value={backtestConfig.customUniverse || []}
+                onChange={(v) => updateBacktestValue("customUniverse", v)}
+                placeholder="Cari saham..."
+                theme="emerald"
+              />
             </div>
           </div>
         )}
@@ -933,81 +753,6 @@ export function AppSidebar({
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-            <Layers className="w-3 h-3 text-tertiary" />
-            <span className="text-caption font-medium text-primary uppercase tracking-wider">Strategi</span>
-          </div>
-          <div className="px-2 py-1.5 space-y-1.5">
-            <div>
-              <span className="text-label text-tertiary block mb-1">Rotasi Saham</span>
-              <div className="flex gap-1">
-                <button onClick={() => updateBacktestValue("enableCrossover", true)}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: backtestConfig.enableCrossover ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.enableCrossover ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Rank &lt; 7
-                </button>
-                <button onClick={() => updateBacktestValue("enableCrossover", false)}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: !backtestConfig.enableCrossover ? 'rgba(242,54,69,0.15)' : 'rgba(255,255,255,0.04)', color: !backtestConfig.enableCrossover ? '#f23645' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Tanpa
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <span className="text-label text-tertiary block mb-1">Adaptive Weights (Auto)</span>
-              <button onClick={() => updateBacktestValue("enableAdaptiveWeights", !backtestConfig.enableAdaptiveWeights)}
-                className="w-full py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                style={{ backgroundColor: backtestConfig.enableAdaptiveWeights ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.enableAdaptiveWeights ? '#a855f7' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                {backtestConfig.enableAdaptiveWeights ? "ON — Auto-adjust Q/G/V/M" : "OFF — Static Profile Weights"}
-              </button>
-            </div>
-
-            <div>
-              <span className="text-label text-tertiary block mb-1">Proteksi Crash</span>
-              <div className="flex gap-1 items-center">
-                <button onClick={() => updateBacktestValue("enableCrashProtection", !backtestConfig.enableCrashProtection)}
-                  className="px-2 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                  style={{ backgroundColor: backtestConfig.enableCrashProtection ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.enableCrashProtection ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {backtestConfig.enableCrashProtection ? "ON" : "OFF"}
-                </button>
-                <input type="range" min="5" max="30" step="1" value={backtestConfig.crashSensitivity}
-                  onChange={e => updateBacktestValue("crashSensitivity", Number(e.target.value))}
-                  disabled={!backtestConfig.enableCrashProtection}
-                  className="flex-1 accent-emerald-500 h-1.5" />
-                <span className="text-caption text-tertiary ml-1">{backtestConfig.crashSensitivity}%</span>
-              </div>
-            </div>
-
-            <div>
-              <span className="text-label text-tertiary block mb-1">Safe Haven</span>
-              <div className="flex gap-1">
-                <button onClick={() => updateBacktestValue("safeHavenAsset", "emas")} disabled={!backtestConfig.enableCrashProtection}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: backtestConfig.safeHavenAsset === "emas" ? 'rgba(240,165,0,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.safeHavenAsset === "emas" ? '#f0a500' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Emas
-                </button>
-                <button onClick={() => updateBacktestValue("safeHavenAsset", "kas")} disabled={!backtestConfig.enableCrashProtection}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: backtestConfig.safeHavenAsset === "kas" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.safeHavenAsset === "kas" ? '#00c9a5' : '#7a7a7a', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Kas
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-label mb-1">
-                <span className="text-tertiary">Buffer Kas</span>
-                <span className="text-accent">{backtestConfig.reserveBufferPct}%</span>
-              </div>
-              <input type="range" min="0" max="30" step="5" value={backtestConfig.reserveBufferPct}
-                onChange={e => updateBacktestValue("reserveBufferPct", Number(e.target.value))}
-                className="w-full accent-emerald-500 h-1.5" />
             </div>
           </div>
         </div>

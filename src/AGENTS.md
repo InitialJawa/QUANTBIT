@@ -84,6 +84,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/components/BackToTop.tsx` — Floating scroll-to-top button, mounted di AppContent
 - `src/components/ConfirmModal.tsx` — Reusable confirmation dialog (danger/warning/info variants)
 - `src/components/LastUpdatedChip.tsx` — "Updated 14:23 WIB · 5 menit lalu" chip dengan auto-refresh
+- `src/components/StrategySettingsPanel.tsx` — Unified strategy settings (10 fields). Used by Portfolio + Backtest sidebar. Sesi 12.
 - `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
 - `src/components/AIActionApprovalCard.tsx` — Inline approval card for AI-suggested actions (Level 3)
 - `src/components/_archive/` — Archived dead components (DashboardGrid.tsx)

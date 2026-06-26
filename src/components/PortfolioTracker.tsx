@@ -810,11 +810,17 @@ export function PortfolioTracker({
             {strategyEval.reason}
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
+            <span className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+              IHSG live: {MKT.ihsg.value.toLocaleString("id-ID")} ({ihsgDrawdown60 !== null ? `${ihsgDrawdown60 >= 0 ? "+" : ""}${ihsgDrawdown60.toFixed(1)}%` : "—"})
+            </span>
             <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
               TARGET: {strategyEval.targetSafeHaven?.toUpperCase()}
             </div>
             <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
               MODE: {engineConfig.simulationMode.toUpperCase()}
+            </div>
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">
+              PROFIL: {activeProfile?.name?.toUpperCase() || engineConfig.activeProfileId.toUpperCase()}
             </div>
             {portfolio.some((p) => p.ticker === strategyEval.targetSafeHaven) && (
               <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
@@ -938,140 +944,107 @@ export function PortfolioTracker({
         </div>
       )}
 
-      {/* Top Summary Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Card 1: Saldo Kas */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden group">
-          <div className="flex-1 mr-2 relative z-10">
-            <div className="flex items-center gap-2 mb-2 text-white/40">
-              <Wallet className="w-3.5 h-3.5" />
-              <span className="text-caption uppercase font-bold tracking-widest block font-sans">
-                Likuiditas Kas (RDI)
-              </span>
-            </div>
-            <div>
-              <h4 className="text-2xl font-black text-white font-mono flex items-baseline gap-2">
-                <span className="text-xs text-white/30 font-semibold uppercase">
-                  IDR
+      {/* Sesi 12 — Net Wealth hero card + 5 mini-metrics (replaces 5 separate cards) */}
+      <div className="space-y-2">
+        {/* Hero: Total Net Wealth */}
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-emerald-500/15 p-5 relative overflow-hidden">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Wallet className="w-4 h-4 text-emerald-400" />
+                <span className="text-caption uppercase font-bold tracking-widest text-emerald-400/80 font-sans">
+                  Net Wealth (Saham + Kas + Emas)
                 </span>
-                {cash.toLocaleString("id-ID")}
+                <ExplainButton label="Net Wealth = modal di saham + kas RDI + gram emas × harga spot. Sumber kebenaran tunggal untuk nilai portofolio." />
+              </div>
+              <h4 className="text-3xl font-black text-white font-mono flex items-baseline gap-2">
+                <span className="text-xs text-white/30 font-semibold uppercase">IDR</span>
+                {(totalInvestment + cash + (portfolio.find(p => p.ticker === "EMAS" || p.ticker === "GOLD")?.shares ?? 0) * (typeof MKT !== "undefined" ? MKT.gold.value : 0)).toLocaleString("id-ID")}
               </h4>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-label font-bold font-mono text-emerald-400 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20">
-                  Secure & Verified
-                </span>
+              <div className="mt-1.5 flex items-center gap-2 text-label font-mono text-white/40">
+                <span>Modal: {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}</span>
+                <span>•</span>
+                <span>Kas: {cash.toLocaleString("id-ID", { notation: "compact" })}</span>
+                <span>•</span>
+                <span>Emas: {((portfolio.find(p => p.ticker === "EMAS" || p.ticker === "GOLD")?.shares ?? 0) * (MKT.gold.value || 0)).toLocaleString("id-ID", { notation: "compact" })}</span>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-caption uppercase font-bold text-white/30 tracking-widest">P&amp;L</div>
+              <div className={`text-2xl font-black font-mono ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
+              </div>
+              <div className={`text-caption font-mono font-bold mt-0.5 ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
               </div>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Total Modal */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
-          <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              Modal Investasi Saham
-            </span>
-            <h4
-              id="portfolio-total-cost"
-              className="text-2xl font-bold text-white font-mono flex items-baseline gap-2"
-            >
-              <span className="text-xs text-white/30 font-semibold uppercase">
-                IDR
-              </span>
-              {totalInvestment.toLocaleString("id-ID")}
-            </h4>
-            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
-              Cost-Basis Value
-            </span>
+        {/* 5 mini-metrics in 1 row */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {/* Modal */}
+          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <FileSpreadsheet className="w-3 h-3 text-white/40" />
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Modal</span>
+            </div>
+            <div id="portfolio-total-cost" className="text-data font-mono font-bold text-white">
+              {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}
+            </div>
+            <div className="text-label font-mono text-white/30 mt-0.5">cost basis</div>
           </div>
-        </div>
 
-        {/* Card 3: Nilai Saat Ini */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
-          <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
-              <Briefcase className="w-3.5 h-3.5" />
-              Nilai Saham Saat Ini
-            </span>
-            <h4
-              id="portfolio-current-value"
-              className="text-2xl font-bold text-white font-mono flex items-baseline gap-2"
-            >
-              <span className="text-xs text-white/30 font-semibold uppercase">
-                IDR
-              </span>
-              {totalCurrentValue.toLocaleString("id-ID")}
-            </h4>
-            <span className="text-label font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
-              Market Live Pricing
-            </span>
+          {/* Nilai */}
+          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Briefcase className="w-3 h-3 text-white/40" />
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Nilai</span>
+            </div>
+            <div id="portfolio-current-value" className="text-data font-mono font-bold text-white">
+              {totalCurrentValue.toLocaleString("id-ID", { notation: "compact" })}
+            </div>
+            <div className="text-label font-mono text-white/30 mt-0.5">market live</div>
           </div>
-        </div>
 
-        {/* Card 4: Total Return */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-5 flex items-center justify-between relative overflow-hidden gap-4">
-          <div className="relative z-10">
-            <span className="text-caption uppercase font-bold text-white/40 tracking-widest block mb-2 font-sans flex items-center gap-2">
-              {totalReturn >= 0 ? (
-                <TrendingUp className="w-3.5 h-3.5" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
-              )}
-              Total P&amp;L Portofolio
-            </span>
-            <h4
-              id="portfolio-total-return"
-              className={`text-2xl font-bold font-mono flex items-baseline gap-2 ${
-                totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              <span
-                className={`text-xs font-semibold uppercase ${totalReturn >= 0 ? "text-emerald-400/50" : "text-rose-400/50"}`}
-              >
-                IDR
-              </span>
-              {totalReturn >= 0 ? "+" : ""}
-              {totalReturn.toLocaleString("id-ID")}
-            </h4>
-            <span className="text-caption font-bold font-mono block mt-2 uppercase tracking-widest flex items-center gap-1.5 text-white/50">
-              Return
-              <span
-                className={`px-1.5 py-0.5 rounded text-label font-black ${totalReturn >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}
-              >
-                {totalReturn >= 0 ? "+" : ""}
-                {totalReturnPercent.toFixed(2)}%
-              </span>
-            </span>
+          {/* P&L */}
+          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              {totalReturn >= 0 ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : <TrendingDown className="w-3 h-3 text-rose-400" />}
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">P&amp;L</span>
+            </div>
+            <div id="portfolio-total-return" className={`text-data font-mono font-bold ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
+            </div>
+            <div className={`text-label font-mono mt-0.5 ${totalReturn >= 0 ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+              {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
+            </div>
           </div>
-        </div>
 
-        {/* Card 5: Estimasi Dividen Tahunan */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-emerald-500/10 p-5 flex items-center justify-between relative overflow-hidden gap-4">
-          <div className="relative z-10 flex-1">
-            <span className="text-caption uppercase font-bold text-emerald-400/70 tracking-widest block mb-2 font-sans flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              Estimasi Dividen Tahunan
-            </span>
-            <h4
-              id="portfolio-annual-dividend"
-              className="text-2xl font-bold text-emerald-400 font-mono flex items-baseline gap-2"
-            >
-              <span className="text-xs text-emerald-400/50 font-semibold uppercase">
-                IDR
-              </span>
-              +{totalAnnualDividend.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
-            </h4>
-            <span className="text-caption font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
-              Net (after 10% tax)
-            </span>
+          {/* Dividen /thn */}
+          <div className="bg-[#050505] border border-emerald-500/15 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span className="text-label font-mono text-emerald-400/70 uppercase tracking-widest">Dividen/thn</span>
+            </div>
+            <div id="portfolio-annual-dividend" className="text-data font-mono font-bold text-emerald-400">
+              +{totalAnnualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-label font-mono text-emerald-400/60 mt-0.5">
+              {totalCurrentValue > 0 ? `${(totalAnnualDividend / totalCurrentValue * 100).toFixed(2)}% yield` : "—"}
+            </div>
           </div>
-          <div className="relative z-10 text-right shrink-0">
-            <span className="text-caption uppercase font-bold text-white/30 tracking-widest block mb-1">Yield</span>
-            <span className="text-base font-bold font-mono text-white">
-              {totalCurrentValue > 0 ? (totalAnnualDividend / totalCurrentValue * 100).toFixed(2) : "0.00"}%
-            </span>
-            <span className="text-caption text-white/30 block mt-0.5 font-mono">on portfolio</span>
+
+          {/* Kas */}
+          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Wallet className="w-3 h-3 text-white/40" />
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Kas (RDI)</span>
+            </div>
+            <div className="text-data font-mono font-bold text-white">
+              {cash.toLocaleString("id-ID", { notation: "compact" })}
+            </div>
+            <div className="text-label font-mono text-emerald-400/60 mt-0.5">secure</div>
           </div>
         </div>
       </div>
@@ -1208,14 +1181,14 @@ export function PortfolioTracker({
                           </td>
                           <td className="py-3.5 pl-3 text-right">
                             {item.dividendYield > 0 ? (
-                              <>
-                                <div className="text-emerald-400 font-bold text-xs font-mono">
-                                  +{item.annualDividend.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
-                                </div>
-                                <div className="text-caption text-white/40 font-mono">
-                                  yield {item.dividendYield.toFixed(1)}%
-                                </div>
-                              </>
+                              <div className="inline-flex flex-col items-end gap-0.5">
+                                <span className="text-emerald-400 font-bold text-xs font-mono">
+                                  +Rp {item.annualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
+                                </span>
+                                <span className="text-label text-emerald-400/60 font-mono">
+                                  {item.dividendYield.toFixed(2)}% yield
+                                </span>
+                              </div>
                             ) : (
                               <span className="text-caption text-white/30 font-mono">—</span>
                             )}

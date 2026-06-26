@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { 
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceArea } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   TrendingUp, 
@@ -34,6 +34,7 @@ import { isCrisisMode } from "../marketRegimeEngine";
 import { api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
+import { ConfirmModal } from "./ConfirmModal";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -210,8 +211,15 @@ export function SimulationTab({
     }
     return null;
   };
-  const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest, backtestConfig, updateBacktestValue } = useEngineConfig();
-  const backtestActiveProfile = useMemo(() => engineConfig.profiles.find(p => p.id === backtestConfig.activeProfileId) || engineConfig.profiles[0], [engineConfig.profiles, backtestConfig.activeProfileId]);
+  const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
+  // Sesi 12: when backtestUseLiveStrategy=true, strategy fields used at run-time
+  // are sourced from engineConfig (not backtestConfig) so results are always
+  // coherent with Portfolio. Date range, capital, and singleTicker remain
+  // backtest-specific.
+  const effectiveConfig = backtestUseLiveStrategy
+    ? { ...backtestConfig, ...engineConfig }
+    : backtestConfig;
+  const backtestActiveProfile = useMemo(() => engineConfig.profiles.find(p => p.id === effectiveConfig.activeProfileId) || engineConfig.profiles[0], [engineConfig.profiles, effectiveConfig.activeProfileId]);
 
   // A2 fix: re-fetch historical data when the active profile changes so the
   // engine runs against the right stockRanksProd/Res dataset. Previously this
@@ -455,28 +463,28 @@ export function SimulationTab({
         return;
       }
 
-      const cap = parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
+      const cap = parseInt(effectiveConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
 
       const result = runStrategy({
         dayData: historicalData,
         config: {
           capital: cap,
-          reserveBufferPct: backtestConfig.reserveBufferPct,
-          topNCount: backtestConfig.topNCount,
-          universe: backtestConfig.universe,
-          simulationMode: backtestConfig.simulationMode,
-          singleTicker: backtestConfig.singleTicker,
-          enableCrashProtection: backtestConfig.enableCrashProtection,
-          crashSensitivity: backtestConfig.crashSensitivity,
-          singleSellTrigger: backtestConfig.singleSellTrigger,
-          singleBuyTrigger: backtestConfig.singleBuyTrigger,
-          safeHavenAsset: backtestConfig.safeHavenAsset,
-          enableCrossover: backtestConfig.enableCrossover,
-          simStartDate: backtestConfig.simStartDate,
-          simEndDate: backtestConfig.simEndDate,
-          customUniverse: backtestConfig.customUniverse || [],
-          activeProfileId: backtestConfig.activeProfileId,
-          enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
+          reserveBufferPct: effectiveConfig.reserveBufferPct,
+          topNCount: effectiveConfig.topNCount,
+          universe: effectiveConfig.universe,
+          simulationMode: effectiveConfig.simulationMode,
+          singleTicker: effectiveConfig.singleTicker,
+          enableCrashProtection: effectiveConfig.enableCrashProtection,
+          crashSensitivity: effectiveConfig.crashSensitivity,
+          singleSellTrigger: effectiveConfig.singleSellTrigger,
+          singleBuyTrigger: effectiveConfig.singleBuyTrigger,
+          safeHavenAsset: effectiveConfig.safeHavenAsset,
+          enableCrossover: effectiveConfig.enableCrossover,
+          simStartDate: effectiveConfig.simStartDate,
+          simEndDate: effectiveConfig.simEndDate,
+          customUniverse: effectiveConfig.customUniverse || [],
+          activeProfileId: effectiveConfig.activeProfileId,
+          enableAdaptiveWeights: effectiveConfig.enableAdaptiveWeights,
         },
         profileWeights: {
           quality: backtestActiveProfile?.qualityWeight ?? 0.20,
@@ -625,8 +633,70 @@ export function SimulationTab({
     }
   };
 
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const draftEqualNow = isDraftEqualToEngine();
+
+  // Sesi 12: listen for sidebar toggle OFF→ON request when draft unsynced
+  useEffect(() => {
+    const handler = () => setShowDraftModal(true);
+    window.addEventListener("backtest:draft-unsynced-toggle", handler);
+    return () => window.removeEventListener("backtest:draft-unsynced-toggle", handler);
+  }, []);
+
   return (
     <div className="space-y-6">
+      {/* Sesi 12 — Live strategy mode banner (visible when toggle is OFF or draft diverges) */}
+      {!backtestUseLiveStrategy && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-caption text-amber-200 font-sans leading-snug">
+              <strong>DRAFT MODE</strong> — perubahan settings tidak effect Portofolio. Eksperimen aman.
+            </span>
+            {!draftEqualNow && backtestResult && (
+              <span className="text-label font-mono text-amber-300 ml-2">⚠ ada perubahan unsaved</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {!draftEqualNow && backtestResult && (
+              <button
+                onClick={() => {
+                  promoteDraftToEngine();
+                  toast.success("Settings promoted to Portofolio");
+                }}
+                className="px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black cursor-pointer"
+              >
+                ↑ Promote to Portofolio
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sesi 12 — Draft unsynced modal (Buang / Promote / Batal) */}
+      <ConfirmModal
+        open={showDraftModal}
+        title="Draft Belum di-Sync"
+        message={
+          <>
+            Anda punya perubahan draft yang berbeda dari Portofolio.
+            Mau diapain?
+            <div className="mt-2 text-label font-mono text-white/40 italic">
+              (lihat perbedaan detail di sidebar Backtest)
+            </div>
+          </>
+        }
+        confirmLabel="Promote Dulu"
+        cancelLabel="Batal"
+        variant="info"
+        onConfirm={() => {
+          promoteDraftToEngine();
+          setShowDraftModal(false);
+          toast.success("Settings promoted. Backtest sekarang pakai strategi Portofolio yang baru.");
+        }}
+        onCancel={() => setShowDraftModal(false)}
+      />
+
       {/* D7 — Config changed banner */}
       {configChanged && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
@@ -1027,7 +1097,37 @@ export function SimulationTab({
                 </div>
               ) : backtestResult ? (
                 <div className="space-y-6">
-                  
+
+                  {/* Sesi 12 — compact 6-col metrics strip (CAGR / MaxDD / Sharpe / Dividen / Trades) */}
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2 px-3 py-2 bg-white/[0.01] border border-white/[0.04] rounded-lg">
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">CAGR</div>
+                      <div className={`text-caption font-mono font-bold ${backtestResult.cagr >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {backtestResult.cagr.toFixed(2)}%
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Max DD</div>
+                      <div className="text-caption font-mono font-bold text-rose-400">-{backtestResult.maxDrawdown.toFixed(1)}%</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Sharpe</div>
+                      <div className="text-caption font-mono font-bold text-white/70">{backtestResult.sharpe.toFixed(2)}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Dividen</div>
+                      <div className="text-caption font-mono font-bold text-emerald-400">+{formatRupiah(backtestResult.totalDividends).replace("Rp ", "Rp ")}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Trades</div>
+                      <div className="text-caption font-mono font-bold text-amber-400">{backtestResult.totalTrades}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Vol</div>
+                      <div className="text-caption font-mono font-bold text-white/70">{backtestResult.volatility.toFixed(1)}%</div>
+                    </div>
+                  </div>
+
                   {/* Stats Bento Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     

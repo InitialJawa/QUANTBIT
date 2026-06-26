@@ -235,3 +235,55 @@ in the notification loop. (Tidak berubah dari sesi sebelumnya.)
 - `npx tsc --noEmit` PASS 0 errors
 - `npx vitest run` 18/18 tests passing
 - `npx vite build` 10.9s PASS
+
+## Session 2026-06-26 (session 12): Konsolidasi UI + Backtest ↔ Portfolio Koherensi — COMPLETED
+
+### 🟢 Root cause
+User: "backtest untuk eksperimen dan aku udah nemu hasil yang pas, langsung sync ke porto dong... tapi di kasus ini backtest sudah masuk fase recovery dan sudah membeli saham lagi tapi pas di porto dan market malah masih crash. kalau kek gtu 2 mesin itu baca data yang beda atau ada setting yang ngga sync semua"
+
+**Penyebab**: backtestConfig dan engineConfig bisa diverge (10 strategy fields). User edit di Backtest sidebar → backtestConfig ter-update, tapi engineConfig (yang drives Portfolio) tidak. Hasil backtest tidak sama dengan sinyal Portfolio.
+
+Tambahan: "settingan ui yang ada di porto dan backtest jujur beda jauah" — UI settings di dua tab secara visual/substantif berbeda, user bingung mana yang sync.
+
+### 🟢 FASE 12.1 — Unified Settings Panel (NEW)
+- **`src/components/StrategySettingsPanel.tsx` (NEW, 230 LOC)**: reusable component
+  untuk strategy fields. Standard fields: Profile, Mode, Universe, Custom Universe,
+  Top N, Crossover, Crash (ON + sensitivity), Safe Haven, Buffer Kas.
+- **Adaptive Weights** dihapus (deprecated ADR-010)
+- Settings Lock + DCA toggle tetap di Portfolio sidebar (Portfolio-only concerns)
+- Used identically di Portfolio sidebar (write) dan Backtest sidebar (read-only when toggle ON, write when OFF)
+
+### 🟢 FASE 12.2 — Backtest ↔ Portfolio Koherensi
+- **`EngineConfigContext`**: tambah `backtestUseLiveStrategy` (default ON, localStorage).
+  Tambah `isDraftEqualToEngine()` method + `promoteDraftToEngine()` helper.
+  Hapus `isConfigSynced` flag (replaced by `isDraftEqualToEngine`).
+- **`SimulationTab`**: `handleRunAlgoBacktest` sekarang merge `engineConfig` ke backtestConfig
+  saat `backtestUseLiveStrategy=true`. Strategy fields (10 keys) dari engineConfig menang;
+  date range, capital, singleTicker tetap backtest-specific.
+- **Banner DRAFT MODE** muncul di Backtest tab saat toggle OFF
+- **Tombol "PROMOTE TO PORTFOLIO"** saat toggle OFF + draft != engineConfig + ada hasil
+- **Edge case modal** "Draft Belum di-Sync" saat toggle ON dengan draft unsynced
+  (Buang / Promote Dulu / Batal via ConfirmModal)
+
+### 🟢 FASE 12.3 — PortfolioTracker UI Restructure
+- **Net Wealth hero card**: 1 baris dengan total (Saham + Kas + Emas) + P&L besar
+- **5 mini-metrics**: Modal, Nilai, P&L, Dividen/thn, Kas (1 baris, 5 col di md+)
+- **Strategy Says banner**: tambah chip "IHSG live: 5884 (-23.3%)" + "PROFIL: AGRESIF"
+- **Holdings table dividen cell**: compact "+Rp XXjt" + "X.XX% yield" format
+
+### 🟢 FASE 12.4 — SimulationTab UI Tidy
+- **6-col compact metrics strip** (CAGR, MaxDD, Sharpe, Dividen, Trades, Vol)
+  di atas bento grid 4-col existing
+- **Status Akhir card** dipromote (sudah dari sesi 10)
+- **ReferenceArea** imported (untuk future chart annotations)
+
+### Files
+- `src/components/StrategySettingsPanel.tsx` (NEW)
+- `src/contexts/EngineConfigContext.tsx` (modified)
+- `src/components/AppSidebar.tsx` (heavily modified, ~250 LOC removed)
+- `src/components/SimulationTab.tsx` (modified)
+- `src/components/PortfolioTracker.tsx` (modified)
+
+### Verification
+- `npx tsc --noEmit` PASS 0 errors
+- `npx vitest run` 18/18 tests passing

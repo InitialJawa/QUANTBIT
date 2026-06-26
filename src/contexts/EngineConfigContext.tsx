@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
 export interface WeightProfile {
   id: string;
@@ -113,8 +113,15 @@ export interface EngineConfigContextType {
   backtestConfig: EngineConfig;
   updateBacktestValue: (key: string, value: any) => void;
   resetBacktestConfig: () => void;
-  /** True when critical fields of backtestConfig match engineConfig. */
-  isConfigSynced: boolean;
+  /** Sesi 12 — when true, backtest reads strategy fields from engineConfig
+   *  (always coherent with Portfolio). When false, backtest uses backtestConfig
+   *  as a sandbox for what-if exploration. Toggle is in Backtest sidebar. */
+  backtestUseLiveStrategy: boolean;
+  setBacktestUseLiveStrategy: (v: boolean) => void;
+  /** True when backtestConfig strategy fields match engineConfig. */
+  isDraftEqualToEngine: () => boolean;
+  /** Promote backtestConfig strategy fields → engineConfig. */
+  promoteDraftToEngine: () => void;
 }
 
 const EngineConfigContext = createContext<EngineConfigContextType | null>(null);
@@ -190,6 +197,42 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     } catch {}
     return createDefaultConfig();
   });
+
+  // Sesi 12 — Sesi 12: when true, backtest = engineConfig (default, always
+  // coherent). When false, backtest = backtestConfig (sandbox for what-if).
+  const [backtestUseLiveStrategy, setBacktestUseLiveStrategy] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("quantbit_backtest_use_live_strategy");
+      return v === null ? true : v === "1";
+    } catch { return true; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("quantbit_backtest_use_live_strategy", backtestUseLiveStrategy ? "1" : "0"); } catch {}
+  }, [backtestUseLiveStrategy]);
+
+  // Sesi 12: detect if draft (backtestConfig strategy fields) diverges from engineConfig.
+  const STRATEGY_KEYS: Array<keyof EngineConfig> = [
+    "activeProfileId", "universe", "topNCount", "simulationMode",
+    "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
+    "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
+  ];
+  const isDraftEqualToEngine = () => {
+    return STRATEGY_KEYS.every(k =>
+      JSON.stringify(backtestConfig[k]) === JSON.stringify(engineConfig[k])
+    );
+  };
+
+  // Sesi 12: promote backtestConfig strategy fields → engineConfig.
+  // Also called from "PROMOTE TO PORTFOLIO" button in Backtest tab.
+  const promoteDraftToEngine = () => {
+    setEngineConfig(prev => {
+      const next = { ...prev };
+      STRATEGY_KEYS.forEach(k => {
+        (next as any)[k] = backtestConfig[k];
+      });
+      return next;
+    });
+  };
   const updateBacktestValue = (key: string, value: any) => {
     setBacktestConfig((prev) => ({ ...prev, [key]: value }));
     // Clear stale backtestResult so the UI doesn't briefly show numbers
@@ -219,16 +262,9 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
   // backtestConfig diverges from engineConfig on any of these, the
   // AppHeader shows a yellow "SYNC" indicator so the user knows the
   // backtest sandbox has settings the live Portfolio doesn't.
-  const isConfigSynced = (() => {
-    const KEYS: Array<keyof EngineConfig> = [
-      "activeProfileId", "universe", "topNCount", "simulationMode",
-      "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
-      "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
-    ];
-    return KEYS.every(k =>
-      JSON.stringify(backtestConfig[k]) === JSON.stringify(engineConfig[k]),
-    );
-  })();
+  // Sesi 12: removed isConfigSynced (replaced by isDraftEqualToEngine() method
+  // on context + backtestUseLiveStrategy toggle controls whether backtest
+  // uses backtestConfig at all).
 
   const updateConfigValue = (key: string, value: any) => {
     setEngineConfig((prev) => {
@@ -328,7 +364,8 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
       lastBacktestProfile, setLastBacktestProfile,
       syncFromBacktest,
       backtestConfig, updateBacktestValue, resetBacktestConfig,
-      isConfigSynced,
+      backtestUseLiveStrategy, setBacktestUseLiveStrategy,
+      isDraftEqualToEngine, promoteDraftToEngine,
     }}>
       {children}
     </EngineConfigContext.Provider>
