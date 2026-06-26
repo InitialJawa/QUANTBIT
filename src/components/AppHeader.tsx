@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, Sparkles, Wallet } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, BellRing, Sparkles, Wallet, AlertTriangle } from "lucide-react";
 import { totalWealth, formatRupiahShort } from "../utils/portfolioValue";
 import type { PortfolioItem, StockData } from "../types";
 
@@ -28,6 +28,8 @@ interface AppHeaderProps {
   setUseDevMockAI: (v: boolean) => void;
   showToasts: boolean;
   setShowToasts: (v: boolean) => void;
+  showCrisisSignals: boolean;
+  setShowCrisisSignals: (v: boolean) => void;
   // FASE 1.4 — Total Wealth (single source of truth = stocks + cash + gold)
   portfolio: PortfolioItem[];
   cash: number;
@@ -66,6 +68,8 @@ export function AppHeader({
   setUseDevMockAI,
   showToasts,
   setShowToasts,
+  showCrisisSignals,
+  setShowCrisisSignals,
   portfolio,
   cash,
   getDynamicStock,
@@ -205,6 +209,49 @@ export function AppHeader({
                 <div className="h-px bg-white/[0.04] my-0.5" />
 
                 <div className="px-1.5 py-1">
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Sinyal Pasar</div>
+                  <button
+                    onClick={() => setShowCrisisSignals(!showCrisisSignals)}
+                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
+                    title={showCrisisSignals
+                      ? "Sembunyikan banner 'Strategy Says: Exit ke EMAS' & 'Exit Safe Haven'. Algoritma tetap berjalan."
+                      : "Tampilkan banner sinyal krisis IHSG di tab Portofolio"
+                    }
+                  >
+                    {showCrisisSignals ? <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                    <span className="flex-1 text-left">Sinyal Krisis</span>
+                    <span className={`text-label font-mono ${showCrisisSignals ? "text-emerald-400" : "text-white/30"}`}>
+                      {showCrisisSignals ? "ON" : "OFF"}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="h-px bg-white/[0.04] my-0.5" />
+
+                <div className="px-1.5 py-1">
+                  <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Alert Pop-up</div>
+                  <button
+                    onClick={() => setShowToasts(!showToasts)}
+                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
+                    title={showToasts
+                      ? "Matikan toast pop-up. Event tetap tersimpan di notifikasi persistent & dibaca AI."
+                      : "Tampilkan toast pop-up singkat di pojok kanan atas saat ada aksi (beli/jual)"
+                    }
+                  >
+                    {showToasts ? <BellRing className="w-3.5 h-3.5 text-cyan-400" /> : <BellOff className="w-3.5 h-3.5" />}
+                    <span className="flex-1 text-left">Toast Pop-up</span>
+                    <span className={`text-label font-mono ${showToasts ? "text-emerald-400" : "text-white/30"}`}>
+                      {showToasts ? "ON" : "OFF"}
+                    </span>
+                  </button>
+                  <div className="px-2 pt-1 pb-1.5 text-[10px] text-white/25 leading-snug italic">
+                    Notifikasi persistent (bell icon) selalu aktif, event disimpan dan dibaca AI walaupun toast mati.
+                  </div>
+                </div>
+
+                <div className="h-px bg-white/[0.04] my-0.5" />
+
+                <div className="px-1.5 py-1">
                   <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">AI Agent</div>
                   <button
                     onClick={() => setProactiveAIEnabled(!proactiveAIEnabled)}
@@ -215,17 +262,6 @@ export function AppHeader({
                     <span className="flex-1 text-left">Proactive Alerts</span>
                     <span className={`text-label font-mono ${proactiveAIEnabled ? "text-emerald-400" : "text-white/30"}`}>
                       {proactiveAIEnabled ? "ON" : "OFF"}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setShowToasts(!showToasts)}
-                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
-                    title={showToasts ? "Sembunyikan toast pop-up (event tetap tersimpan di notifikasi & dibaca AI)" : "Tampilkan toast pop-up singkat di pojok kanan atas"}
-                  >
-                    {showToasts ? <Bell className="w-3.5 h-3.5 text-cyan-400" /> : <BellOff className="w-3.5 h-3.5" />}
-                    <span className="flex-1 text-left">Toast Pop-up</span>
-                    <span className={`text-label font-mono ${showToasts ? "text-emerald-400" : "text-white/30"}`}>
-                      {showToasts ? "ON" : "OFF"}
                     </span>
                   </button>
                   {import.meta.env?.DEV && (

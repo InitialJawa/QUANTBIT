@@ -234,6 +234,8 @@ function AppContent({ logout }: { logout: () => void }) {
           setUseDevMockAI={ui.setUseDevMockAI}
           showToasts={ui.showToasts}
           setShowToasts={ui.setShowToasts}
+          showCrisisSignals={ui.showCrisisSignals}
+          setShowCrisisSignals={ui.setShowCrisisSignals}
           portfolio={pm.portfolio}
           cash={pm.cash}
           getDynamicStock={df.getDynamicStock}
@@ -317,6 +319,7 @@ function AppContent({ logout }: { logout: () => void }) {
                           setCash={pm.setCash}
                           tradeLogs={pm.tradeLogs}
                           setTradeLogs={pm.customSetTradeLogs}
+                          showCrisisSignals={ui.showCrisisSignals}
                         />
                         </Suspense>
                       </motion.div>

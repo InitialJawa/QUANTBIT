@@ -59,6 +59,17 @@ export function useUIState() {
       return v === "1";
     } catch { return false; }
   });
+
+  // Crisis signals (Strategy Says: Exit to EMAS / Exit Safe Haven) — default ON.
+  // User can mute if they don't want the amber/green banner to take up screen space.
+  // Does NOT affect the algorithm itself (engineConfig.enableCrashProtection does that).
+  const [showCrisisSignals, setShowCrisisSignals] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("quantbit_show_crisis_signals");
+      return v === null ? true : v === "1";
+    } catch { return true; }
+  });
+
   const [appNotification, setAppNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   const getChartTheme = (): "dark" | "light" => theme === "light" ? "light" : "dark";
@@ -86,6 +97,10 @@ export function useUIState() {
   }, [showToasts]);
 
   useEffect(() => {
+    try { localStorage.setItem("quantbit_show_crisis_signals", showCrisisSignals ? "1" : "0"); } catch {}
+  }, [showCrisisSignals]);
+
+  useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (settingsDropdownRef.current && !settingsDropdownRef.current.contains(e.target as Node)) {
         setIsSettingsOpen(false);
@@ -109,6 +124,7 @@ export function useUIState() {
     isSettingsOpen, setIsSettingsOpen,
     settingsDropdownRef,
     showToasts, setShowToasts,
+    showCrisisSignals, setShowCrisisSignals,
     appNotification, setAppNotification,
     proactiveAIEnabled, setProactiveAIEnabled,
     useDevMockAI, setUseDevMockAI,

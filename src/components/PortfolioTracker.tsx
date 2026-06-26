@@ -62,6 +62,8 @@ interface PortfolioTrackerProps {
   setCash: React.Dispatch<React.SetStateAction<number>>;
   tradeLogs: any[];
   setTradeLogs: React.Dispatch<React.SetStateAction<any[]>>;
+  /** When OFF, hide "Strategy Says: Exit..." + "Exit Safe Haven → Stock" banners. */
+  showCrisisSignals?: boolean;
 }
 
 export function PortfolioTracker({
@@ -77,6 +79,7 @@ export function PortfolioTracker({
   setCash,
   tradeLogs,
   setTradeLogs,
+  showCrisisSignals = true,
 }: PortfolioTrackerProps) {
   const visibleStocks = STOCKS_DATA.map((s) => getDynamicStock(s.ticker) || s);
   const [selectedTicker, setSelectedTicker] = useState(visibleStocks[0].ticker);
@@ -793,7 +796,7 @@ export function PortfolioTracker({
         </div>
       )}
 
-      {strategyEval.shouldExit && (
+      {showCrisisSignals && strategyEval.shouldExit && (
         <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
           <div className="flex items-center gap-2 text-amber-400">
@@ -823,7 +826,7 @@ export function PortfolioTracker({
       )}
 
       {/* Safe Haven Exit Signal — IHSG recovered, time to leave EMAS back to stocks */}
-      {strategyEval.shouldExitSafeHaven && !strategyEval.shouldExit && (() => {
+      {showCrisisSignals && strategyEval.shouldExitSafeHaven && !strategyEval.shouldExit && (() => {
         const hasSafeHaven = portfolio.some(
           (p) => p.ticker === "EMAS" || p.ticker === "GOLD",
         );

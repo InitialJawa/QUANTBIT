@@ -1,24 +1,24 @@
 # NEXT ACTION
-## P0 — VERIFY (2026-06-26, Sesi 10)
+## P0 — VERIFY (2026-06-26, Sesi 11)
 **Status**: Code changes done, docs updated, tsc + vitest + vite build all green.
 
-Delivered (Sesi 10 — UX Phase 2 Power Features):
-- **A2** Keyboard shortcuts (1/2/3/4) + kbd badges
-- **A3** Total Wealth pill on mobile
-- **A4** LastUpdatedChip component
-- **A7** Backtest empty state CTA
-- **A10** ConfirmModal component (danger/warning/info)
-- **B2** Holdings table sort/filter/sticky thead
-- **B5** Dismissable portfolio warnings (per-row + bulk)
-- **D1** "Jalankan Backtest" button inside tab
-- **D7** "Config changed" amber banner
-- **E5** CSV export on 3 Analytics sub-tabs
-- **F4** "Danger Zone" group in sidebar
+Delivered (Sesi 11 — Settings toggles + backtest status):
+- **showCrisisSignals** di useUIState (default ON, localStorage). Gate
+  'Strategy Says: Exit...' + 'Exit Safe Haven → Stock' banner
+- **Settings dropdown**: section baru 'Sinyal Pasar' dengan toggle
+  Sinyal Krisis (amber AlertTriangle). Pisahkan dari 'Alert Pop-up'
+  (toast) dan 'AI Agent' (proactive alerts) — 3 concerns sekarang
+  jelas terpisah
+- **Toast Pop-up** renamed section header ke 'Alert Pop-up' dengan
+  subtitle italic menjelaskan 'Notifikasi persistent selalu aktif, event
+  disimpan dan dibaca AI walaupun toast mati'
+- **Backtest card** 'Status Akhir Backtest' (Sesi 10): tampil apakah
+  algo berakhir di Safe Haven / Saham / Kas, plus crashCount info
 
 **Verification**:
 - [x] `npx tsc --noEmit` — PASS 0 errors
 - [x] `npx vitest run` — 18/18 passing
-- [x] `npx vite build` — PASS 10.9s
+- [x] `npx vite build` — PASS 12.0s
 
 ## P1 — UX Phase 3 (next sprint)
 - [ ] A5 — Command palette (Cmd+K)
