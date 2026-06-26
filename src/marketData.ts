@@ -243,10 +243,15 @@ function buildDividendCache(stocks: ScanStock[]) {
  *  Mutates s.dividend in place so getProcessedLeaders + marketRegimeEngine
  *  see the same value as the other 0-100 factors. */
 function enrichDividendScore(stocks: ScanStock[]) {
+  let enriched = 0;
   for (const s of stocks) {
     if (s.dividend === undefined && s.dividendYield !== undefined) {
       s.dividend = Math.max(0, Math.min(100, s.dividendYield * (100 / 15)));
+      enriched++;
     }
+  }
+  if (typeof console !== "undefined") {
+    console.log(`[dividend] enriched ${enriched}/${stocks.length} stocks from dividendYield`);
   }
 }
 
