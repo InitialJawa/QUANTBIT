@@ -11,6 +11,7 @@ import {
 } from "./types";
 import { computeDayRankings, pickTopTickersByRank, getCleanTickerList, computeAdaptiveWeights } from "./ranker";
 import { detectCrashAlgo, detectRecoveryAlgo } from "./crashDetector";
+import dividendSnapshots from "../data/dividend_snapshots.json";
 import {
   computeInitialAllocation,
   liquidateHoldings,
@@ -37,10 +38,41 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
-      // A4 fix: always recompute rank from normalised scores using the
-      // caller's profileWeights so custom profiles (and adaptive weights)
-      // are honoured — not just the stockRanksProd/Res pre-baked values.
-      const stockRanks = computeDayRankings(d.stockNormScores, currentWeights);
+      // Backfill missing dividend score from FUNDAMENTAL_SNAPSHOTS (DPS / price)
+      // — year data only has Q/G/V/M. Top ~9 IDX stocks have real DPS; rest
+      // get a neutral 50 (which collapses to uniform shift under ranking).
+      const tickersInDay = Object.keys(d.stockNormScores);
+      const year = parseInt(d.date.slice(0, 4), 10);
+      const enrichedScores: Record<string, { quality: number; growth: number; value: number; momentum: number; dividend: number }> = {};
+      const yields: { ticker: string; y: number }[] = [];
+      for (const t of tickersInDay) {
+        const ns = d.stockNormScores[t];
+        const existing = (ns as any).dividend;
+        let yieldPct = 0;
+        if (existing === undefined) {
+          const dps = (dividendSnapshots as any)[t]?.[year]?.dividend_per_share;
+          const price = d.stockPrices?.[t];
+          if (dps > 0 && price > 0) {
+            yieldPct = (dps / price) * 100;
+          }
+          yields.push({ ticker: t, y: yieldPct });
+        }
+        enrichedScores[t] = {
+          quality: ns.quality ?? 50,
+          growth: ns.growth ?? 50,
+          value: ns.value ?? 50,
+          momentum: ns.momentum ?? 50,
+          dividend: existing ?? 50,
+        };
+      }
+      if (yields.length > 0) {
+        yields.sort((a, b) => a.y - b.y);
+        const n = yields.length;
+        yields.forEach((it, i) => {
+          enrichedScores[it.ticker].dividend = (i / Math.max(1, n - 1)) * 95;
+        });
+      }
+      const stockRanks = computeDayRankings(enrichedScores, currentWeights);
       return { ...d, stockRanks };
     }
     return {

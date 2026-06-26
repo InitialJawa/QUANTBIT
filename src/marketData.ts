@@ -215,6 +215,7 @@ let scanDataCache: { stocks: ScanStock[]; lastUpdated: string } | null = null;
 export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } | null) {
   scanDataCache = data;
   if (data?.stocks?.length) {
+    enrichDividendScore(data.stocks);
     syncExitsFromScan(data);
     syncTurnaroundFromScan(data);
     syncRadarContext(data);
@@ -235,6 +236,18 @@ function buildDividendCache(stocks: ScanStock[]) {
     }
   }
   setDividendCache(cache);
+}
+
+/** Compute 0-100 dividend score from dividendYield (%). IDX dividend yield
+ *  range is roughly 0-15%; linear map: 0%→0, 7.5%→50, 15%→100.
+ *  Mutates s.dividend in place so getProcessedLeaders + marketRegimeEngine
+ *  see the same value as the other 0-100 factors. */
+function enrichDividendScore(stocks: ScanStock[]) {
+  for (const s of stocks) {
+    if (s.dividend === undefined && s.dividendYield !== undefined) {
+      s.dividend = Math.max(0, Math.min(100, s.dividendYield * (100 / 15)));
+    }
+  }
 }
 
 function syncExitsFromScan(scanData: { stocks: ScanStock[]; lastUpdated: string }) {

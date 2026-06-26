@@ -38,6 +38,7 @@ function copyDataAssets(): Plugin {
   const sources = [
     { from: resolve(root, 'data/idx80_scan.json'), to: 'idx80_scan.json' },
     { from: resolve(root, 'data/idx_fundamentals_all.json'), to: 'idx_fundamentals_all.json' },
+    { from: resolve(root, 'data/fundamental_snapshots.json'), to: 'fundamental_snapshots.json' },
   ];
   const yearDirs = [
     { from: resolve(root, 'data/years'), to: 'years' },
