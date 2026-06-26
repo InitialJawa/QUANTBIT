@@ -1,668 +1,2975 @@
 {
   "BBCA": {
+    "2010": {
+      "dividend_per_share": 23
+    },
+    "2011": {
+      "dividend_per_share": 23
+    },
+    "2012": {
+      "dividend_per_share": 23
+    },
+    "2013": {
+      "dividend_per_share": 23
+    },
+    "2014": {
+      "dividend_per_share": 25
+    },
+    "2015": {
+      "dividend_per_share": 31
+    },
+    "2016": {
+      "dividend_per_share": 35
+    },
+    "2017": {
+      "dividend_per_share": 42
+    },
     "2018": {
-      "roe": 0.2,
-      "pb": 4.1,
-      "pe": 26,
-      "der": 0.15,
-      "roa": 0.035,
-      "net_margin": 0.38,
-      "dividend_per_share": 145
+      "dividend_per_share": 52
     },
     "2019": {
-      "roe": 0.18,
-      "pb": 4.4,
-      "pe": 28,
-      "der": 0.15,
-      "roa": 0.034,
-      "net_margin": 0.39,
-      "dividend_per_share": 155
+      "dividend_per_share": 71
     },
     "2020": {
-      "roe": 0.16,
-      "pb": 4.2,
-      "pe": 27,
-      "der": 0.15,
-      "roa": 0.031,
-      "net_margin": 0.36,
-      "dividend_per_share": 145
+      "dividend_per_share": 111
     },
     "2021": {
-      "roe": 0.19,
-      "pb": 4.6,
-      "pe": 29,
-      "der": 0.14,
-      "roa": 0.034,
-      "net_margin": 0.37,
-      "dividend_per_share": 170
+      "dividend_per_share": 111
     },
     "2022": {
-      "roe": 0.21,
-      "pb": 4.8,
-      "pe": 25,
-      "der": 0.13,
-      "roa": 0.036,
-      "net_margin": 0.4,
-      "dividend_per_share": 205
+      "dividend_per_share": 155
     },
     "2023": {
-      "roe": 0.22,
-      "pb": 4.9,
-      "pe": 24,
-      "der": 0.12,
-      "roa": 0.037,
-      "net_margin": 0.42,
-      "dividend_per_share": 228
+      "dividend_per_share": 213
     },
     "2024": {
-      "roe": 0.23,
-      "pb": 4.8,
-      "pe": 24.5,
-      "der": 0.12,
-      "roa": 0.038,
-      "net_margin": 0.43,
-      "dividend_per_share": 270
+      "dividend_per_share": 278
     },
     "2025": {
-      "roe": 0.23,
-      "pb": 4.5,
-      "pe": 22,
-      "der": 0.12,
-      "roa": 0.037,
-      "net_margin": 0.44,
-      "dividend_per_share": 310
+      "dividend_per_share": 305
+    },
+    "2026": {
+      "dividend_per_share": 301
     }
   },
   "BBRI": {
+    "2010": {
+      "dividend_per_share": 16
+    },
+    "2011": {
+      "dividend_per_share": 13
+    },
+    "2012": {
+      "dividend_per_share": 22
+    },
+    "2013": {
+      "dividend_per_share": 41
+    },
+    "2014": {
+      "dividend_per_share": 47
+    },
+    "2015": {
+      "dividend_per_share": 54
+    },
+    "2016": {
+      "dividend_per_share": 57
+    },
+    "2017": {
+      "dividend_per_share": 78
+    },
     "2018": {
-      "roe": 0.17,
-      "pb": 2.3,
-      "pe": 15,
-      "der": 0.18,
-      "roa": 0.025,
-      "net_margin": 0.25,
-      "dividend_per_share": 120
+      "dividend_per_share": 97
     },
     "2019": {
-      "roe": 0.16,
-      "pb": 2.5,
-      "pe": 16,
-      "der": 0.18,
-      "roa": 0.024,
-      "net_margin": 0.26,
-      "dividend_per_share": 130
-    },
-    "2020": {
-      "roe": 0.11,
-      "pb": 2.1,
-      "pe": 21,
-      "der": 0.19,
-      "roa": 0.015,
-      "net_margin": 0.18,
-      "dividend_per_share": 80
-    },
-    "2021": {
-      "roe": 0.14,
-      "pb": 2.2,
-      "pe": 18,
-      "der": 0.18,
-      "roa": 0.02,
-      "net_margin": 0.21,
       "dividend_per_share": 120
     },
+    "2020": {
+      "dividend_per_share": 153
+    },
+    "2021": {
+      "dividend_per_share": 90
+    },
     "2022": {
-      "roe": 0.17,
-      "pb": 2.4,
-      "pe": 14.5,
-      "der": 0.18,
-      "roa": 0.026,
-      "net_margin": 0.24,
-      "dividend_per_share": 188
+      "dividend_per_share": 174
     },
     "2023": {
-      "roe": 0.18,
-      "pb": 2.3,
-      "pe": 14,
-      "der": 0.17,
-      "roa": 0.027,
-      "net_margin": 0.26,
-      "dividend_per_share": 220
+      "dividend_per_share": 288
     },
     "2024": {
-      "roe": 0.18,
-      "pb": 1.8,
-      "pe": 11.5,
-      "der": 0.18,
-      "roa": 0.026,
-      "net_margin": 0.25,
-      "dividend_per_share": 240
+      "dividend_per_share": 454
     },
     "2025": {
-      "roe": 0.18,
-      "pb": 1.6,
-      "pe": 10,
-      "der": 0.18,
-      "roa": 0.025,
-      "net_margin": 0.24,
-      "dividend_per_share": 260
+      "dividend_per_share": 345
+    },
+    "2026": {
+      "dividend_per_share": 209
     }
   },
   "BMRI": {
+    "2010": {
+      "dividend_per_share": 29
+    },
+    "2011": {
+      "dividend_per_share": 30
+    },
+    "2012": {
+      "dividend_per_share": 26
+    },
+    "2013": {
+      "dividend_per_share": 50
+    },
+    "2014": {
+      "dividend_per_share": 59
+    },
+    "2015": {
+      "dividend_per_share": 53
+    },
+    "2016": {
+      "dividend_per_share": 65
+    },
+    "2017": {
+      "dividend_per_share": 67
+    },
     "2018": {
-      "roe": 0.16,
-      "pb": 1.8,
-      "pe": 14,
-      "der": 0.16,
-      "roa": 0.022,
-      "net_margin": 0.24,
-      "dividend_per_share": 160
-    },
-    "2019": {
-      "roe": 0.17,
-      "pb": 1.9,
-      "pe": 15,
-      "der": 0.16,
-      "roa": 0.023,
-      "net_margin": 0.25,
-      "dividend_per_share": 180
-    },
-    "2020": {
-      "roe": 0.09,
-      "pb": 1.5,
-      "pe": 22,
-      "der": 0.17,
-      "roa": 0.013,
-      "net_margin": 0.14,
       "dividend_per_share": 100
     },
-    "2021": {
-      "roe": 0.15,
-      "pb": 1.7,
-      "pe": 15,
-      "der": 0.16,
-      "roa": 0.021,
-      "net_margin": 0.22,
-      "dividend_per_share": 175
-    },
-    "2022": {
-      "roe": 0.2,
-      "pb": 2,
-      "pe": 12,
-      "der": 0.15,
-      "roa": 0.025,
-      "net_margin": 0.27,
-      "dividend_per_share": 260
-    },
-    "2023": {
-      "roe": 0.21,
-      "pb": 2.1,
-      "pe": 11,
-      "der": 0.15,
-      "roa": 0.026,
-      "net_margin": 0.28,
-      "dividend_per_share": 350
-    },
-    "2024": {
-      "roe": 0.21,
-      "pb": 1.9,
-      "pe": 11,
-      "der": 0.15,
-      "roa": 0.026,
-      "net_margin": 0.28,
-      "dividend_per_share": 380
-    },
-    "2025": {
-      "roe": 0.21,
-      "pb": 1.7,
-      "pe": 10.5,
-      "der": 0.15,
-      "roa": 0.025,
-      "net_margin": 0.28,
-      "dividend_per_share": 410
-    }
-  },
-  "TLKM": {
-    "2018": {
-      "roe": 0.16,
-      "pb": 3.2,
-      "pe": 18,
-      "der": 0.4,
-      "roa": 0.09,
-      "net_margin": 0.14,
-      "dividend_per_share": 163
-    },
     "2019": {
-      "roe": 0.16,
-      "pb": 3,
-      "pe": 17.5,
-      "der": 0.42,
-      "roa": 0.085,
-      "net_margin": 0.14,
-      "dividend_per_share": 154
+      "dividend_per_share": 121
     },
     "2020": {
-      "roe": 0.15,
-      "pb": 2.8,
-      "pe": 16,
-      "der": 0.45,
-      "roa": 0.08,
-      "net_margin": 0.15,
-      "dividend_per_share": 168
+      "dividend_per_share": 177
     },
     "2021": {
-      "roe": 0.17,
-      "pb": 3.3,
-      "pe": 17,
-      "der": 0.48,
-      "roa": 0.095,
-      "net_margin": 0.16,
-      "dividend_per_share": 149
+      "dividend_per_share": 110
     },
     "2022": {
-      "roe": 0.16,
-      "pb": 2.9,
-      "pe": 18,
-      "der": 0.46,
-      "roa": 0.088,
-      "net_margin": 0.14,
-      "dividend_per_share": 167
+      "dividend_per_share": 180
     },
     "2023": {
-      "roe": 0.14,
-      "pb": 2.5,
-      "pe": 16.5,
-      "der": 0.44,
-      "roa": 0.074,
-      "net_margin": 0.11,
-      "dividend_per_share": 186
+      "dividend_per_share": 265
     },
     "2024": {
-      "roe": 0.14,
-      "pb": 2,
-      "pe": 15,
-      "der": 0.45,
-      "roa": 0.072,
-      "net_margin": 0.11,
-      "dividend_per_share": 195
+      "dividend_per_share": 354
     },
     "2025": {
-      "roe": 0.13,
-      "pb": 1.8,
-      "pe": 13.5,
-      "der": 0.44,
-      "roa": 0.07,
-      "net_margin": 0.11,
-      "dividend_per_share": 210
+      "dividend_per_share": 466
+    },
+    "2026": {
+      "dividend_per_share": 477
+    }
+  },
+  "BBNI": {
+    "2010": {
+      "dividend_per_share": 23
+    },
+    "2011": {
+      "dividend_per_share": 33
+    },
+    "2012": {
+      "dividend_per_share": 31
+    },
+    "2013": {
+      "dividend_per_share": 57
+    },
+    "2014": {
+      "dividend_per_share": 73
+    },
+    "2015": {
+      "dividend_per_share": 72
+    },
+    "2016": {
+      "dividend_per_share": 61
+    },
+    "2017": {
+      "dividend_per_share": 106
+    },
+    "2018": {
+      "dividend_per_share": 128
+    },
+    "2019": {
+      "dividend_per_share": 101
+    },
+    "2020": {
+      "dividend_per_share": 103
+    },
+    "2021": {
+      "dividend_per_share": 22
+    },
+    "2022": {
+      "dividend_per_share": 73
+    },
+    "2023": {
+      "dividend_per_share": 196
+    },
+    "2024": {
+      "dividend_per_share": 280
+    },
+    "2025": {
+      "dividend_per_share": 374
+    },
+    "2026": {
+      "dividend_per_share": 349
     }
   },
   "ASII": {
+    "2010": {
+      "dividend_per_share": 130
+    },
+    "2011": {
+      "dividend_per_share": 173
+    },
+    "2012": {
+      "dividend_per_share": 204
+    },
+    "2013": {
+      "dividend_per_share": 214
+    },
+    "2014": {
+      "dividend_per_share": 216
+    },
+    "2015": {
+      "dividend_per_share": 216
+    },
+    "2016": {
+      "dividend_per_share": 168
+    },
+    "2017": {
+      "dividend_per_share": 168
+    },
     "2018": {
-      "roe": 0.13,
-      "pb": 1.6,
-      "pe": 13.5,
-      "der": 0.38,
-      "roa": 0.072,
-      "net_margin": 0.09,
+      "dividend_per_share": 190
+    },
+    "2019": {
+      "dividend_per_share": 211
+    },
+    "2020": {
+      "dividend_per_share": 184
+    },
+    "2021": {
+      "dividend_per_share": 132
+    },
+    "2022": {
+      "dividend_per_share": 282
+    },
+    "2023": {
+      "dividend_per_share": 650
+    },
+    "2024": {
+      "dividend_per_share": 519
+    },
+    "2025": {
+      "dividend_per_share": 406
+    },
+    "2026": {
+      "dividend_per_share": 292
+    }
+  },
+  "TLKM": {
+    "2010": {
+      "dividend_per_share": 58
+    },
+    "2011": {
+      "dividend_per_share": 59
+    },
+    "2012": {
+      "dividend_per_share": 74
+    },
+    "2013": {
+      "dividend_per_share": 87
+    },
+    "2014": {
+      "dividend_per_share": 102
+    },
+    "2015": {
+      "dividend_per_share": 89
+    },
+    "2016": {
+      "dividend_per_share": 114
+    },
+    "2017": {
+      "dividend_per_share": 117
+    },
+    "2018": {
+      "dividend_per_share": 168
+    },
+    "2019": {
+      "dividend_per_share": 164
+    },
+    "2020": {
+      "dividend_per_share": 154
+    },
+    "2021": {
+      "dividend_per_share": 168
+    },
+    "2022": {
+      "dividend_per_share": 150
+    },
+    "2023": {
+      "dividend_per_share": 168
+    },
+    "2024": {
+      "dividend_per_share": 179
+    },
+    "2025": {
+      "dividend_per_share": 212
+    },
+    "2026": {
+      "dividend_per_share": 223
+    }
+  },
+  "UNVR": {
+    "2010": {
+      "dividend_per_share": 80
+    },
+    "2011": {
+      "dividend_per_share": 119
+    },
+    "2012": {
+      "dividend_per_share": 119
+    },
+    "2013": {
+      "dividend_per_share": 133
+    },
+    "2014": {
+      "dividend_per_share": 141
+    },
+    "2015": {
+      "dividend_per_share": 152
+    },
+    "2016": {
+      "dividend_per_share": 160
+    },
+    "2017": {
+      "dividend_per_share": 174
+    },
+    "2018": {
+      "dividend_per_share": 183
+    },
+    "2019": {
+      "dividend_per_share": 241
+    },
+    "2020": {
+      "dividend_per_share": 194
+    },
+    "2021": {
+      "dividend_per_share": 166
+    },
+    "2022": {
+      "dividend_per_share": 153
+    },
+    "2023": {
+      "dividend_per_share": 134
+    },
+    "2024": {
+      "dividend_per_share": 118
+    },
+    "2025": {
+      "dividend_per_share": 134
+    },
+    "2026": {
+      "dividend_per_share": 114
+    }
+  },
+  "ICBP": {
+    "2011": {
+      "dividend_per_share": 58
+    },
+    "2012": {
+      "dividend_per_share": 85
+    },
+    "2013": {
+      "dividend_per_share": 93
+    },
+    "2014": {
+      "dividend_per_share": 95
+    },
+    "2015": {
+      "dividend_per_share": 111
+    },
+    "2016": {
+      "dividend_per_share": 128
+    },
+    "2017": {
+      "dividend_per_share": 154
+    },
+    "2018": {
       "dividend_per_share": 220
     },
     "2019": {
-      "roe": 0.13,
-      "pb": 1.4,
-      "pe": 12,
-      "der": 0.37,
-      "roa": 0.068,
-      "net_margin": 0.09,
+      "dividend_per_share": 137
+    },
+    "2020": {
       "dividend_per_share": 215
     },
-    "2020": {
-      "roe": 0.08,
-      "pb": 1.1,
-      "pe": 16,
-      "der": 0.39,
-      "roa": 0.041,
-      "net_margin": 0.08,
-      "dividend_per_share": 114
-    },
     "2021": {
-      "roe": 0.12,
-      "pb": 1.2,
-      "pe": 11.5,
-      "der": 0.38,
-      "roa": 0.055,
-      "net_margin": 0.09,
-      "dividend_per_share": 194
+      "dividend_per_share": 215
     },
     "2022": {
-      "roe": 0.15,
-      "pb": 1.3,
-      "pe": 9.5,
-      "der": 0.35,
-      "roa": 0.065,
-      "net_margin": 0.1,
-      "dividend_per_share": 640
+      "dividend_per_share": 215
     },
     "2023": {
-      "roe": 0.13,
-      "pb": 1.1,
-      "pe": 8.5,
-      "der": 0.4,
-      "roa": 0.045,
-      "net_margin": 0.1,
-      "dividend_per_share": 521
+      "dividend_per_share": 188
     },
     "2024": {
-      "roe": 0.13,
-      "pb": 0.8,
-      "pe": 7,
-      "der": 0.4,
-      "roa": 0.045,
-      "net_margin": 0.1,
-      "dividend_per_share": 410
+      "dividend_per_share": 200
     },
     "2025": {
-      "roe": 0.13,
-      "pb": 0.7,
-      "pe": 6.5,
-      "der": 0.4,
-      "roa": 0.044,
-      "net_margin": 0.1,
-      "dividend_per_share": 440
+      "dividend_per_share": 250
     }
   },
-  "ADRO": {
+  "INDF": {
+    "2010": {
+      "dividend_per_share": 93
+    },
+    "2011": {
+      "dividend_per_share": 133
+    },
+    "2012": {
+      "dividend_per_share": 175
+    },
+    "2013": {
+      "dividend_per_share": 185
+    },
+    "2014": {
+      "dividend_per_share": 142
+    },
+    "2015": {
+      "dividend_per_share": 220
+    },
+    "2016": {
+      "dividend_per_share": 168
+    },
+    "2017": {
+      "dividend_per_share": 235
+    },
     "2018": {
-      "roe": 0.1,
-      "pb": 0.8,
-      "pe": 9,
-      "der": 0.32,
-      "roa": 0.055,
-      "net_margin": 0.12,
-      "dividend_per_share": 110
+      "dividend_per_share": 302
     },
     "2019": {
-      "roe": 0.11,
-      "pb": 0.7,
-      "pe": 8.5,
-      "der": 0.3,
-      "roa": 0.06,
-      "net_margin": 0.13,
-      "dividend_per_share": 95
+      "dividend_per_share": 171
     },
     "2020": {
-      "roe": 0.04,
-      "pb": 0.5,
-      "pe": 14,
-      "der": 0.34,
-      "roa": 0.021,
-      "net_margin": 0.06,
-      "dividend_per_share": 60
+      "dividend_per_share": 278
     },
     "2021": {
-      "roe": 0.22,
-      "pb": 1.1,
-      "pe": 6,
-      "der": 0.31,
-      "roa": 0.11,
-      "net_margin": 0.2,
-      "dividend_per_share": 280
+      "dividend_per_share": 278
     },
     "2022": {
-      "roe": 0.38,
-      "pb": 1.5,
-      "pe": 2.8,
-      "der": 0.24,
-      "roa": 0.19,
-      "net_margin": 0.29,
-      "dividend_per_share": 510
+      "dividend_per_share": 278
     },
     "2023": {
-      "roe": 0.24,
-      "pb": 0.8,
-      "pe": 3.5,
-      "der": 0.2,
-      "roa": 0.125,
-      "net_margin": 0.23,
-      "dividend_per_share": 360
+      "dividend_per_share": 257
     },
     "2024": {
-      "roe": 0.2,
-      "pb": 0.7,
-      "pe": 4.8,
-      "der": 0.2,
-      "roa": 0.105,
-      "net_margin": 0.21,
-      "dividend_per_share": 320
+      "dividend_per_share": 267
     },
     "2025": {
-      "roe": 0.1,
-      "pb": 0.7,
-      "pe": 7.2,
-      "der": 0.2,
-      "roa": 0.054,
-      "net_margin": 0.25,
-      "dividend_per_share": 180
+      "dividend_per_share": 280
+    }
+  },
+  "GOTO": {},
+  "ADRO": {
+    "2010": {
+      "dividend_per_share": 27
+    },
+    "2011": {
+      "dividend_per_share": 42
+    },
+    "2012": {
+      "dividend_per_share": 76
+    },
+    "2013": {
+      "dividend_per_share": 28
+    },
+    "2014": {
+      "dividend_per_share": 25
+    },
+    "2015": {
+      "dividend_per_share": 34
+    },
+    "2016": {
+      "dividend_per_share": 42
+    },
+    "2017": {
+      "dividend_per_share": 59
+    },
+    "2018": {
+      "dividend_per_share": 99
+    },
+    "2019": {
+      "dividend_per_share": 56
+    },
+    "2020": {
+      "dividend_per_share": 110
+    },
+    "2021": {
+      "dividend_per_share": 226
+    },
+    "2022": {
+      "dividend_per_share": 141
+    },
+    "2023": {
+      "dividend_per_share": 692
+    },
+    "2024": {
+      "dividend_per_share": 1674
+    },
+    "2025": {
+      "dividend_per_share": 312
+    },
+    "2026": {
+      "dividend_per_share": 118
     }
   },
   "PTBA": {
+    "2010": {
+      "dividend_per_share": 107
+    },
+    "2011": {
+      "dividend_per_share": 112
+    },
+    "2012": {
+      "dividend_per_share": 140
+    },
+    "2013": {
+      "dividend_per_share": 144
+    },
+    "2014": {
+      "dividend_per_share": 92
+    },
+    "2015": {
+      "dividend_per_share": 65
+    },
+    "2016": {
+      "dividend_per_share": 58
+    },
+    "2017": {
+      "dividend_per_share": 57
+    },
     "2018": {
-      "roe": 0.32,
-      "pb": 2.1,
-      "pe": 7.2,
-      "der": 0.15,
-      "roa": 0.17,
-      "net_margin": 0.24,
-      "dividend_per_share": 340
+      "dividend_per_share": 319
     },
     "2019": {
-      "roe": 0.22,
-      "pb": 1.7,
-      "pe": 7.5,
-      "der": 0.15,
-      "roa": 0.13,
-      "net_margin": 0.19,
-      "dividend_per_share": 326
+      "dividend_per_share": 340
     },
     "2020": {
-      "roe": 0.14,
-      "pb": 1.3,
-      "pe": 10,
-      "der": 0.16,
-      "roa": 0.08,
-      "net_margin": 0.14,
-      "dividend_per_share": 74
+      "dividend_per_share": 326
     },
     "2021": {
-      "roe": 0.33,
-      "pb": 1.6,
-      "pe": 5.5,
-      "der": 0.14,
-      "roa": 0.18,
-      "net_margin": 0.28,
-      "dividend_per_share": 688
+      "dividend_per_share": 75
     },
     "2022": {
-      "roe": 0.44,
-      "pb": 2.2,
-      "pe": 3.5,
-      "der": 0.12,
-      "roa": 0.22,
-      "net_margin": 0.3,
-      "dividend_per_share": 1090
+      "dividend_per_share": 689
     },
     "2023": {
-      "roe": 0.24,
-      "pb": 1.4,
-      "pe": 6.2,
-      "der": 0.11,
-      "roa": 0.11,
-      "net_margin": 0.13,
-      "dividend_per_share": 397
+      "dividend_per_share": 1094
     },
     "2024": {
-      "roe": 0.15,
-      "pb": 1.3,
-      "pe": 8.9,
-      "der": 0.11,
-      "roa": 0.08,
-      "net_margin": 0.08,
-      "dividend_per_share": 250
+      "dividend_per_share": 398
     },
     "2025": {
-      "roe": 0.14,
-      "pb": 1.3,
-      "pe": 8.9,
-      "der": 0.11,
-      "roa": 0.053,
-      "net_margin": 0.08,
-      "dividend_per_share": 220
+      "dividend_per_share": 332
+    },
+    "2026": {
+      "dividend_per_share": 115
+    }
+  },
+  "ITMG": {
+    "2010": {
+      "dividend_per_share": 2081
+    },
+    "2011": {
+      "dividend_per_share": 1575
+    },
+    "2012": {
+      "dividend_per_share": 4172
+    },
+    "2013": {
+      "dividend_per_share": 2478
+    },
+    "2014": {
+      "dividend_per_share": 2075
+    },
+    "2015": {
+      "dividend_per_share": 1397
+    },
+    "2016": {
+      "dividend_per_share": 495
+    },
+    "2017": {
+      "dividend_per_share": 2443
+    },
+    "2018": {
+      "dividend_per_share": 3260
+    },
+    "2019": {
+      "dividend_per_share": 2750
+    },
+    "2020": {
+      "dividend_per_share": 877
+    },
+    "2021": {
+      "dividend_per_share": 1385
+    },
+    "2022": {
+      "dividend_per_share": 7168
+    },
+    "2023": {
+      "dividend_per_share": 9076
+    },
+    "2024": {
+      "dividend_per_share": 2975
+    },
+    "2025": {
+      "dividend_per_share": 2983
+    },
+    "2026": {
+      "dividend_per_share": 992
+    }
+  },
+  "UNTR": {
+    "2010": {
+      "dividend_per_share": 471
+    },
+    "2011": {
+      "dividend_per_share": 455
+    },
+    "2012": {
+      "dividend_per_share": 660
+    },
+    "2013": {
+      "dividend_per_share": 585
+    },
+    "2014": {
+      "dividend_per_share": 535
+    },
+    "2015": {
+      "dividend_per_share": 796
+    },
+    "2016": {
+      "dividend_per_share": 583
+    },
+    "2017": {
+      "dividend_per_share": 675
+    },
+    "2018": {
+      "dividend_per_share": 976
+    },
+    "2019": {
+      "dividend_per_share": 1236
+    },
+    "2020": {
+      "dividend_per_share": 976
+    },
+    "2021": {
+      "dividend_per_share": 808
+    },
+    "2022": {
+      "dividend_per_share": 1723
+    },
+    "2023": {
+      "dividend_per_share": 6886
+    },
+    "2024": {
+      "dividend_per_share": 2236
+    },
+    "2025": {
+      "dividend_per_share": 2051
+    },
+    "2026": {
+      "dividend_per_share": 1096
+    }
+  },
+  "AMMN": {},
+  "BREN": {
+    "2023": {
+      "dividend_per_share": 4
+    },
+    "2024": {
+      "dividend_per_share": 6
+    }
+  },
+  "CUAN": {
+    "2025": {
+      "dividend_per_share": 0
+    }
+  },
+  "PGEO": {
+    "2023": {
+      "dividend_per_share": 11
+    },
+    "2024": {
+      "dividend_per_share": 48
+    },
+    "2025": {
+      "dividend_per_share": 53
+    },
+    "2026": {
+      "dividend_per_share": 49
+    }
+  },
+  "TPIA": {
+    "2010": {
+      "dividend_per_share": 6
+    },
+    "2011": {
+      "dividend_per_share": 1
+    },
+    "2014": {
+      "dividend_per_share": 0
+    },
+    "2015": {
+      "dividend_per_share": 1
+    },
+    "2016": {
+      "dividend_per_share": 9
+    },
+    "2017": {
+      "dividend_per_share": 32
+    },
+    "2018": {
+      "dividend_per_share": 16
+    },
+    "2019": {
+      "dividend_per_share": 6
+    },
+    "2021": {
+      "dividend_per_share": 21
+    },
+    "2022": {
+      "dividend_per_share": 2
+    },
+    "2023": {
+      "dividend_per_share": 5
+    },
+    "2024": {
+      "dividend_per_share": 6
+    },
+    "2025": {
+      "dividend_per_share": 10
+    },
+    "2026": {
+      "dividend_per_share": 6
+    }
+  },
+  "BYAN": {
+    "2011": {
+      "dividend_per_share": 8
+    },
+    "2012": {
+      "dividend_per_share": 20
+    },
+    "2018": {
+      "dividend_per_share": 63
+    },
+    "2019": {
+      "dividend_per_share": 127
+    },
+    "2020": {
+      "dividend_per_share": 30
+    },
+    "2021": {
+      "dividend_per_share": 129
+    },
+    "2022": {
+      "dividend_per_share": 905
+    },
+    "2023": {
+      "dividend_per_share": 587
+    },
+    "2024": {
+      "dividend_per_share": 291
+    },
+    "2025": {
+      "dividend_per_share": 195
+    },
+    "2026": {
+      "dividend_per_share": 267
     }
   },
   "ESSA": {
-    "2018": {
-      "roe": 0.08,
-      "pb": 1.3,
-      "pe": 16,
-      "der": 0.85,
-      "roa": 0.035,
-      "net_margin": 0.06,
-      "dividend_per_share": 5
-    },
-    "2019": {
-      "roe": 0.05,
-      "pb": 1.1,
-      "pe": 22,
-      "der": 0.8,
-      "roa": 0.02,
-      "net_margin": 0.04,
-      "dividend_per_share": 5
-    },
-    "2020": {
-      "roe": -0.04,
-      "pb": 0.9,
-      "pe": -18,
-      "der": 0.95,
-      "roa": -0.015,
-      "net_margin": -0.03,
-      "dividend_per_share": 0
-    },
-    "2021": {
-      "roe": 0.12,
-      "pb": 1.5,
-      "pe": 12,
-      "der": 0.65,
-      "roa": 0.05,
-      "net_margin": 0.08,
-      "dividend_per_share": 15
-    },
     "2022": {
-      "roe": 0.35,
-      "pb": 2.8,
-      "pe": 8,
-      "der": 0.35,
-      "roa": 0.18,
-      "net_margin": 0.22,
+      "dividend_per_share": 5
+    },
+    "2023": {
       "dividend_per_share": 45
     },
-    "2023": {
-      "roe": 0.15,
-      "pb": 1.6,
-      "pe": 11.5,
-      "der": 0.22,
-      "roa": 0.08,
-      "net_margin": 0.12,
-      "dividend_per_share": 10
-    },
     "2024": {
-      "roe": 0.12,
-      "pb": 1.3,
-      "pe": 11,
-      "der": 0,
-      "roa": 0.084,
-      "net_margin": 0.16,
       "dividend_per_share": 5
     },
     "2025": {
-      "roe": 0.12,
-      "pb": 1.3,
-      "pe": 11,
-      "der": 0,
-      "roa": 0.084,
-      "net_margin": 0.16,
-      "dividend_per_share": 30
+      "dividend_per_share": 10
     }
   },
-  "GOTO": {
+  "BRPT": {
     "2018": {
-      "roe": -0.8,
-      "pb": 12,
-      "pe": -5,
-      "der": 0.05,
-      "roa": -0.6,
-      "net_margin": -2.5,
-      "dividend_per_share": 0
+      "dividend_per_share": 8
+    },
+    "2021": {
+      "dividend_per_share": 3
+    },
+    "2022": {
+      "dividend_per_share": 3
+    },
+    "2023": {
+      "dividend_per_share": 2
+    },
+    "2024": {
+      "dividend_per_share": 1
+    }
+  },
+  "KLBF": {
+    "2010": {
+      "dividend_per_share": 5
+    },
+    "2011": {
+      "dividend_per_share": 14
+    },
+    "2012": {
+      "dividend_per_share": 19
+    },
+    "2013": {
+      "dividend_per_share": 19
+    },
+    "2014": {
+      "dividend_per_share": 17
+    },
+    "2015": {
+      "dividend_per_share": 19
+    },
+    "2016": {
+      "dividend_per_share": 19
+    },
+    "2017": {
+      "dividend_per_share": 22
+    },
+    "2018": {
+      "dividend_per_share": 25
     },
     "2019": {
-      "roe": -0.6,
-      "pb": 8,
-      "pe": -6,
-      "der": 0.05,
-      "roa": -0.45,
-      "net_margin": -1.8,
+      "dividend_per_share": 26
+    },
+    "2020": {
+      "dividend_per_share": 26
+    },
+    "2021": {
+      "dividend_per_share": 28
+    },
+    "2022": {
+      "dividend_per_share": 35
+    },
+    "2023": {
+      "dividend_per_share": 38
+    },
+    "2024": {
+      "dividend_per_share": 31
+    },
+    "2025": {
+      "dividend_per_share": 36
+    },
+    "2026": {
+      "dividend_per_share": 20
+    }
+  },
+  "MIKA": {
+    "2015": {
+      "dividend_per_share": 20
+    },
+    "2016": {
+      "dividend_per_share": 25
+    },
+    "2017": {
+      "dividend_per_share": 34
+    },
+    "2019": {
+      "dividend_per_share": 18
+    },
+    "2020": {
+      "dividend_per_share": 21
+    },
+    "2021": {
+      "dividend_per_share": 36
+    },
+    "2022": {
+      "dividend_per_share": 36
+    },
+    "2023": {
+      "dividend_per_share": 37
+    },
+    "2024": {
+      "dividend_per_share": 34
+    },
+    "2025": {
+      "dividend_per_share": 43
+    },
+    "2026": {
+      "dividend_per_share": 43
+    }
+  },
+  "CPIN": {
+    "2010": {
+      "dividend_per_share": 33
+    },
+    "2011": {
+      "dividend_per_share": 65
+    },
+    "2012": {
+      "dividend_per_share": 42
+    },
+    "2013": {
+      "dividend_per_share": 46
+    },
+    "2014": {
+      "dividend_per_share": 46
+    },
+    "2015": {
+      "dividend_per_share": 18
+    },
+    "2016": {
+      "dividend_per_share": 29
+    },
+    "2017": {
+      "dividend_per_share": 56
+    },
+    "2018": {
+      "dividend_per_share": 56
+    },
+    "2019": {
+      "dividend_per_share": 118
+    },
+    "2020": {
+      "dividend_per_share": 81
+    },
+    "2021": {
+      "dividend_per_share": 112
+    },
+    "2022": {
+      "dividend_per_share": 108
+    },
+    "2023": {
+      "dividend_per_share": 100
+    },
+    "2024": {
+      "dividend_per_share": 30
+    },
+    "2025": {
+      "dividend_per_share": 108
+    },
+    "2026": {
+      "dividend_per_share": 180
+    }
+  },
+  "JPFA": {
+    "2010": {
+      "dividend_per_share": 1
+    },
+    "2011": {
+      "dividend_per_share": 73
+    },
+    "2012": {
+      "dividend_per_share": 15
+    },
+    "2013": {
+      "dividend_per_share": 20
+    },
+    "2014": {
+      "dividend_per_share": 10
+    },
+    "2016": {
+      "dividend_per_share": 15
+    },
+    "2017": {
+      "dividend_per_share": 50
+    },
+    "2018": {
+      "dividend_per_share": 100
+    },
+    "2019": {
+      "dividend_per_share": 50
+    },
+    "2020": {
+      "dividend_per_share": 20
+    },
+    "2021": {
+      "dividend_per_share": 40
+    },
+    "2022": {
+      "dividend_per_share": 60
+    },
+    "2023": {
+      "dividend_per_share": 50
+    },
+    "2024": {
+      "dividend_per_share": 70
+    },
+    "2025": {
+      "dividend_per_share": 70
+    },
+    "2026": {
+      "dividend_per_share": 140
+    }
+  },
+  "INDY": {
+    "2010": {
+      "dividend_per_share": 118
+    },
+    "2011": {
+      "dividend_per_share": 26
+    },
+    "2012": {
+      "dividend_per_share": 60
+    },
+    "2013": {
+      "dividend_per_share": 37
+    },
+    "2018": {
+      "dividend_per_share": 162
+    },
+    "2019": {
+      "dividend_per_share": 109
+    },
+    "2020": {
+      "dividend_per_share": 90
+    },
+    "2022": {
+      "dividend_per_share": 114
+    },
+    "2023": {
+      "dividend_per_share": 208
+    },
+    "2024": {
+      "dividend_per_share": 92
+    },
+    "2025": {
+      "dividend_per_share": 17
+    },
+    "2026": {
+      "dividend_per_share": 10
+    }
+  },
+  "MEDC": {
+    "2010": {
+      "dividend_per_share": 10
+    },
+    "2011": {
+      "dividend_per_share": 51
+    },
+    "2012": {
+      "dividend_per_share": 26
+    },
+    "2013": {
+      "dividend_per_share": 4
+    },
+    "2014": {
+      "dividend_per_share": 5
+    },
+    "2015": {
+      "dividend_per_share": 4
+    },
+    "2022": {
+      "dividend_per_share": 36
+    },
+    "2023": {
+      "dividend_per_share": 39
+    },
+    "2024": {
+      "dividend_per_share": 45
+    },
+    "2025": {
+      "dividend_per_share": 53
+    },
+    "2026": {
+      "dividend_per_share": 32
+    }
+  },
+  "ENRG": {},
+  "HRUM": {
+    "2011": {
+      "dividend_per_share": 49
+    },
+    "2012": {
+      "dividend_per_share": 76
+    },
+    "2013": {
+      "dividend_per_share": 50
+    },
+    "2014": {
+      "dividend_per_share": 22
+    },
+    "2018": {
+      "dividend_per_share": 50
+    },
+    "2019": {
+      "dividend_per_share": 8
+    },
+    "2021": {
+      "dividend_per_share": 8
+    },
+    "2022": {
+      "dividend_per_share": 90
+    }
+  },
+  "AMRT": {
+    "2010": {
+      "dividend_per_share": 1
+    },
+    "2011": {
+      "dividend_per_share": 4
+    },
+    "2012": {
+      "dividend_per_share": 5
+    },
+    "2013": {
+      "dividend_per_share": 5
+    },
+    "2014": {
+      "dividend_per_share": 4
+    },
+    "2015": {
+      "dividend_per_share": 4
+    },
+    "2016": {
+      "dividend_per_share": 4
+    },
+    "2017": {
+      "dividend_per_share": 4
+    },
+    "2018": {
+      "dividend_per_share": 6
+    },
+    "2019": {
+      "dividend_per_share": 3
+    },
+    "2020": {
+      "dividend_per_share": 19
+    },
+    "2021": {
+      "dividend_per_share": 9
+    },
+    "2022": {
+      "dividend_per_share": 19
+    },
+    "2023": {
+      "dividend_per_share": 24
+    },
+    "2024": {
+      "dividend_per_share": 29
+    },
+    "2025": {
+      "dividend_per_share": 34
+    },
+    "2026": {
+      "dividend_per_share": 42
+    }
+  },
+  "MIDI": {
+    "2012": {
+      "dividend_per_share": 0
+    },
+    "2013": {
+      "dividend_per_share": 0
+    },
+    "2014": {
+      "dividend_per_share": 1
+    },
+    "2015": {
+      "dividend_per_share": 1
+    },
+    "2016": {
+      "dividend_per_share": 1
+    },
+    "2017": {
+      "dividend_per_share": 2
+    },
+    "2018": {
+      "dividend_per_share": 1
+    },
+    "2019": {
+      "dividend_per_share": 2
+    },
+    "2020": {
+      "dividend_per_share": 2
+    },
+    "2021": {
+      "dividend_per_share": 2
+    },
+    "2022": {
+      "dividend_per_share": 3
+    },
+    "2023": {
+      "dividend_per_share": 4
+    },
+    "2024": {
+      "dividend_per_share": 5
+    },
+    "2025": {
+      "dividend_per_share": 7
+    },
+    "2026": {
+      "dividend_per_share": 12
+    }
+  },
+  "MAPA": {
+    "2023": {
+      "dividend_per_share": 4
+    },
+    "2024": {
+      "dividend_per_share": 5
+    },
+    "2025": {
+      "dividend_per_share": 4
+    }
+  },
+  "MAPI": {
+    "2010": {
+      "dividend_per_share": 2
+    },
+    "2011": {
+      "dividend_per_share": 2
+    },
+    "2012": {
+      "dividend_per_share": 4
+    },
+    "2013": {
+      "dividend_per_share": 4
+    },
+    "2014": {
+      "dividend_per_share": 2
+    },
+    "2017": {
+      "dividend_per_share": 3
+    },
+    "2018": {
+      "dividend_per_share": 4
+    },
+    "2019": {
+      "dividend_per_share": 10
+    },
+    "2023": {
+      "dividend_per_share": 8
+    },
+    "2024": {
+      "dividend_per_share": 8
+    },
+    "2025": {
+      "dividend_per_share": 10
+    }
+  },
+  "ACES": {
+    "2010": {
+      "dividend_per_share": 1
+    },
+    "2011": {
+      "dividend_per_share": 5
+    },
+    "2012": {
+      "dividend_per_share": 3
+    },
+    "2013": {
+      "dividend_per_share": 10
+    },
+    "2014": {
+      "dividend_per_share": 6
+    },
+    "2015": {
+      "dividend_per_share": 16
+    },
+    "2016": {
+      "dividend_per_share": 15
+    },
+    "2017": {
+      "dividend_per_share": 16
+    },
+    "2018": {
+      "dividend_per_share": 23
+    },
+    "2019": {
+      "dividend_per_share": 28
+    },
+    "2020": {
+      "dividend_per_share": 18
+    },
+    "2021": {
+      "dividend_per_share": 32
+    },
+    "2022": {
+      "dividend_per_share": 21
+    },
+    "2023": {
+      "dividend_per_share": 31
+    },
+    "2024": {
+      "dividend_per_share": 34
+    },
+    "2025": {
+      "dividend_per_share": 34
+    },
+    "2026": {
+      "dividend_per_share": 32
+    }
+  },
+  "SCMA": {
+    "2010": {
+      "dividend_per_share": 9
+    },
+    "2011": {
+      "dividend_per_share": 19
+    },
+    "2012": {
+      "dividend_per_share": 5
+    },
+    "2013": {
+      "dividend_per_share": 13
+    },
+    "2014": {
+      "dividend_per_share": 10
+    },
+    "2015": {
+      "dividend_per_share": 25
+    },
+    "2016": {
+      "dividend_per_share": 17
+    },
+    "2017": {
+      "dividend_per_share": 12
+    },
+    "2018": {
+      "dividend_per_share": 11
+    },
+    "2019": {
+      "dividend_per_share": 11
+    },
+    "2022": {
+      "dividend_per_share": 3
+    },
+    "2023": {
+      "dividend_per_share": 7
+    },
+    "2024": {
+      "dividend_per_share": 10
+    },
+    "2025": {
+      "dividend_per_share": 27
+    },
+    "2026": {
+      "dividend_per_share": 12
+    }
+  },
+  "EMTK": {
+    "2010": {
+      "dividend_per_share": 2
+    },
+    "2012": {
+      "dividend_per_share": 10
+    },
+    "2013": {
+      "dividend_per_share": 13
+    },
+    "2014": {
+      "dividend_per_share": 8
+    },
+    "2015": {
+      "dividend_per_share": 39
+    },
+    "2016": {
+      "dividend_per_share": 7
+    },
+    "2017": {
+      "dividend_per_share": 4
+    },
+    "2018": {
+      "dividend_per_share": 2
+    },
+    "2022": {
+      "dividend_per_share": 5
+    },
+    "2023": {
+      "dividend_per_share": 5
+    },
+    "2024": {
+      "dividend_per_share": 4
+    },
+    "2025": {
+      "dividend_per_share": 38
+    },
+    "2026": {
+      "dividend_per_share": 5
+    }
+  },
+  "BUKA": {},
+  "ARTO": {},
+  "BRIS": {
+    "2019": {
+      "dividend_per_share": 1
+    },
+    "2022": {
+      "dividend_per_share": 18
+    },
+    "2023": {
+      "dividend_per_share": 9
+    },
+    "2024": {
+      "dividend_per_share": 19
+    },
+    "2025": {
+      "dividend_per_share": 23
+    },
+    "2026": {
+      "dividend_per_share": 33
+    }
+  },
+  "BBTN": {
+    "2010": {
+      "dividend_per_share": 13
+    },
+    "2011": {
+      "dividend_per_share": 27
+    },
+    "2012": {
+      "dividend_per_share": 22
+    },
+    "2013": {
+      "dividend_per_share": 34
+    },
+    "2014": {
+      "dividend_per_share": 39
+    },
+    "2015": {
+      "dividend_per_share": 19
+    },
+    "2016": {
+      "dividend_per_share": 31
+    },
+    "2017": {
+      "dividend_per_share": 44
+    },
+    "2018": {
+      "dividend_per_share": 51
+    },
+    "2019": {
+      "dividend_per_share": 47
+    },
+    "2020": {
+      "dividend_per_share": 2
+    },
+    "2022": {
+      "dividend_per_share": 20
+    },
+    "2023": {
+      "dividend_per_share": 43
+    },
+    "2024": {
+      "dividend_per_share": 50
+    },
+    "2025": {
+      "dividend_per_share": 54
+    }
+  },
+  "BDMN": {
+    "2010": {
+      "dividend_per_share": 88
+    },
+    "2011": {
+      "dividend_per_share": 116
+    },
+    "2012": {
+      "dividend_per_share": 104
+    },
+    "2013": {
+      "dividend_per_share": 126
+    },
+    "2014": {
+      "dividend_per_share": 127
+    },
+    "2015": {
+      "dividend_per_share": 82
+    },
+    "2016": {
+      "dividend_per_share": 75
+    },
+    "2017": {
+      "dividend_per_share": 97
+    },
+    "2018": {
+      "dividend_per_share": 134
+    },
+    "2019": {
+      "dividend_per_share": 143
+    },
+    "2020": {
+      "dividend_per_share": 188
+    },
+    "2021": {
+      "dividend_per_share": 36
+    },
+    "2022": {
+      "dividend_per_share": 56
+    },
+    "2023": {
+      "dividend_per_share": 118
+    },
+    "2024": {
+      "dividend_per_share": 125
+    },
+    "2025": {
+      "dividend_per_share": 114
+    },
+    "2026": {
+      "dividend_per_share": 142
+    }
+  },
+  "BNGA": {
+    "2011": {
+      "dividend_per_share": 8
+    },
+    "2018": {
+      "dividend_per_share": 24
+    },
+    "2019": {
+      "dividend_per_share": 28
+    },
+    "2020": {
+      "dividend_per_share": 55
+    },
+    "2021": {
+      "dividend_per_share": 44
+    },
+    "2022": {
+      "dividend_per_share": 94
+    },
+    "2023": {
+      "dividend_per_share": 115
+    },
+    "2024": {
+      "dividend_per_share": 123
+    },
+    "2025": {
+      "dividend_per_share": 156
+    },
+    "2026": {
+      "dividend_per_share": 162
+    }
+  },
+  "NISP": {
+    "2022": {
+      "dividend_per_share": 22
+    },
+    "2023": {
+      "dividend_per_share": 58
+    },
+    "2024": {
+      "dividend_per_share": 72
+    },
+    "2025": {
+      "dividend_per_share": 106
+    },
+    "2026": {
+      "dividend_per_share": 45
+    }
+  },
+  "PNBN": {
+    "2022": {
+      "dividend_per_share": 20
+    },
+    "2025": {
+      "dividend_per_share": 42
+    },
+    "2026": {
+      "dividend_per_share": 42
+    }
+  },
+  "JSMR": {
+    "2010": {
+      "dividend_per_share": 88
+    },
+    "2011": {
+      "dividend_per_share": 105
+    },
+    "2012": {
+      "dividend_per_share": 79
+    },
+    "2013": {
+      "dividend_per_share": 94
+    },
+    "2014": {
+      "dividend_per_share": 78
+    },
+    "2015": {
+      "dividend_per_share": 72
+    },
+    "2016": {
+      "dividend_per_share": 43
+    },
+    "2017": {
+      "dividend_per_share": 78
+    },
+    "2018": {
+      "dividend_per_share": 61
+    },
+    "2019": {
+      "dividend_per_share": 46
+    },
+    "2020": {
+      "dividend_per_share": 15
+    },
+    "2023": {
+      "dividend_per_share": 76
+    },
+    "2024": {
+      "dividend_per_share": 38
+    },
+    "2025": {
+      "dividend_per_share": 156
+    },
+    "2026": {
+      "dividend_per_share": 156
+    }
+  },
+  "WIKA": {
+    "2010": {
+      "dividend_per_share": 8
+    },
+    "2011": {
+      "dividend_per_share": 13
+    },
+    "2012": {
+      "dividend_per_share": 14
+    },
+    "2013": {
+      "dividend_per_share": 18
+    },
+    "2014": {
+      "dividend_per_share": 22
+    },
+    "2015": {
+      "dividend_per_share": 16
+    },
+    "2016": {
+      "dividend_per_share": 16
+    },
+    "2017": {
+      "dividend_per_share": 29
+    },
+    "2018": {
+      "dividend_per_share": 23
+    },
+    "2019": {
+      "dividend_per_share": 33
+    },
+    "2020": {
+      "dividend_per_share": 43
+    }
+  },
+  "PTPP": {
+    "2010": {
+      "dividend_per_share": 10
+    },
+    "2011": {
+      "dividend_per_share": 14
+    },
+    "2012": {
+      "dividend_per_share": 14
+    },
+    "2013": {
+      "dividend_per_share": 18
+    },
+    "2014": {
+      "dividend_per_share": 25
+    },
+    "2015": {
+      "dividend_per_share": 21
+    },
+    "2016": {
+      "dividend_per_share": 29
+    },
+    "2017": {
+      "dividend_per_share": 50
+    },
+    "2018": {
+      "dividend_per_share": 47
+    },
+    "2019": {
+      "dividend_per_share": 48
+    },
+    "2020": {
+      "dividend_per_share": 34
+    }
+  },
+  "ADHI": {
+    "2010": {
+      "dividend_per_share": 22
+    },
+    "2011": {
+      "dividend_per_share": 25
+    },
+    "2012": {
+      "dividend_per_share": 24
+    },
+    "2013": {
+      "dividend_per_share": 18
+    },
+    "2014": {
+      "dividend_per_share": 53
+    },
+    "2015": {
+      "dividend_per_share": 28
+    },
+    "2016": {
+      "dividend_per_share": 24
+    },
+    "2017": {
+      "dividend_per_share": 24
+    },
+    "2018": {
+      "dividend_per_share": 27
+    },
+    "2019": {
+      "dividend_per_share": 33
+    },
+    "2020": {
+      "dividend_per_share": 17
+    }
+  },
+  "WSKT": {
+    "2013": {
+      "dividend_per_share": 2
+    },
+    "2014": {
+      "dividend_per_share": 11
+    },
+    "2015": {
+      "dividend_per_share": 10
+    },
+    "2016": {
+      "dividend_per_share": 15
+    },
+    "2017": {
+      "dividend_per_share": 38
+    },
+    "2018": {
+      "dividend_per_share": 57
+    },
+    "2019": {
+      "dividend_per_share": 73
+    },
+    "2020": {
+      "dividend_per_share": 3
+    }
+  },
+  "SMGR": {
+    "2010": {
+      "dividend_per_share": 308
+    },
+    "2011": {
+      "dividend_per_share": 248
+    },
+    "2012": {
+      "dividend_per_share": 330
+    },
+    "2013": {
+      "dividend_per_share": 367
+    },
+    "2014": {
+      "dividend_per_share": 406
+    },
+    "2015": {
+      "dividend_per_share": 374
+    },
+    "2016": {
+      "dividend_per_share": 304
+    },
+    "2017": {
+      "dividend_per_share": 304
+    },
+    "2018": {
+      "dividend_per_share": 135
+    },
+    "2019": {
+      "dividend_per_share": 207
+    },
+    "2020": {
+      "dividend_per_share": 40
+    },
+    "2021": {
+      "dividend_per_share": 188
+    },
+    "2022": {
+      "dividend_per_share": 172
+    },
+    "2023": {
+      "dividend_per_share": 245
+    },
+    "2024": {
+      "dividend_per_share": 85
+    },
+    "2025": {
+      "dividend_per_share": 96
+    },
+    "2026": {
+      "dividend_per_share": 28
+    }
+  },
+  "INTP": {
+    "2010": {
+      "dividend_per_share": 225
+    },
+    "2011": {
+      "dividend_per_share": 263
+    },
+    "2012": {
+      "dividend_per_share": 293
+    },
+    "2013": {
+      "dividend_per_share": 450
+    },
+    "2014": {
+      "dividend_per_share": 900
+    },
+    "2015": {
+      "dividend_per_share": 1350
+    },
+    "2016": {
+      "dividend_per_share": 415
+    },
+    "2017": {
+      "dividend_per_share": 929
+    },
+    "2018": {
+      "dividend_per_share": 700
+    },
+    "2019": {
+      "dividend_per_share": 550
+    },
+    "2020": {
+      "dividend_per_share": 725
+    },
+    "2021": {
+      "dividend_per_share": 500
+    },
+    "2022": {
+      "dividend_per_share": 500
+    },
+    "2023": {
+      "dividend_per_share": 160
+    },
+    "2024": {
+      "dividend_per_share": 90
+    },
+    "2025": {
+      "dividend_per_share": 259
+    },
+    "2026": {
+      "dividend_per_share": 468
+    }
+  },
+  "SMRA": {
+    "2010": {
+      "dividend_per_share": 4
+    },
+    "2011": {
+      "dividend_per_share": 5
+    },
+    "2012": {
+      "dividend_per_share": 11
+    },
+    "2013": {
+      "dividend_per_share": 21
+    },
+    "2014": {
+      "dividend_per_share": 22
+    },
+    "2015": {
+      "dividend_per_share": 19
+    },
+    "2016": {
+      "dividend_per_share": 5
+    },
+    "2017": {
+      "dividend_per_share": 5
+    },
+    "2018": {
+      "dividend_per_share": 5
+    },
+    "2019": {
+      "dividend_per_share": 5
+    },
+    "2022": {
+      "dividend_per_share": 6
+    },
+    "2023": {
+      "dividend_per_share": 7
+    },
+    "2024": {
+      "dividend_per_share": 9
+    },
+    "2025": {
+      "dividend_per_share": 9
+    },
+    "2026": {
+      "dividend_per_share": 5
+    }
+  },
+  "CTRA": {
+    "2011": {
+      "dividend_per_share": 6
+    },
+    "2012": {
+      "dividend_per_share": 7
+    },
+    "2013": {
+      "dividend_per_share": 12
+    },
+    "2014": {
+      "dividend_per_share": 19
+    },
+    "2015": {
+      "dividend_per_share": 10
+    },
+    "2016": {
+      "dividend_per_share": 8
+    },
+    "2017": {
+      "dividend_per_share": 5
+    },
+    "2018": {
+      "dividend_per_share": 10
+    },
+    "2019": {
+      "dividend_per_share": 10
+    },
+    "2020": {
+      "dividend_per_share": 8
+    },
+    "2021": {
+      "dividend_per_share": 9
+    },
+    "2022": {
+      "dividend_per_share": 14
+    },
+    "2023": {
+      "dividend_per_share": 15
+    },
+    "2024": {
+      "dividend_per_share": 21
+    },
+    "2025": {
+      "dividend_per_share": 24
+    }
+  },
+  "BSDE": {
+    "2010": {
+      "dividend_per_share": 6
+    },
+    "2011": {
+      "dividend_per_share": 6
+    },
+    "2012": {
+      "dividend_per_share": 10
+    },
+    "2013": {
+      "dividend_per_share": 15
+    },
+    "2014": {
+      "dividend_per_share": 15
+    },
+    "2015": {
+      "dividend_per_share": 15
+    },
+    "2016": {
+      "dividend_per_share": 5
+    },
+    "2017": {
+      "dividend_per_share": 5
+    }
+  },
+  "PWON": {
+    "2012": {
+      "dividend_per_share": 1
+    },
+    "2013": {
+      "dividend_per_share": 4
+    },
+    "2014": {
+      "dividend_per_share": 5
+    },
+    "2015": {
+      "dividend_per_share": 5
+    },
+    "2016": {
+      "dividend_per_share": 5
+    },
+    "2017": {
+      "dividend_per_share": 5
+    },
+    "2018": {
+      "dividend_per_share": 6
+    },
+    "2019": {
+      "dividend_per_share": 7
+    },
+    "2022": {
+      "dividend_per_share": 4
+    },
+    "2023": {
+      "dividend_per_share": 7
+    },
+    "2024": {
+      "dividend_per_share": 9
+    },
+    "2025": {
+      "dividend_per_share": 13
+    },
+    "2026": {
+      "dividend_per_share": 13
+    }
+  },
+  "ASRI": {
+    "2010": {
+      "dividend_per_share": 1
+    },
+    "2011": {
+      "dividend_per_share": 4
+    },
+    "2012": {
+      "dividend_per_share": 6
+    },
+    "2013": {
+      "dividend_per_share": 15
+    },
+    "2014": {
+      "dividend_per_share": 7
+    },
+    "2015": {
+      "dividend_per_share": 7
+    },
+    "2017": {
+      "dividend_per_share": 2
+    },
+    "2026": {
+      "dividend_per_share": 2
+    }
+  },
+  "AKRA": {
+    "2010": {
+      "dividend_per_share": 11
+    },
+    "2011": {
+      "dividend_per_share": 94
+    },
+    "2012": {
+      "dividend_per_share": 13
+    },
+    "2013": {
+      "dividend_per_share": 15
+    },
+    "2014": {
+      "dividend_per_share": 13
+    },
+    "2015": {
+      "dividend_per_share": 26
+    },
+    "2016": {
+      "dividend_per_share": 18
+    },
+    "2017": {
+      "dividend_per_share": 30
+    },
+    "2018": {
+      "dividend_per_share": 44
+    },
+    "2019": {
+      "dividend_per_share": 36
+    },
+    "2020": {
+      "dividend_per_share": 20
+    },
+    "2021": {
+      "dividend_per_share": 27
+    },
+    "2022": {
+      "dividend_per_share": 42
+    },
+    "2023": {
+      "dividend_per_share": 150
+    },
+    "2024": {
+      "dividend_per_share": 100
+    },
+    "2025": {
+      "dividend_per_share": 100
+    },
+    "2026": {
+      "dividend_per_share": 50
+    }
+  },
+  "PGAS": {
+    "2010": {
+      "dividend_per_share": 154
+    },
+    "2011": {
+      "dividend_per_share": 155
+    },
+    "2012": {
+      "dividend_per_share": 124
+    },
+    "2013": {
+      "dividend_per_share": 203
+    },
+    "2014": {
+      "dividend_per_share": 210
+    },
+    "2015": {
+      "dividend_per_share": 145
+    },
+    "2016": {
+      "dividend_per_share": 91
+    },
+    "2017": {
+      "dividend_per_share": 75
+    },
+    "2018": {
+      "dividend_per_share": 32
+    },
+    "2019": {
+      "dividend_per_share": 57
+    },
+    "2020": {
+      "dividend_per_share": 42
+    },
+    "2022": {
+      "dividend_per_share": 124
+    },
+    "2023": {
+      "dividend_per_share": 141
+    },
+    "2024": {
+      "dividend_per_share": 148
+    },
+    "2025": {
+      "dividend_per_share": 182
+    },
+    "2026": {
+      "dividend_per_share": 126
+    }
+  },
+  "EXCL": {
+    "2011": {
+      "dividend_per_share": 106
+    },
+    "2012": {
+      "dividend_per_share": 128
+    },
+    "2013": {
+      "dividend_per_share": 133
+    },
+    "2014": {
+      "dividend_per_share": 64
+    },
+    "2020": {
+      "dividend_per_share": 20
+    },
+    "2021": {
+      "dividend_per_share": 32
+    },
+    "2022": {
+      "dividend_per_share": 51
+    },
+    "2023": {
+      "dividend_per_share": 42
+    },
+    "2024": {
+      "dividend_per_share": 49
+    },
+    "2025": {
+      "dividend_per_share": 245
+    }
+  },
+  "ISAT": {
+    "2010": {
+      "dividend_per_share": 34
+    },
+    "2011": {
+      "dividend_per_share": 15
+    },
+    "2012": {
+      "dividend_per_share": 19
+    },
+    "2013": {
+      "dividend_per_share": 9
+    },
+    "2017": {
+      "dividend_per_share": 18
+    },
+    "2018": {
+      "dividend_per_share": 18
+    },
+    "2021": {
+      "dividend_per_share": 207
+    },
+    "2022": {
+      "dividend_per_share": 62
+    },
+    "2023": {
+      "dividend_per_share": 64
+    },
+    "2024": {
+      "dividend_per_share": 67
+    },
+    "2025": {
+      "dividend_per_share": 84
+    },
+    "2026": {
+      "dividend_per_share": 111
+    }
+  },
+  "TOWR": {
+    "2017": {
+      "dividend_per_share": 20
+    },
+    "2018": {
+      "dividend_per_share": 24
+    },
+    "2019": {
+      "dividend_per_share": 24
+    },
+    "2020": {
+      "dividend_per_share": 24
+    },
+    "2021": {
+      "dividend_per_share": 28
+    },
+    "2022": {
+      "dividend_per_share": 24
+    },
+    "2023": {
+      "dividend_per_share": 24
+    },
+    "2024": {
+      "dividend_per_share": 18
+    },
+    "2025": {
+      "dividend_per_share": 23
+    },
+    "2026": {
+      "dividend_per_share": 7
+    }
+  },
+  "TBIG": {
+    "2011": {
+      "dividend_per_share": 5
+    },
+    "2013": {
+      "dividend_per_share": 12
+    },
+    "2014": {
+      "dividend_per_share": 12
+    },
+    "2016": {
+      "dividend_per_share": 26
+    },
+    "2017": {
+      "dividend_per_share": 30
+    },
+    "2018": {
+      "dividend_per_share": 34
+    },
+    "2019": {
+      "dividend_per_share": 28
+    },
+    "2020": {
+      "dividend_per_share": 28
+    },
+    "2021": {
+      "dividend_per_share": 32
+    },
+    "2022": {
+      "dividend_per_share": 36
+    },
+    "2023": {
+      "dividend_per_share": 60
+    },
+    "2024": {
+      "dividend_per_share": 55
+    },
+    "2025": {
+      "dividend_per_share": 24
+    },
+    "2026": {
+      "dividend_per_share": 47
+    }
+  },
+  "MTEL": {
+    "2022": {
+      "dividend_per_share": 12
+    },
+    "2023": {
+      "dividend_per_share": 21
+    },
+    "2024": {
+      "dividend_per_share": 18
+    },
+    "2025": {
+      "dividend_per_share": 25
+    }
+  },
+  "INCO": {
+    "2010": {
+      "dividend_per_share": 429
+    },
+    "2011": {
+      "dividend_per_share": 211
+    },
+    "2012": {
+      "dividend_per_share": 103
+    },
+    "2013": {
+      "dividend_per_share": 54
+    },
+    "2014": {
+      "dividend_per_share": 122
+    },
+    "2021": {
+      "dividend_per_share": 47
+    },
+    "2023": {
+      "dividend_per_share": 88
+    },
+    "2025": {
+      "dividend_per_share": 53
+    },
+    "2026": {
+      "dividend_per_share": 78
+    }
+  },
+  "ANTM": {
+    "2010": {
+      "dividend_per_share": 21
+    },
+    "2011": {
+      "dividend_per_share": 59
+    },
+    "2012": {
+      "dividend_per_share": 76
+    },
+    "2013": {
+      "dividend_per_share": 40
+    },
+    "2014": {
+      "dividend_per_share": 8
+    },
+    "2018": {
+      "dividend_per_share": 2
+    },
+    "2019": {
+      "dividend_per_share": 13
+    },
+    "2020": {
+      "dividend_per_share": 3
+    },
+    "2021": {
+      "dividend_per_share": 17
+    },
+    "2022": {
+      "dividend_per_share": 39
+    },
+    "2023": {
+      "dividend_per_share": 80
+    },
+    "2024": {
+      "dividend_per_share": 128
+    },
+    "2025": {
+      "dividend_per_share": 152
+    },
+    "2026": {
+      "dividend_per_share": 210
+    }
+  },
+  "MDKA": {},
+  "TINS": {
+    "2010": {
+      "dividend_per_share": 21
+    },
+    "2011": {
+      "dividend_per_share": 64
+    },
+    "2012": {
+      "dividend_per_share": 60
+    },
+    "2013": {
+      "dividend_per_share": 29
+    },
+    "2014": {
+      "dividend_per_share": 56
+    },
+    "2015": {
+      "dividend_per_share": 26
+    },
+    "2016": {
+      "dividend_per_share": 4
+    },
+    "2017": {
+      "dividend_per_share": 10
+    },
+    "2018": {
+      "dividend_per_share": 24
+    },
+    "2019": {
+      "dividend_per_share": 25
+    },
+    "2022": {
+      "dividend_per_share": 61
+    },
+    "2023": {
+      "dividend_per_share": 42
+    },
+    "2025": {
+      "dividend_per_share": 64
+    },
+    "2026": {
+      "dividend_per_share": 88
+    }
+  },
+  "SMDR": {
+    "2011": {
+      "dividend_per_share": 2
+    },
+    "2012": {
+      "dividend_per_share": 2
+    },
+    "2013": {
+      "dividend_per_share": 1
+    },
+    "2014": {
+      "dividend_per_share": 2
+    },
+    "2015": {
+      "dividend_per_share": 4
+    },
+    "2016": {
+      "dividend_per_share": 4
+    },
+    "2017": {
+      "dividend_per_share": 5
+    },
+    "2018": {
+      "dividend_per_share": 8
+    },
+    "2019": {
+      "dividend_per_share": 3
+    },
+    "2020": {
+      "dividend_per_share": 2
+    },
+    "2021": {
+      "dividend_per_share": 2
+    },
+    "2022": {
+      "dividend_per_share": 20
+    },
+    "2023": {
+      "dividend_per_share": 34
+    },
+    "2024": {
+      "dividend_per_share": 14
+    },
+    "2025": {
+      "dividend_per_share": 12
+    }
+  },
+  "TMAS": {
+    "2013": {
+      "dividend_per_share": 0
+    },
+    "2015": {
+      "dividend_per_share": 0
+    },
+    "2016": {
+      "dividend_per_share": 1
+    },
+    "2017": {
       "dividend_per_share": 0
     },
     "2020": {
-      "roe": -0.4,
-      "pb": 6,
-      "pe": -8,
-      "der": 0.08,
-      "roa": -0.32,
-      "net_margin": -1.2,
       "dividend_per_share": 0
     },
     "2021": {
-      "roe": -0.25,
-      "pb": 3.5,
-      "pe": -12,
-      "der": 0.12,
-      "roa": -0.2,
-      "net_margin": -0.8,
-      "dividend_per_share": 0
+      "dividend_per_share": 4
     },
     "2022": {
-      "roe": -0.18,
-      "pb": 1.6,
-      "pe": -15,
-      "der": 0.1,
-      "roa": -0.15,
-      "net_margin": -0.55,
-      "dividend_per_share": 0
+      "dividend_per_share": 14
     },
     "2023": {
-      "roe": -0.12,
-      "pb": 0.8,
-      "pe": -20,
-      "der": 0.08,
-      "roa": -0.09,
-      "net_margin": -0.35,
-      "dividend_per_share": 0
+      "dividend_per_share": 8
     },
     "2024": {
-      "roe": -0.03,
-      "pb": 1.7,
-      "pe": -50,
-      "der": 0.28,
-      "roa": 0.003,
-      "net_margin": -0.03,
-      "dividend_per_share": 0
+      "dividend_per_share": 8
     },
     "2025": {
-      "roe": -0.03,
-      "pb": 1.7,
-      "pe": -50,
-      "der": 0.28,
-      "roa": 0.003,
-      "net_margin": -0.03,
+      "dividend_per_share": 4
+    },
+    "2026": {
+      "dividend_per_share": 4
+    }
+  },
+  "NELY": {
+    "2013": {
+      "dividend_per_share": 9
+    },
+    "2014": {
+      "dividend_per_share": 4
+    },
+    "2015": {
+      "dividend_per_share": 3
+    },
+    "2016": {
+      "dividend_per_share": 4
+    },
+    "2017": {
+      "dividend_per_share": 3
+    },
+    "2018": {
+      "dividend_per_share": 6
+    },
+    "2019": {
+      "dividend_per_share": 7
+    },
+    "2020": {
+      "dividend_per_share": 4
+    },
+    "2021": {
+      "dividend_per_share": 25
+    },
+    "2022": {
+      "dividend_per_share": 15
+    },
+    "2023": {
+      "dividend_per_share": 35
+    },
+    "2024": {
+      "dividend_per_share": 30
+    },
+    "2025": {
+      "dividend_per_share": 10
+    },
+    "2026": {
+      "dividend_per_share": 10
+    }
+  },
+  "SIDO": {
+    "2014": {
+      "dividend_per_share": 13
+    },
+    "2015": {
+      "dividend_per_share": 12
+    },
+    "2016": {
+      "dividend_per_share": 12
+    },
+    "2017": {
+      "dividend_per_share": 13
+    },
+    "2018": {
+      "dividend_per_share": 22
+    },
+    "2019": {
+      "dividend_per_share": 21
+    },
+    "2020": {
+      "dividend_per_share": 26
+    },
+    "2021": {
+      "dividend_per_share": 34
+    },
+    "2022": {
+      "dividend_per_share": 36
+    },
+    "2023": {
+      "dividend_per_share": 36
+    },
+    "2024": {
+      "dividend_per_share": 36
+    },
+    "2025": {
+      "dividend_per_share": 43
+    },
+    "2026": {
+      "dividend_per_share": 15
+    }
+  },
+  "MYOR": {
+    "2010": {
+      "dividend_per_share": 3
+    },
+    "2011": {
+      "dividend_per_share": 4
+    },
+    "2012": {
+      "dividend_per_share": 4
+    },
+    "2013": {
+      "dividend_per_share": 8
+    },
+    "2014": {
+      "dividend_per_share": 9
+    },
+    "2015": {
+      "dividend_per_share": 6
+    },
+    "2016": {
+      "dividend_per_share": 12
+    },
+    "2017": {
+      "dividend_per_share": 21
+    },
+    "2018": {
+      "dividend_per_share": 27
+    },
+    "2019": {
+      "dividend_per_share": 29
+    },
+    "2020": {
+      "dividend_per_share": 30
+    },
+    "2021": {
+      "dividend_per_share": 52
+    },
+    "2022": {
+      "dividend_per_share": 21
+    },
+    "2023": {
+      "dividend_per_share": 35
+    },
+    "2024": {
+      "dividend_per_share": 55
+    },
+    "2025": {
+      "dividend_per_share": 55
+    },
+    "2026": {
+      "dividend_per_share": 60
+    }
+  },
+  "ULTJ": {
+    "2012": {
+      "dividend_per_share": 3
+    },
+    "2014": {
+      "dividend_per_share": 3
+    },
+    "2017": {
+      "dividend_per_share": 7
+    },
+    "2018": {
+      "dividend_per_share": 10
+    },
+    "2019": {
+      "dividend_per_share": 12
+    },
+    "2020": {
+      "dividend_per_share": 12
+    },
+    "2021": {
+      "dividend_per_share": 85
+    },
+    "2022": {
+      "dividend_per_share": 25
+    },
+    "2023": {
+      "dividend_per_share": 30
+    },
+    "2024": {
+      "dividend_per_share": 40
+    },
+    "2025": {
+      "dividend_per_share": 45
+    },
+    "2026": {
+      "dividend_per_share": 130
+    }
+  },
+  "CLEO": {
+    "2021": {
+      "dividend_per_share": 3
+    },
+    "2022": {
+      "dividend_per_share": 1
+    },
+    "2023": {
+      "dividend_per_share": 1
+    },
+    "2024": {
+      "dividend_per_share": 3
+    },
+    "2025": {
+      "dividend_per_share": 3
+    }
+  },
+  "ROTI": {
+    "2011": {
+      "dividend_per_share": 5
+    },
+    "2012": {
+      "dividend_per_share": 6
+    },
+    "2013": {
+      "dividend_per_share": 7
+    },
+    "2014": {
+      "dividend_per_share": 3
+    },
+    "2015": {
+      "dividend_per_share": 6
+    },
+    "2016": {
+      "dividend_per_share": 11
+    },
+    "2017": {
+      "dividend_per_share": 14
+    },
+    "2018": {
+      "dividend_per_share": 6
+    },
+    "2019": {
+      "dividend_per_share": 10
+    },
+    "2020": {
+      "dividend_per_share": 26
+    },
+    "2021": {
+      "dividend_per_share": 48
+    },
+    "2022": {
+      "dividend_per_share": 60
+    },
+    "2023": {
+      "dividend_per_share": 107
+    },
+    "2024": {
+      "dividend_per_share": 88
+    },
+    "2025": {
+      "dividend_per_share": 79
+    },
+    "2026": {
+      "dividend_per_share": 80
+    }
+  },
+  "WOOD": {
+    "2021": {
+      "dividend_per_share": 3
+    },
+    "2022": {
+      "dividend_per_share": 7
+    }
+  },
+  "INKP": {
+    "2014": {
+      "dividend_per_share": 25
+    },
+    "2015": {
+      "dividend_per_share": 25
+    },
+    "2016": {
+      "dividend_per_share": 25
+    },
+    "2017": {
+      "dividend_per_share": 30
+    },
+    "2018": {
+      "dividend_per_share": 100
+    },
+    "2019": {
+      "dividend_per_share": 100
+    },
+    "2020": {
+      "dividend_per_share": 50
+    },
+    "2021": {
+      "dividend_per_share": 50
+    },
+    "2022": {
+      "dividend_per_share": 50
+    },
+    "2023": {
+      "dividend_per_share": 50
+    },
+    "2024": {
+      "dividend_per_share": 50
+    },
+    "2025": {
+      "dividend_per_share": 50
+    }
+  },
+  "TKIM": {
+    "2010": {
+      "dividend_per_share": 8
+    },
+    "2011": {
+      "dividend_per_share": 11
+    },
+    "2012": {
+      "dividend_per_share": 19
+    },
+    "2013": {
+      "dividend_per_share": 19
+    },
+    "2014": {
+      "dividend_per_share": 10
+    },
+    "2015": {
+      "dividend_per_share": 10
+    },
+    "2016": {
+      "dividend_per_share": 5
+    },
+    "2017": {
+      "dividend_per_share": 5
+    },
+    "2018": {
+      "dividend_per_share": 30
+    },
+    "2019": {
+      "dividend_per_share": 50
+    },
+    "2020": {
+      "dividend_per_share": 25
+    },
+    "2021": {
+      "dividend_per_share": 25
+    },
+    "2022": {
+      "dividend_per_share": 25
+    },
+    "2023": {
+      "dividend_per_share": 25
+    },
+    "2024": {
+      "dividend_per_share": 25
+    },
+    "2025": {
+      "dividend_per_share": 25
+    }
+  },
+  "SMAR": {
+    "2010": {
+      "dividend_per_share": 75
+    },
+    "2011": {
+      "dividend_per_share": 150
+    },
+    "2012": {
+      "dividend_per_share": 200
+    },
+    "2013": {
+      "dividend_per_share": 1200
+    },
+    "2014": {
+      "dividend_per_share": 5
+    },
+    "2015": {
+      "dividend_per_share": 10
+    },
+    "2017": {
+      "dividend_per_share": 25
+    },
+    "2018": {
+      "dividend_per_share": 30
+    },
+    "2019": {
+      "dividend_per_share": 750
+    },
+    "2021": {
+      "dividend_per_share": 345
+    },
+    "2022": {
+      "dividend_per_share": 310
+    },
+    "2023": {
+      "dividend_per_share": 370
+    },
+    "2024": {
+      "dividend_per_share": 200
+    },
+    "2025": {
+      "dividend_per_share": 30
+    },
+    "2026": {
+      "dividend_per_share": 270
+    }
+  },
+  "LSIP": {
+    "2010": {
+      "dividend_per_share": 42
+    },
+    "2011": {
+      "dividend_per_share": 61
+    },
+    "2012": {
+      "dividend_per_share": 100
+    },
+    "2013": {
+      "dividend_per_share": 66
+    },
+    "2014": {
+      "dividend_per_share": 46
+    },
+    "2015": {
+      "dividend_per_share": 53
+    },
+    "2016": {
+      "dividend_per_share": 37
+    },
+    "2017": {
+      "dividend_per_share": 35
+    },
+    "2018": {
+      "dividend_per_share": 45
+    },
+    "2019": {
+      "dividend_per_share": 19
+    },
+    "2020": {
+      "dividend_per_share": 15
+    },
+    "2021": {
+      "dividend_per_share": 20
+    },
+    "2022": {
+      "dividend_per_share": 51
+    },
+    "2023": {
+      "dividend_per_share": 53
+    },
+    "2024": {
+      "dividend_per_share": 39
+    },
+    "2025": {
+      "dividend_per_share": 65
+    }
+  },
+  "TRIL": {},
+  "TRAM": {
+    "2010": {
+      "dividend_per_share": 4
+    },
+    "2011": {
+      "dividend_per_share": 5
+    }
+  },
+  "MYRX": {},
+  "RIMO": {},
+  "KREN": {
+    "2010": {
+      "dividend_per_share": 0
+    },
+    "2011": {
+      "dividend_per_share": 0
+    },
+    "2014": {
       "dividend_per_share": 0
     }
-  }
+  },
+  "SUGI": {},
+  "NUSA": {}
 }
