@@ -314,12 +314,18 @@ export function PortfolioTracker({
   const enrichedPortfolio = portfolio
     .map((item) => {
       const liveStock = visibleStocks.find((s) => s.ticker === item.ticker);
-      const currentPrice = liveStock ? liveStock.currentPrice : item.buyPrice;
+      // Guard: live stock may be missing (ticker no longer in STOCKS_DATA) and
+      // item.buyPrice may be undefined/null from legacy/corrupt data. Fall back
+      // to 0 so the table never crashes on .toLocaleString().
+      const currentPrice =
+        liveStock?.currentPrice ?? (typeof item.buyPrice === "number" ? item.buyPrice : 0);
+      const safeBuyPrice = typeof item.buyPrice === "number" ? item.buyPrice : 0;
+      const safeShares = typeof item.shares === "number" ? item.shares : 0;
 
-      const originalCost = item.shares * item.buyPrice;
-      const valueNow = item.shares * currentPrice;
+      const originalCost = safeShares * safeBuyPrice;
+      const valueNow = safeShares * currentPrice;
       const profitOrLoss = valueNow - originalCost;
-      const percentChange = (profitOrLoss / originalCost) * 100;
+      const percentChange = originalCost > 0 ? (profitOrLoss / originalCost) * 100 : 0;
 
       totalInvestment += originalCost;
       totalCurrentValue += valueNow;
@@ -328,11 +334,13 @@ export function PortfolioTracker({
       // Annual dividend estimate = shares × currentPrice × dividendYield / 100
       // (dividendYield stored as percentage in scan data, e.g. 5.72 = 5.72%)
       const dividendYieldPct = (liveStock as any)?.dividendYield ?? 0;
-      const annualDividend = (item.shares * currentPrice * dividendYieldPct) / 100;
+      const annualDividend = (safeShares * currentPrice * dividendYieldPct) / 100;
       totalAnnualDividend += annualDividend;
 
       return {
         ...item,
+        shares: safeShares,
+        buyPrice: safeBuyPrice,
         companyName: liveStock ? liveStock.name : item.ticker,
         logoColor: liveStock ? liveStock.logoColor : "bg-gray-400",
         currentPrice,
@@ -416,14 +424,16 @@ export function PortfolioTracker({
       portfolio.forEach((item) => {
         if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
         const stock = visibleStocks.find((s) => s.ticker === item.ticker);
-        const price = stock ? stock.currentPrice : item.buyPrice;
+        const price = stock?.currentPrice ?? (typeof item.buyPrice === "number" ? item.buyPrice : 0);
+        const shares = typeof item.shares === "number" ? item.shares : 0;
+        if (price <= 0 || shares <= 0) return;
         list.push({
           id: `crisis-sell-${item.ticker}`,
           type: "SELL",
           ticker: item.ticker,
           name: stock ? stock.name : item.ticker,
           price,
-          shares: item.shares,
+          shares,
           reason: `Fase Krisis Aktif (IHSG -${Math.abs(ihsgDrawdown60 ?? 0).toFixed(1)}% dari puncak 60 hari). Segera lakukan proteksi kapital.`,
           badge: "LIQUIDATE / CASH OUT",
         });
@@ -446,7 +456,9 @@ export function PortfolioTracker({
       portfolio.forEach((item) => {
         if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
         const stock = visibleStocks.find((s) => s.ticker === item.ticker);
-        const price = stock ? stock.currentPrice : item.buyPrice;
+        const price = stock?.currentPrice ?? (typeof item.buyPrice === "number" ? item.buyPrice : 0);
+        const shares = typeof item.shares === "number" ? item.shares : 0;
+        if (price <= 0 || shares <= 0) return;
         const cleanT = item.ticker.toUpperCase().replace(".JK", "");
         const inUniverse = engineConfig.customUniverse.some(
           (u) => u.toUpperCase().replace(".JK", "") === cleanT
@@ -465,7 +477,7 @@ export function PortfolioTracker({
             ticker: item.ticker,
             name: stock ? stock.name : item.ticker,
             price,
-            shares: item.shares,
+            shares,
             reason: `Exit Ops (${exData.exit_state === "EXIT" ? "Sinyal Jual Kuat" : "Risiko Tinggi"}).`,
             badge: "EXIT REBALANCING",
           });
@@ -476,7 +488,7 @@ export function PortfolioTracker({
             ticker: item.ticker,
             name: stock ? stock.name : item.ticker,
             price,
-            shares: item.shares,
+            shares,
             reason: `#${item.ticker} tidak ada di Custom Universe (${engineConfig.customUniverse.length} emiten). Likuidasi untuk selaraskan dengan strategi.`,
             badge: "LIKUIDASI ASET",
           });
@@ -535,7 +547,9 @@ export function PortfolioTracker({
           (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
 
         const stock = visibleStocks.find((s) => s.ticker === item.ticker);
-        const price = stock ? stock.currentPrice : item.buyPrice;
+        const price = stock?.currentPrice ?? (typeof item.buyPrice === "number" ? item.buyPrice : 0);
+        const shares = typeof item.shares === "number" ? item.shares : 0;
+        if (price <= 0 || shares <= 0) return;
 
         if (isExitStatic) {
           list.push({
@@ -544,7 +558,7 @@ export function PortfolioTracker({
             ticker: item.ticker,
             name: stock ? stock.name : item.ticker,
             price,
-            shares: item.shares,
+            shares,
             reason: `Memicu kriteria Exit Ops (${exData.exit_state === "EXIT" ? "Sinyal Jual Kuat" : "Risiko Tinggi Penurunan"}).`,
             badge: "EXIT REBALANCING",
           });
@@ -556,7 +570,7 @@ export function PortfolioTracker({
             ticker: item.ticker,
             name: stock ? stock.name : item.ticker,
             price,
-            shares: item.shares,
+            shares,
             reason: `Kebijakan Rotasi: Peringkat turun ke #${rankInfo.rank} (Batas Target: Top ${engineConfig.topNCount}).`,
             badge: "ROTASI OUT",
           });
