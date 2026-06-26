@@ -23,7 +23,7 @@ describe("formatLiveContext", () => {
 
   it("includes uiContext label when provided", () => {
     const out = formatLiveContext({ uiContext: "Market Regime panel" });
-    assert.ok(out.includes("Panel yang sedang dibuka user: Market Regime panel"));
+    assert.ok(out.includes("Panel: Market Regime panel"));
   });
 
   it("renders config block with profile name and weights", () => {
@@ -34,10 +34,7 @@ describe("formatLiveContext", () => {
         activeProfileName: "Quality Momentum (QM)",
         universe: "idx80",
         topNCount: 5,
-        reserveBufferPct: 10,
         crashSensitivity: 10,
-        singleSellTrigger: 8,
-        singleBuyTrigger: 5,
         qualityWeight: 0.45,
         growthWeight: 0.10,
         valueWeight: 0.05,
@@ -45,15 +42,9 @@ describe("formatLiveContext", () => {
       },
     };
     const out = formatLiveContext(ctx);
-    assert.ok(out.includes("Config mesin"));
-    assert.ok(out.includes("Quality Momentum (QM)"));
-    assert.ok(out.includes("0.45/0.1/0.05/0.4"));
+    assert.ok(out.includes("Config: prod (Quality Momentum (QM))"));
+    assert.ok(out.includes("W:[Q45/G10/V5/M40]"));
     assert.ok(out.includes("universe=idx80"));
-  });
-
-  it("includes adaptive weights flag when enabled", () => {
-    const out = formatLiveContext({ config: { enableAdaptiveWeights: true } as any });
-    assert.ok(out.includes("Adaptive weights: ON"));
   });
 
   it("includes lastBacktestProfile block when present", () => {
@@ -69,8 +60,7 @@ describe("formatLiveContext", () => {
         },
       } as any,
     });
-    assert.ok(out.includes("Last backtest profile"));
-    assert.ok(out.includes("Balanced Growth (BG)"));
+    assert.ok(out.includes("Last BT: Balanced Growth (BG)"));
     assert.ok(out.includes("Q40/G25/V5/M30"));
   });
 
@@ -82,9 +72,8 @@ describe("formatLiveContext", () => {
         targetSafeHaven: "emas",
       },
     });
-    assert.ok(out.includes("shouldExit=true"));
+    assert.ok(out.includes("EXIT → emas"));
     assert.ok(out.includes("IHSG dropped 12.0%"));
-    assert.ok(out.includes("targetSafeHaven=emas"));
   });
 
   it("renders regime block with all scores", () => {
@@ -97,14 +86,12 @@ describe("formatLiveContext", () => {
         confidence: 50,
         capital_deployment: 15,
         action: "WAIT",
-        rationale: "IHSG below SMA20 and SMA50",
       },
     });
-    assert.ok(out.includes("status=RISK_OFF"));
+    assert.ok(out.includes("Regime: RISK_OFF"));
     assert.ok(out.includes("health=42"));
-    assert.ok(out.includes("opportunity=35"));
     assert.ok(out.includes("risk=70"));
-    assert.ok(out.includes("Rationale regime: IHSG below SMA20 and SMA50"));
+    assert.ok(out.includes("action=WAIT"));
   });
 
   it("renders market block with IHSG, USDIDR, gold", () => {
@@ -112,9 +99,9 @@ describe("formatLiveContext", () => {
       market: { ihsg: 6800, ihsgMonthly: -5.2, usdidr: 16100, gold: 1300000 },
     });
     assert.ok(out.includes("IHSG=6800"));
-    assert.ok(out.includes("bulanan -5.2%"));
-    assert.ok(out.includes("USD/IDR=16100"));
-    assert.ok(out.includes("Emas=1300000"));
+    assert.ok(out.includes("(-5.2%)"));
+    assert.ok(out.includes("USD=16100"));
+    assert.ok(out.includes("Gold=1300000"));
   });
 
   it("renders selectedStock block with all fields", () => {
@@ -133,9 +120,9 @@ describe("formatLiveContext", () => {
       },
     });
     assert.ok(out.includes("BBCA.JK"));
-    assert.ok(out.includes("Bank Central Asia"));
-    assert.ok(out.includes("PE 25.5"));
-    assert.ok(out.includes("ROE 22%"));
+    assert.ok(out.includes("@9500"));
+    assert.ok(out.includes("PE=25.5"));
+    assert.ok(out.includes("ROE=22%"));
   });
 
   it("renders portfolio + cash", () => {
@@ -146,15 +133,14 @@ describe("formatLiveContext", () => {
       ],
       cash: 50000000,
     });
-    assert.ok(out.includes("BBCA.JK 100lbr @9000"));
-    assert.ok(out.includes("TLKM.JK 500lbr @3500"));
+    assert.ok(out.includes("BBCA.JK 100@9000"));
+    assert.ok(out.includes("TLKM.JK 500@3500"));
     assert.ok(out.includes("Cash: 50000000"));
   });
 
   it("renders cash alone when portfolio empty", () => {
     const out = formatLiveContext({ cash: 25000000 });
     assert.ok(out.includes("Cash: 25000000"));
-    assert.ok(!out.includes("Portfolio:"));
   });
 
   it("renders BPS block when present", () => {
@@ -169,18 +155,15 @@ describe("formatLiveContext", () => {
         factors: { valuation: 80, momentum: 60, breadth: 70, drawdown: 100, fear: 65 },
       },
     });
-    assert.ok(out.includes("BPS (Adaptive DCA)"));
-    assert.ok(out.includes("score=78/100"));
-    assert.ok(out.includes("action=aggressive"));
-    assert.ok(out.includes("deployPct=75%"));
-    assert.ok(out.includes("Drawdown tinggi + valuasi murah"));
+    assert.ok(out.includes("BPS: 78/100 aggressive"));
+    assert.ok(out.includes("deploy=75%"));
   });
 
   it("marks BPS as CASH DEFENSE when invalid", () => {
     const out = formatLiveContext({
       bps: { score: 0, action: "none", deployPct: 0, cashPct: 100, valid: false, reason: "x", factors: { valuation: 0, momentum: 0, breadth: 0, drawdown: 0, fear: 0 } },
     });
-    assert.ok(out.includes("[CASH DEFENSE]"));
+    assert.ok(out.includes("CASH_DEFENSE"));
   });
 
   it("renders backtest draft snapshot", () => {
@@ -196,10 +179,9 @@ describe("formatLiveContext", () => {
       },
       isBacktestOutOfSync: true,
     });
-    assert.ok(out.includes("Backtest draft:"));
-    assert.ok(out.includes("profile=custom_1"));
-    assert.ok(out.includes("mode=adaptive_dca"));
-    assert.ok(out.includes("OUT OF SYNC"));
+    assert.ok(out.includes("Backtest: custom_1 adaptive_dca"));
+    assert.ok(out.includes("topN=7"));
+    assert.ok(out.includes("[OUT OF SYNC]"));
   });
 
   it("renders backtest synced state", () => {
@@ -215,7 +197,7 @@ describe("formatLiveContext", () => {
       },
       isBacktestOutOfSync: false,
     });
-    assert.ok(out.includes("(synced)"));
+    assert.ok(out.includes("[synced]"));
     assert.ok(!out.includes("OUT OF SYNC"));
   });
 
@@ -226,21 +208,17 @@ describe("formatLiveContext", () => {
         { rule: "ihsgDrop", title: "IHSG turun", message: "-12%", timestamp: Date.now() },
       ],
     });
-    assert.ok(out.includes("Active alerts:"));
-    assert.ok(out.includes("[bpsAggressive] Peluang beli agresif"));
-    assert.ok(out.includes("[ihsgDrop] IHSG turun"));
+    assert.ok(out.includes("Alerts: Peluang beli agresif | IHSG turun"));
   });
 
   it("does not render alerts section when alerts array is empty", () => {
     const out = formatLiveContext({ alerts: [] });
-    assert.ok(!out.includes("Active alerts:"));
+    assert.ok(!out.includes("Alerts:"));
   });
 
   it("renders activeUniverse when present", () => {
     const out = formatLiveContext({ activeUniverse: ["BBCA", "BBRI", "BMRI"] });
-    assert.ok(out.includes("Active universe"));
-    assert.ok(out.includes("#BBCA"));
-    assert.ok(out.includes("#BMRI"));
+    assert.ok(out.includes("Universe: BBCA, BBRI, BMRI"));
   });
 
   it("combines multiple sections with newlines", () => {
@@ -251,8 +229,8 @@ describe("formatLiveContext", () => {
     });
     const lines = out.split("\n");
     assert.ok(lines.length >= 3);
-    assert.ok(out.includes("Panel"));
-    assert.ok(out.includes("Pasar:"));
+    assert.ok(out.includes("Panel: Portfolio"));
+    assert.ok(out.includes("Market:"));
     assert.ok(out.includes("Cash:"));
   });
 });

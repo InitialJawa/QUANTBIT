@@ -31,7 +31,7 @@ export interface BuildContextInputs {
   alerts?: { rule: string; title: string; message: string; timestamp: number }[];
 }
 
-/** Rakit konteks live dari objek-objek app jadi AILiveContext. */
+/** Rakit konteks live dari objek-objek app jadi AILiveContext — ringkas. */
 export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext {
   const { engineConfig: c, backtestConfig, isBacktestOutOfSync, selectedStock: s, portfolio, cash, uiContext, alerts } = inputs;
 
@@ -44,7 +44,6 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       confidence: RS.confidence,
       capital_deployment: RS.capital_deployment,
       action: RS.action,
-      rationale: RS.rationale,
     },
     market: {
       ihsg: MKT.ihsg?.value,
@@ -62,17 +61,13 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       activeProfileName: profile?.name,
       safeHavenAsset: c.safeHavenAsset,
       topNCount: c.topNCount,
-      reserveBufferPct: c.reserveBufferPct,
       crashSensitivity: c.crashSensitivity,
-      singleSellTrigger: c.singleSellTrigger,
-      singleBuyTrigger: c.singleBuyTrigger,
       universe: c.universe,
       qualityWeight: profile?.qualityWeight,
       growthWeight: profile?.growthWeight,
       valueWeight: profile?.valueWeight,
       momentumWeight: profile?.momentumWeight,
       customUniverse: c.customUniverse,
-      enableAdaptiveWeights: c.enableAdaptiveWeights,
       simulationMode: c.simulationMode,
       enableCrashProtection: c.enableCrashProtection,
       dcaActive: c.dcaActive,
@@ -91,15 +86,14 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
     }
 
     if (c.enableCrashProtection) {
-      const ihsgPrice = MKT.ihsg?.value;
       const ihsgDrawdown60 = getIhsgDrawdown60();
-      if (typeof ihsgPrice === "number") {
+      if (typeof MKT.ihsg?.value === "number") {
         const shouldExit = ihsgDrawdown60 !== null && ihsgDrawdown60 <= -(c.crashSensitivity ?? 10);
         ctx.strategyEvaluation = {
           shouldExit,
           reason: shouldExit
-            ? `IHSG dropped ${Math.abs(ihsgDrawdown60!).toFixed(1)}% from 60d peak (threshold: ${c.crashSensitivity}%)`
-            : `IHSG within tolerance (${ihsgDrawdown60 !== null ? ihsgDrawdown60.toFixed(1) : "N/A"}%, threshold: ${c.crashSensitivity}%)`,
+            ? `IHSG drop ${Math.abs(ihsgDrawdown60!).toFixed(1)}% from 60d peak (threshold ${c.crashSensitivity}%)`
+            : `IHSG toleran (${ihsgDrawdown60 !== null ? ihsgDrawdown60.toFixed(1) : "N/A"}%, threshold ${c.crashSensitivity}%)`,
           targetSafeHaven: shouldExit ? c.safeHavenAsset : null,
         };
       }

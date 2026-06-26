@@ -466,7 +466,7 @@ describe("runAiChat — system prompt integration", () => {
     );
     assert.ok(capturedSystem.includes("TOOL CATALOG"));
     assert.ok(capturedSystem.includes("IHSG=6800"));
-    assert.ok(capturedSystem.includes("status=RISK_OFF"));
+    assert.ok(capturedSystem.includes("Regime: RISK_OFF"));
   });
 });
 

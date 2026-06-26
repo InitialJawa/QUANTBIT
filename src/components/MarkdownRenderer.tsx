@@ -33,16 +33,19 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
   const lines = content.split("\n");
   const blocks: React.ReactNode[] = [];
-  
+
   let currentTable: string[][] = [];
   let inTable = false;
-  
-  let currentList: string[] = [];
-  let inList = false;
+
+  let currentBulletList: string[] = [];
+  let inBulletList = false;
+
+  let currentOrderedList: string[] = [];
+  let inOrderedList = false;
 
   const flushTable = (key: number) => {
     if (currentTable.length === 0) return;
-    
+
     const headerRow = currentTable[0];
     const dataRows = currentTable.slice(1).filter((row) => {
       const isSep = row.every(
@@ -54,7 +57,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     blocks.push(
       <div
         key={`table-${key}`}
-        className="my-3 overflow-x-auto w-full border border-white/10 rounded-xl bg-black/30 shadow-sm scrollbar-thin"
+        className="my-2 overflow-x-auto w-full border border-white/10 rounded-xl bg-black/30 shadow-sm scrollbar-thin"
       >
         <table className="min-w-full divide-y divide-white/10 text-body sm:text-xs font-mono">
           <thead className="bg-white/[0.03]">
@@ -62,7 +65,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
               {headerRow.map((cell, idx) => (
                 <th
                   key={idx}
-                  className="px-3 py-2 text-left font-bold text-white border-b border-white/10 uppercase tracking-wider"
+                  className="px-3 py-1.5 text-left font-bold text-white border-b border-white/10 uppercase tracking-wider text-caption"
                 >
                   {parseInline(cell)}
                 </th>
@@ -78,7 +81,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
                 {row.map((cell, cellIdx) => (
                   <td
                     key={cellIdx}
-                    className="px-3 py-2 text-white/90 whitespace-nowrap"
+                    className="px-3 py-1.5 text-white/90 whitespace-nowrap text-caption"
                   >
                     {parseInline(cell)}
                   </td>
@@ -93,31 +96,63 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     inTable = false;
   };
 
-  const flushList = (key: number) => {
-    if (currentList.length === 0) return;
+  const flushBulletList = (key: number) => {
+    if (currentBulletList.length === 0) return;
     blocks.push(
       <ul
-        key={`list-${key}`}
-        className="list-disc pl-5 my-3 space-y-1.5 text-white/80 text-xs sm:text-sm"
+        key={`blist-${key}`}
+        className="list-disc pl-4 my-2 space-y-0.5 text-white/80 text-xs sm:text-sm"
       >
-        {currentList.map((item, idx) => (
+        {currentBulletList.map((item, idx) => (
           <li key={idx} className="leading-relaxed">
             {parseInline(item)}
           </li>
         ))}
       </ul>
     );
-    currentList = [];
-    inList = false;
+    currentBulletList = [];
+    inBulletList = false;
+  };
+
+  const flushOrderedList = (key: number) => {
+    if (currentOrderedList.length === 0) return;
+    blocks.push(
+      <ol
+        key={`olist-${key}`}
+        className="list-decimal pl-4 my-2 space-y-0.5 text-white/80 text-xs sm:text-sm"
+      >
+        {currentOrderedList.map((item, idx) => (
+          <li key={idx} className="leading-relaxed">
+            {parseInline(item)}
+          </li>
+        ))}
+      </ol>
+    );
+    currentOrderedList = [];
+    inOrderedList = false;
+  };
+
+  const flushAllLists = (key: number) => {
+    flushBulletList(key);
+    flushOrderedList(key);
   };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Table Row detection
+    // Horizontal rule
+    if (/^---+\s*$/.test(trimmed)) {
+      flushAllLists(i);
+      blocks.push(
+        <hr key={`hr-${i}`} className="my-2 border-t border-white/10" />
+      );
+      continue;
+    }
+
+    // Table Row
     if (trimmed.startsWith("|")) {
-      if (inList) flushList(i);
+      flushAllLists(i);
       inTable = true;
       const cells = line.split("|").map((c) => c.trim());
       if (cells[0] === "") cells.shift();
@@ -128,62 +163,36 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       flushTable(i);
     }
 
-    // List Item detection
+    // Bullet list
     if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      if (inTable) flushTable(i);
-      inList = true;
-      currentList.push(trimmed.slice(2));
+      flushAllLists(i);
+      inBulletList = true;
+      currentBulletList.push(trimmed.slice(2));
       continue;
-    } else if (inList) {
-      flushList(i);
+    } else if (inBulletList) {
+      flushBulletList(i);
     }
 
-    // Headers
-    if (trimmed.startsWith("### ")) {
-      blocks.push(
-        <h3
-          key={i}
-          className="text-xs sm:text-sm font-extrabold text-white mt-4 mb-2 flex items-center gap-1.5 uppercase tracking-wide border-b border-white/5 pb-1"
-        >
-          {parseInline(trimmed.slice(4))}
-        </h3>
-      );
+    // Numbered list
+    if (/^\d+[\.\)]\s/.test(trimmed)) {
+      flushAllLists(i);
+      inOrderedList = true;
+      currentOrderedList.push(trimmed.replace(/^\d+[\.\)]\s/, ""));
       continue;
+    } else if (inOrderedList) {
+      flushOrderedList(i);
     }
 
-    if (trimmed.startsWith("#### ")) {
-      blocks.push(
-        <h4
-          key={i}
-          className="text-body sm:text-xs font-bold text-white/95 mt-3 mb-1.5 uppercase tracking-wider"
-        >
-          {parseInline(trimmed.slice(5))}
-        </h4>
-      );
-      continue;
-    }
-
-    if (trimmed.startsWith("## ")) {
-      blocks.push(
-        <h2
-          key={i}
-          className="text-sm sm:text-base font-black text-white mt-5 mb-3 uppercase tracking-wide border-b border-white/10 pb-1.5"
-        >
-          {parseInline(trimmed.slice(3))}
-        </h2>
-      );
-      continue;
-    }
-
+    // Empty line = separator
     if (trimmed === "") {
       continue;
     }
 
-    // Standard Paragraph
+    // Standard paragraph
     blocks.push(
       <p
         key={i}
-        className="text-white/80 leading-relaxed mb-3 text-xs sm:text-sm"
+        className="text-white/80 leading-relaxed mb-2 text-xs sm:text-sm"
       >
         {parseInline(line)}
       </p>
@@ -191,7 +200,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   }
 
   if (inTable) flushTable(lines.length);
-  if (inList) flushList(lines.length);
+  flushBulletList(lines.length);
+  flushOrderedList(lines.length);
 
-  return <div className="space-y-1 text-left">{blocks}</div>;
+  return <div className="space-y-0.5 text-left">{blocks}</div>;
 }

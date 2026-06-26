@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Send, Bot, User, Loader2, Sparkles, HelpCircle, X, MessageCircle, Minus, ChevronDown, Trash2, Bell, Plus } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, X, Minus, ChevronDown, Trash2, Bell, Plus } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { AIActionApprovalCard } from "./AIActionApprovalCard";
 import { askAI, buildLiveContext, extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS, type AIChatMessage } from "../ai/aiClient";
@@ -11,7 +11,7 @@ import { useAITools, type PortfolioAPI } from "../hooks/useAITools";
 import { useUIState } from "../hooks/useUIState";
 import { api } from "../services/api";
 import type { StockData, PortfolioItem } from "../types";
-import type { AIAction, PendingAction } from "../types/ai";
+import type { AIAction, PendingAction, AIToolResult } from "../types/ai";
 
 interface FloatingAIChatProps {
   selectedStock?: StockData;
@@ -78,8 +78,32 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const [isLoading, setIsLoading] = useState(false);
   const [provider, setProvider] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  /** Tool results to display as cards when no follow-up AI call */
+  const [toolResults, setToolResults] = useState<AIToolResult[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Index of the latest assistant message for follow-up suggestions.
+  const lastAssistantIdx = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant" && messages[i] !== WELCOME) return i;
+    }
+    return -1;
+  }, [messages]);
+
+  // Contextual follow-up suggestion chips
+  const followUpSuggestions = useMemo(() => {
+    const base = [
+      { label: "Cek portofolio", query: "Cek portofolio saya sekarang — nilai total, P&L, dan kondisi tiap posisi." },
+      { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+      { label: "Regime detail", query: "Jelaskan status regime saat ini — health, risk, action, dan kenapa." },
+    ];
+    if (selectedStock) {
+      const t = selectedStock.ticker;
+      base.push({ label: `Analisa ${t}`, query: `Analisa ringkas ${t} (${selectedStock.name}) berdasarkan data live.` });
+    }
+    return base;
+  }, [selectedStock]);
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
@@ -212,6 +236,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const send = useCallback(async (text: string, uiContext?: string) => {
     if (!text.trim() || isLoading || sendingRef.current) return;
     sendingRef.current = true;
+    setToolResults([]);
     const userMsg: AIChatMessage = { role: "user", content: text };
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
@@ -299,17 +324,13 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         }
       }
 
-      // When follow-up will run, skip initial text + tool result display
-      // to avoid duplicate messages (follow-up produces one cohesive response).
+      // When follow-up will run, skip initial display (follow-up produces one cohesive response).
       if (!hasFollowup) {
         if (result.content && result.provider !== "none" && result.provider !== "error") {
           setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
         }
-        for (const r of followupResults) {
-          const summary = r.error
-            ? `⚠ ${r.name}: ${r.error}`
-            : `📊 ${r.name} → ${summariseToolResult(r.name, r.result)}`;
-          setMessages((prev) => [...prev, { role: "tool", content: summary, toolCallId: r.toolCallId }]);
+        if (followupResults.length > 0) {
+          setToolResults(followupResults.map(r => ({ toolCallId: r.toolCallId, name: r.name, result: r.result, error: r.error })));
         }
       }
 
@@ -468,15 +489,27 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             {/* Messages */}
             <div ref={containerRef} className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin" style={{ minHeight: "300px", maxHeight: "400px" }}>
               {messages.filter((m) => m.role !== "tool").map((msg, i) => (
-                <div key={i} className={`flex gap-2 w-full ${msg.role === "user" ? "ml-auto flex-row-reverse max-w-[88%]" : msg.role === "tool" ? "mx-auto max-w-[92%]" : "mr-auto max-w-[96%]"}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-cyan-500 text-black" : msg.role === "tool" ? "bg-white/5" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
-                    {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : msg.role === "tool" ? <HelpCircle className="w-3 h-3 text-cyan-400" /> : <Bot className="w-3.5 h-3.5" />}
+                <div key={i} className={`flex gap-2 w-full ${msg.role === "user" ? "ml-auto flex-row-reverse max-w-[88%]" : "mr-auto max-w-[96%]"}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-cyan-500 text-black" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
+                    {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                   </div>
-                  <div className={`px-3 py-2 rounded-xl text-body leading-relaxed flex-1 overflow-hidden ${msg.role === "user" ? "bg-cyan-950/40 rounded-tr-none border border-cyan-500/20" : msg.role === "tool" ? "bg-cyan-500/5 rounded-md border border-cyan-500/10" : "bg-white/[0.03] rounded-tl-none border border-white/5"}`} style={{ color: msg.role === "user" ? "#fff" : "rgba(255,255,255,0.9)" }}>
+                  <div className={`px-3 py-2 rounded-xl text-body leading-relaxed flex-1 overflow-hidden ${msg.role === "user" ? "bg-cyan-950/40 rounded-tr-none border border-cyan-500/20" : "bg-white/[0.03] rounded-tl-none border border-white/5"}`} style={{ color: msg.role === "user" ? "#fff" : "rgba(255,255,255,0.9)" }}>
                     {msg.role === "user" ? <div className="whitespace-pre-line">{msg.content}</div> : <MarkdownRenderer content={msg.content} />}
                   </div>
                 </div>
               ))}
+
+              {/* Tool result cards (when no follow-up AI call) */}
+              {toolResults.length > 0 && (
+                <div className="space-y-2">
+                  {toolResults.map((r) => (
+                    <div key={r.toolCallId}>
+                      <ToolResultCard name={r.name} result={r.result} error={r.error} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {isLoading && (
                 <div className="flex gap-2 max-w-[88%] mr-auto">
                   <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center shrink-0" style={{ color: "#00c9a5" }}>
@@ -503,26 +536,38 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               ))}
             </div>
 
-            {/* Quick prompts */}
-            {messages.filter((m) => m.role !== "tool").length <= 1 && !isLoading && (
-              <div className="px-3 pb-2 pt-1 border-t border-white/5">
-                <span className="text-label uppercase font-bold tracking-widest flex items-center gap-1 mb-1.5" style={{ color: "#7a7a7a" }}>
-                  <HelpCircle className="w-3 h-3" style={{ color: "#00c9a5" }} /> Cepat
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {quickPrompts.map((p, idx) => (
+            {/* Follow-up suggestion chips (after latest assistant response) */}
+            {lastAssistantIdx >= 0 && !isLoading && (
+              <div className="px-3 pb-0 pt-0 border-t border-white/5">
+                <div className="flex flex-wrap gap-1.5 py-1.5">
+                  {followUpSuggestions.map((s, idx) => (
                     <button
                       key={idx}
-                      onClick={() => send(p.query)}
-                      className="text-caption bg-white/5 hover:bg-cyan-950/30 px-2.5 py-1.5 rounded-lg border border-white/10 transition-all cursor-pointer"
-                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      onClick={() => send(s.query)}
+                      className="text-caption bg-cyan-950/20 hover:bg-cyan-950/40 px-2 py-1 rounded-lg border border-cyan-500/15 transition-all cursor-pointer text-cyan-300/70 hover:text-cyan-300"
                     >
-                      <span className="hover:text-cyan-300">{p.label}</span>
+                      {s.label}
                     </button>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Quick prompts — always visible */}
+            <div className="px-3 pb-1 pt-1 border-t border-white/5">
+              <div className="flex flex-wrap gap-1.5">
+                {quickPrompts.map((p, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => send(p.query)}
+                    className="text-caption bg-white/5 hover:bg-cyan-950/30 px-2 py-1 rounded-lg border border-white/10 transition-all cursor-pointer"
+                    style={{ color: "rgba(255,255,255,0.6)" }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Input */}
             <div className="p-3 border-t border-white/5 flex items-center gap-2">
@@ -579,4 +624,91 @@ function summariseToolResult(name: string, result: any): string {
     default:
       try { return JSON.stringify(result).slice(0, 200); } catch { return "(data)"; }
   }
+}
+
+/** Render tool result as a compact info card. */
+function ToolResultCard({ name, result, error }: { name: string; result: any; error?: string }) {
+  if (error) {
+    return (
+      <div className="px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-caption font-mono">
+        ⚠ {name}: {error}
+      </div>
+    );
+  }
+
+  const rows: { label: string; value: string }[] = [];
+
+  switch (name) {
+    case "get_portfolio_state": {
+      const p = result;
+      rows.push({ label: "Posisi", value: `${p.positions?.length ?? 0} items` });
+      rows.push({ label: "Kas", value: `Rp ${(p.cash ?? 0).toLocaleString("id-ID")}` });
+      if (p.totalValue) rows.push({ label: "Total nilai", value: `Rp ${p.totalValue.toLocaleString("id-ID")}` });
+      if (p.totalPnl) rows.push({ label: "P&L", value: `Rp ${p.totalPnl.toLocaleString("id-ID")}` });
+      break;
+    }
+    case "get_bps_now": {
+      const b = result;
+      rows.push({ label: "Score", value: `${b.score}/100` });
+      rows.push({ label: "Action", value: b.action });
+      rows.push({ label: "Deploy", value: `${b.deployPct}%` });
+      if (b.factors) {
+        if (b.factors.valuation != null) rows.push({ label: "Valuasi", value: `${b.factors.valuation}/100` });
+        if (b.factors.momentum != null) rows.push({ label: "Momentum", value: `${b.factors.momentum}/100` });
+        if (b.factors.drawdown != null) rows.push({ label: "Drawdown", value: `${b.factors.drawdown}/100` });
+      }
+      break;
+    }
+    case "get_regime_details": {
+      const r = result;
+      rows.push({ label: "Status", value: r.status });
+      rows.push({ label: "Risk", value: `${r.risk}/100` });
+      rows.push({ label: "Action", value: r.action });
+      if (r.health != null) rows.push({ label: "Health", value: `${r.health}/100` });
+      if (r.breadth != null) rows.push({ label: "Breadth", value: `${r.breadth}` });
+      break;
+    }
+    case "get_ticker_metrics": {
+      const t = result;
+      if (t.found === false) {
+        return (
+          <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-caption font-mono">
+            Ticker {t.ticker} tidak ditemukan
+          </div>
+        );
+      }
+      rows.push({ label: "Harga", value: `Rp ${(t.currentPrice ?? 0).toLocaleString("id-ID")}` });
+      if (t.change != null) rows.push({ label: "Change", value: `${t.change > 0 ? "+" : ""}${t.change}%` });
+      if (t.quality != null) rows.push({ label: "Quality", value: `${t.quality}/100` });
+      if (t.momentum != null) rows.push({ label: "Momentum", value: `${t.momentum}/100` });
+      if (t.rank != null) rows.push({ label: "Rank", value: `#${t.rank}` });
+      break;
+    }
+    case "get_market_history": {
+      rows.push({ label: "Hari", value: `${result.days ?? result.last ?? "?"} data IHSG` });
+      break;
+    }
+    default: {
+      try {
+        const str = JSON.stringify(result).slice(0, 150);
+        rows.push({ label: name, value: str });
+      } catch {
+        rows.push({ label: name, value: "(data)" });
+      }
+    }
+  }
+
+  return (
+    <div className="px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10 text-caption font-mono">
+      <div className="text-cyan-400 font-bold mb-1 text-xs uppercase tracking-wider">{name}</div>
+      <div className="space-y-0.5">
+        {rows.map((r, i) => (
+          <div key={i} className="flex justify-between gap-2">
+            <span className="text-white/50">{r.label}</span>
+            <span className="text-white/90 font-medium">{r.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
