@@ -276,20 +276,15 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         void persistMessage(sessionId, user?.id || "dev-user", "assistant", result.content, result.toolCalls, { provider: result.provider });
       }
 
-      // Track consecutive provider failures — after 3 fails, surface
-      // a "use dev mock" hint in the chat (only in dev mode).
+      // ── Error path (all providers failed) ──
       if (result.provider === "none" || result.provider === "error") {
         consecutiveFailuresRef.current += 1;
-        // Show brief fail indicator mid-conversation (but only once).
-        const userCount = messages.filter((m) => m.role === "user").length;
-        if (userCount > 0 && consecutiveFailuresRef.current === 1) {
-          setMessages((prev) => [...prev, { role: "assistant", content: "(limit)" }]);
+        // Show the error diagnostic from the server directly.
+        if (result.content) {
+          setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
         }
-        if (
-          consecutiveFailuresRef.current === 3 &&
-          import.meta.env?.DEV &&
-          !useDevMockAI
-        ) {
+        // On 3rd consecutive failure in dev mode, suggest dev mock.
+        if (consecutiveFailuresRef.current === 3 && import.meta.env?.DEV && !useDevMockAI) {
           setMessages((prev) => [
             ...prev,
             {
@@ -303,69 +298,72 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         }
       } else {
         consecutiveFailuresRef.current = 0;
-      }
 
-      // Level 2 — execute read-only tool calls immediately.
-      // Level 3 — collect action calls into the pending queue.
-      let hasFollowup = false;
-      const followupResults: { toolCallId: string; name: string; result: any; error?: string }[] = [];
-      for (const tc of result.toolCalls) {
-        if (READ_ONLY_TOOLS.has(tc.name)) {
-          const r = await executeTool(tc);
-          followupResults.push(r);
-          hasFollowup = true;
-        } else if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
-          const action = actionRegistry[tc.name](tc.args);
-          addPendingAction(buildPendingAction(action));
+        // Level 2 — execute read-only tool calls immediately.
+        // Level 3 — collect action calls into the pending queue.
+        let hasFollowup = false;
+        const followupResults: { toolCallId: string; name: string; result: any; error?: string }[] = [];
+        for (const tc of result.toolCalls) {
+          if (READ_ONLY_TOOLS.has(tc.name)) {
+            const r = await executeTool(tc);
+            followupResults.push(r);
+            hasFollowup = true;
+          } else if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
+            const action = actionRegistry[tc.name](tc.args);
+            addPendingAction(buildPendingAction(action));
+          }
         }
-      }
 
-      // When follow-up will run, skip initial display (follow-up produces one cohesive response).
-      if (!hasFollowup) {
-        if (result.content && result.provider !== "none" && result.provider !== "error") {
-          setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+        // When follow-up will run, skip initial display (follow-up produces one cohesive response).
+        if (!hasFollowup) {
+          if (result.content) {
+            setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+          }
+          if (followupResults.length > 0) {
+            setToolResults(followupResults.map(r => ({ toolCallId: r.toolCallId, name: r.name, result: r.result, error: r.error })));
+          }
         }
-        if (followupResults.length > 0) {
-          setToolResults(followupResults.map(r => ({ toolCallId: r.toolCallId, name: r.name, result: r.result, error: r.error })));
-        }
-      }
 
-      // Re-ask AI for a follow-up answer that incorporates the tool results.
-      if (hasFollowup && result.content) {
-        try {
-          const followupHistory = [
-            ...history,
-            { role: "assistant" as const, content: result.content },
-            ...followupResults.map((r) => ({
-              role: "tool" as const,
-              content: r.error ? `ERROR: ${r.error}` : JSON.stringify(r.result).slice(0, 4000),
-              toolCallId: r.toolCallId,
-            })),
-          ];
-          const followupRaw = await api.post<{ content: string; provider?: string }>(
-            "/api/ai/chat",
-            { messages: followupHistory.map((m) => ({ role: m.role, content: m.content })), context: ctx }
-          );
-          const followupText = followupRaw.content || "";
-          const { cleanText: followupClean, toolCalls: followupCalls } = extractToolCalls(followupText);
-          setProvider(followupRaw.provider || "unknown");
-          if (followupClean && followupRaw.provider !== "none" && followupRaw.provider !== "error") {
-            setMessages((prev) => [...prev, { role: "assistant", content: followupClean }]);
-            // Surface any new action tool calls from the followup.
-            for (const tc of followupCalls) {
-              if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
-                const action = actionRegistry[tc.name](tc.args);
-                addPendingAction(buildPendingAction(action));
+        // Re-ask AI for a follow-up answer that incorporates the tool results.
+        if (hasFollowup) {
+          try {
+            const followupHistory = [
+              ...history,
+              ...(result.content ? [{ role: "assistant" as const, content: result.content }] : []),
+              ...followupResults.map((r) => ({
+                role: "tool" as const,
+                content: r.error ? `ERROR: ${r.error}` : JSON.stringify(r.result).slice(0, 4000),
+                toolCallId: r.toolCallId,
+              })),
+            ];
+            const followupRaw = await api.post<{ content: string; provider?: string }>(
+              "/api/ai/chat",
+              { messages: followupHistory.map((m) => ({ role: m.role, content: m.content })), context: ctx }
+            );
+            const followupText = followupRaw.content || "";
+            const { cleanText: followupClean, toolCalls: followupCalls } = extractToolCalls(followupText);
+            setProvider(followupRaw.provider || "unknown");
+            if (followupClean && followupRaw.provider !== "none" && followupRaw.provider !== "error") {
+              setMessages((prev) => [...prev, { role: "assistant", content: followupClean }]);
+              // Surface any new action tool calls from the followup.
+              for (const tc of followupCalls) {
+                if (ACTION_TOOLS.has(tc.name) && actionRegistry[tc.name]) {
+                  const action = actionRegistry[tc.name](tc.args);
+                  addPendingAction(buildPendingAction(action));
+                }
+              }
+            } else {
+              // Follow-up failed — fallback to original or tool results.
+              if (result.content) {
+                setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+              }
+              if (followupResults.length > 0) {
+                setToolResults(followupResults.map(r => ({ toolCallId: r.toolCallId, name: r.name, result: r.result, error: r.error })));
               }
             }
-          } else {
-            // Follow-up failed — show original text as fallback.
-            if (result.content && result.provider !== "none" && result.provider !== "error") {
-              setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
-            }
+          } catch {
+            /* followup is best-effort */
           }
-        } catch {
-          /* followup is best-effort */
         }
       }
     } catch (e: any) {
