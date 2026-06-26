@@ -89,6 +89,8 @@ export interface BacktestResult {
   maxDrawdown: number;
   totalTrades: number;
   totalDividends: number;
+  /** Per-ticker dividend accumulation (IDR) — for UI breakdown top contributors. */
+  dividendByTicker: Record<string, number>;
   cagr: number;
   volatility: number;
   sharpe: number;

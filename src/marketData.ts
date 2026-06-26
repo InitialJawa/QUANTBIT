@@ -2,6 +2,7 @@
 // Ported from target_data.js to provide real, robust, production-level IDX metrics
 
 import { setDividendCache } from "./engine/dividendCache.ts";
+import snapshots from "./data/dividend_snapshots.json";
 
 export interface LeaderStock {
   rank: string;
@@ -226,6 +227,7 @@ export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } |
 function buildDividendCache(stocks: ScanStock[]) {
   const cache: Record<string, Record<string, number>> = {};
   const currentYear = new Date().getFullYear().toString();
+
   for (const s of stocks) {
     const ticker = s.ticker.replace(".JK", "");
     if (s.dividendYield && s.dividendYield > 0 && s.currentPrice > 0) {
@@ -235,6 +237,24 @@ function buildDividendCache(stocks: ScanStock[]) {
       }
     }
   }
+
+  // Merge with real historical yearly DPS from dividend_snapshots.json
+  // (77 IDX80 tickers, 2010-2026, sourced from Yahoo Finance historical()
+  // via scripts/fetch_dividend_history.ts). Without this merge, historical
+  // backtest always returns 0 dividend because cache only has currentYear.
+  try {
+    for (const [ticker, years] of Object.entries(snapshots as Record<string, Record<string, { dividend_per_share: number }>>)) {
+      if (!cache[ticker]) cache[ticker] = {};
+      for (const [year, snap] of Object.entries(years)) {
+        if (snap?.dividend_per_share > 0) {
+          cache[ticker][year] = snap.dividend_per_share;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[dividendCache] failed to merge snapshots:", err);
+  }
+
   setDividendCache(cache);
 }
 

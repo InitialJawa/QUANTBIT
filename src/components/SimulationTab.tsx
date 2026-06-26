@@ -1025,14 +1025,43 @@ export function SimulationTab({
                       </span>
                     </div>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Swaps &amp; Dividen</span>
-                      <span className="text-sm font-bold font-mono text-amber-400 block">
-                        {backtestResult.totalTrades} Rebalances
+                    <div className="p-4 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl space-y-1.5">
+                      <span className="text-label uppercase font-bold tracking-widest text-emerald-400/70 block">Dividen Kumulatif (Nett 90%)</span>
+                      <span className="text-base font-black font-mono text-emerald-400 block">
+                        +{formatRupiah(backtestResult.totalDividends)}
                       </span>
-                      <span className="text-label text-[#A0A0A0] block">
-                        Dividen: +{formatRupiah(backtestResult.totalDividends)}
-                      </span>
+                      <div className="pt-1 mt-1 border-t border-emerald-500/10 space-y-0.5">
+                        <div className="text-[10px] font-mono text-white/40 flex justify-between">
+                          <span>Rebalances</span>
+                          <span className="text-amber-400 font-bold">{backtestResult.totalTrades}</span>
+                        </div>
+                        {(() => {
+                          const years = Math.max(1, (new Date(backtestConfig.simEndDate).getTime() - new Date(backtestConfig.simStartDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                          const annualized = backtestResult.finalValue > 0
+                            ? (backtestResult.totalDividends / years / backtestResult.finalValue * 100).toFixed(2)
+                            : "0.00";
+                          return (
+                            <div className="text-[10px] font-mono text-white/40 flex justify-between">
+                              <span>Avg yield/thn</span>
+                              <span className="text-emerald-400/80 font-bold">{annualized}%</span>
+                            </div>
+                          );
+                        })()}
+                        {backtestResult.dividendByTicker && Object.keys(backtestResult.dividendByTicker).length > 0 && (
+                          <div className="pt-1 mt-1 border-t border-emerald-500/10">
+                            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-0.5">Top Kontributor</div>
+                            {Object.entries(backtestResult.dividendByTicker)
+                              .sort((a, b) => (b[1] as number) - (a[1] as number))
+                              .slice(0, 3)
+                              .map(([ticker, amt]) => (
+                                <div key={ticker} className="text-[10px] font-mono text-white/60 flex justify-between">
+                                  <span>{ticker}</span>
+                                  <span className="text-emerald-400/70">+{((amt as number) / 1e6).toFixed(1)}M</span>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                   </div>
@@ -1119,6 +1148,7 @@ export function SimulationTab({
                             <div>CAGR: {backtestResult.cagr.toFixed(1)}%</div>
                             <div>Max DD: -{backtestResult.maxDrawdown.toFixed(1)}%</div>
                             <div className="text-emerald-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
+                            <div className="text-emerald-400/80">+Dividen: {formatRupiah(backtestResult.totalDividends)}</div>
                           </div>
                         </div>
 
@@ -1138,6 +1168,7 @@ export function SimulationTab({
                               <div>Max DD: -{bl.maxDrawdown.toFixed(1)}%</div>
                               <div>Avg Price: {formatRupiah(bl.avgBuyPrice)}</div>
                               <div>Cash Used: {bl.cashUtilization.toFixed(0)}%</div>
+                              <div className="text-emerald-400/70">+Dividen: {formatRupiah(bl.totalDividends)}</div>
                             </div>
                           </div>
                         ))}

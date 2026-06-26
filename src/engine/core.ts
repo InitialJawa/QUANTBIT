@@ -136,6 +136,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   let totalSwaps = 0;
   let totalDividendsEarned = 0;
+  const dividendByTicker: Record<string, number> = {};
   let maxVal = cap;
   let maxDrawdownValue = 0;
   // Adaptive DCA tracking — how much cash has been deployed and the BPS
@@ -240,20 +241,31 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (currentYear > lastJulyYear && currentMonth >= 5 && dateObj.getDate() >= 15) {
       let yearlyDividends = 0;
+      const yearlyDividendByTicker: Record<string, number> = {};
       Object.entries(positions).forEach(([ticker, shares]) => {
         const dps = getDividendPerShare(ticker, dateObj);
         if (dps > 0 && shares > 0) {
           const divPaid = Math.round(shares * dps * 0.90);
           yearlyDividends += divPaid;
+          yearlyDividendByTicker[ticker] = (yearlyDividendByTicker[ticker] ?? 0) + divPaid;
         }
       });
       if (yearlyDividends > 0) {
         cash += yearlyDividends;
         totalDividendsEarned += yearlyDividends;
+        // Per-ticker accumulator for UI breakdown
+        for (const [t, amt] of Object.entries(yearlyDividendByTicker)) {
+          dividendByTicker[t] = (dividendByTicker[t] ?? 0) + amt;
+        }
+        const topContrib = Object.entries(yearlyDividendByTicker)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([t, a]) => `${t} ${(a / 1e6).toFixed(1)}M`)
+          .join(", ");
         logs.push({
           date: day.date,
           type: "REBALANCE",
-          message: `Dividen tahunan dikreditkan: Rp ${yearlyDividends.toLocaleString("id-ID")} (net 90%) — portfolio value saat ini Rp ${todayPortfolioVal.toLocaleString("id-ID")}`,
+          message: `Dividen tahunan dikreditkan: Rp ${yearlyDividends.toLocaleString("id-ID")} (net 90%) — top: ${topContrib}`,
         });
       }
       lastJulyYear = currentYear;
@@ -543,6 +555,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     maxDrawdown: maxDrawdownValue,
     totalTrades: totalSwaps,
     totalDividends: totalDividendsEarned,
+    dividendByTicker,
     cagr: metrics.cagr,
     volatility: metrics.volatility,
     sharpe: metrics.sharpe,

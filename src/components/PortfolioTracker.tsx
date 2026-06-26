@@ -207,6 +207,7 @@ export function PortfolioTracker({
   // Calculations
   let totalInvestment = 0;
   let totalCurrentValue = 0;
+  let totalAnnualDividend = 0;
 
   // D1 fix: memoize processedLeaders so the O(n log n) sort + filter only
   // runs when active profile or universe actually change (not every render).
@@ -325,6 +326,11 @@ export function PortfolioTracker({
       totalCurrentValue += valueNow;
 
       const rankInfo = getStockRankAndScore(item.ticker);
+      // Annual dividend estimate = shares × currentPrice × dividendYield / 100
+      // (dividendYield stored as percentage in scan data, e.g. 5.72 = 5.72%)
+      const dividendYieldPct = (liveStock as any)?.dividendYield ?? 0;
+      const annualDividend = (item.shares * currentPrice * dividendYieldPct) / 100;
+      totalAnnualDividend += annualDividend;
 
       return {
         ...item,
@@ -337,6 +343,8 @@ export function PortfolioTracker({
         percentChange,
         rank: rankInfo.rank,
         score: rankInfo.score,
+        dividendYield: dividendYieldPct,
+        annualDividend,
       };
     });
 
@@ -897,6 +905,35 @@ export function PortfolioTracker({
             </span>
           </div>
         </div>
+
+        {/* Card 5: Estimasi Dividen Tahunan */}
+        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-emerald-500/10 p-5 flex items-center justify-between relative overflow-hidden gap-4">
+          <div className="relative z-10 flex-1">
+            <span className="text-caption uppercase font-bold text-emerald-400/70 tracking-widest block mb-2 font-sans flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              Estimasi Dividen Tahunan
+            </span>
+            <h4
+              id="portfolio-annual-dividend"
+              className="text-2xl font-bold text-emerald-400 font-mono flex items-baseline gap-2"
+            >
+              <span className="text-xs text-emerald-400/50 font-semibold uppercase">
+                IDR
+              </span>
+              +{totalAnnualDividend.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
+            </h4>
+            <span className="text-caption font-bold font-mono text-white/50 block mt-2 uppercase tracking-widest">
+              Net (after 10% tax)
+            </span>
+          </div>
+          <div className="relative z-10 text-right shrink-0">
+            <span className="text-caption uppercase font-bold text-white/30 tracking-widest block mb-1">Yield</span>
+            <span className="text-base font-bold font-mono text-white">
+              {totalCurrentValue > 0 ? (totalAnnualDividend / totalCurrentValue * 100).toFixed(2) : "0.00"}%
+            </span>
+            <span className="text-caption text-white/30 block mt-0.5 font-mono">on portfolio</span>
+          </div>
+        </div>
       </div>
 
       {/* MERGED PORTFOLIO + INSTRUCTION CARD */}
@@ -935,6 +972,7 @@ export function PortfolioTracker({
                       <th className="pb-3 px-3 text-right font-sans">Volume (Lembar)</th>
                       <th className="pb-3 px-3 text-right font-sans">Entry vs Live (Rp)</th>
                       <th className="pb-3 pl-3 text-right font-sans">Net Value (Rp) &amp; P&amp;L</th>
+                      <th className="pb-3 pl-3 text-right font-sans hidden md:table-cell">Dividen/thn</th>
                       <th className="pb-3 w-[110px]"></th>
                     </tr>
                   </thead>
@@ -983,6 +1021,20 @@ export function PortfolioTracker({
                             }`}>
                               {isPos ? "+" : ""}{item.profitOrLoss.toLocaleString()} ({isPos ? "+" : ""}{item.percentChange.toFixed(1)}%)
                             </div>
+                          </td>
+                          <td className="py-3.5 pl-3 text-right hidden md:table-cell">
+                            {item.dividendYield > 0 ? (
+                              <>
+                                <div className="text-emerald-400 font-bold text-xs font-mono">
+                                  +{item.annualDividend.toLocaleString("id-ID", { maximumFractionDigits: 0 })}
+                                </div>
+                                <div className="text-caption text-white/40 font-mono">
+                                  yield {item.dividendYield.toFixed(1)}%
+                                </div>
+                              </>
+                            ) : (
+                              <span className="text-caption text-white/30 font-mono">—</span>
+                            )}
                           </td>
                           <td className="py-3.5 pl-2 text-right">
                             <div className="flex flex-col sm:flex-row items-end sm:items-center justify-end gap-2 sm:gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
