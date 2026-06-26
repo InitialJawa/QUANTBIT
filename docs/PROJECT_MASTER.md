@@ -5,7 +5,7 @@
 |-------|-------|
 | Project | QUANTBIT — Quantitative Stock Terminal |
 | Owner | @InitialJawa |
-| Goal | Complete UI refinement, backtest bug fixes, and final enhancements (gradients, alert banner, command palette) |
+| Goal | Quantitative stock terminal dengan deterministic engine, AI narrative, real-time IHSG data, dan portfolio rebalancing otomatis. UI/UX koheren lintas 4 tab (Pasar/Portofolio/Backtest/Analitik) via single source of truth (engineConfig). |
 | Stack | TypeScript, React 19, Vite 6, Tailwind CSS 4, Express 4, Cloudflare Pages + D1, Gemini AI |
 | Type | Full-stack financial terminal |
 

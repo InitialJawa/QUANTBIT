@@ -498,3 +498,20 @@ Server fetches last 20 messages from past sessions (excluding current), formats 
 **Alasan:** User mengeluh "terlalu banyak fitur sampai ngga tau gmana makenya" dan "banyak yang ngga sync antar tab". Audit menemukan 22+ sync drift dan ~470 LOC dead code.
 
 **Konsekuensi:** ~470 LOC cleanup, cognitive load turun ~40-50%, 5 critical sync drift hilang. Backtest tidak auto-update (user klik tombol eksplisit). Lihat ADR-010 untuk detail.
+
+## 2026-06-26 — Unified Settings Panel + Backtest↔Portfolio Default Coherence (ADR-011)
+**Keputusan:** Buat `StrategySettingsPanel.tsx` (230 LOC) sebagai unified component untuk 10 strategy fields. Backtest default pakai `engineConfig` (coherent dengan Portfolio) via `backtestUseLiveStrategy=true` + `effectiveConfig = {...backtestConfig, ...engineConfig}`. Tambah toggle "Gunakan Strategi Portofolio" di Backtest sidebar (default ON). Sandbox mode eksplisit via toggle OFF + tombol "↑ PROMOTE TO PORTFOLIO" untuk apply hasil eksperimen. ConfirmModal untuk edge case "Toggle ON dengan draft unsynced" (Buang/Promote/Batal).
+
+**Alasan:** User mengeluh "backtest udah masuk fase recovery, porto bilang exit to EMAS" + "settingan ui di porto dan backtest jujur beda jauah". Root cause: `backtestConfig` (draft) dan `engineConfig` (live) bisa diverge tanpa warning jelas. Settings UI inline di Portfolio (~200 LOC) berbeda dari Backtest sidebar (~100 LOC) — order berbeda, fields berbeda, Adaptive Weights masih muncul di Backtest (deprecated by ADR-010).
+
+**Konsekuensi:**
+- Default behavior sekarang koheren by default — backtest & portfolio baca `engineConfig`, hasil identik untuk data yang sama
+- Settings UI identik di kedua tab (1 component, 2 tempat, 0 perbedaan visual)
+- Adaptive Weights benar-benar dihapus (was dead code di Backtest sidebar)
+- Settings Lock + DCA Rekomendasi tetap di Portfolio sidebar (Portfolio-only concerns)
+- 10 strategy fields yang koheren: `activeProfileId`, `universe`, `topNCount`, `simulationMode`, `safeHavenAsset`, `crashSensitivity`, `enableCrashProtection`, `customUniverse`, `enableAdaptiveWeights`, `reserveBufferPct`
+- Backtest-only fields: `simStartDate`, `simEndDate`, `algoCapital`, `singleTicker`, `singleSellTrigger`, `singleBuyTrigger`
+- Workflow user: Default koheren (no action) → toggle OFF untuk eksperimen → edit → run → "↑ PROMOTE TO PORTFOLIO" untuk apply
+- Edge case: toggle ON dengan draft unsynced → modal konfirmasi 3 opsi
+- 8 file berubah (+821/-610 LOC, mostly removed inline settings), 1 file baru (StrategySettingsPanel.tsx)
+- Lihat ADR-011 untuk detail lengkap + SOT flow diagram

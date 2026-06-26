@@ -5,29 +5,52 @@
 | Tanggal | 2026-06-26 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | UX Phase 2 — Power Features (selesai 2026-06-26) |
+| Sprint | Sesi 12 — Konsolidasi UI + Backtest↔Portfolio Koherensi (selesai 2026-06-26) |
 
 ## Active Architecture
 
 ```
-EngineConfigContext (source of truth for LIVE strategy)
+EngineConfigContext (SOT for LIVE strategy) — ADR-003, ADR-010, ADR-011
   ├── profiles[] — AMAN, AGRESIF, DIVIDEN, Custom N (weight profiles)
   ├── activeProfileId — profile aktif (getter: activeProfile)
   ├── topNCount, universe, crash/crossover settings
   ├── simulationMode: "algo" | "custom" | "adaptive_dca"
   ├── customUniverse: string[] (exclusive, custom mode)
-   └── enableAdaptiveWeights: boolean (auto-adjust weights)
-        │
-        ├── AppSidebar → 3-button mode toggle + chips
-        ├── SimulationTab → backtestConfig (draft, eksplisit run)
-        ├── PortfolioTracker → reads engineConfig (live, only via SYNC)
-        ├── MarketTab → cascade filter from engineConfig
-        └── AI Chat → profile-aware context (AMAN/AGRESIF/DIVIDEN)
+  ├── enableAdaptiveWeights: boolean (auto-adjust weights)
+  └── dcaActive: boolean (DCA Rekomendasi — Portfolio-only)
+       │
+       ├── AppSidebar (renderPortfolioContent)
+       │     └── StrategySettingsPanel (10 strategy fields, write)
+       ├── SimulationTab
+       │     ├── handleRunAlgoBacktest uses:
+       │     │   effectiveConfig = backtestUseLiveStrategy
+       │     │     ? {...backtestConfig, ...engineConfig}  ← engineConfig menang untuk 10 strategy keys
+       │     │     : backtestConfig
+       │     └── AppSidebar (renderBacktestContent)
+       │           └── StrategySettingsPanel (10 strategy fields, read-only when ON, write when OFF)
+       ├── PortfolioTracker → reads engineConfig (live, no sync needed)
+       ├── MarketTab → cascade filter from engineConfig
+       └── AI Chat → profile-aware context (AMAN/AGRESIF/DIVIDEN)
 ```
 
-**Single Source of Truth (ADR-003)**: `engineConfig.activeProfileId` adalah SATU-SATUNYA sumber
-kebenaran untuk active profile. `ui.activeConfig` (UIState) sudah dihapus (2026-06-26). ConfigSync
-bridge dihapus.
+**Single Source of Truth (ADR-003, ADR-011)**: `engineConfig` adalah SATU-SATUNYA sumber
+kebenaran untuk strategy. `ui.activeConfig` (UIState) sudah dihapus (Sesi 8). ConfigSync bridge
+dihapus. **Sesi 12**: `backtestConfig` sekarang opsional — backtest SELALU pakai engineConfig untuk
+strategy fields saat `backtestUseLiveStrategy=true` (default). Draft mode opsional untuk eksperimen,
+di-promote manual via `promoteDraftToEngine()`.
+
+## 3 Mode + 1 Bridge (ADR-011) — backtest ↔ portfolio
+
+| Mode | Default | Description |
+|------|---------|-------------|
+| **Live** (default ON) | ✅ | Backtest = engineConfig. Strategy fields di sidebar greyed. Banner hijau "✓ Live Strategy". |
+| **Draft** (toggle OFF) | – | Backtest = backtestConfig (sandbox). Strategy fields editable. Banner amber "⚠ DRAFT — perubahan tidak effect Portofolio". Tombol "PROMOTE TO PORTFOLIO" tersedia saat ada hasil. |
+| **Edge case** | – | User toggle ON dengan draft unsynced → ConfirmModal "Buang / Promote Dulu / Batal". |
+
+10 strategy fields yang koheren: `activeProfileId`, `universe`, `topNCount`, `simulationMode`,
+`safeHavenAsset`, `crashSensitivity`, `enableCrashProtection`, `customUniverse`,
+`enableAdaptiveWeights`, `reserveBufferPct`. Fields backtest-only: `simStartDate`, `simEndDate`,
+`algoCapital`, `singleTicker`, `singleSellTrigger`, `singleBuyTrigger`.
 
 ## Current Focus
 

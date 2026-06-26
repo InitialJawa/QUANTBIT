@@ -35,21 +35,33 @@ EngineConfigContext adalah **single source of truth** untuk SEMUA setting strate
 Portfolio adalah **strategy control center** yang menerima settingan via SYNC TO PORTO dan
 mencascade settingan tersebut ke SEMUA modul lain (Market, Notifications, AI, Rekomendasi).
 
-**Flow:**
+**Flow (Sesi 12 — ADR-011 update):**
 ```
-[Backtest] → user configures → runStrategy() → result
-         ↓
-[SYNC TO PORTO] → copy snapshot to engineConfig
-         ↓
-[Portfolio] → reads engineConfig → drives Market, Notifications, AI
+[Portfolio Tab]  ←  user changes engineConfig  ←  StrategySettingsPanel (write)
+        ↓
+[engineConfig]  ───  single source of truth  ───  consumed by ALL engines
+        ↓                                                 ↓
+[AppSidebar StrategySettingsPanel (Portfolio)]   [Backtest handleRunAlgoBacktest]
+        ↓                                                 ↓
+[Live evaluation: evaluateStrategy()]            [effectiveConfig = engineConfig if
+ [Notification rules, AI context, BPS]              backtestUseLiveStrategy else draft]
+        ↓                                                 ↓
+[Real-time signals: Strategy Says banner]         [runStrategy() with effectiveConfig]
+                                                          ↓
+[Backtest Tab]  ←  results COHERENT with Portfolio  ←  SAME engine, SAME config
+        │
+[Optional: toggle OFF → DRAFT mode → eksperimen → PROMOTE TO PORTFOLIO → engineConfig]
 ```
 
 **Key contracts:**
-- Setting Backtest = Setting Portfolio (sama persis setelah SYNC)
-- Portfolio edit setting → cascade ke semua modul
+- Setting Portfolio = Setting Backtest (selalu, saat `backtestUseLiveStrategy=true`)
+- Portfolio edit setting → cascade ke semua modul + auto-update backtest
+- Backtest di Mode Live TIDAK BISA edit strategy fields (greyed, tooltip "Locked ke Strategi Portofolio")
+- Backtest di Mode DRAFT bisa edit + tombol "↑ PROMOTE TO PORTFOLIO" untuk apply
 - Notification rules membaca dari `engineConfig` (threshold-based, bukan real-time)
 - AI context berisi `engineConfig` lengkap untuk menjawab "kenapa exit?" / "harus beli X?"
-- Mode baru: `"custom"` (exclusive universe, bukan forced holding)
+- Mode: `"algo"`, `"custom"`, `"adaptive_dca"`
+- Adaptive Weights: DEPRECATED (Sesi 12, lihat ADR-011)
 
 ## Child DOX Index
 - `audit/` — Research reports (REPORT-IDX-API-001), audit notes, audit data
