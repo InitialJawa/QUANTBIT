@@ -177,8 +177,9 @@ export function AppHeader({
                 <div className="px-1.5 py-1">
                   <div className="text-label font-medium text-white/30 px-2 pt-1.5 pb-1 uppercase tracking-wider">Config</div>
                   {([
-                    ["prod", "Config QM"],
-                    ["res", "Config BG"],
+                    ["aman", "Aman"],
+                    ["agresif", "Agresif"],
+                    ["dividen", "Dividen"],
                   ] as const).map(([c, label]) => (
                     <button
                       key={c}

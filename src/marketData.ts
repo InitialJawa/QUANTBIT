@@ -90,7 +90,7 @@ export const RS = {
   rationale: "Score gap 40.6 poin menunjukkan pemisahan kualitas yang jelas antara top5 dan bottom5. Faktor dominan: Growth (80.0). Faktor terlemah: Quality (60.0). Breadth terbatas (1 saham >=70). 2 dari 5 saham watchlist volume sepi - likuiditas rendah.",
   detail_message: "Score gap 40.6 poin menunjukkan pemisahan kualitas yang jelas antara top5 dan bottom5. Faktor dominan: Growth (80.0). Faktor terlemah: Quality (60.0). Breadth terbatas (1 saham >=70). 2 dari 5 saham watchlist volume sepi - likuiditas rendah.",
   radar_context: {
-    production_config: "Config QM",
+    production_config: "Aman",
     top5_avg_score: 66.8,
     bot5_avg_score: 26.2,
     score_gap: 40.6,

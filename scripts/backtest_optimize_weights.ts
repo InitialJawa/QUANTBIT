@@ -9,7 +9,7 @@ import { readFileSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { runStrategy } from "../src/engine";
-import type { BacktestDayData, StrategiesInput, ProfileWeights } from "../src/engine/types";
+import type { BacktestDayData, BacktestResult, StrategiesInput, ProfileWeights } from "../src/engine/types";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../src/constants/idx80";
 
 const CAPITAL = 100_000_000;

@@ -955,10 +955,10 @@ export function SimulationTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-label font-bold text-white block">
-                  {backtestActiveProfile?.name ?? (backtestConfig.activeProfileId === "prod" ? "Config QM (Quality Momentum)" : "Config BG (Balanced Growth)")}
+                  {backtestActiveProfile?.name ?? (backtestConfig.activeProfileId === "agresif" ? "Agresif" : backtestConfig.activeProfileId === "dividen" ? "Dividen" : "Aman")}
                 </span>
                 <span className="text-caption text-white/40 font-mono block mt-0.5">
-                  Quality: {backtestActiveProfile?.qualityWeight ?? 0.45} | Growth: {backtestActiveProfile?.growthWeight ?? 0.10} | Value: {backtestActiveProfile?.valueWeight ?? 0.05} | Momentum: {backtestActiveProfile?.momentumWeight ?? 0.40}
+                  Q: {(backtestActiveProfile?.qualityWeight ?? 0.30).toFixed(2)} | G: {(backtestActiveProfile?.growthWeight ?? 0.45).toFixed(2)} | V: {(backtestActiveProfile?.valueWeight ?? 0.10).toFixed(2)} | M: {(backtestActiveProfile?.momentumWeight ?? 0).toFixed(2)} | D: {(backtestActiveProfile?.dividendWeight ?? 0.15).toFixed(2)}
                 </span>
               </div>
               

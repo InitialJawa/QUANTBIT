@@ -863,16 +863,13 @@ export function AppSidebar({
               </div>
               <div className="px-2 py-2">
                 <div className="flex gap-1">
-                  <button onClick={() => updateBacktestValue("activeProfileId", "prod")}
-                    className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: backtestConfig.activeProfileId === "prod" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === "prod" ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === "prod" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                    Config QM
-                  </button>
-                  <button onClick={() => updateBacktestValue("activeProfileId", "res")}
-                    className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
-                    style={{ backgroundColor: backtestConfig.activeProfileId === "res" ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === "res" ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === "res" ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
-                    Config BG
-                  </button>
+                  {(["aman", "agresif", "dividen"] as const).map((pid) => (
+                    <button key={pid} onClick={() => updateBacktestValue("activeProfileId", pid)}
+                      className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer"
+                      style={{ backgroundColor: backtestConfig.activeProfileId === pid ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)', color: backtestConfig.activeProfileId === pid ? '#00c9a5' : '#7a7a7a', border: backtestConfig.activeProfileId === pid ? '1px solid rgba(0,201,165,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                      {pid === "aman" ? "Aman" : pid === "agresif" ? "Agresif" : "Dividen"}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

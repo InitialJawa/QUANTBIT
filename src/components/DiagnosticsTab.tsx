@@ -109,7 +109,7 @@ export function DiagnosticsTab({ activeStock, availableStocks, onSelectStock }: 
           <div>
             <span className="text-label text-zinc-500 uppercase font-bold tracking-widest block font-mono">Dual-Weights Registry</span>
             <span className="text-xs text-white/90 font-bold block mt-1 font-mono uppercase tracking-widest">SYNCHRONIZED</span>
-            <p className="text-caption text-zinc-500 mt-2 leading-relaxed">Config QM (Quality Momentum) and Config BG (Balanced Growth) coefficients fully loaded.</p>
+            <p className="text-caption text-zinc-500 mt-2 leading-relaxed">Aman, Agresif, dan Dividen coefficients fully loaded.</p>
           </div>
         </div>
 

@@ -202,6 +202,7 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
               <option value="growth" className="bg-[#0A0A0A] text-white">Growth</option>
               <option value="value" className="bg-[#0A0A0A] text-white">Value</option>
               <option value="momentum" className="bg-[#0A0A0A] text-white">Momentum</option>
+              <option value="dividend" className="bg-[#0A0A0A] text-white">Dividen</option>
             </select>
             <button
               onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
@@ -257,6 +258,7 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                     <th className="py-4 px-3 text-center hidden md:table-cell font-sans">Growth</th>
                     <th className="py-4 px-3 text-center hidden md:table-cell font-sans">Value</th>
                     <th className="py-4 px-3 text-center hidden md:table-cell font-sans">Moment</th>
+                    <th className="py-4 px-3 text-center hidden md:table-cell font-sans">Dividen</th>
                     <th className="py-4 px-3 text-left font-sans">Rotasi Sektor</th>
                     <th className="py-4 px-3 md:px-5 text-right font-black font-sans text-white/40">Total Score</th>
                   </tr>
@@ -324,7 +326,8 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.growth}</td>
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.value}</td>
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.momentum}</td>
-                        
+                        <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.dividend}</td>
+
                         {/* ROTATION STATS MATRIX COLUMN */}
                         <td className="py-3 px-3">
                           <div className="flex flex-col items-start gap-1">
@@ -453,6 +456,15 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                       </div>
                       <div className="w-full bg-white/[0.05] h-1 rounded-full overflow-hidden">
                         <div className="bg-white/40 h-full" style={{ width: `${item.momentum}%` }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-white/40 mb-1 font-bold tracking-wide uppercase text-label">
+                        <span>Dividen</span>
+                        <span className="font-mono text-zinc-500">{item.dividend}</span>
+                      </div>
+                      <div className="w-full bg-white/[0.05] h-1 rounded-full overflow-hidden">
+                        <div className="bg-white/40 h-full" style={{ width: `${item.dividend}%` }} />
                       </div>
                     </div>
                   </div>

@@ -133,9 +133,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   const configName = config.simulationMode === "adaptive_dca"
     ? "Adaptive DCA (BPS-driven)"
-    : config.activeProfileId === "res"
-    ? "Config BG (Balanced Growth)"
-    : "Config QM (Quality Momentum)";
+    : config.activeProfileId === "agresif"
+    ? "Agresif (Growth-heavy)"
+    : config.activeProfileId === "dividen"
+    ? "Dividen (Yield-focused)"
+    : "Aman (Quality + Growth)";
 
   logs.push({
     date: day0.date,
