@@ -16,7 +16,8 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - `npm run build:db` — build SQLite DB from JSON market data
 - `npm run split-data` — split large JSON into yearly chunks
 - Scripts are NOT part of the main build (except via npm scripts)
-- `fetch_historical_data.ts` — master pipeline: downloads Yahoo prices + scores with IDX Warehouse fundamentals
+- `fetch_historical_data.ts` — master pipeline: downloads Yahoo prices + scores with IDX Warehouse fundamentals. Pinned to `2021-01-01` onwards (pre-2021 data archived 2026-06).
+- `fetch_dividend_history.ts` — pulls per-ticker dividend events from Yahoo `historical({events:"dividends"})`, sums by year, writes `data/fundamental_snapshots.json` (also pinned to 2021+).
 - IDX fundamentals scraping now in `collectors/` (fetches via IDX API, outputs warehouse parquet+JSON)
 - `scrape_idx_fundamentals.py` — legacy, superseded by `collectors/fetch_idx_fundamental.py`
 

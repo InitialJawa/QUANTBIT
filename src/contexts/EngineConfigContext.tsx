@@ -147,7 +147,9 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
           });
         }
         if (!parsed.simStartDate) parsed.simStartDate = "2021-01-04";
+        else if (parseInt(parsed.simStartDate.slice(0, 4), 10) < 2021) parsed.simStartDate = "2021-01-04";
         if (!parsed.simEndDate) parsed.simEndDate = getTodayWIB();
+        else if (parseInt(parsed.simEndDate.slice(0, 4), 10) < 2021) parsed.simEndDate = getTodayWIB();
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customUniverse) parsed.customUniverse = [];
         if (parsed.enableAdaptiveWeights === undefined) parsed.enableAdaptiveWeights = false;

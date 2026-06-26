@@ -44,8 +44,9 @@ function buildMonthlySeries(yearly: Record<number, number>): Record<string, numb
 const HISTORICAL_GOLD_USD = buildMonthlySeries(HISTORICAL_GOLD_USD_YEARLY);
 const HISTORICAL_USDIDR = buildMonthlySeries(HISTORICAL_USDIDR_YEARLY);
 
-// 2000-01-01 to Today for extended backtest
-const START_TIME = Math.floor(new Date("2000-01-01").getTime() / 1000);
+// 2021-01-01 to Today — pre-2021 data has been archived/removed (2026-06)
+// We focus on the post-2021 era which has reliable IDX warehouse fundamentals
+const START_TIME = Math.floor(new Date("2021-01-01").getTime() / 1000);
 const END_TIME = Math.floor(new Date().getTime() / 1000);
 
 const TICKERS = [...COMBINED_TICKERS, "^JKSE", "GC=F", "IDR=X"];

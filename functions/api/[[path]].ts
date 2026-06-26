@@ -311,6 +311,9 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     try {
       const yearStart = parseInt(url.searchParams.get("from") || "2021");
       const yearEnd = parseInt(url.searchParams.get("to") || "2026");
+      if (yearStart < 2021 || yearEnd < 2021) {
+        return error("Pre-2021 data has been archived. Use from >= 2021.", 400);
+      }
       const allData: any[] = [];
       for (let y = yearStart; y <= yearEnd; y++) {
         const resp = await env.ASSETS.fetch(new URL(`/data/years/${y}.json`, url));

@@ -17,7 +17,7 @@ const yahooFinance = new YahooFinance();
 //   npx tsx scripts/fetch_dividend_history.ts --smoke   # BBCA only, year 2024
 
 const SMOKE = process.argv.includes("--smoke");
-const PERIOD_START = "2010-01-01";
+const PERIOD_START = "2021-01-01";
 const PERIOD_END = new Date().toISOString().slice(0, 10);
 const DELAY_MS = 800; // Yahoo rate limit courtesy
 
