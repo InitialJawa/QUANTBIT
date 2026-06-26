@@ -92,6 +92,9 @@ export interface AILiveContext {
   };
   /** Last few fired notification rules (proactive signals that already fired) */
   alerts?: { rule: string; title: string; message: string; timestamp: number }[];
+  /** Recent user transaction/system events (buy/sell/watchlist/profile changes).
+   *  Lets the AI understand the user's recent activity when answering questions. */
+  recentActions?: { type: string; title: string; message: string; timestamp: number }[];
   /** Snapshot of backtest draft config (separate from live engineConfig) */
   backtestConfigSnapshot?: {
     activeProfileId?: string;
@@ -301,6 +304,9 @@ export function formatLiveContext(ctx?: AILiveContext): string {
   }
   if (ctx.alerts?.length) {
     lines.push(`Alerts: ${ctx.alerts.map(a => a.title).join(" | ")}`);
+  }
+  if (ctx.recentActions?.length) {
+    lines.push(`Recent user actions: ${ctx.recentActions.map(a => a.title).join(" | ")}`);
   }
   return lines.length ? lines.join("\n") : "Tidak ada konteks live.";
 }

@@ -58,6 +58,14 @@ export function useUIState() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Toast notifications default OFF — transactions still flow into the
+  // persistent NotificationContext (which AI can read). Toggle in Settings.
+  const [showToasts, setShowToasts] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("quantbit_show_toasts");
+      return v === "1";
+    } catch { return false; }
+  });
   const [appNotification, setAppNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   const getChartTheme = (): "dark" | "light" => theme === "light" ? "light" : "dark";
@@ -72,11 +80,17 @@ export function useUIState() {
   };
 
   useEffect(() => {
-    if (appNotification) {
+    if (appNotification && showToasts) {
       const timer = setTimeout(() => setAppNotification(null), 5000);
       return () => clearTimeout(timer);
+    } else if (appNotification && !showToasts) {
+      setAppNotification(null);
     }
-  }, [appNotification]);
+  }, [appNotification, showToasts]);
+
+  useEffect(() => {
+    try { localStorage.setItem("quantbit_show_toasts", showToasts ? "1" : "0"); } catch {}
+  }, [showToasts]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -102,6 +116,7 @@ export function useUIState() {
     theme, setTheme,
     isSettingsOpen, setIsSettingsOpen,
     settingsDropdownRef,
+    showToasts, setShowToasts,
     appNotification, setAppNotification,
     proactiveAIEnabled, setProactiveAIEnabled,
     useDevMockAI, setUseDevMockAI,

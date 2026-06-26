@@ -252,6 +252,12 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         message: n.message,
         timestamp: n.timestamp,
       }));
+      const recentActions = notifications.slice(0, 8).map((n) => ({
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        timestamp: n.timestamp,
+      }));
       const ctx = buildLiveContext({
         engineConfig,
         backtestConfig,
@@ -261,6 +267,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         cash,
         uiContext,
         alerts: recentAlerts,
+        recentActions,
       });
       // Strip tool messages when sending to backend (model only sees user/assistant).
       const history = nextMsgs.filter((m) => m.role !== "tool");

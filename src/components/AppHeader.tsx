@@ -25,6 +25,8 @@ interface AppHeaderProps {
   setProactiveAIEnabled: (v: boolean) => void;
   useDevMockAI: boolean;
   setUseDevMockAI: (v: boolean) => void;
+  showToasts: boolean;
+  setShowToasts: (v: boolean) => void;
 }
 
 const TABS = [
@@ -58,6 +60,8 @@ export function AppHeader({
   setProactiveAIEnabled,
   useDevMockAI,
   setUseDevMockAI,
+  showToasts,
+  setShowToasts,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-header-gradient px-2 py-1.5 shrink-0 flex items-center justify-between gap-2">
@@ -205,6 +209,17 @@ export function AppHeader({
                     <span className="flex-1 text-left">Proactive Alerts</span>
                     <span className={`text-label font-mono ${proactiveAIEnabled ? "text-emerald-400" : "text-white/30"}`}>
                       {proactiveAIEnabled ? "ON" : "OFF"}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setShowToasts(!showToasts)}
+                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
+                    title={showToasts ? "Sembunyikan toast pop-up (event tetap tersimpan di notifikasi & dibaca AI)" : "Tampilkan toast pop-up singkat di pojok kanan atas"}
+                  >
+                    {showToasts ? <Bell className="w-3.5 h-3.5 text-cyan-400" /> : <BellOff className="w-3.5 h-3.5" />}
+                    <span className="flex-1 text-left">Toast Pop-up</span>
+                    <span className={`text-label font-mono ${showToasts ? "text-emerald-400" : "text-white/30"}`}>
+                      {showToasts ? "ON" : "OFF"}
                     </span>
                   </button>
                   {import.meta.env?.DEV && (

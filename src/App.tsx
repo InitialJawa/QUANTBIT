@@ -208,6 +208,8 @@ export default function App() {
           setProactiveAIEnabled={ui.setProactiveAIEnabled}
           useDevMockAI={ui.useDevMockAI}
           setUseDevMockAI={ui.setUseDevMockAI}
+          showToasts={ui.showToasts}
+          setShowToasts={ui.setShowToasts}
         />
         <EngineConfigProvider>
           <ConfigSync activeConfig={ui.activeConfig} setActiveConfig={ui.setActiveConfig} />

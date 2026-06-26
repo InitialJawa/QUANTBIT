@@ -29,11 +29,14 @@ export interface BuildContextInputs {
   uiContext?: string;
   /** Recent fired notifications (Level 4 proactive) */
   alerts?: { rule: string; title: string; message: string; timestamp: number }[];
+  /** Recent user transaction events (buy/sell/watchlist/profile changes).
+   *  Surfaced to AI so it can answer "what did I just do" type questions. */
+  recentActions?: { type: string; title: string; message: string; timestamp: number }[];
 }
 
 /** Rakit konteks live dari objek-objek app jadi AILiveContext — ringkas. */
 export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext {
-  const { engineConfig: c, backtestConfig, isBacktestOutOfSync, selectedStock: s, portfolio, cash, uiContext, alerts } = inputs;
+  const { engineConfig: c, backtestConfig, isBacktestOutOfSync, selectedStock: s, portfolio, cash, uiContext, alerts, recentActions } = inputs;
 
   const ctx: AILiveContext = {
     regime: {
@@ -162,6 +165,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
   if (cash != null) ctx.cash = cash;
   if (uiContext) ctx.uiContext = uiContext;
   if (alerts?.length) ctx.alerts = alerts.slice(0, 5);
+  if (recentActions?.length) ctx.recentActions = recentActions.slice(0, 8);
 
   return ctx;
 }
