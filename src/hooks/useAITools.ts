@@ -174,7 +174,7 @@ export function buildPendingActionFromContext(
     case "set_active_profile": {
       const p = ctx.engineConfig.profiles.find((x) => x.id === action.profileId);
       displayText = `Ganti profil ke ${p?.name || action.profileId}`;
-      if (p) impact.push({ label: "Bobot", value: `Q${Math.round(p.qualityWeight * 100)} G${Math.round(p.growthWeight * 100)} V${Math.round(p.valueWeight * 100)} M${Math.round(p.momentumWeight * 100)}` });
+      if (p) impact.push({ label: "Bobot", value: `Q${Math.round(p.qualityWeight * 100)} G${Math.round(p.growthWeight * 100)} V${Math.round(p.valueWeight * 100)} M${Math.round(p.momentumWeight * 100)} D${Math.round(p.dividendWeight * 100)}` });
       break;
     }
     case "set_universe":

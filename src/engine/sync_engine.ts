@@ -49,6 +49,20 @@ function calcGrowth(fin: any) {
   return Math.min(100, Math.max(1, score));
 }
 
+function calcDividend(detail: any) {
+  let score = 50;
+  const dy = detail?.dividendYield;
+  if (dy != null) {
+    const pct = dy * 100;
+    if (pct > 8) score += 35;
+    else if (pct > 5) score += 25;
+    else if (pct > 3) score += 15;
+    else if (pct > 1.5) score += 5;
+    else if (pct < 0.3) score -= 15;
+  }
+  return Math.min(100, Math.max(1, score));
+}
+
 let ACTIVE_UNIVERSE = [...COMBINED_TICKERS];
 
 export async function refreshActiveUniverse() {
@@ -97,7 +111,9 @@ export async function runIdx80Scan() {
            if (price < quote.summaryDetail.twoHundredDayAverage) momentum -= 20;
         }
         momentum = Math.min(100, Math.max(1, momentum));
-        
+
+        const dividend = calcDividend(quote.summaryDetail);
+
         const fin = quote.financialData || {};
         const stat = quote.defaultKeyStatistics || {};
         const detail = quote.summaryDetail || {};
@@ -117,6 +133,7 @@ export async function runIdx80Scan() {
           value,
           growth,
           momentum,
+          dividend,
           volume: detail.volume || 0,
           peRatio: detail.trailingPE || detail.forwardPE || 0,
           pbRatio: stat.priceToBook || 0,

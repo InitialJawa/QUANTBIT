@@ -43,7 +43,7 @@ describe("formatLiveContext", () => {
     };
     const out = formatLiveContext(ctx);
     assert.ok(out.includes("Config: prod (Quality Momentum (QM))"));
-    assert.ok(out.includes("W:[Q45/G10/V5/M40]"));
+    assert.ok(out.includes("W:[Q45/G10/V5/M40/D0]"));
     assert.ok(out.includes("universe=idx80"));
   });
 

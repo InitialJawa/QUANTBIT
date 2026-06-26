@@ -84,6 +84,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/components/AITestHarness.tsx` — Dev-only test panel (4 tabs: Tools/Actions/Cooldown/Storage)
 - `src/engine/` — Sync engine (pure functions, no React deps)
 - `src/engine/core.ts` — `runStrategy()`, `shouldTriggerExit()`, `evaluateStrategy()`
+- `src/engine/dividendCache.ts` — `setDividendCache()`, `getDividendPerShare()` (extracted from core.ts)
   - **Rebalancing rules**: algo mode only (custom mode excluded from rank-based exit). `lastRebalanceMonth` init from day0 month (no day-1 false trigger). Swap candidates = `config.topNCount` (not hardcoded). Self-swap & duplicate positions prevented.
 - `src/data/` — Data files (historical market data, IDX warehouse fundamental_idx_all.json)
 - `src/data/archive/` — Archived legacy data (FUNDAMENTAL_SNAPSHOTS, STOCK_FACTORS)

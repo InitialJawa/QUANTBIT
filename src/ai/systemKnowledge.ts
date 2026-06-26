@@ -9,7 +9,7 @@
 /** Snapshot keadaan live yang dikirim bersama tiap chat. */
 export interface AILiveContext {
   config?: {
-    activeConfig?: "prod" | "res";
+    activeConfig?: string;
     activeProfileId?: string;
     activeProfileName?: string;
     safeHavenAsset?: "emas" | "kas";
@@ -23,6 +23,7 @@ export interface AILiveContext {
     growthWeight?: number;
     valueWeight?: number;
     momentumWeight?: number;
+    dividendWeight?: number;
     customUniverse?: string[];
     enableAdaptiveWeights?: boolean;
     simulationMode?: "algo" | "custom";
@@ -36,6 +37,7 @@ export interface AILiveContext {
       growthWeight: number;
       valueWeight: number;
       momentumWeight: number;
+      dividendWeight: number;
     };
   };
   regime?: {
@@ -112,10 +114,11 @@ export const SYSTEM_KNOWLEDGE: string = [
   "Terminal kuantitatif saham IDX. Semua skor & keputusan deterministic.",
   "Jawab berdasarkan rumus DI SINI, jangan mengarang.",
 
-  "## 1. SKOR SAHAM",
-  "final_score = quality*Wq + growth*Wg + value*Wv + momentum*Wm",
-  "- Bobot default: QM (prod)=Q45/G10/V5/M40, BG (res)=Q40/G25/V5/M30",
-  "- Value negative-alpha di IDX80 (ADR-009) → bobot max 5%",
+  "## 1. SKOR SAHAM (5 FAKTOR)",
+  "final_score = quality*Wq + growth*Wg + value*Wv + momentum*Wm + dividend*Wd",
+  "- 3 profil default: AMAN, AGRESIF, DIVIDEN (equal weights 0.2 per faktor untuk backtest awal)",
+  "- Profil DIVIDEN bobot dividen tinggi + quality sebagai safety net",
+  "- Dividend fixed — tidak di-adjust oleh adaptive weighting",
 
   "## 2-6. METRIK PASAR",
   "- Trend: SMA20/50 → bullish(both↑), bearish(both↓), recovering(SMA20↑ saja)",
@@ -247,14 +250,14 @@ export function formatLiveContext(ctx?: AILiveContext): string {
   if (ctx.config) {
     const c = ctx.config;
     const label = c.activeProfileName ? ` (${c.activeProfileName})` : "";
-    const weights = c.qualityWeight != null ? ` W:[Q${Math.round(c.qualityWeight * 100)}/G${Math.round(c.growthWeight * 100)}/V${Math.round(c.valueWeight * 100)}/M${Math.round(c.momentumWeight * 100)}]` : "";
+    const weights = c.qualityWeight != null ? ` W:[Q${Math.round(c.qualityWeight * 100)}/G${Math.round(c.growthWeight * 100)}/V${Math.round(c.valueWeight * 100)}/M${Math.round(c.momentumWeight * 100)}/D${Math.round((c.dividendWeight ?? 0) * 100)}]` : "";
     lines.push(
       `Config: ${c.activeProfileId}${label}${weights} | universe=${c.universe} topN=${c.topNCount} ` +
       `crashSens=${c.crashSensitivity}% mode=${c.simulationMode}`
     );
     if (c.lastBacktestProfile) {
       const p = c.lastBacktestProfile;
-      lines.push(`Last BT: ${p.name} Q${Math.round(p.qualityWeight * 100)}/G${Math.round(p.growthWeight * 100)}/V${Math.round(p.valueWeight * 100)}/M${Math.round(p.momentumWeight * 100)}`);
+      lines.push(`Last BT: ${p.name} Q${Math.round(p.qualityWeight * 100)}/G${Math.round(p.growthWeight * 100)}/V${Math.round(p.valueWeight * 100)}/M${Math.round(p.momentumWeight * 100)}/D${Math.round(p.dividendWeight * 100)}`);
     }
   }
   if (ctx.regime) {

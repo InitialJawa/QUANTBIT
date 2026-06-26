@@ -215,8 +215,8 @@ export function PortfolioTracker({
     const cleanIdx30 = IDX30_TICKERS.map((t) => t.replace(".JK", ""));
     const cleanLq45 = LQ45_TICKERS.map((t) => t.replace(".JK", ""));
     const profileWeights = activeProfile
-      ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight }
-      : (engineConfig.activeProfileId === "res" ? "res" as const : "prod" as const);
+      ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight, dividend: activeProfile.dividendWeight }
+      : engineConfig.activeProfileId;
     return getProcessedLeaders(visibleStocks, profileWeights).filter((item) => {
       const rawTicker = item.ticker.replace(".JK", "");
       if (engineConfig.universe === "idx80") return cleanIdx80.includes(rawTicker);

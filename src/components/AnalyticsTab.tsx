@@ -9,7 +9,7 @@ import { useEngineConfig } from "../contexts/EngineConfigContext";
 type SubTab = "leaders" | "recovery" | "risk";
 
 interface AnalyticsTabProps {
-  activeConfig: "prod" | "res";
+  activeConfig: string;
   onSelectTicker: (ticker: string) => void;
   portfolio: PortfolioItem[];
   watchlist: WatchlistItem[];
@@ -48,8 +48,8 @@ export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, port
       <div className="flex-1">
         {subTab === "leaders" && (
           <LeadersTab
-            activeConfig={engineConfig.activeProfileId === "res" ? "res" : "prod"}
-            activeProfile={activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight } : null}
+            activeConfig={engineConfig.activeProfileId}
+            activeProfile={activeProfile ? { quality: activeProfile.qualityWeight, growth: activeProfile.growthWeight, value: activeProfile.valueWeight, momentum: activeProfile.momentumWeight, dividend: activeProfile.dividendWeight } : null}
             onSelectTicker={onSelectTicker}
             portfolio={portfolio}
             watchlist={watchlist}

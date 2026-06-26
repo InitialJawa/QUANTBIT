@@ -1,7 +1,7 @@
 // marketData.ts
 // Ported from target_data.js to provide real, robust, production-level IDX metrics
 
-import { setDividendCache } from "./engine/core.ts";
+import { setDividendCache } from "./engine/dividendCache.ts";
 
 export interface LeaderStock {
   rank: string;
@@ -10,6 +10,7 @@ export interface LeaderStock {
   growth: string;
   value: string;
   momentum: string;
+  dividend: string;
   final_score: string;
 }
 
@@ -64,7 +65,7 @@ export interface FundamentalDetails {
   earnings_growth: number | null;
 }
 
-export const L: LeaderStock[] = [{"rank":"1","ticker":"ADRO.JK","quality":"53.77","growth":"86.21","value":"62.07","momentum":"92.97","final_score":"78.05"},{"rank":"2","ticker":"ESSA.JK","quality":"64.65","growth":"96.55","value":"26.9","momentum":"81.14","final_score":"76.22"},{"rank":"3","ticker":"PTBA.JK","quality":"49.96","growth":"93.1","value":"55.86","momentum":"81.98","final_score":"74.7"},{"rank":"4","ticker":"MAPI.JK","quality":"44.85","growth":"72.41","value":"26.55","momentum":"87.46","final_score":"66.2"},{"rank":"5","ticker":"BMRI.JK","quality":"77.59","growth":"68.97","value":"77.58","momentum":"52.06","final_score":"66.07"},{"rank":"6","ticker":"CPIN.JK","quality":"63.88","growth":"82.76","value":"47.59","momentum":"53.61","final_score":"64.32"},{"rank":"7","ticker":"PGAS.JK","quality":"35.81","growth":"75.86","value":"52.07","momentum":"74.81","final_score":"63.1"},{"rank":"8","ticker":"ANTM.JK","quality":"50.62","growth":"79.31","value":"38.97","momentum":"62.28","final_score":"62.14"},{"rank":"9","ticker":"AKRA.JK","quality":"49.14","growth":"65.52","value":"34.83","momentum":"70.14","final_score":"59.97"},{"rank":"10","ticker":"BBRI.JK","quality":"71.21","growth":"62.07","value":"75.86","momentum":"41.84","final_score":"58.65"},{"rank":"11","ticker":"BRPT.JK","quality":"41.83","growth":"100.0","value":"9.48","momentum":"49.26","final_score":"58.65"},{"rank":"12","ticker":"BBNI.JK","quality":"53.96","growth":"55.17","value":"83.45","momentum":"55.21","final_score":"57.71"},{"rank":"13","ticker":"INDF.JK","quality":"50.49","growth":"58.62","value":"74.83","momentum":"55.98","final_score":"57.28"},{"rank":"14","ticker":"EXCL.JK","quality":"18.62","growth":"34.48","value":"66.55","momentum":"85.0","final_score":"51.4"},{"rank":"15","ticker":"INTP.JK","quality":"47.44","growth":"48.28","value":"86.21","momentum":"39.3","final_score":"48.72"},{"rank":"16","ticker":"MDKA.JK","quality":"12.34","growth":"34.48","value":"40.17","momentum":"87.43","final_score":"48.05"},{"rank":"17","ticker":"ITMG.JK","quality":"45.77","growth":"13.79","value":"57.24","momentum":"72.51","final_score":"46.68"},{"rank":"18","ticker":"ASII.JK","quality":"53.52","growth":"17.24","value":"77.59","momentum":"55.78","final_score":"45.83"},{"rank":"19","ticker":"BBCA.JK","quality":"80.35","growth":"44.83","value":"30.34","momentum":"18.94","final_score":"43.2"},{"rank":"20","ticker":"TLKM.JK","quality":"62.2","growth":"6.9","value":"28.96","momentum":"64.46","final_score":"43.08"},{"rank":"21","ticker":"SMGR.JK","quality":"31.59","growth":"89.66","value":"38.28","momentum":"11.01","final_score":"42.48"},{"rank":"22","ticker":"MIKA.JK","quality":"73.92","growth":"51.72","value":"17.93","momentum":"11.83","final_score":"39.93"},{"rank":"23","ticker":"UNTR.JK","quality":"50.34","growth":"0.0","value":"61.38","momentum":"58.2","final_score":"39.09"},{"rank":"24","ticker":"ICBP.JK","quality":"59.0","growth":"24.14","value":"48.96","momentum":"33.97","final_score":"38.78"},{"rank":"25","ticker":"SIDO.JK","quality":"82.3","growth":"3.45","value":"37.24","momentum":"31.45","final_score":"36.34"},{"rank":"26","ticker":"GOTO.JK","quality":"16.44","growth":"34.48","value":"51.55","momentum":"34.66","final_score":"31.74"},{"rank":"27","ticker":"KLBF.JK","quality":"62.6","growth":"20.69","value":"45.86","momentum":"10.26","final_score":"30.03"},{"rank":"28","ticker":"TPIA.JK","quality":"50.22","growth":"34.48","value":"54.48","momentum":"0.78","final_score":"28.62"},{"rank":"29","ticker":"AMMN.JK","quality":"41.71","growth":"34.48","value":"9.48","momentum":"3.14","final_score":"22.82"},{"rank":"30","ticker":"HEAL.JK","quality":"19.05","growth":"10.34","value":"14.83","momentum":"14.2","final_score":"14.32"}];
+export const L: LeaderStock[] = [{"rank":"1","ticker":"ADRO.JK","quality":"53.77","growth":"86.21","value":"62.07","momentum":"92.97","dividend":"50","final_score":"78.05"},{"rank":"2","ticker":"ESSA.JK","quality":"64.65","growth":"96.55","value":"26.9","momentum":"81.14","dividend":"50","final_score":"76.22"},{"rank":"3","ticker":"PTBA.JK","quality":"49.96","growth":"93.1","value":"55.86","momentum":"81.98","dividend":"50","final_score":"74.7"},{"rank":"4","ticker":"MAPI.JK","quality":"44.85","growth":"72.41","value":"26.55","momentum":"87.46","dividend":"50","final_score":"66.2"},{"rank":"5","ticker":"BMRI.JK","quality":"77.59","growth":"68.97","value":"77.58","momentum":"52.06","dividend":"50","final_score":"66.07"},{"rank":"6","ticker":"CPIN.JK","quality":"63.88","growth":"82.76","value":"47.59","momentum":"53.61","dividend":"50","final_score":"64.32"},{"rank":"7","ticker":"PGAS.JK","quality":"35.81","growth":"75.86","value":"52.07","momentum":"74.81","dividend":"50","final_score":"63.1"},{"rank":"8","ticker":"ANTM.JK","quality":"50.62","growth":"79.31","value":"38.97","momentum":"62.28","dividend":"50","final_score":"62.14"},{"rank":"9","ticker":"AKRA.JK","quality":"49.14","growth":"65.52","value":"34.83","momentum":"70.14","dividend":"50","final_score":"59.97"},{"rank":"10","ticker":"BBRI.JK","quality":"71.21","growth":"62.07","value":"75.86","momentum":"41.84","dividend":"50","final_score":"58.65"},{"rank":"11","ticker":"BRPT.JK","quality":"41.83","growth":"100.0","value":"9.48","momentum":"49.26","dividend":"50","final_score":"58.65"},{"rank":"12","ticker":"BBNI.JK","quality":"53.96","growth":"55.17","value":"83.45","momentum":"55.21","dividend":"50","final_score":"57.71"},{"rank":"13","ticker":"INDF.JK","quality":"50.49","growth":"58.62","value":"74.83","momentum":"55.98","dividend":"50","final_score":"57.28"},{"rank":"14","ticker":"EXCL.JK","quality":"18.62","growth":"34.48","value":"66.55","momentum":"85.0","dividend":"50","final_score":"51.4"},{"rank":"15","ticker":"INTP.JK","quality":"47.44","growth":"48.28","value":"86.21","momentum":"39.3","dividend":"50","final_score":"48.72"},{"rank":"16","ticker":"MDKA.JK","quality":"12.34","growth":"34.48","value":"40.17","momentum":"87.43","dividend":"50","final_score":"48.05"},{"rank":"17","ticker":"ITMG.JK","quality":"45.77","growth":"13.79","value":"57.24","momentum":"72.51","dividend":"50","final_score":"46.68"},{"rank":"18","ticker":"ASII.JK","quality":"53.52","growth":"17.24","value":"77.59","momentum":"55.78","dividend":"50","final_score":"45.83"},{"rank":"19","ticker":"BBCA.JK","quality":"80.35","growth":"44.83","value":"30.34","momentum":"18.94","dividend":"50","final_score":"43.2"},{"rank":"20","ticker":"TLKM.JK","quality":"62.2","growth":"6.9","value":"28.96","momentum":"64.46","dividend":"50","final_score":"43.08"},{"rank":"21","ticker":"SMGR.JK","quality":"31.59","growth":"89.66","value":"38.28","momentum":"11.01","dividend":"50","final_score":"42.48"},{"rank":"22","ticker":"MIKA.JK","quality":"73.92","growth":"51.72","value":"17.93","momentum":"11.83","dividend":"50","final_score":"39.93"},{"rank":"23","ticker":"UNTR.JK","quality":"50.34","growth":"0.0","value":"61.38","momentum":"58.2","dividend":"50","final_score":"39.09"},{"rank":"24","ticker":"ICBP.JK","quality":"59.0","growth":"24.14","value":"48.96","momentum":"33.97","dividend":"50","final_score":"38.78"},{"rank":"25","ticker":"SIDO.JK","quality":"82.3","growth":"3.45","value":"37.24","momentum":"31.45","dividend":"50","final_score":"36.34"},{"rank":"26","ticker":"GOTO.JK","quality":"16.44","growth":"34.48","value":"51.55","momentum":"34.66","dividend":"50","final_score":"31.74"},{"rank":"27","ticker":"KLBF.JK","quality":"62.6","growth":"20.69","value":"45.86","momentum":"10.26","dividend":"50","final_score":"30.03"},{"rank":"28","ticker":"TPIA.JK","quality":"50.22","growth":"34.48","value":"54.48","momentum":"0.78","dividend":"50","final_score":"28.62"},{"rank":"29","ticker":"AMMN.JK","quality":"41.71","growth":"34.48","value":"9.48","momentum":"3.14","dividend":"50","final_score":"22.82"},{"rank":"30","ticker":"HEAL.JK","quality":"19.05","growth":"10.34","value":"14.83","momentum":"14.2","dividend":"50","final_score":"14.32"}];
 
 export let T: TurnaroundStock[] = [{"rank":"1","ticker":"TLKM.JK","drawdown_252d":"-27.16","distance_from_high_252d":"-27.16","volatility_60d":"3.5","rs_change_60d":"26.36","volume_ratio":"1.46","recovery_from_60d_low":"22.13","context_match":"True","transition_match":"True"},{"rank":"2","ticker":"BRPT.JK","drawdown_252d":"-61.45","distance_from_high_252d":"-61.45","volatility_60d":"8.57","rs_change_60d":"86.32","volume_ratio":"0.99","recovery_from_60d_low":"32.0","context_match":"True","transition_match":"True"},{"rank":"3","ticker":"ASII.JK","drawdown_252d":"-33.28","distance_from_high_252d":"-33.28","volatility_60d":"3.38","rs_change_60d":"16.59","volume_ratio":"1.01","recovery_from_60d_low":"7.8","context_match":"True","transition_match":"True"},{"rank":"4","ticker":"EXCL.JK","drawdown_252d":"-41.87","distance_from_high_252d":"-41.87","volatility_60d":"3.81","rs_change_60d":"31.07","volume_ratio":"1.22","recovery_from_60d_low":"6.97","context_match":"True","transition_match":"True"},{"rank":"5","ticker":"TPIA.JK","drawdown_252d":"-82.63","distance_from_high_252d":"-82.63","volatility_60d":"8.82","rs_change_60d":"-29.66","volume_ratio":"1.5","recovery_from_60d_low":"36.78","context_match":"True","transition_match":"False"},{"rank":"6","ticker":"MDKA.JK","drawdown_252d":"-37.31","distance_from_high_252d":"-37.31","volatility_60d":"5.39","rs_change_60d":"-54.65","volume_ratio":"0.77","recovery_from_60d_low":"13.3","context_match":"True","transition_match":"False"},{"rank":"7","ticker":"ESSA.JK","drawdown_252d":"-36.98","distance_from_high_252d":"-36.98","volatility_60d":"4.3","rs_change_60d":"-21.49","volume_ratio":"0.83","recovery_from_60d_low":"7.08","context_match":"True","transition_match":"False"},{"rank":"8","ticker":"ANTM.JK","drawdown_252d":"-42.86","distance_from_high_252d":"-42.86","volatility_60d":"4.07","rs_change_60d":"-41.34","volume_ratio":"1.26","recovery_from_60d_low":"7.51","context_match":"True","transition_match":"False"},{"rank":"9","ticker":"AMMN.JK","drawdown_252d":"-65.23","distance_from_high_252d":"-65.23","volatility_60d":"6.0","rs_change_60d":"-16.2","volume_ratio":"0.61","recovery_from_60d_low":"5.52","context_match":"True","transition_match":"False"},{"rank":"10","ticker":"BBCA.JK","drawdown_252d":"-32.93","distance_from_high_252d":"-32.93","volatility_60d":"2.74","rs_change_60d":"24.03","volume_ratio":"1.56","recovery_from_60d_low":"20.1","context_match":"False","transition_match":"True"},{"rank":"11","ticker":"MAPI.JK","drawdown_252d":"-1.33","distance_from_high_252d":"-1.33","volatility_60d":"3.32","rs_change_60d":"62.25","volume_ratio":"1.98","recovery_from_60d_low":"37.5","context_match":"False","transition_match":"True"},{"rank":"12","ticker":"BMRI.JK","drawdown_252d":"-13.92","distance_from_high_252d":"-13.92","volatility_60d":"2.35","rs_change_60d":"15.22","volume_ratio":"1.29","recovery_from_60d_low":"14.56","context_match":"False","transition_match":"True"},{"rank":"13","ticker":"BBNI.JK","drawdown_252d":"-17.87","distance_from_high_252d":"-17.87","volatility_60d":"2.77","rs_change_60d":"8.28","volume_ratio":"1.97","recovery_from_60d_low":"16.28","context_match":"False","transition_match":"True"},{"rank":"14","ticker":"BBRI.JK","drawdown_252d":"-25.92","distance_from_high_252d":"-25.92","volatility_60d":"2.38","rs_change_60d":"3.79","volume_ratio":"1.39","recovery_from_60d_low":"10.04","context_match":"False","transition_match":"True"},{"rank":"15","ticker":"AKRA.JK","drawdown_252d":"-17.86","distance_from_high_252d":"-17.86","volatility_60d":"2.68","rs_change_60d":"27.08","volume_ratio":"1.5","recovery_from_60d_low":"8.58","context_match":"False","transition_match":"True"},{"rank":"16","ticker":"ICBP.JK","drawdown_252d":"-41.86","distance_from_high_252d":"-41.86","volatility_60d":"2.31","rs_change_60d":"20.01","volume_ratio":"2.27","recovery_from_60d_low":"4.17","context_match":"False","transition_match":"True"},{"rank":"17","ticker":"KLBF.JK","drawdown_252d":"-53.27","distance_from_high_252d":"-53.27","volatility_60d":"2.07","rs_change_60d":"10.48","volume_ratio":"1.8","recovery_from_60d_low":"9.02","context_match":"False","transition_match":"True"},{"rank":"18","ticker":"INDF.JK","drawdown_252d":"-26.98","distance_from_high_252d":"-26.98","volatility_60d":"1.96","rs_change_60d":"35.95","volume_ratio":"0.87","recovery_from_60d_low":"5.51","context_match":"False","transition_match":"True"},{"rank":"19","ticker":"GOTO.JK","drawdown_252d":"-29.58","distance_from_high_252d":"-29.58","volatility_60d":"1.98","rs_change_60d":"24.15","volume_ratio":"0.34","recovery_from_60d_low":"0.0","context_match":"False","transition_match":"True"},{"rank":"20","ticker":"CPIN.JK","drawdown_252d":"-34.71","distance_from_high_252d":"-34.71","volatility_60d":"3.26","rs_change_60d":"42.78","volume_ratio":"0.97","recovery_from_60d_low":"3.49","context_match":"False","transition_match":"True"},{"rank":"21","ticker":"INTP.JK","drawdown_252d":"-38.54","distance_from_high_252d":"-38.54","volatility_60d":"2.21","rs_change_60d":"19.43","volume_ratio":"0.74","recovery_from_60d_low":"4.0","context_match":"False","transition_match":"True"},{"rank":"22","ticker":"MIKA.JK","drawdown_252d":"-44.03","distance_from_high_252d":"-44.03","volatility_60d":"2.4","rs_change_60d":"8.51","volume_ratio":"0.37","recovery_from_60d_low":"4.53","context_match":"False","transition_match":"True"},{"rank":"23","ticker":"PTBA.JK","drawdown_252d":"-17.3","distance_from_high_252d":"-17.3","volatility_60d":"2.68","rs_change_60d":"-19.93","volume_ratio":"1.61","recovery_from_60d_low":"5.2","context_match":"False","transition_match":"False"},{"rank":"24","ticker":"ITMG.JK","drawdown_252d":"-22.67","distance_from_high_252d":"-22.67","volatility_60d":"2.78","rs_change_60d":"-27.57","volume_ratio":"2.52","recovery_from_60d_low":"2.52","context_match":"False","transition_match":"False"},{"rank":"25","ticker":"PGAS.JK","drawdown_252d":"-33.95","distance_from_high_252d":"-33.95","volatility_60d":"2.58","rs_change_60d":"-12.7","volume_ratio":"1.61","recovery_from_60d_low":"7.91","context_match":"False","transition_match":"False"},{"rank":"26","ticker":"HEAL.JK","drawdown_252d":"-50.53","distance_from_high_252d":"-50.53","volatility_60d":"2.57","rs_change_60d":"-1.08","volume_ratio":"0.65","recovery_from_60d_low":"11.69","context_match":"False","transition_match":"False"},{"rank":"27","ticker":"SMGR.JK","drawdown_252d":"-50.8","distance_from_high_252d":"-50.8","volatility_60d":"2.82","rs_change_60d":"-8.35","volume_ratio":"1.46","recovery_from_60d_low":"4.38","context_match":"False","transition_match":"False"},{"rank":"28","ticker":"ADRO.JK","drawdown_252d":"-13.46","distance_from_high_252d":"-13.46","volatility_60d":"2.64","rs_change_60d":"-20.65","volume_ratio":"0.42","recovery_from_60d_low":"3.69","context_match":"False","transition_match":"False"},{"rank":"29","ticker":"UNTR.JK","drawdown_252d":"-30.69","distance_from_high_252d":"-30.69","volatility_60d":"2.21","rs_change_60d":"-1.07","volume_ratio":"0.84","recovery_from_60d_low":"4.19","context_match":"False","transition_match":"False"},{"rank":"30","ticker":"SIDO.JK","drawdown_252d":"-32.55","distance_from_high_252d":"-32.55","volatility_60d":"1.96","rs_change_60d":"-0.54","volume_ratio":"0.58","recovery_from_60d_low":"4.52","context_match":"False","transition_match":"False"}];
 
@@ -156,9 +157,20 @@ export const BT = {
 export const RK: Record<string, number> = {};
 let _prevRanks: Record<string, number> = {};
 
-// Factor Config weight coefficients (2026-06-25: Value proven negative-alpha in IDX80 2021-2026 → reduced to 5%)
-export const CW_QM = { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 };
-export const CW_BG = { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 };
+// Default weight constants — hasil backtest optimasi step 0.05 (data 2021-2026).
+// AMAN: prioritas Sharpe + drawdown rendah.
+// AGRESIF: growth-heavy.
+// DIVIDEN: fokus dividend yield.
+export const CW_AMAN = { quality: 0.30, growth: 0.45, value: 0.10, momentum: 0.00, dividend: 0.15 };
+export const CW_AGRESIF = { quality: 0.20, growth: 0.60, value: 0.10, momentum: 0.10, dividend: 0.00 };
+export const CW_DIVIDEN = { quality: 0.15, growth: 0.20, value: 0.05, momentum: 0.00, dividend: 0.60 };
+
+/** Legacy map — used by callers that still reference "prod"/"res" strings. */
+export const CW_MAP: Record<string, typeof CW_AMAN> = {
+  aman: CW_AMAN,
+  agresif: CW_AGRESIF,
+  dividen: CW_DIVIDEN,
+};
 
 // Scan data cache from idx80_scan.json (loaded from /api/engine/idx80)
 interface ScanStock {
@@ -167,6 +179,7 @@ interface ScanStock {
   growth: number;
   value: number;
   momentum: number;
+  dividend?: number;
   currentPrice: number;
   changePercent: number;
   volume?: number;
@@ -225,9 +238,10 @@ function buildDividendCache(stocks: ScanStock[]) {
 }
 
 function syncExitsFromScan(scanData: { stocks: ScanStock[]; lastUpdated: string }) {
+  const dw = CW_DIVIDEN;
   const sorted = [...scanData.stocks].sort((a, b) => {
-    const sa = a.quality * 0.40 + a.growth * 0.25 + a.value * 0.05 + a.momentum * 0.30;
-    const sb = b.quality * 0.40 + b.growth * 0.25 + b.value * 0.05 + b.momentum * 0.30;
+    const sa = a.quality * dw.quality + a.growth * dw.growth + a.value * dw.value + a.momentum * dw.momentum + (a.dividend ?? 50) * dw.dividend;
+    const sb = b.quality * dw.quality + b.growth * dw.growth + b.value * dw.value + b.momentum * dw.momentum + (b.dividend ?? 50) * dw.dividend;
     return sb - sa;
   });
 
@@ -307,12 +321,13 @@ function syncRadarContext(scanData: { stocks: ScanStock[]; lastUpdated: string }
   const stocks = scanData.stocks;
   if (!stocks.length) return;
 
-  const avgQ = stocks.reduce((s, x) => s + x.quality, 0) / stocks.length;
-  const avgG = stocks.reduce((s, x) => s + x.growth, 0) / stocks.length;
-  const avgV = stocks.reduce((s, x) => s + x.value, 0) / stocks.length;
-  const avgM = stocks.reduce((s, x) => s + x.momentum, 0) / stocks.length;
+  const avgQ = stocks.reduce((s, x) => s + (x.quality ?? 50), 0) / stocks.length;
+  const avgG = stocks.reduce((s, x) => s + (x.growth ?? 50), 0) / stocks.length;
+  const avgV = stocks.reduce((s, x) => s + (x.value ?? 50), 0) / stocks.length;
+  const avgM = stocks.reduce((s, x) => s + (x.momentum ?? 50), 0) / stocks.length;
+  const avgD = stocks.reduce((s, x) => s + (x.dividend ?? 50), 0) / stocks.length;
 
-  const factors: [string, number][] = [["Quality", avgQ], ["Growth", avgG], ["Value", avgV], ["Momentum", avgM]];
+  const factors: [string, number][] = [["Quality", avgQ], ["Growth", avgG], ["Value", avgV], ["Momentum", avgM], ["Dividen", avgD]];
   factors.sort((a, b) => b[1] - a[1]);
 
   const strongest = factors[0];
@@ -329,7 +344,8 @@ function syncRadarContext(scanData: { stocks: ScanStock[]; lastUpdated: string }
       return `${tickerClean}.JK: Volume ${ratio}x (${label})`;
     });
 
-  const scores = stocks.map(s => s.quality * 0.40 + s.growth * 0.25 + s.value * 0.05 + s.momentum * 0.30);
+  const dw = CW_DIVIDEN;
+  const scores = stocks.map(s => (s.quality ?? 50) * dw.quality + (s.growth ?? 50) * dw.growth + (s.value ?? 50) * dw.value + (s.momentum ?? 50) * dw.momentum + (s.dividend ?? 50) * dw.dividend);
   const sortedScores = [...scores].sort((a, b) => b - a);
   const above70 = scores.filter(s => s >= 70).length;
   const above60 = scores.filter(s => s >= 60).length;
@@ -350,9 +366,9 @@ export function getScanData() {
   return scanDataCache;
 }
 
-export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "res" | { quality: number; growth: number; value: number; momentum: number }) {
+export function getProcessedLeaders(activeStocksList: any[], config: string | { quality: number; growth: number; value: number; momentum: number; dividend: number }) {
   const weights = typeof config === "string"
-    ? (config === "prod" ? CW_QM : CW_BG)
+    ? (CW_MAP[config] ?? CW_AMAN)
     : config;
 
   const dynamicL = activeStocksList.map((s, idx) => {
@@ -360,6 +376,7 @@ export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "r
     const normTicker = s.ticker.replace(".JK", "");
     const scanStock = scanDataCache?.stocks.find(st => st.ticker.replace(".JK", "") === normTicker);
     if (scanStock) {
+      const div = scanStock.dividend ?? 50;
       return {
         rank: String(idx + 1),
         ticker: normTicker + ".JK",
@@ -367,28 +384,33 @@ export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "r
         growth: scanStock.growth.toFixed(2),
         value: scanStock.value.toFixed(2),
         momentum: scanStock.momentum.toFixed(2),
+        dividend: div.toFixed(2),
         final_score: String(Math.round(
           scanStock.quality * weights.quality +
           scanStock.growth * weights.growth +
           scanStock.value * weights.value +
-          scanStock.momentum * weights.momentum
+          scanStock.momentum * weights.momentum +
+          div * weights.dividend
         )),
       };
     }
 
     const existing = L.find(l => l.ticker.replace(".JK", "") === s.ticker);
     if (existing) {
+      const div = parseFloat(existing.dividend || "50");
       return {
         ...existing,
         quality: parseFloat(existing.quality).toFixed(2),
         growth: parseFloat(existing.growth).toFixed(2),
         value: parseFloat(existing.value).toFixed(2),
         momentum: parseFloat(existing.momentum).toFixed(2),
+        dividend: div.toFixed(2),
         final_score: String(Math.round(
           parseFloat(existing.quality) * weights.quality +
           parseFloat(existing.growth) * weights.growth +
           parseFloat(existing.value) * weights.value +
-          parseFloat(existing.momentum) * weights.momentum
+          parseFloat(existing.momentum) * weights.momentum +
+          div * weights.dividend
         )),
       };
     }
@@ -401,6 +423,7 @@ export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "r
       growth: "50.00",
       value: "50.00",
       momentum: "50.00",
+      dividend: "50.00",
       final_score: "50",
     };
   }).filter(Boolean);
@@ -410,7 +433,8 @@ export function getProcessedLeaders(activeStocksList: any[], config: "prod" | "r
     const gVal = parseFloat(stock.growth) || 0;
     const vVal = parseFloat(stock.value) || 0;
     const mVal = parseFloat(stock.momentum) || 0;
-    return qVal * weights.quality + gVal * weights.growth + vVal * weights.value + mVal * weights.momentum;
+    const dVal = parseFloat((stock as any).dividend) || 50;
+    return qVal * weights.quality + gVal * weights.growth + vVal * weights.value + mVal * weights.momentum + dVal * weights.dividend;
   };
 
   const sorted = dynamicL.map((stock) => {

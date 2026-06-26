@@ -470,3 +470,24 @@ Server fetches last 20 messages from past sessions (excluding current), formats 
 - User can ask "what did we discuss yesterday?" — AI has context
 - "Start New Session" button in chat header
 - 5 new API endpoints for session management
+
+## 2026-06-26 — 3 Faktor Investasi: AMAN, AGRESIF, DIVIDEN
+**Keputusan:** QM/BG (4 faktor Q/G/V/M) dihapus. Diganti 3 profil baru berdasarkan backtest optimasi step 0.05 — AMAN (konservatif), AGRESIF (growth), DIVIDEN (yield). Masing-masing punya bobot sub-faktor sendiri.
+
+**Alasan:**
+- Value terbukti negative-alpha di IDX80 2021-2026 (ADR-009), tapi masih ada di QM (5%) dan BG (5%) — tidak perlu
+- Momentum 0% di AMAN & DIVIDEN karena menambah volatilitas tanpa risk-adjusted benefit signifikan
+- User butuh profil yang jelas: "saya mau aman", "saya mau growth", "saya mau dividen" — bukan QM/BG yang abstrak
+
+**Hasil backtest** (`scripts/backtest_optimize_weights.ts`):
+- **AMAN** (Q30/G45/V10/M0/D15): Sharpe × 10 - DD/8 + Sortino × 5 + CAGR × 0.5 sebagai score function
+- **AGRESIF** (Q20/G60/V10/M10/D0): CAGR × 3 + Return/100 + Sharpe × 5 — growth-heavy
+- **DIVIDEN** (Q15/G20/V5/M0/D60): Sharpe × 8 - DD/8 + Sortino × 4 + CAGR × 0.3 — fokus yield
+
+**Konsekuensi:**
+- `activeConfig` type dari `"prod" | "res"` → `string` (profile id) — flexibel untuk N profil
+- `CW_QM`/`CW_BG` → `CW_AMAN`/`CW_AGRESIF`/`CW_DIVIDEN` + `CW_MAP` lookup
+- `setActiveConfig()` di marketRegimeEngine sekarang cuma terima object (no string fallback)
+- `calcDividend()` baru di sync_engine — dividend yield score dari Yahoo Finance
+- Dividend fixed dalam adaptive weighting — tidak di-adjust, hanya Q/G/V/M yang berubah
+- Dividend cache dipisah ke `src/engine/dividendCache.ts`

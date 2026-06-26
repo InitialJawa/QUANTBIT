@@ -29,21 +29,13 @@ export function useMarketRegimeSync(): void {
     setCrashSensitivity(engineConfig.crashSensitivity ?? 10);
     setCrashProtectionEnabled(engineConfig.enableCrashProtection);
 
-    // B4: propagate custom profile weights so the radar/breadth scoring
-    // honours whatever weight profile the user has selected — not just the
-    // hardcoded QM/BG pair.
-    if (activeProfile && activeProfile.id !== "prod" && activeProfile.id !== "res") {
-      setActiveConfig({
-        quality: activeProfile.qualityWeight,
-        growth: activeProfile.growthWeight,
-        value: activeProfile.valueWeight,
-        momentum: activeProfile.momentumWeight,
-      });
-    } else {
-      // Reset to undefined so the engine falls back to CW_QM/CW_BG based on
-      // the active profile id (see computeMarketRegime's configWeights).
-      setActiveConfig("prod");
-    }
+    setActiveConfig({
+      quality: activeProfile.qualityWeight,
+      growth: activeProfile.growthWeight,
+      value: activeProfile.valueWeight,
+      momentum: activeProfile.momentumWeight,
+      dividend: activeProfile.dividendWeight,
+    });
 
     refreshRSFromRegime();
   }, [
@@ -55,5 +47,6 @@ export function useMarketRegimeSync(): void {
     activeProfile?.growthWeight,
     activeProfile?.valueWeight,
     activeProfile?.momentumWeight,
+    activeProfile?.dividendWeight,
   ]);
 }

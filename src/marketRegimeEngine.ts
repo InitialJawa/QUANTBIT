@@ -1,4 +1,4 @@
-import { MKT, L, EX, RS, CW_QM, CW_BG, getProcessedLeaders } from "./marketData";
+import { MKT, L, EX, RS, CW_AMAN, CW_MAP, getProcessedLeaders } from "./marketData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "./constants/idx80";
 
 export type RegimeState =
@@ -44,8 +44,7 @@ export interface RegimeOutput {
 
 let _lastIhsgData: { close: number; date: string; isCarriedForward?: boolean }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
-let _activeConfig: "prod" | "res" = "prod";
-let _activeWeights: { quality: number; growth: number; value: number; momentum: number } | null = null;
+let _activeWeights: { quality: number; growth: number; value: number; momentum: number; dividend: number } | null = null;
 let _crashSensitivity = 10;
 let _crashProtectionEnabled = true;
 
@@ -57,13 +56,8 @@ export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
   _activeUniverse = u;
 }
 
-export function setActiveConfig(c: "prod" | "res" | { quality: number; growth: number; value: number; momentum: number }) {
-  if (typeof c === "string") {
-    _activeConfig = c;
-    _activeWeights = null;
-  } else {
-    _activeWeights = c;
-  }
+export function setActiveConfig(c: { quality: number; growth: number; value: number; momentum: number; dividend: number }) {
+  _activeWeights = c;
 }
 
 export function setCrashSensitivity(n: number) {
@@ -187,12 +181,13 @@ export function computeMarketRegime(): RegimeOutput {
   const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
 
   const lenL = universeL.length || 1;
-  const configWeights = _activeWeights ?? (_activeConfig === "prod" ? CW_QM : CW_BG);
+  const configWeights = _activeWeights ?? CW_AMAN;
   const scores = universeL.map(s =>
     (parseFloat(s.quality) || 0) * configWeights.quality +
     (parseFloat(s.growth) || 0) * configWeights.growth +
     (parseFloat(s.value) || 0) * configWeights.value +
-    (parseFloat(s.momentum) || 0) * configWeights.momentum
+    (parseFloat(s.momentum) || 0) * configWeights.momentum +
+    (parseFloat((s as any).dividend) || 50) * configWeights.dividend
   );
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;

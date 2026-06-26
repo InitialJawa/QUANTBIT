@@ -3,6 +3,7 @@ export interface ProfileWeights {
   growth: number;
   value: number;
   momentum: number;
+  dividend: number;
 }
 
 export interface BacktestDayData {
@@ -19,6 +20,7 @@ export interface BacktestDayData {
     growth: number;
     value: number;
     momentum: number;
+    dividend: number;
   }>;
 }
 

@@ -56,7 +56,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
   if (c) {
     const profile = (c.profiles || []).find((p: any) => p.id === c.activeProfileId);
     ctx.config = {
-      activeConfig: c.activeConfig ?? (c.activeProfileId === "res" ? "res" : "prod"),
+      activeConfig: c.activeProfileId,
       activeProfileId: c.activeProfileId,
       activeProfileName: profile?.name,
       safeHavenAsset: c.safeHavenAsset,
@@ -67,6 +67,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
       growthWeight: profile?.growthWeight,
       valueWeight: profile?.valueWeight,
       momentumWeight: profile?.momentumWeight,
+      dividendWeight: profile?.dividendWeight,
       customUniverse: c.customUniverse,
       simulationMode: c.simulationMode,
       enableCrashProtection: c.enableCrashProtection,
@@ -78,6 +79,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
         growthWeight: c.lastBacktestProfile.growthWeight,
         valueWeight: c.lastBacktestProfile.valueWeight,
         momentumWeight: c.lastBacktestProfile.momentumWeight,
+        dividendWeight: c.lastBacktestProfile.dividendWeight,
       } : undefined,
     };
 

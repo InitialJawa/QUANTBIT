@@ -33,10 +33,10 @@ const mockCtx = {
   },
   engineConfig: {
     profiles: [
-      { id: "prod", name: "Quality Momentum (QM)", qualityWeight: 0.45, growthWeight: 0.1, valueWeight: 0.05, momentumWeight: 0.4 },
-      { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.4, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.3 },
+      { id: "aman", name: "Aman", qualityWeight: 0.2, growthWeight: 0.2, valueWeight: 0.2, momentumWeight: 0.2, dividendWeight: 0.2 },
+      { id: "agresif", name: "Agresif", qualityWeight: 0.2, growthWeight: 0.2, valueWeight: 0.2, momentumWeight: 0.2, dividendWeight: 0.2 },
     ],
-    lastBacktestProfile: { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.4, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.3 },
+    lastBacktestProfile: { id: "aman", name: "Aman", qualityWeight: 0.2, growthWeight: 0.2, valueWeight: 0.2, momentumWeight: 0.2, dividendWeight: 0.2 },
   },
   goldPrice: 1_300_000,
 };
@@ -256,11 +256,11 @@ describe("buildPendingActionFromContext — move_to_gold", () => {
 
 describe("buildPendingActionFromContext — set_active_profile", () => {
   it("shows profile name + weight summary", () => {
-    const a: AIAction = { type: "set_active_profile", profileId: "prod" };
+    const a: AIAction = { type: "set_active_profile", profileId: "aman" };
     const pa = buildPendingActionFromContext(a, mockCtx, FIXED_NOW);
-    assert.ok(pa.displayText.includes("Quality Momentum (QM)"));
+    assert.ok(pa.displayText.includes("Aman"));
     const bobotImpact = pa.impact.find((i) => i.label === "Bobot");
-    assert.equal(bobotImpact!.value, "Q45 G10 V5 M40");
+    assert.equal(bobotImpact!.value, "Q20 G20 V20 M20 D20");
   });
 
   it("falls back to raw profileId when profile not found", () => {
@@ -317,7 +317,7 @@ describe("buildPendingActionFromContext — sync_backtest_to_portfolio", () => {
     const pa = buildPendingActionFromContext(a, mockCtx, FIXED_NOW);
     assert.ok(pa.displayText.includes("Sync konfigurasi backtest"));
     const profileImpact = pa.impact.find((i) => i.label === "Profil backtest");
-    assert.equal(profileImpact!.value, "Balanced Growth (BG)");
+    assert.equal(profileImpact!.value, "Aman");
   });
 
   it("omits profile impact when no lastBacktestProfile", () => {

@@ -21,6 +21,7 @@ import {
 } from "./allocator";
 import { computeMetrics } from "./metrics";
 import { computeBuyPressureFromMarket } from "./buyPressure";
+import { getDividendPerShare } from "./dividendCache";
 
 export function runStrategy(input: StrategiesInput): BacktestResult {
   const { dayData: rawInput, config, profileWeights: inputWeights, universeTickers, fees = DEFAULT_FEES } = input;
@@ -523,17 +524,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     bpsHistory: bpsHistory.length > 0 ? bpsHistory : undefined,
     totalDeployed: config.simulationMode === "adaptive_dca" ? totalDeployed : undefined,
   };
-}
-
-let dividendCache: Record<string, Record<string, number>> = {};
-
-export function setDividendCache(cache: Record<string, Record<string, number>>) {
-  dividendCache = cache;
-}
-
-function getDividendPerShare(ticker: string, date: Date): number {
-  const year = date.getFullYear().toString();
-  return dividendCache[ticker]?.[year] || 0;
 }
 
 export interface StrategyEvaluation {

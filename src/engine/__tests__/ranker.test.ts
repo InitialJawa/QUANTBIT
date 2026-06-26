@@ -8,13 +8,13 @@ import {
 import type { ProfileWeights, BacktestDayData } from "../types.ts";
 
 describe("computeDayRankings", () => {
-  const weights: ProfileWeights = { quality: 0.4, growth: 0.1, value: 0.05, momentum: 0.45 };
+  const weights: ProfileWeights = { quality: 0.4, growth: 0.1, value: 0.05, momentum: 0.4, dividend: 0.05 };
 
   it("ranks by weighted score descending", () => {
     const scores = {
-      BBCA: { quality: 90, growth: 50, value: 30, momentum: 80 },
-      BBRI: { quality: 70, growth: 80, value: 50, momentum: 60 },
-      TLKM: { quality: 50, growth: 50, value: 50, momentum: 50 },
+      BBCA: { quality: 90, growth: 50, value: 30, momentum: 80, dividend: 50 },
+      BBRI: { quality: 70, growth: 80, value: 50, momentum: 60, dividend: 50 },
+      TLKM: { quality: 50, growth: 50, value: 50, momentum: 50, dividend: 50 },
     };
     const ranks = computeDayRankings(scores, weights);
     assert.equal(ranks["BBCA"], 1);
@@ -24,8 +24,8 @@ describe("computeDayRankings", () => {
 
   it("assigns ascending rank numbers", () => {
     const scores = {
-      A: { quality: 100, growth: 100, value: 100, momentum: 100 },
-      B: { quality: 0, growth: 0, value: 0, momentum: 0 },
+      A: { quality: 100, growth: 100, value: 100, momentum: 100, dividend: 100 },
+      B: { quality: 0, growth: 0, value: 0, momentum: 0, dividend: 0 },
     };
     const ranks = computeDayRankings(scores, weights);
     assert.equal(ranks["A"], 1);

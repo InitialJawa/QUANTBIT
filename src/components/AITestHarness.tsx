@@ -99,10 +99,10 @@ Setelah itu saya akan kasih rekomendasi.`;
       pm: { cash: 100_000_000, portfolio: [{ ticker: "BBCA.JK", shares: 100, buyPrice: 9000, addedAt: "2025-01-01" }], watchlist: [] },
       engineConfig: {
         profiles: [
-          { id: "prod", name: "Quality Momentum (QM)", qualityWeight: 0.45, growthWeight: 0.1, valueWeight: 0.05, momentumWeight: 0.4 },
-          { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.4, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.3 },
+          { id: "aman", name: "Aman", qualityWeight: 0.20, growthWeight: 0.20, valueWeight: 0.20, momentumWeight: 0.20, dividendWeight: 0.20 },
+          { id: "dividen", name: "Dividen", qualityWeight: 0.20, growthWeight: 0.20, valueWeight: 0.20, momentumWeight: 0.20, dividendWeight: 0.20 },
         ],
-        lastBacktestProfile: { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.4, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.3 },
+        lastBacktestProfile: { id: "dividen", name: "Dividen", qualityWeight: 0.20, growthWeight: 0.20, valueWeight: 0.20, momentumWeight: 0.20, dividendWeight: 0.20 },
       },
       goldPrice: 1_300_000,
     };

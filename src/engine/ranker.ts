@@ -1,7 +1,7 @@
 import { ProfileWeights, BacktestDayData } from "./types";
 
 export function computeDayRankings(
-  stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number }>,
+  stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number; dividend: number }>,
   profileWeights: ProfileWeights
 ): Record<string, number> {
   const scores: { ticker: string; score: number }[] = [];
@@ -11,7 +11,8 @@ export function computeDayRankings(
       (ns.quality ?? 50) * profileWeights.quality +
       (ns.growth ?? 50) * profileWeights.growth +
       (ns.value ?? 50) * profileWeights.value +
-      (ns.momentum ?? 50) * profileWeights.momentum;
+      (ns.momentum ?? 50) * profileWeights.momentum +
+      (ns.dividend ?? 50) * profileWeights.dividend;
     scores.push({ ticker, score: s });
   }
 
@@ -61,10 +62,13 @@ export function computeAdaptiveWeights(
   const day0 = dayData[startIdx];
   const dayN = dayData[currentIndex];
 
-  const factors: (keyof ProfileWeights)[] = ["quality", "growth", "value", "momentum"];
+  // Dividend is fixed — not adjusted by adaptive weighting.
+  const dividendFixed = profileWeights.dividend;
+  const adaptiveFactors: (keyof ProfileWeights)[] = ["quality", "growth", "value", "momentum"];
+  const adaptiveScale = 1.0 - dividendFixed;
   const factorReturns: Record<string, number> = {};
 
-  for (const factor of factors) {
+  for (const factor of adaptiveFactors) {
     const ns0 = day0.stockNormScores;
     const nsN = dayN.stockNormScores;
     if (!ns0 || !nsN) {
@@ -102,30 +106,30 @@ export function computeAdaptiveWeights(
     factorReturns[factor] = count > 0 ? totalReturn / count : 0;
   }
 
-  const returns = factors.map(f => factorReturns[f]);
+  const returns = adaptiveFactors.map(f => factorReturns[f]);
   const minRet = Math.min(...returns);
   const maxRet = Math.max(...returns);
   const range = maxRet - minRet;
 
-  const baseWeight = 0.25;
-  const minWeight = 0.10;
-  const maxWeight = 0.50;
+  const baseWeight = 0.25 * adaptiveScale;
+  const minWeight = 0.10 * adaptiveScale;
+  const maxWeight = 0.50 * adaptiveScale;
 
   let weights: Record<string, number> = {};
   let totalAdjusted = 0;
 
   if (range < 0.001) {
-    for (const f of factors) weights[f] = baseWeight;
+    for (const f of adaptiveFactors) weights[f] = baseWeight;
   } else {
-    for (const f of factors) {
+    for (const f of adaptiveFactors) {
       const normalized = (factorReturns[f] - minRet) / range;
       const adjusted = minWeight + normalized * (maxWeight - minWeight);
       weights[f] = adjusted;
       totalAdjusted += adjusted;
     }
 
-    for (const f of factors) {
-      weights[f] = weights[f] / totalAdjusted;
+    for (const f of adaptiveFactors) {
+      weights[f] = (weights[f] / totalAdjusted) * adaptiveScale;
     }
   }
 
@@ -134,5 +138,6 @@ export function computeAdaptiveWeights(
     growth: weights.growth,
     value: weights.value,
     momentum: weights.momentum,
+    dividend: dividendFixed,
   };
 }

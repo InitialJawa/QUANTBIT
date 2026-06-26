@@ -7,18 +7,18 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
 
-  const handleWeightChange = (profileId: string, key: "qualityWeight" | "growthWeight" | "valueWeight" | "momentumWeight", value: number) => {
+  const handleWeightChange = (profileId: string, key: "qualityWeight" | "growthWeight" | "valueWeight" | "momentumWeight" | "dividendWeight", value: number) => {
     updateProfile(profileId, { [key]: value });
   };
 
   const handleAdd = () => {
     const name = newName.trim();
     if (!name) return;
-    addProfile(name, { qualityWeight: 0.25, growthWeight: 0.25, valueWeight: 0.25, momentumWeight: 0.25 });
+    addProfile(name, { qualityWeight: 0.20, growthWeight: 0.20, valueWeight: 0.20, momentumWeight: 0.20, dividendWeight: 0.20 });
     setNewName("");
   };
 
-  const isDefault = (id: string) => id === "prod" || id === "res";
+  const isDefault = (id: string) => id === "aman" || id === "agresif" || id === "dividen";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -50,8 +50,8 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="space-y-2">
-                  {(["qualityWeight", "growthWeight", "valueWeight", "momentumWeight"] as const).map(key => {
-                    const label = { qualityWeight: "Quality", growthWeight: "Growth", valueWeight: "Value", momentumWeight: "Momentum" }[key];
+                  {(["qualityWeight", "growthWeight", "valueWeight", "momentumWeight", "dividendWeight"] as const).map(key => {
+                    const label = { qualityWeight: "Quality", growthWeight: "Growth", valueWeight: "Value", momentumWeight: "Momentum", dividendWeight: "Dividen" }[key];
                     const pct = Math.round((p[key] ?? 0) * 100);
                     return (
                       <div key={key}>
@@ -68,7 +68,7 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="mt-2 text-caption text-white/30 text-right">
-                  Total: {Math.round(((p.qualityWeight ?? 0) + (p.growthWeight ?? 0) + (p.valueWeight ?? 0) + (p.momentumWeight ?? 0)) * 100)}%
+                  Total: {Math.round(((p.qualityWeight ?? 0) + (p.growthWeight ?? 0) + (p.valueWeight ?? 0) + (p.momentumWeight ?? 0) + (p.dividendWeight ?? 0)) * 100)}%
                 </div>
               </div>
             );

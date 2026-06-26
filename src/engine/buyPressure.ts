@@ -176,10 +176,9 @@ export function useBuyPressure(): BuyPressureResult {
           growth: activeProfile.growthWeight,
           value: activeProfile.valueWeight,
           momentum: activeProfile.momentumWeight,
+          dividend: activeProfile.dividendWeight,
         }
-      : engineConfig.activeProfileId === "res"
-        ? "res" as const
-        : "prod" as const;
+      : engineConfig.activeProfileId;
     const leaders = getProcessedLeaders(STOCKS_DATA, profileWeights);
     const avgValue = leaders.length > 0
       ? leaders.reduce((sum, l) => sum + parseFloat(l.value || "0"), 0) / leaders.length

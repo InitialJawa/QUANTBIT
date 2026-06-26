@@ -7,6 +7,7 @@ export interface WeightProfile {
   growthWeight: number;
   valueWeight: number;
   momentumWeight: number;
+  dividendWeight: number;
 }
 
 export interface EngineConfig {
@@ -34,8 +35,9 @@ export interface EngineConfig {
 }
 
 export const DEFAULT_PROFILES: WeightProfile[] = [
-  { id: "prod", name: "Quality Momentum (QM)", qualityWeight: 0.45, growthWeight: 0.1, valueWeight: 0.05, momentumWeight: 0.40 },
-  { id: "res", name: "Balanced Growth (BG)", qualityWeight: 0.40, growthWeight: 0.25, valueWeight: 0.05, momentumWeight: 0.30 },
+  { id: "aman", name: "Aman", qualityWeight: 0.30, growthWeight: 0.45, valueWeight: 0.10, momentumWeight: 0.00, dividendWeight: 0.15 },
+  { id: "agresif", name: "Agresif", qualityWeight: 0.20, growthWeight: 0.60, valueWeight: 0.10, momentumWeight: 0.10, dividendWeight: 0.00 },
+  { id: "dividen", name: "Dividen", qualityWeight: 0.15, growthWeight: 0.20, valueWeight: 0.05, momentumWeight: 0.00, dividendWeight: 0.60 },
 ];
 
 const getTodayWIB = () => {
@@ -45,7 +47,7 @@ const getTodayWIB = () => {
 
 export function createDefaultConfig(): EngineConfig {
   return {
-    activeProfileId: "res",
+    activeProfileId: "aman",
     profiles: DEFAULT_PROFILES,
     safeHavenAsset: "emas",
     topNCount: 5,
@@ -89,8 +91,8 @@ export interface StrategySnapshot {
 export interface EngineConfigContextType {
   engineConfig: EngineConfig;
   activeProfile: WeightProfile;
-  /** @deprecated Use activeProfileId / activeProfile instead */
-  activeConfig: "prod" | "res";
+  /** @deprecated kept for legacy compat */
+  activeConfig: string;
   updateConfigValue: (key: string, value: any) => void;
   updateProfile: (profileId: string, updates: Partial<WeightProfile>) => void;
   addProfile: (name: string, weights: Omit<WeightProfile, "id" | "name">) => string;
@@ -127,7 +129,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.profiles) {
           parsed.profiles = DEFAULT_PROFILES;
           if (!parsed.activeProfileId) {
-            parsed.activeProfileId = parsed.activeConfig === "res" ? "res" : "prod";
+            parsed.activeProfileId = "aman";
           }
         } else {
           // Migrate legacy default profile weights to latest values
@@ -188,7 +190,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
   const [lastBacktestProfile, setLastBacktestProfile] = useState<WeightProfile | null>(engineConfig.lastBacktestProfile || null);
 
   const activeProfile = engineConfig.profiles.find(p => p.id === engineConfig.activeProfileId) || engineConfig.profiles[0];
-  const activeConfig: "prod" | "res" = engineConfig.activeProfileId === "res" ? "res" : "prod";
+  const activeConfig = engineConfig.activeProfileId;
 
   // Fields that the BPS dashboard + algo engine both depend on. When
   // backtestConfig diverges from engineConfig on any of these, the
@@ -242,14 +244,16 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     return id;
   };
 
+  const isDefault = (id: string) => id === "aman" || id === "agresif" || id === "dividen";
+
   const deleteProfile = (profileId: string) => {
-    if (profileId === "prod" || profileId === "res") return;
+    if (isDefault(profileId)) return;
     setEngineConfig((prev) => {
       const profiles = prev.profiles.filter(p => p.id !== profileId);
       let activeProfileId = prev.activeProfileId;
-      if (activeProfileId === profileId) {
-        activeProfileId = "prod";
-      }
+        if (activeProfileId === profileId) {
+          activeProfileId = "aman";
+        }
       const next = { ...prev, profiles, activeProfileId };
       localStorage.setItem("idx_engine_config", JSON.stringify(next));
       return next;

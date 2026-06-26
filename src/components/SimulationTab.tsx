@@ -457,10 +457,11 @@ export function SimulationTab({
           enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
         },
         profileWeights: {
-          quality: backtestActiveProfile?.qualityWeight ?? 0.45,
-          growth: backtestActiveProfile?.growthWeight ?? 0.10,
-          value: backtestActiveProfile?.valueWeight ?? 0.05,
-          momentum: backtestActiveProfile?.momentumWeight ?? 0.40,
+          quality: backtestActiveProfile?.qualityWeight ?? 0.20,
+          growth: backtestActiveProfile?.growthWeight ?? 0.20,
+          value: backtestActiveProfile?.valueWeight ?? 0.20,
+          momentum: backtestActiveProfile?.momentumWeight ?? 0.20,
+          dividend: backtestActiveProfile?.dividendWeight ?? 0.20,
         },
         universeTickers: {
           idx80: IDX80_TICKERS,
@@ -491,10 +492,11 @@ export function SimulationTab({
             enableAdaptiveWeights: false,
           },
           profileWeights: {
-            quality: backtestActiveProfile?.qualityWeight ?? 0.45,
-            growth: backtestActiveProfile?.growthWeight ?? 0.10,
-            value: backtestActiveProfile?.valueWeight ?? 0.05,
-            momentum: backtestActiveProfile?.momentumWeight ?? 0.40,
+            quality: backtestActiveProfile?.qualityWeight ?? 0.20,
+            growth: backtestActiveProfile?.growthWeight ?? 0.20,
+            value: backtestActiveProfile?.valueWeight ?? 0.20,
+            momentum: backtestActiveProfile?.momentumWeight ?? 0.20,
+            dividend: backtestActiveProfile?.dividendWeight ?? 0.20,
           },
           universeTickers: {
             idx80: IDX80_TICKERS,
