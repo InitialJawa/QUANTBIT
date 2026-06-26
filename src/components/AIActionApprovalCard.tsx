@@ -41,11 +41,11 @@ export const AIActionApprovalCard: FC<AIActionApprovalCardProps> = ({ pending, o
   };
 
   return (
-    <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 my-2 space-y-2 max-w-[96%]">
+    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 my-2 space-y-2 max-w-[96%]">
       <div className="flex items-start gap-2">
-        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="text-caption text-cyan-300 font-bold uppercase tracking-widest font-mono">
+          <p className="text-caption text-emerald-300 font-bold uppercase tracking-widest font-mono">
             AI suggests
           </p>
           <p className="text-caption text-white/90 font-sans mt-1 break-words">

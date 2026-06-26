@@ -77,7 +77,7 @@ export function getRotationColor(label: string, trend: string) {
     return "bg-amber-500/10 text-amber-400 border-amber-500/20";
   }
   if (lbl.includes("konsolidasi") || lbl.includes("support") || lbl.includes("defensif") || lbl.includes("jangkar") || lbl.includes("bluechip") || lbl.includes("ayunan")) {
-    return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
   }
   if (trend === "up") return "bg-white/[0.05] text-white border-white/10";
   if (trend === "down") return "bg-rose-500/5 text-rose-400 border-rose-500/10";

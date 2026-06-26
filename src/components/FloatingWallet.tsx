@@ -56,7 +56,7 @@ export function FloatingWallet({
             >
               <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/5" style={{ backgroundColor: "#0a0a0a" }}>
                 <div className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-cyan-400" />
+                  <Wallet className="w-4 h-4 text-emerald-400" />
                   <h3 className="text-body font-bold text-white">Dompet</h3>
                 </div>
                 <button

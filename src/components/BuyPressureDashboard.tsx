@@ -15,8 +15,8 @@ import { useBuyPressure, type BuyPressureAction, type BuyPressureFactors } from 
 const ACTION_META: Record<BuyPressureAction, { label: string; color: string; bg: string; border: string; ring: string }> = {
   none:       { label: "JANGAN BELI",    color: "text-rose-400",    bg: "bg-rose-500/10",     border: "border-rose-500/30",     ring: "stroke-rose-500" },
   small:      { label: "BELI KECIL",     color: "text-amber-400",   bg: "bg-amber-500/10",    border: "border-amber-500/30",    ring: "stroke-amber-500" },
-  normal:     { label: "BELI NORMAL",    color: "text-cyan-400",    bg: "bg-cyan-500/10",     border: "border-cyan-500/30",     ring: "stroke-cyan-500" },
-  aggressive: { label: "BELI AGRESIF",   color: "text-emerald-400", bg: "bg-emerald-500/10",  border: "border-emerald-500/30",  ring: "stroke-emerald-500" },
+  normal:     { label: "BELI NORMAL",    color: "text-emerald-400", bg: "bg-emerald-500/10",  border: "border-emerald-500/30",  ring: "stroke-emerald-500" },
+  aggressive: { label: "BELI AGRESIF",   color: "text-emerald-300", bg: "bg-emerald-500/20",  border: "border-emerald-400/40",  ring: "stroke-emerald-400" },
   deploy:     { label: "DEPLOY SEMUA",   color: "text-emerald-300", bg: "bg-emerald-500/20",  border: "border-emerald-400/40",  ring: "stroke-emerald-400" },
 };
 
@@ -92,7 +92,7 @@ const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon,
       </div>
       <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-500 to-emerald-400"
+          className="h-full rounded-full bg-gradient-to-r from-emerald-500/70 via-emerald-500 to-emerald-400"
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}

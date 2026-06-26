@@ -519,7 +519,7 @@ export const idxNews: NewsItem[] = [
     summary: "Rapat Dewan Gubernur Bank Indonesia memutuskan untuk menahan suku bunga acuan. Langkah ini diambil untuk mengawal stabilitas nilai tukar Rupiah dari volatilitas eksternal global.",
     time: "20 mins ago",
     badge: "Macro Indicator",
-    color: "border-blue-500/20 text-blue-400 bg-blue-500/10"
+    color: "border-emerald-500/20 text-emerald-400 bg-emerald-500/10"
   },
   {
     portal: "Bisnis.com",

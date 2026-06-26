@@ -63,8 +63,8 @@ export function MarketTab({
   // Match AnalyticsTab sub-tab style (flex-1 + icon + emerald underline).
   // See AppSidebar.tsx for the same pattern in BacktestContent.
   const MARKET_SUB_TABS = [
-    { id: "overview" as const, icon: Globe, label: "Overview" },
-    { id: "charts" as const, icon: BarChart3, label: "Charts" },
+    { id: "overview" as const, icon: Globe, label: "Ikhtisar" },
+    { id: "charts" as const, icon: BarChart3, label: "Grafik" },
     { id: "watchlist" as const, icon: BookOpen, label: "Watchlist" },
   ];
   const allVisibleStocks = useMemo(
@@ -518,7 +518,7 @@ export function MarketTab({
                     <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${
                       trail.decision === "BUY_STOCKS" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                       trail.decision === "HOLD_GOLD" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                      trail.decision === "HOLD_CASH" ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                      trail.decision === "HOLD_CASH" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                       "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
                     }`}>
                       {trail.decision === "BUY_STOCKS" ? "BELI SAHAM" :
@@ -533,7 +533,7 @@ export function MarketTab({
                       trail.regime === "RISK_ON" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                       trail.regime === "RISK_OFF" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
                       trail.regime === "GOLD_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
-                      trail.regime === "CASH_DEFENSE" ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                      trail.regime === "CASH_DEFENSE" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                       "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
                     }`}>
                       {trail.regime === "RISK_ON" ? "RISK ON" :

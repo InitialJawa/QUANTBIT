@@ -132,13 +132,13 @@ Setelah itu saya akan kasih rekomendasi.`;
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-[998] w-[420px] max-h-[600px] bg-black/95 border border-cyan-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-xs"
+      className="fixed bottom-6 left-6 z-[998] w-[420px] max-h-[600px] bg-black/95 border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-xs"
       data-testid="ai-test-harness"
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-cyan-500/5">
-        <Beaker className="w-4 h-4 text-cyan-400" />
-        <span className="font-bold text-cyan-300 uppercase tracking-widest">AI Test Harness</span>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-emerald-500/5">
+        <Beaker className="w-4 h-4 text-emerald-400" />
+        <span className="font-bold text-emerald-300 uppercase tracking-widest">AI Test Harness</span>
         <span className="ml-auto text-label text-white/30 font-mono">DEV ONLY</span>
       </div>
 
@@ -155,7 +155,7 @@ Setelah itu saya akan kasih rekomendasi.`;
             onClick={() => setActivePanel(tab.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-label uppercase tracking-wider font-bold transition-colors ${
               activePanel === tab.id
-                ? "bg-cyan-500/10 text-cyan-300"
+                ? "bg-emerald-500/10 text-emerald-300"
                 : "text-white/50 hover:text-white/80 hover:bg-white/[0.03]"
             }`}
           >
@@ -174,7 +174,7 @@ Setelah itu saya akan kasih rekomendasi.`;
             </p>
             <button
               onClick={testExtractToolCalls}
-              className="w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 rounded-md font-bold uppercase tracking-wider text-label"
+              className="w-full py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 rounded-md font-bold uppercase tracking-wider text-label"
             >
               Run extractToolCalls test
             </button>
@@ -201,7 +201,7 @@ Setelah itu saya akan kasih rekomendasi.`;
                 <button
                   key={name}
                   onClick={() => testAction(name as AIAction["type"])}
-                  className="py-1.5 px-2 bg-white/5 hover:bg-cyan-500/15 text-white/80 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 rounded text-label font-mono text-left transition-colors"
+                  className="py-1.5 px-2 bg-white/5 hover:bg-emerald-500/15 text-white/80 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/30 rounded text-label font-mono text-left transition-colors"
                 >
                   {name}
                 </button>
@@ -220,7 +220,7 @@ Setelah itu saya akan kasih rekomendasi.`;
                 type="checkbox"
                 checked={bypassCooldown}
                 onChange={(e) => setBypassCooldown(e.target.checked)}
-                className="accent-cyan-500"
+                className="accent-emerald-500"
               />
               <span className="text-label text-white/80">Bypass cooldown (testing only)</span>
             </label>
@@ -242,7 +242,7 @@ Setelah itu saya akan kasih rekomendasi.`;
             <p className="text-label text-white/40 pt-2">
               Note: This is a UI simulation only. The real <code>useProactiveAgent</code> reads live BPS + IHSG from MKT, which you can override in DevTools:
             </p>
-            <pre className="text-[10px] bg-black/40 p-2 rounded text-cyan-200/80 font-mono overflow-x-auto">
+            <pre className="text-[10px] bg-black/40 p-2 rounded text-emerald-200/80 font-mono overflow-x-auto">
 {`import("/src/marketData.ts").then(m => {
   m.MKT.ihsg.monthly = -20;  // bearish
   // or
@@ -289,7 +289,7 @@ Setelah itu saya akan kasih rekomendasi.`;
         {testResult && (
           <div className="mt-2 p-2 bg-black/40 border border-white/10 rounded">
             <p className="text-label text-white/40 mb-1 font-bold uppercase tracking-wider">Result:</p>
-            <pre className="text-[10px] text-cyan-200/80 font-mono overflow-x-auto max-h-40 overflow-y-auto">
+            <pre className="text-[10px] text-emerald-200/80 font-mono overflow-x-auto max-h-40 overflow-y-auto">
 {testResult}
             </pre>
             <button

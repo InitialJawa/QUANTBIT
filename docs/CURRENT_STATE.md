@@ -5,7 +5,7 @@
 | Tanggal | 2026-06-26 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sync + Simplification Pass (selesai 2026-06-26) |
+| Sprint | UI/UX Polish + Color Consolidation (selesai 2026-06-26) |
 
 ## Active Architecture
 
@@ -118,3 +118,71 @@ in the notification loop. (Tidak berubah dari sesi sebelumnya.)
 - `src/components/DeepReport.tsx`
 - `src/components/AICockpit.tsx`
 - `DashboardGrid.tsx` (moved to _archive)
+
+## Session 2026-06-26 (session 9): UI/UX Polish + Color Consolidation — COMPLETED
+
+### 🟢 Theme Color Unification
+- **Wallet + AI → emerald**: Semua `text-cyan-*`, `bg-cyan-*`, `border-cyan-*` di
+  `FloatingWallet.tsx`, `FloatingAIChat.tsx`, `AITestHarness.tsx`, `AIActionApprovalCard.tsx`
+  diganti `emerald-*`. AI button, chat bubbles, follow-up chips, dan tool call cards sekarang
+  konsisten dengan accent hijau.
+- **Decorative blue/indigo → emerald**: `DataBadge` (CACHED), `LeadersTab` (Konsolidasi/Support),
+  `MarketTab` (HOLD_CASH regime), `SimulationTab` (BUY action), `AppSidebar` (Custom Universe
+  pill), `MultiSearchableSelect` default theme, dan `marketData.ts` news badge.
+- **BuyPressure "BELI NORMAL" → emerald** (sebelumnya cyan) untuk konsistensi; shade 400 vs
+  300 membedakan NORMAL vs AGRESIF.
+
+### 🟢 Light Theme Visibility Fix
+- **CSS remap diperluas**: `[class*="bg-cyan-500/"]`, `[class*="bg-cyan-950/"]`,
+  `[class*="bg-blue-500/"]` sekarang di-remap ke emerald tint di kedua tema (sebelumnya
+  hanya `/10` dan `/20` yang ter-remap, sisanya pakai Tailwind default yang tidak terbaca
+  di light mode).
+- **Light text contrast**: `--text-muted` light dinaikkan dari `#CBD5E1` → `#94A3B8`,
+  `--text-tertiary` dari `#94A3B8` → `#64748B`, `--text-secondary` dari `#475569` →
+  `#334155`. Konten `text-white/30` (di-remap ke text-muted) sekarang lebih gelap dan
+  terbaca di light mode.
+
+### 🟢 UI/UX Improvements (Phase 1 Quick Wins)
+- **A1 Tab labels**: `Market` → `Pasar`, `Portfolio` → `Portofolio`. Konsisten dengan
+  tab lain yang sudah Indonesia.
+- **A6 Sub-tab unification**: `SimulationTab` sub-tab pill style diganti ke border-bottom
+  emerald (matching `MarketTab` & `AnalyticsTab`).
+- **A7 Empty state**: `PortfolioTracker` empty state sekarang punya icon `Briefcase`
+  + quick "Beli Pertama" CTA yang scroll ke form manual buy.
+- **A11 Back-to-top**: Komponen baru `src/components/BackToTop.tsx`, mounted di `App.tsx`.
+  Muncul setelah scroll > 600px, fixed bottom-right.
+- **B10 EMAS tooltip**: Volume cell di Portfolio sekarang punya tooltip "1 lot emas = 1 gram.
+  Spread 2% untuk konversi fisik" (cursor-help + dotted underline).
+- **D6 Backtest sub-tab rename**: `Backtester` → `Strategi`, `Simulasi` → `Historis`.
+  Hindari overlap dengan "Simulasi" istilah Portfolio.
+- **E1 Crisis badge**: `Recovery` sub-tab dapat badge "Krisis" merah saat IHSG krisis aktif.
+- **E2 Risk rename**: `Risk` sub-tab → `Proteksi Modal` (lebih deskriptif).
+- **E4 Sub-tab persist**: `AnalyticsTab` sub-tab state di-persist via `localStorage`
+  (key: `quantbit_analytics_subtab`) supaya tidak reset saat pindah tab utama.
+- **F2 BPS Config**: Sudah di-rename ke "Profil Strategi Aktif" oleh ADR-010 (no-op).
+
+### Files Modified
+- `src/components/FloatingWallet.tsx`
+- `src/components/FloatingAIChat.tsx`
+- `src/components/AITestHarness.tsx`
+- `src/components/AIActionApprovalCard.tsx`
+- `src/components/BuyPressureDashboard.tsx`
+- `src/components/DataBadge.tsx`
+- `src/components/LeadersTab.tsx`
+- `src/components/MarketTab.tsx`
+- `src/components/PortfolioTracker.tsx`
+- `src/components/SimulationTab.tsx`
+- `src/components/AppHeader.tsx`
+- `src/components/AppSidebar.tsx`
+- `src/components/MultiSearchableSelect.tsx`
+- `src/components/AnalyticsTab.tsx`
+- `src/components/BackToTop.tsx` (new)
+- `src/App.tsx`
+- `src/marketData.ts`
+- `src/index.css`
+- `src/AGENTS.md`
+
+### Verification
+- `npx tsc --noEmit` PASS 0 errors
+- `npx vitest run` 18/18 tests passing
+- `npx vite build` 14.5s, no errors

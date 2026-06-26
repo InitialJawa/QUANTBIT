@@ -633,7 +633,7 @@ export function AppSidebar({
               {engineConfig.customUniverse && engineConfig.customUniverse.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
                   {engineConfig.customUniverse.map((t, i) => (
-                    <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                    <span key={i} className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       #{t}
                     </span>
                   ))}
@@ -883,7 +883,7 @@ export function AppSidebar({
                   value={backtestConfig.customUniverse || []}
                   onChange={(v) => updateBacktestValue("customUniverse", v)}
                   placeholder="Cari saham..."
-                  theme="indigo"
+                  theme="emerald"
                 />
               </div>
             </div>

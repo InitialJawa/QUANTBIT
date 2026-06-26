@@ -35,8 +35,8 @@ interface AppHeaderProps {
 }
 
 const TABS = [
-  { id: "market", icon: Activity, label: "Market" },
-  { id: "portfolio", icon: Briefcase, label: "Portfolio" },
+  { id: "market", icon: Activity, label: "Pasar" },
+  { id: "portfolio", icon: Briefcase, label: "Portofolio" },
   { id: "analytics", icon: BarChart3, label: "Analitik" },
   { id: "backtest", icon: History, label: "Backtest" },
 

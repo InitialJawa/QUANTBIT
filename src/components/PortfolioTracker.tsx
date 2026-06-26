@@ -986,14 +986,27 @@ export function PortfolioTracker({
             </div>
 
             {enrichedPortfolio.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl bg-white/[0.01] border justify-center border-dashed border-white/5 flex flex-col items-center gap-3">
-                <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+              <div className="p-8 text-center rounded-2xl bg-white/[0.01] border border-dashed border-white/10 flex flex-col items-center gap-3">
+                <Briefcase className="w-8 h-8 text-emerald-400/60" />
+                <span className="text-xs font-bold text-white/60 uppercase tracking-widest">
                   Portofolio Kosong
                 </span>
-                <p className="text-white/30 text-caption font-sans max-w-sm">
-                  Belum ada penyaluran dana ke aset saham. Gunakan sistem
-                  Analisis di panel kanan untuk skenario akuisisi.
+                <p className="text-white/40 text-caption font-sans max-w-sm leading-relaxed">
+                  Belum ada saham yang dibeli. Mulai dengan beli pertama, atau
+                  lihat rekomendasi AI di tab Analitik.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const form = document.getElementById("manual-buy-form");
+                    form?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
+                  }}
+                  className="mt-2 px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
+                  style={{ backgroundColor: '#00c9a5', color: '#000' }}
+                >
+                  <Plus className="w-3.5 h-3.5 inline-block mr-1" /> Beli Pertama
+                </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1041,7 +1054,17 @@ export function PortfolioTracker({
                             <span className="text-label text-white/30 block mt-1.5 font-mono">Skor {item.score}</span>
                           </td>
                           <td className="py-3.5 px-3 text-right font-medium text-white/90 font-mono text-xs">
-                            {item.shares.toLocaleString()} {item.ticker === "EMAS" || item.ticker === "GOLD" ? "gr" : "lbr"}
+                            {item.shares.toLocaleString()}{" "}
+                            <span
+                              title={
+                                item.ticker === "EMAS" || item.ticker === "GOLD"
+                                  ? "1 lot emas = 1 gram. Spread 2% untuk konversi fisik."
+                                  : "1 lot = 100 lembar. Minimal transaksi = 1 lot."
+                              }
+                              className="cursor-help border-b border-dotted border-white/30"
+                            >
+                              {item.ticker === "EMAS" || item.ticker === "GOLD" ? "gr" : "lbr"}
+                            </span>
                           </td>
                           <td className="py-3.5 px-3 text-right">
                             <div className="font-mono text-caption text-white/40 font-semibold tracking-wider">B: {item.buyPrice.toLocaleString()}</div>
@@ -1657,7 +1680,7 @@ export function PortfolioTracker({
               <AlertTriangle className="w-5 h-5 text-rose-400" />
             )}
             {notification.type === "info" && (
-              <HelpCircle className="w-5 h-5 text-blue-400" />
+              <HelpCircle className="w-5 h-5 text-emerald-400" />
             )}
           </div>
           <div className="flex-1 space-y-1">

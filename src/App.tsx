@@ -11,6 +11,7 @@ import { AppHeader } from "./components/AppHeader";
 import { useMarketRegimeSync } from "./hooks/useMarketRegimeSync";
 import { useProactiveAgent } from "./hooks/useProactiveAgent";
 import { AITestHarness } from "./components/AITestHarness";
+import { BackToTop } from "./components/BackToTop";
 import { useNotifications } from "./contexts/NotificationContext";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
@@ -397,7 +398,8 @@ function AppContent({ logout }: { logout: () => void }) {
         onToggleWatchlist={pm.handleToggleWatchlist}
         chartTheme={ui.getChartTheme()}
       />
-{import.meta.env?.DEV && <AITestHarness />}
+      <BackToTop />
+ {import.meta.env?.DEV && <AITestHarness />}
     </div>
   );
 }

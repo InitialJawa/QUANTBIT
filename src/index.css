@@ -40,9 +40,9 @@
   --bg-header: #FFFFFF;
   --bg-elevated: #FFFFFF;
   --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-tertiary: #94A3B8;
-  --text-muted: #CBD5E1;
+  --text-secondary: #334155;
+  --text-tertiary: #64748B;
+  --text-muted: #94A3B8;
   --border-default: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.12);
   --accent: #00a37a;
@@ -260,6 +260,18 @@
   color: var(--accent-red) !important;
 }
 
+/* Blue text → accent (green) for consistency */
+[data-theme] .text-blue-400,
+[data-theme] .text-blue-300,
+[data-theme] [class*="text-blue-4"] {
+  color: var(--accent) !important;
+}
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-blue-300,
+[data-theme="light"] [class*="text-blue-4"] {
+  color: var(--accent) !important;
+}
+
 [data-theme="light"] .text-emerald-400,
 [data-theme="light"] .text-emerald-300,
 [data-theme="light"] [class*="text-emerald-4"],
@@ -451,10 +463,12 @@
    BADGE / STATUS PILLS — Cyan Theme
    ========================================================================== */
 
-[data-theme] [class*="bg-emerald-500/10"],
-[data-theme] .bg-emerald-500\/10,
-[data-theme] [class*="bg-cyan-500/10"],
-[data-theme] .bg-cyan-500\/10 {
+[data-theme] [class*="bg-emerald-500/"],
+[data-theme] .bg-emerald-500\/,
+[data-theme] [class*="bg-cyan-500/"],
+[data-theme] .bg-cyan-500\/,
+[data-theme] [class*="bg-blue-500/"],
+[data-theme] .bg-blue-500\/ {
   background: rgba(0, 201, 165, 0.12) !important;
   border-color: rgba(0, 201, 165, 0.25) !important;
 }
@@ -473,10 +487,12 @@
 }
 
 /* Light badge overrides */
-[data-theme="light"] [class*="bg-emerald-500/10"],
-[data-theme="light"] .bg-emerald-500\/10,
-[data-theme="light"] [class*="bg-cyan-500/10"],
-[data-theme="light"] .bg-cyan-500\/10 {
+[data-theme="light"] [class*="bg-emerald-500/"],
+[data-theme="light"] .bg-emerald-500\/,
+[data-theme="light"] [class*="bg-cyan-500/"],
+[data-theme="light"] .bg-cyan-500\/,
+[data-theme="light"] [class*="bg-blue-500/"],
+[data-theme="light"] .bg-blue-500\/ {
   background-color: #d1fae5 !important;
   color: #065f46 !important;
   border-color: rgba(0, 163, 122, 0.3) !important;
@@ -497,9 +513,10 @@
   border-color: rgba(242, 54, 69, 0.3) !important;
 }
 
-/* Emulated cyan-950 for ai chat bubbles */
+/* Emulated cyan-950 / blue-950 for ai chat bubbles & decorative surfaces */
 [data-theme="dark"] [class*="bg-cyan-950/"],
-[data-theme="dark"] [class*="bg-emerald-950/"] {
+[data-theme="dark"] [class*="bg-emerald-950/"],
+[data-theme="dark"] [class*="bg-blue-950/"] {
   background: rgba(0, 201, 165, 0.08) !important;
   border-color: rgba(0, 201, 165, 0.2) !important;
 }

@@ -425,7 +425,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     return (
       <button
         onClick={() => { setIsOpen(true); setUnreadCount(0); }}
-        className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-full bg-cyan-500 hover:bg-cyan-600 text-black shadow-lg hover:shadow-cyan-500/25 transition-all flex items-center justify-center cursor-pointer group"
+        className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center cursor-pointer group"
         aria-label="Buka AI Chat"
       >
         <Bot className="w-6 h-6" />
@@ -450,7 +450,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       >
         {/* Header */}
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center border border-cyan-500/20 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
           <div className="min-w-0 flex-1">
@@ -490,10 +490,10 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             <div ref={containerRef} className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin" style={{ minHeight: "300px", maxHeight: "400px" }}>
               {messages.filter((m) => m.role !== "tool").map((msg, i) => (
                 <div key={i} className={`flex gap-2 w-full ${msg.role === "user" ? "ml-auto flex-row-reverse max-w-[88%]" : "mr-auto max-w-[96%]"}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-cyan-500 text-black" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-emerald-500 text-black" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
                     {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                   </div>
-                  <div className={`px-3 py-2 rounded-xl text-body leading-relaxed flex-1 overflow-hidden ${msg.role === "user" ? "bg-cyan-950/40 rounded-tr-none border border-cyan-500/20" : "bg-white/[0.03] rounded-tl-none border border-white/5"}`} style={{ color: msg.role === "user" ? "#fff" : "rgba(255,255,255,0.9)" }}>
+                  <div className={`px-3 py-2 rounded-xl text-body leading-relaxed flex-1 overflow-hidden ${msg.role === "user" ? "bg-emerald-950/40 rounded-tr-none border border-emerald-500/20" : "bg-white/[0.03] rounded-tl-none border border-white/5"}`} style={{ color: msg.role === "user" ? "#fff" : "rgba(255,255,255,0.9)" }}>
                     {msg.role === "user" ? <div className="whitespace-pre-line">{msg.content}</div> : <MarkdownRenderer content={msg.content} />}
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                     <button
                       key={idx}
                       onClick={() => send(s.query)}
-                      className="text-caption bg-cyan-950/20 hover:bg-cyan-950/40 px-2 py-1 rounded-lg border border-cyan-500/15 transition-all cursor-pointer text-cyan-300/70 hover:text-cyan-300"
+                      className="text-caption bg-emerald-950/20 hover:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/15 transition-all cursor-pointer text-emerald-300/70 hover:text-emerald-300"
                     >
                       {s.label}
                     </button>
@@ -560,7 +560,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                   <button
                     key={idx}
                     onClick={() => send(p.query)}
-                    className="text-caption bg-white/5 hover:bg-cyan-950/30 px-2 py-1 rounded-lg border border-white/10 transition-all cursor-pointer"
+                    className="text-caption bg-white/5 hover:bg-emerald-950/30 px-2 py-1 rounded-lg border border-white/10 transition-all cursor-pointer"
                     style={{ color: "rgba(255,255,255,0.6)" }}
                   >
                     {p.label}
@@ -586,7 +586,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                 onClick={() => send(input)}
                 disabled={!input.trim() || isLoading}
                 aria-label="Kirim pertanyaan"
-                className="w-9 h-9 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-black flex items-center justify-center shrink-0 disabled:opacity-40 transition-all cursor-pointer"
+                className="w-9 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black flex items-center justify-center shrink-0 disabled:opacity-40 transition-all cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -699,8 +699,8 @@ function ToolResultCard({ name, result, error }: { name: string; result: any; er
   }
 
   return (
-    <div className="px-3 py-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10 text-caption font-mono">
-      <div className="text-cyan-400 font-bold mb-1 text-xs uppercase tracking-wider">{name}</div>
+    <div className="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-caption font-mono">
+      <div className="text-emerald-400 font-bold mb-1 text-xs uppercase tracking-wider">{name}</div>
       <div className="space-y-0.5">
         {rows.map((r, i) => (
           <div key={i} className="flex justify-between gap-2">

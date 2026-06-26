@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SlidersHorizontal, Flame, ShieldAlert } from "lucide-react";
 import { LeadersTab } from "./LeadersTab";
 import { RecoveryOpsTab } from "./RecoveryOpsTab";
@@ -20,12 +20,24 @@ interface AnalyticsTabProps {
 const SUB_TABS = [
   { id: "leaders" as const, icon: SlidersHorizontal, label: "Leaders" },
   { id: "recovery" as const, icon: Flame, label: "Recovery" },
-  { id: "risk" as const, icon: ShieldAlert, label: "Risk" },
+  { id: "risk" as const, icon: ShieldAlert, label: "Proteksi Modal" },
 ];
+
+const SUB_TAB_STORAGE_KEY = "quantbit_analytics_subtab";
 
 export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, portfolio, watchlist, getDynamicStock, isIHSGInCrisis }: AnalyticsTabProps) {
   const { activeProfile, engineConfig } = useEngineConfig();
-  const [subTab, setSubTab] = useState<SubTab>("leaders");
+  const [subTab, setSubTab] = useState<SubTab>(() => {
+    try {
+      const saved = localStorage.getItem(SUB_TAB_STORAGE_KEY);
+      if (saved === "leaders" || saved === "recovery" || saved === "risk") return saved;
+    } catch {}
+    return "leaders";
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(SUB_TAB_STORAGE_KEY, subTab); } catch {}
+  }, [subTab]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -41,6 +53,11 @@ export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, port
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
+            {id === "recovery" && isIHSGInCrisis && (
+              <span className="text-label font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                Krisis
+              </span>
+            )}
           </button>
         ))}
       </div>

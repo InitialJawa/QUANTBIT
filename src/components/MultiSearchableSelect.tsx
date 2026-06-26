@@ -13,7 +13,7 @@ interface MultiSearchableSelectProps {
   value: string[];
   onChange: (value: string[]) => void;
   placeholder?: string;
-  theme?: "indigo" | "emerald";
+  theme?: "emerald";
   className?: string;
 }
 
@@ -22,15 +22,15 @@ export function MultiSearchableSelect({
   value,
   onChange,
   placeholder = "Cari saham...",
-  theme = "indigo",
+  theme = "emerald",
   className = ""
 }: MultiSearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const borderFocusColor = theme === "indigo" ? "focus:border-indigo-500" : "focus:border-emerald-500";
-  const pillBg = theme === "indigo" ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+  const borderFocusColor = "focus:border-emerald-500";
+  const pillBg = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

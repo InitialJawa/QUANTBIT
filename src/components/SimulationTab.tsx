@@ -607,10 +607,10 @@ export function SimulationTab({
       
       {/* 1. Header Information Panel */}
       <div className="p-5 md:p-6 bg-[#050505] border border-white/[0.03] rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         <div>
           <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
-             <Award className="w-4 h-4 text-indigo-400" />
+             <Award className="w-4 h-4 text-emerald-400" />
              Interactive Trading & Backtest Laboratory
           </h2>
           <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
@@ -619,7 +619,7 @@ export function SimulationTab({
         </div>
         
         {!hideTabs && (
-          <div className="flex bg-[#050505] p-1 border border-white/[0.05] rounded-xl self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto">
+          <div className="flex border-b border-white/[0.04] self-start md:self-auto shrink-0 relative z-10 w-full md:w-auto md:min-w-[280px]">
             <button
               onClick={() => {
                 setActiveSubTab("algo");
@@ -627,19 +627,23 @@ export function SimulationTab({
                   handleRunAlgoBacktest();
                 }
               }}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
-                activeSubTab === "algo" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
+              className={`flex-1 md:flex-none px-3 py-2 text-body font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeSubTab === "algo"
+                  ? "text-emerald-500 border-b-2 border-emerald-500"
+                  : "text-white/30 hover:text-white/60"
               }`}
             >
-              <Briefcase className="w-3.5 h-3.5" /> Backtester
+              <Briefcase className="w-3.5 h-3.5" /> Strategi
             </button>
             <button
               onClick={() => setActiveSubTab("past")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-label font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all ${
-                activeSubTab === "past" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-white/40 hover:text-white"
+              className={`flex-1 md:flex-none px-3 py-2 text-body font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeSubTab === "past"
+                  ? "text-emerald-500 border-b-2 border-emerald-500"
+                  : "text-white/30 hover:text-white/60"
               }`}
             >
-              <Coins className="w-3.5 h-3.5" /> Simulasi
+              <Coins className="w-3.5 h-3.5" /> Historis
             </button>
           </div>
         )}
@@ -1350,7 +1354,7 @@ export function SimulationTab({
                       {backtestResult.logs.map((log: any, idx: number) => {
                         const dateStr = log.date && log.date.length >= 10 ? log.date.slice(0, 10) : log.date;
                         const [, typeColor] = {
-                          BUY: ["bg-blue-500/20 text-blue-400 border-blue-500/20", "text-blue-300"],
+                          BUY: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
                           SELL: ["bg-rose-500/20 text-rose-400 border-rose-500/20", "text-rose-300"],
                           REBALANCE: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
                           CRASH_TRIGGER: ["bg-red-500/25 text-red-400 border-red-500/30", "text-red-300"],

@@ -81,6 +81,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 
 ## Child DOX Index
 - `src/components/` — React UI components
+- `src/components/BackToTop.tsx` — Floating scroll-to-top button, mounted di AppContent
 - `src/components/ManageProfilesModal.tsx` — Weight profile management UI (sliders, add/delete custom profiles)
 - `src/components/AIActionApprovalCard.tsx` — Inline approval card for AI-suggested actions (Level 3)
 - `src/components/_archive/` — Archived dead components (DashboardGrid.tsx)
