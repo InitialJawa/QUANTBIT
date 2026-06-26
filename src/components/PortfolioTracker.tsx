@@ -428,6 +428,10 @@ export function PortfolioTracker({
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
 
   const portfolioWarnings = enrichedPortfolio.filter((item) => {
+    // Safe haven assets (EMAS/GOLD) are not ranked against topN — skip crossover check.
+    // (rankMap returns { rank: 99, score: "50.0" } for assets not in processedLeaders,
+    //  which would always trigger outOfTop5 below.)
+    const isSafeHaven = item.ticker === "EMAS" || item.ticker === "GOLD";
     const liveStock = visibleStocks.find((s) => s.ticker === item.ticker);
     const drop = liveStock ? liveStock.change : 0;
     const exData = EX.find((e) => e.ticker.split(".")[0] === item.ticker);
@@ -435,7 +439,7 @@ export function PortfolioTracker({
       exData &&
       (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
     const isExitLive = drop <= -0.5;
-    const outOfTop5 = item.rank > engineConfig.topNCount;
+    const outOfTop5 = !isSafeHaven && item.rank > engineConfig.topNCount;
     return (
       isExitStatic ||
       isExitLive ||
@@ -802,13 +806,18 @@ export function PortfolioTracker({
           <p className="text-xs text-amber-200/70 font-sans max-w-3xl">
             {strategyEval.reason}
           </p>
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-2">
             <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
               TARGET: {strategyEval.targetSafeHaven?.toUpperCase()}
             </div>
             <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
               MODE: {engineConfig.simulationMode.toUpperCase()}
             </div>
+            {portfolio.some((p) => p.ticker === strategyEval.targetSafeHaven) && (
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Safe Haven Aktif — Pertahankan
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1113,16 +1122,29 @@ export function PortfolioTracker({
                             </div>
                           </td>
                           <td className="py-3.5 px-3 text-center">
-                            <span className={`px-2 py-1 inline-block rounded text-label font-bold font-mono tracking-wider border ${
-                              item.rank <= engineConfig.topNCount
-                                ? "bg-white/10 border-white/20 text-white"
-                                : item.rank <= 15
-                                  ? "bg-white/[0.05] border-white/10 text-white/80"
-                                  : item.rank >= 40
-                                    ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                                    : "bg-white/[0.02] border-white/5 text-white/50"
-                            }`}>Rank {item.rank}</span>
-                            <span className="text-label text-white/30 block mt-1.5 font-mono">Skor {item.score}</span>
+                            {item.ticker === "EMAS" || item.ticker === "GOLD" ? (
+                              <>
+                                <span className="px-2 py-1 inline-block rounded text-label font-bold font-mono tracking-wider border bg-amber-500/10 border-amber-500/30 text-amber-400">
+                                  Safe Haven
+                                </span>
+                                <span className="text-label text-amber-400/70 block mt-1.5 font-mono">
+                                  {isIHSGInCrisis ? "HOLD per Strategy" : "Idle"}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className={`px-2 py-1 inline-block rounded text-label font-bold font-mono tracking-wider border ${
+                                  item.rank <= engineConfig.topNCount
+                                    ? "bg-white/10 border-white/20 text-white"
+                                    : item.rank <= 15
+                                      ? "bg-white/[0.05] border-white/10 text-white/80"
+                                      : item.rank >= 40
+                                        ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                                        : "bg-white/[0.02] border-white/5 text-white/50"
+                                }`}>Rank {item.rank}</span>
+                                <span className="text-label text-white/30 block mt-1.5 font-mono">Skor {item.score}</span>
+                              </>
+                            )}
                           </td>
                           <td className="py-3.5 px-3 text-right font-medium text-white/90 font-mono text-xs">
                             {item.shares.toLocaleString()}{" "}
