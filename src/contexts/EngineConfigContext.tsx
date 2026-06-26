@@ -190,6 +190,13 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
   });
   const updateBacktestValue = (key: string, value: any) => {
     setBacktestConfig((prev) => ({ ...prev, [key]: value }));
+    // Clear stale backtestResult so the UI doesn't briefly show numbers
+    // computed with old config. The auto-run effect in SimulationTab
+    // will re-populate it within a few ms. Without this, screenshots
+    // taken between the input change and the next run completion show
+    // inconsistent metrics (e.g. yield calc from new date + IHSG return
+    // from old date).
+    setBacktestResultState(null);
   };
   const resetBacktestConfig = () => {
     setBacktestConfig({ ...engineConfig });
