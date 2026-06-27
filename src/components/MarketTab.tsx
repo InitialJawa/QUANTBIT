@@ -81,8 +81,9 @@ export function MarketTab({
   }, [allVisibleStocks, engineConfig.simulationMode, engineConfig.customUniverse, engineConfig.singleTicker]);
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
-  const [depthTicker, setDepthTicker] = useState<string>(activeStock.ticker);
   const [watchlistTicker, setWatchlistTicker] = useState<string>(activeStock.ticker);
+  const [watchlistSearch, setWatchlistSearch] = useState("");
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
 
   const [tickerStatus, setTickerStatus] = useState<Record<string, DataStatus>>({});
 
@@ -205,50 +206,8 @@ export function MarketTab({
   const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
   React.useEffect(() => {
-    setDepthTicker(activeStock.ticker);
+    setWatchlistTicker(activeStock.ticker);
   }, [activeStock.ticker]);
-
-  const currentDepthStock = visibleStocks.find(s => s.ticker === depthTicker) || activeStock;
-
-  const getIdXTickSize = (price: number) => {
-    if (price < 200) return 1;
-    if (price < 500) return 2;
-    if (price < 2000) return 5;
-    if (price < 5000) return 10;
-    return 25;
-  };
-
-  const getSpreadSeed = (ticker: string): number => {
-    let seed = 0;
-    for (let i = 0; i < ticker.length; i++) {
-      seed = ((seed << 5) - seed) + ticker.charCodeAt(i);
-      seed = seed & seed;
-    }
-    return Math.abs(seed) % 10000;
-  };
-
-  const generateEstimatedSpread = (price: number, ticker: string) => {
-    const tick = getIdXTickSize(price);
-    const seed = getSpreadSeed(ticker);
-    const bids = [];
-    const asks = [];
-
-    for (let i = 1; i <= 5; i++) {
-      const bidPrice = price - (i * tick);
-      const bidVol = Math.round((12000 - i * 1800) * (0.8 + ((seed * (i + 1)) % 1000) / 2500));
-      bids.push({ price: bidPrice, vol: bidVol, count: Math.round(bidVol / 12) });
-
-      const askPrice = price + ((i - 1) * tick);
-      const askVol = Math.round((11500 - i * 1500) * (0.8 + ((seed * (i + 5)) % 1000) / 2500));
-      asks.push({ price: askPrice, vol: askVol, count: Math.round(askVol / 11) });
-    }
-
-    return { bids, asks: asks.reverse() };
-  };
-
-  const { bids, asks } = generateEstimatedSpread(currentDepthStock.currentPrice, depthTicker);
-  const totalBidVol = bids.reduce((acc, b) => acc + b.vol, 0);
-  const totalAskVol = asks.reduce((acc, a) => acc + a.vol, 0);
 
   const isIHSGInCrisis = isCrisisMode();
   const currentStatus = isIHSGInCrisis ? "RISK OFF" : RS.status;
@@ -285,6 +244,11 @@ export function MarketTab({
           <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span className="text-emerald-400 font-bold">FILTERED BY PORTFOLIO STRATEGY:</span>
           <span className="text-white/80 truncate">{strategyFilterLabel}</span>
+        </div>
+      )}
+      {summaryError && (
+        <div className="bg-amber-500/[0.04] border border-amber-500/15 rounded-xl px-4 py-2 text-caption text-amber-400/80 font-sans">
+          {summaryError}
         </div>
       )}
 
@@ -441,8 +405,9 @@ export function MarketTab({
               <strong className="text-white/60 flex items-center justify-between mb-2 font-mono text-caption uppercase tracking-wider w-full" id="jci-rationale-header">
                 <span>Rangkuman Sistem:</span>
                 {isFetchingSummary && (
-                  <span className="text-label animate-pulse text-white/40 lowercase font-sans font-bold tracking-widest bg-white/[0.02] border border-white/5 px-2 py-0.5 rounded">
-                    menulis...
+                  <span className="flex items-center gap-1.5 text-label text-white/30">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    Menganalisis pasar...
                   </span>
                 )}
               </strong>
@@ -509,9 +474,14 @@ export function MarketTab({
             </AnimatePresence>
 
             <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4">
-              <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowAuditTrail(!showAuditTrail)}
+                className="flex items-center justify-between w-full cursor-pointer"
+              >
                 <span className="text-caption uppercase font-bold tracking-widest text-white/50 font-mono">Decision Audit Trail</span>
-              </div>
+                {showAuditTrail ? <ChevronUp className="w-3 h-3 text-white/40" /> : <ChevronDown className="w-3 h-3 text-white/40" />}
+              </button>
+              {showAuditTrail && <>
               <div className="grid grid-cols-2 gap-4 text-body">
                 <div className="space-y-3">
                   <div>
@@ -594,7 +564,8 @@ export function MarketTab({
                   <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Syarat Masuk Kembali</span>
                   <p className="text-zinc-400 text-xs leading-relaxed">{trail.reentryCondition}</p>
                 </div>
-              </div>
+                </div>
+              </>}
             </div>
           </div>
         </div>
@@ -680,6 +651,18 @@ export function MarketTab({
         </div>
         
         <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-6 relative overflow-hidden">
+          {watchlist.length > 0 && (
+            <div className="relative mb-4">
+              <Search className="w-3.5 h-3.5 text-white/30 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Cari di daftar pantau..."
+                value={watchlistSearch}
+                onChange={(e) => setWatchlistSearch(e.target.value)}
+                className="w-full text-xs pl-10 pr-4 py-2.5 bg-white/[0.01] hover:bg-white/[0.02] border border-white/[0.05] rounded-xl outline-none text-white focus:border-white/20 transition-all font-mono placeholder:text-white/20"
+              />
+            </div>
+          )}
           {watchlist.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center gap-3 rounded-2xl bg-white/[0.01] border border-dashed border-white/[0.05]">
               <span className="text-body uppercase tracking-widest font-bold text-white/40">Daftar Kosong</span>
@@ -687,25 +670,40 @@ export function MarketTab({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {watchlist.map((item) => {
+              {watchlist
+                .filter(item => {
+                  if (!watchlistSearch) return true;
+                  const q = watchlistSearch.toLowerCase();
+                  const liveStock = getDynamicStock(item.ticker) || STOCKS_DATA.find((s) => s.ticker === item.ticker);
+                  return item.ticker.toLowerCase().includes(q) || (liveStock?.name || "").toLowerCase().includes(q);
+                })
+                .map((item) => {
                 const liveStock = getDynamicStock(item.ticker) || STOCKS_DATA.find((s) => s.ticker === item.ticker);
                 if (!liveStock) return null;
                 const isPos = liveStock.change >= 0;
+                const status = tickerStatus[item.ticker];
                 return (
                   <div 
                     key={item.ticker}
-                    className="p-5 rounded-2xl border border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.02] transition-colors flex items-center justify-between group"
+                    onClick={() => onSelectTicker(liveStock.ticker)}
+                    className="p-5 rounded-2xl border border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/10 transition-all flex items-center justify-between group cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
                       <TickerLogo ticker={liveStock.ticker} size="md" fallbackColor={liveStock.logoColor} />
                       <div>
-                        <button 
-                          onClick={() => onSelectTicker(liveStock.ticker)}
-                          className="flex items-center gap-2 group"
-                        >
+                        <div className="flex items-center gap-2">
                           <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
-                          
-                        </button>
+                          <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/15">AI Monitor</span>
+                          {status && status !== "LIVE" && (
+                            <span className={`text-[10px] uppercase font-bold tracking-widest px-1 py-0.5 rounded border ${
+                              status === "CACHED" ? "text-amber-400/60 bg-amber-500/5 border-amber-500/10" :
+                              status === "STALE" ? "text-rose-400/60 bg-rose-500/5 border-rose-500/10" :
+                              "text-white/30 bg-white/5 border-white/10"
+                            }`}>
+                              {status}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-caption text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
                       </div>
                     </div>
@@ -720,7 +718,7 @@ export function MarketTab({
                         </span>
                       </div>
                       <button
-                        onClick={() => onToggleWatchlist(liveStock.ticker)}
+                        onClick={(e) => { e.stopPropagation(); onToggleWatchlist(liveStock.ticker); }}
                         className="p-1.5 text-white/20 hover:text-white hover:bg-rose-500 border border-transparent hover:border-rose-400 rounded-lg cursor-pointer transition-all focus:outline-none"
                         title="Hapus Dari Daftar Pantau"
                       >

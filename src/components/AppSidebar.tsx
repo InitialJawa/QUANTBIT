@@ -158,55 +158,15 @@ export function AppSidebar({
       <div id="sidebar-macro-indicators-panel" className="mx-2">
         <div className="px-2 py-1 border-b border-white/[0.04] flex items-center justify-between">
           <span className="text-label font-medium text-tertiary uppercase tracking-wider">Makro</span>
-          <ExplainButton label="Regime Status (Health / Opportunity / Risk)" />
         </div>
         <div className="px-2 py-1.5 space-y-1">
-          <div className="flex items-center justify-between py-0.5">
-            <span className="text-label text-tertiary">Market</span>
-            <span className={`text-caption font-medium ${isIHSGInCrisis ? "text-rose-400" : RS.status === "SAFE" ? "text-emerald-400" : "text-amber-400"}`}>
-              {isIHSGInCrisis ? "RISK OFF" : RS.status === "SAFE" ? "RISK ON" : "WARNING"}
-            </span>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-label text-tertiary">USD/IDR</span>
+            <span className="text-body text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
           </div>
-
-          <div className="space-y-1.5">
-            <div>
-              <div className="flex justify-between text-label text-tertiary mb-0.5">
-                <span>Health</span>
-                <span className="text-secondary">{RS.market_health}%</span>
-              </div>
-              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
-                <div className="bg-[#d1d4dc] h-full rounded-full" style={{ width: `${RS.market_health}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-label text-tertiary mb-0.5">
-                <span>Opp.</span>
-                <span className="text-secondary">{RS.opportunity}%</span>
-              </div>
-              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
-                <div className="bg-[#00c9a5] h-full rounded-full" style={{ width: `${RS.opportunity}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-label text-tertiary mb-0.5">
-                <span>Risk</span>
-                <span className="text-secondary">{RS.risk}%</span>
-              </div>
-              <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
-                <div className="bg-[#f23645] h-full rounded-full" style={{ width: `${RS.risk}%` }} />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">USD/IDR</span>
-              <span className="text-body text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Gold/gr</span>
-              <span className="text-body text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
-            </div>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-label text-tertiary">Gold/gr</span>
+            <span className="text-body text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
           </div>
         </div>
       </div>

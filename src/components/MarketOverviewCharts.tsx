@@ -1,18 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line } from "recharts";
 import { api } from "../services/api";
-import { RS } from "../marketData";
-import { TrendingUp, TrendingDown, Activity, Shield, AlertTriangle, BarChart3 } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
 
 type Timeframe = "1M" | "6M" | "1Y" | "5Y" | "MAX";
-
-const REGIME_COLORS: Record<string, string> = {
-  RISK_ON: "#10b981",
-  RISK_OFF: "#ef4444",
-  RECOVERY_WATCH: "#eab308",
-  GOLD_DEFENSE: "#f59e0b",
-  CASH_DEFENSE: "#9ca3af",
-};
 
 function computeSMA(data: number[], period: number): (number | null)[] {
   return data.map((_, i) => {
@@ -23,6 +14,7 @@ function computeSMA(data: number[], period: number): (number | null)[] {
 }
 
 function formatRupiah(val: number) {
+  if (!Number.isFinite(val)) return "Rp 0";
   return "Rp " + Math.round(val).toLocaleString("id-ID");
 }
 
@@ -40,29 +32,67 @@ interface ChartDay {
   ihsgSma50: number | null;
 }
 
+function Skeleton() {
+  return (
+    <div className="space-y-4 animate-pulse p-4">
+      <div className="h-8 bg-white/5 rounded-lg w-64" />
+      <div className="flex gap-2">
+        {[1,2,3,4,5].map(i => <div key={i} className="h-6 bg-white/5 rounded-lg w-10" />)}
+      </div>
+      <div className="h-[320px] bg-white/[0.02] rounded-2xl border border-white/5 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+          <span className="text-caption text-white/30">Memuat data pasar...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 h-80">
+      <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+        <RefreshCw className="w-5 h-5 text-rose-400" />
+      </div>
+      <p className="text-caption text-white/40 text-center max-w-xs">
+        Gagal memuat data chart. Periksa koneksi atau coba lagi.
+      </p>
+      <button
+        onClick={onRetry}
+        className="px-4 py-2 text-caption font-bold uppercase tracking-widest bg-white/10 hover:bg-white/15 text-white rounded-xl border border-white/10 transition-colors cursor-pointer"
+      >
+        Coba Lagi
+      </button>
+    </div>
+  );
+}
+
 export function MarketOverviewCharts() {
   const [timeframe, setTimeframe] = useState<Timeframe>("1Y");
   const [rawData, setRawData] = useState<RawDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    setError(false);
     api.get<{ success: boolean; data: any[] }>("/api/backtest-data")
       .then(res => {
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
           setRawData(res.data.map(d => ({ date: d.date, ihsgPrice: d.ihsgPrice, goldPrice: d.goldPrice })));
+        } else {
+          setError(true);
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
   }, []);
 
-  const regimeStatus = RS.status === "SAFE" || RS.status === "WARNING"
-    ? "RISK_ON"
-    : RS.status === "CRASH"
-    ? "RISK_OFF"
-    : "RISK_ON";
-
-  const regimeColor = REGIME_COLORS[regimeStatus] || "#10b981";
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const slicedData = useMemo(() => {
     if (rawData.length === 0) return [];
@@ -119,13 +149,8 @@ export function MarketOverviewCharts() {
 
   const timeframeBtns: Timeframe[] = ["1M", "6M", "1Y", "5Y", "MAX"];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64 text-white/30 text-body">
-        Memuat data pasar...
-      </div>
-    );
-  }
+  if (loading) return <Skeleton />;
+  if (error) return <ErrorState onRetry={fetchData} />;
 
   return (
     <div className="space-y-3">
@@ -236,72 +261,6 @@ export function MarketOverviewCharts() {
         <div className="flex items-center justify-between mt-2 text-caption text-white/30">
           <span>Base: {slicedData[0]?.date || "-"} = 100</span>
           <span>{slicedData.length} hari</span>
-        </div>
-      </div>
-
-      <div className="bg-surface-alt border border-white/10 rounded-2xl p-4" style={{ background: "#0a0a0a" }}>
-        <div className="flex items-center gap-2 mb-3">
-          <BarChart3 className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-heading font-bold text-white">Indikator & Keputusan</h3>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Activity className="w-3 h-3 text-emerald-400" />
-              <span className="text-caption text-white/40 uppercase tracking-wider">Health</span>
-            </div>
-            <span className="text-heading font-bold text-white">{RS.market_health}</span>
-          </div>
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-3 h-3 text-cyan-400" />
-              <span className="text-caption text-white/40 uppercase tracking-wider">Oppty</span>
-            </div>
-            <span className="text-heading font-bold text-white">{RS.opportunity}</span>
-          </div>
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Shield className="w-3 h-3 text-rose-400" />
-              <span className="text-caption text-white/40 uppercase tracking-wider">Risk</span>
-            </div>
-            <span className="text-heading font-bold text-white">{RS.risk}</span>
-          </div>
-          <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <BarChart3 className="w-3 h-3 text-amber-400" />
-              <span className="text-caption text-white/40 uppercase tracking-wider">Deploy</span>
-            </div>
-            <span className="text-heading font-bold text-white">{RS.capital_deployment}%</span>
-          </div>
-        </div>
-
-        <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: regimeColor }}
-            />
-            <span className="text-body font-semibold text-white">Regime: {regimeStatus}</span>
-            <span className="text-body text-cyan-400">→ {RS.action}</span>
-          </div>
-
-          <div className="flex flex-wrap gap-3 text-caption text-white/50">
-            <span>Breadth: {RS.radar_context.breadth_above_60}/{RS.radar_context.idx_universe_size ?? 80} ≥60</span>
-            <span>Score Gap: {RS.radar_context.score_gap}</span>
-            <span>Faktor: {RS.radar_context.strongest_factor} ({RS.radar_context.strongest_factor_score})</span>
-          </div>
-
-          <p className="text-caption text-white/40 leading-relaxed">{RS.rationale}</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-3">
-          {Object.entries(REGIME_COLORS).map(([key, color]) => (
-            <div key={key} className="flex items-center gap-1.5 text-caption text-white/40">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-              <span>{key.replace(/_/g, " ")}</span>
-            </div>
-          ))}
         </div>
       </div>
     </div>
