@@ -29,7 +29,7 @@ export function FloatingWallet({
     <>
       <button
         onClick={onToggle}
-        className="fixed bottom-24 right-6 z-[999] w-14 h-14 rounded-full bg-cyan-500 hover:bg-cyan-600 text-black shadow-lg hover:shadow-cyan-500/25 transition-all flex items-center justify-center cursor-pointer group"
+        className="fixed bottom-24 right-6 z-[999] w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center cursor-pointer group"
         aria-label="Buka Dompet"
       >
         <Wallet className="w-6 h-6" />

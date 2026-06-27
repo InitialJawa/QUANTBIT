@@ -226,7 +226,7 @@ export function SimulationTab({
   // backtests and vice versa.
   useEffect(() => {
     const configType = backtestConfig.activeProfileId === "agresif" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
-    api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}`)
+    api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
       .catch(() => {
         setHistoricalData(generateClientBacktestData());
@@ -1052,36 +1052,6 @@ export function SimulationTab({
               ) : backtestResult ? (
                 <div className="space-y-6">
 
-                  {/* Sesi 12 — compact 6-col metrics strip (CAGR / MaxDD / Sharpe / Dividen / Trades) */}
-                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2 px-3 py-2 bg-white/[0.01] border border-white/[0.04] rounded-lg">
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">CAGR</div>
-                      <div className={`text-caption font-mono font-bold ${backtestResult.cagr >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                        {backtestResult.cagr.toFixed(2)}%
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Max DD</div>
-                      <div className="text-caption font-mono font-bold text-rose-400">-{backtestResult.maxDrawdown.toFixed(1)}%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Sharpe</div>
-                      <div className="text-caption font-mono font-bold text-white/70">{backtestResult.sharpe.toFixed(2)}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Dividen</div>
-                      <div className="text-caption font-mono font-bold text-emerald-400">+{formatRupiah(backtestResult.totalDividends).replace("Rp ", "Rp ")}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Trades</div>
-                      <div className="text-caption font-mono font-bold text-amber-400">{backtestResult.totalTrades}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-label font-mono text-white/40 uppercase tracking-widest">Vol</div>
-                      <div className="text-caption font-mono font-bold text-white/70">{backtestResult.volatility.toFixed(1)}%</div>
-                    </div>
-                  </div>
-
                   {/* Stats Bento Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
@@ -1225,7 +1195,7 @@ export function SimulationTab({
                       <span className="text-sm font-bold font-mono text-rose-400 block">
                         V: {backtestResult.volatility.toFixed(1)}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
-                      <span className="text-label text-[#A0A0A0] block">Max drawdown: -{backtestResult.maxDrawdown.toFixed(1)}%</span>
+
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
