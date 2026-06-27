@@ -23,7 +23,7 @@ interface FloatingAIChatProps {
 
 const WELCOME: AIChatMessage = {
   role: "assistant",
-  content: "Yo, gue Quantbit AI. Tanya apa aja — rumus, data, rekomendasi. Coba: 'cek portofolio', 'BPS skrg', 'beli BBCA 100'.",
+  content: "Halo, saya Quantbit AI. Terminal kuantitatif saham IDX. Coba tanya: cek portofolio, BPS skrg, atau beli BBCA 100.",
 };
 
 /** Generate a unique session id for this page load. */
@@ -90,13 +90,13 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   // Contextual follow-up suggestion chips
   const followUpSuggestions = useMemo(() => {
     const base = [
-      { label: "Cek portofolio", query: "Cek portofolio saya sekarang — nilai total, P&L, dan kondisi tiap posisi." },
+      { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, kondisi tiap posisi." },
       { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
-      { label: "Regime detail", query: "Jelaskan status regime saat ini — health, risk, action, dan kenapa." },
+      { label: "Regime detail", query: "Status regime — health, risk, action, dan alasannya." },
     ];
     if (selectedStock) {
       const t = selectedStock.ticker;
-      base.push({ label: `Analisa ${t}`, query: `Analisa ringkas ${t} (${selectedStock.name}) berdasarkan data live.` });
+      base.push({ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${selectedStock.name}. Pake data live.` });
     }
     return base;
   }, [selectedStock]);
@@ -375,7 +375,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `Maaf, terjadi kendala: ${e.message || "gagal menghubungi AI"}.` },
+        { role: "assistant", content: `Ada kendala teknis: ${e.message || "gagal hubungi AI"}. Coba lagi ya.` },
       ]);
     } finally {
       sendingRef.current = false;
@@ -387,7 +387,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     if (!pendingExplain) return;
     const label = pendingExplain.label;
     send(
-      `Jelaskan panel/angka "${label}": apa artinya dan dari mana sistem menghitungnya? Ringkas saja dulu.`,
+      `Jelaskan panel ini: ${label}. Apa artinya dan dari mana sistem menghitungnya? Ringkas saja.`,
       label
     );
     clearExplain();
@@ -408,12 +408,12 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   }, []);
 
   const quickPrompts: { label: string; query: string }[] = useMemo(() => [
-    { label: "Ringkas pasar", query: "Ringkas kondisi pasar IHSG saat ini dan implikasinya buat keputusan saya. Ringkas." },
-    { label: "Jelaskan regime", query: "Jelaskan status regime saat ini dan kenapa sistem memilih action ini. Ringkas." },
-    { label: "Cek portofolio", query: "Tolong cek portofolio saya sekarang — berapa nilai total, P&L, dan kondisi tiap posisi?" },
-    { label: "BPS sekarang", query: "Berapa BPS (Buy Pressure Score) saya sekarang? Action apa yang disarankan?" },
+    { label: "Ringkas pasar", query: "Kondisi pasar IHSG terkait dan implikasinya buat keputusan saya, ringkas." },
+    { label: "Jelaskan regime", query: "Status regime saat ini dan kenapa sistem milih action ini, ringkas." },
+    { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, dan kondisi tiap posisi." },
+    { label: "BPS sekarang", query: "Berapa BPS saya sekarang? Action yang disarankan?" },
     ...(selectedStock
-      ? [{ label: `Analisa ${selectedStock.ticker}`, query: `Analisa ringkas saham ${selectedStock.ticker} (${selectedStock.name}) berdasarkan angka live-nya.` }]
+      ? [{ label: `Analisa ${selectedStock.ticker}`, query: `Analisa ringkas ${selectedStock.ticker} — ${selectedStock.name}. Pake data live.` }]
       : []),
   ], [selectedStock]);
 
@@ -574,7 +574,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Tanya apa saja… (mis. 'Risk 85 dari mana?', 'beli BBCA 100')"
+                placeholder="Tanya apa saja — Risk 85 dari mana, beli BBCA 100"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send(input)}
