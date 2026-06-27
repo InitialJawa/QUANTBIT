@@ -583,37 +583,21 @@ export function PortfolioTracker({
         }
       });
     } else {
-      // 3. Algo mode: rank-based alerts
+      // 3. Algo mode: rank-based alerts — EXIT decision from rank only.
+      //    EX data is purely informational (badges in LeadersTab), not used for sell signals.
       portfolio.forEach((item) => {
         if (item.ticker === "EMAS" || item.ticker === "GOLD") return;
         const cleanT = item.ticker.toUpperCase().replace(".JK", "");
         const inTargets = topNTargetStocks.some(
           (t) => t.ticker.replace(".JK", "").toUpperCase() === cleanT,
         );
-        const exData = EX.find(
-          (e) => e.ticker.replace(".JK", "").toUpperCase() === cleanT,
-        );
-        const isExitStatic =
-          exData &&
-          (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
 
         const stock = visibleStocks.find((s) => s.ticker === item.ticker);
         const price = stock?.currentPrice ?? (typeof item.buyPrice === "number" ? item.buyPrice : 0);
         const shares = typeof item.shares === "number" ? item.shares : 0;
         if (price <= 0 || shares <= 0) return;
 
-        if (isExitStatic) {
-          list.push({
-            id: `sell-exit-${item.ticker}`,
-            type: "EXIT_SIGNAL",
-            ticker: item.ticker,
-            name: stock ? stock.name : item.ticker,
-            price,
-            shares,
-            reason: `Memicu kriteria Exit Ops (${exData.exit_state === "EXIT" ? "Sinyal Jual Kuat" : "Risiko Tinggi Penurunan"}).`,
-            badge: "EXIT REBALANCING",
-          });
-        } else if (!inTargets && engineConfig.enableCrossover !== false) {
+        if (!inTargets && engineConfig.enableCrossover !== false) {
           const rankInfo = getStockRankAndScore(item.ticker);
           list.push({
             id: `sell-rank-${item.ticker}`,

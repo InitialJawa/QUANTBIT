@@ -69,11 +69,20 @@ Yield IDX umumnya 1-8%, skor terkompresi di 7-53. Yield 3% (skor 20) vs 6% (skor
 
 ## Ringkasan
 
-| Profile | Masalah | Severitas | File |
-|---------|---------|-----------|------|
-| AMAN | Growth 45% di profil "aman" | 🔴 Konseptual | `src/marketData.ts:168` |
-| DIVIDEN | Quality 15% + Growth 20% kontradiktif | 🔴 Konseptual | `src/marketData.ts:170` |
-| AGRESIF | Quality 20% terlalu rendah | 🟡 Minor | `src/marketData.ts:169` |
-| Semua | Missing factor default 50 | 🔴 Logic Bug | `src/engine/ranker.ts:11-15` |
-| Custom | Tidak ada normalisasi bobot | 🟡 Logic Bug | `src/components/ManageProfilesModal.tsx:17` |
-| Semua | Dividend linear mapping | 🟡 Minor | `src/marketData.ts:274` |
+| Profile | Masalah | Severitas | Status | File |
+|---------|---------|-----------|--------|------|
+| AMAN | Growth 45% di profil "aman" | 🔴 Konseptual | ⏳ Open | `src/marketData.ts:168` |
+| DIVIDEN | Quality 15% + Growth 20% kontradiktif | 🔴 Konseptual | ⏳ Open | `src/marketData.ts:170` |
+| AGRESIF | Quality 20% terlalu rendah | 🟡 Minor | ⏳ Open | `src/marketData.ts:169` |
+| Semua | Missing factor default 50 | 🔴 Logic Bug | ✅ **FIXED** 2026-06-27 | `src/engine/ranker.ts:15` |
+| Custom | Tidak ada normalisasi bobot | 🟡 Logic Bug | ✅ **FIXED** 2026-06-27 | `src/components/ManageProfilesModal.tsx:10` |
+| Semua | Dividend linear mapping | 🟡 Minor | ⏳ Open | `src/marketData.ts:274` |
+
+### Perubahan Sesi 13 (2026-06-27)
+
+| Perubahan | Detail |
+|-----------|--------|
+| EXIT decision | EX data tidak lagi digunakan untuk sell signals di PortfolioTracker. Hanya rank-based crossover (ROTASI OUT). |
+| RecoveryOpsTab → TurnaroundOpsTab | Tab direbrand jadi informasional. Crisis badge dihapus. |
+| Ranker fix | `dividend ?? 50` → `dividend ?? 0` agar tidak ada bonus gratis. |
+| Normalisasi bobot | Slider ManageProfilesModal otomatis normalisasi ke 100%. |

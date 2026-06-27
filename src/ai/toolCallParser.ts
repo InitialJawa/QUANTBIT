@@ -10,11 +10,9 @@
 // ─────────────────────────────────────────────────────────────
 import type { AIToolCall } from "../types/ai.ts";
 
-/** Marker that starts a tool-call JSON block. We find each occurrence,
- *  then walk forward counting braces to find the matching `}`. This
- *  handles nested objects (e.g. `{"args": {}}`) that a non-greedy
- *  regex would mis-parse. */
-const TOOL_CALL_MARKER_SRC = '\\{\\s*"tool_call"\\s*:\\s*';
+/** Match both `{"tool_call":` and `{"function":` — some models use
+ *  the older function-calling key or slight format variations. */
+const TOOL_CALL_MARKER_SRC = '\\{\\s*"(?:tool_call|function)"\\s*:\\s*';
 
 /** Find the matching close-brace for the `{` at `startIdx`, accounting
  *  for nested objects and string literals. Returns -1 if not found. */
@@ -81,11 +79,14 @@ export function extractToolCalls(text: string): { cleanText: string; toolCalls: 
 
   // Strip matched tool-call JSON blocks from the user-facing text.
   let cleanText = text;
-  // Process ranges in reverse so earlier offsets remain valid.
   for (let i = matchedRanges.length - 1; i >= 0; i--) {
     const [start, end] = matchedRanges[i];
     cleanText = cleanText.slice(0, start) + cleanText.slice(end);
   }
+  // Fallback: catch any remaining `{"tool_call":` or `{"function":` blocks
+  // that the brace-counting parser might miss (e.g. malformed or wrapped in code fences).
+  cleanText = cleanText.replace(/\{["\s]*(?:tool_call|function)["\s]*:[\s\S]*?\}\s*\}\s*\}/g, "");
+  cleanText = cleanText.replace(/\{["\s]*(?:tool_call|function)["\s]*:[\s\S]*?\}\s*\}/g, "");
   cleanText = cleanText.replace(/\n{3,}/g, "\n\n").trim();
   return { cleanText, toolCalls };
 }

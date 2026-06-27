@@ -7,15 +7,14 @@ import { motion } from "motion/react";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 
-interface RecoveryOpsTabProps {
-  isIHSGInCrisis: boolean;
+interface TurnaroundOpsTabProps {
   onSelectTicker: (ticker: string) => void;
   portfolio?: PortfolioItem[];
   watchlist?: WatchlistItem[];
   getDynamicStock: (ticker: string) => StockData | undefined;
 }
 
-export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: RecoveryOpsTabProps) {
+export function TurnaroundOpsTab({ onSelectTicker, portfolio = [], watchlist = [], getDynamicStock }: TurnaroundOpsTabProps) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"drawdown_252d" | "recovery_from_60d_low" | "rs_change_60d" | "volume_ratio">("recovery_from_60d_low");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
@@ -62,11 +61,11 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
         <div>
           <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
             <Flame className="w-4 h-4 text-white/40" />
-            Peluang Pemulihan Saham (Turnaround)
-            <ExplainButton label="Recovery / Turnaround (RECOVERY_WATCH regime, momentum & volume)" />
+            Turnaround Candidates
+            <ExplainButton label="High drawdown stocks with potential reversal signals" />
           </h2>
           <p className="text-caption text-zinc-500 mt-2 max-w-2xl leading-relaxed">
-            Menganalisis saham yang menunjukkan lonjakan kekuatan tren dan didukung rasio volume saat fase pemulihan.
+            Stocks with significant drawdown showing potential reversal signals — for reference, not automatic decision.
           </p>
         </div>
       </div>
@@ -77,7 +76,7 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
           <Search className="w-3.5 h-3.5 text-white/30 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Cari kandidat pemulihan..."
+            placeholder="Cari turnaround candidates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full text-xs pl-10 pr-4 py-2.5 bg-white/[0.01] hover:bg-white/[0.02] border border-white/[0.05] rounded-xl outline-none text-white focus:border-white/20 transition-all font-mono placeholder:text-white/20"
@@ -126,7 +125,7 @@ export function RecoveryOpsTab({ isIHSGInCrisis, onSelectTicker, portfolio = [],
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = `quantbit_recovery_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.download = `quantbit_turnaround_${new Date().toISOString().slice(0, 10)}.csv`;
               a.click();
               URL.revokeObjectURL(url);
             }}

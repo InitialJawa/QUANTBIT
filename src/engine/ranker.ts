@@ -12,7 +12,7 @@ export function computeDayRankings(
       (ns.growth ?? 50) * profileWeights.growth +
       (ns.value ?? 50) * profileWeights.value +
       (ns.momentum ?? 50) * profileWeights.momentum +
-      (ns.dividend ?? 50) * profileWeights.dividend;
+      (ns.dividend ?? 0) * profileWeights.dividend;
     scores.push({ ticker, score: s });
   }
 

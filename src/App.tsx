@@ -93,7 +93,7 @@ function AppContent({ logout }: { logout: () => void }) {
   const df = useDataFeed();
   const ui = useUIState();
   const notif = useNotifications();
-  const pm = usePortfolioManager(user, df.getDynamicStock, ui.setAppNotification, notif);
+  const pm = usePortfolioManager(user, df.getDynamicStock, ui.showToasts ? ui.setAppNotification : undefined, notif);
   // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
   const { engineConfig, setActiveProfile } = useEngineConfig();
 
@@ -201,8 +201,15 @@ function AppContent({ logout }: { logout: () => void }) {
               {ui.appNotification.message}
             </span>
             <button
+              onClick={() => ui.setShowToasts(false)}
+              className="text-[10px] uppercase tracking-wider font-bold opacity-50 hover:opacity-100 ml-1"
+              title="Matikan semua notifikasi pop-up"
+            >
+              Mute
+            </button>
+            <button
               onClick={() => ui.setAppNotification(null)}
-              className="ml-2 hover:opacity-50"
+              className="hover:opacity-50"
             >
               <X className="w-4 h-4" />
             </button>

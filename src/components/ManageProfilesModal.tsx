@@ -8,7 +8,17 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
   const [newName, setNewName] = useState("");
 
   const handleWeightChange = (profileId: string, key: "qualityWeight" | "growthWeight" | "valueWeight" | "momentumWeight" | "dividendWeight", value: number) => {
-    updateProfile(profileId, { [key]: value });
+    const profile = engineConfig.profiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const updated = { ...profile, [key]: value };
+    const total = (updated.qualityWeight ?? 0) + (updated.growthWeight ?? 0) + (updated.valueWeight ?? 0) + (updated.momentumWeight ?? 0) + (updated.dividendWeight ?? 0);
+    if (total === 0) return;
+    const keys = ["qualityWeight", "growthWeight", "valueWeight", "momentumWeight", "dividendWeight"] as const;
+    const normalized: Record<string, number> = {};
+    for (const k of keys) {
+      normalized[k] = ((updated as any)[k] ?? 0) / total;
+    }
+    updateProfile(profileId, normalized);
   };
 
   const handleAdd = () => {
@@ -85,7 +95,7 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
               <Plus className="w-3 h-3" /> Tambah
             </button>
           </div>
-          <p className="text-caption text-white/20">Total bobot otomatis disesuaikan. Profile default (F/B) tidak bisa dihapus.</p>
+          <p className="text-caption text-white/20">Bobot dinormalisasi ke 100% otomatis. Profile default (F/B) tidak bisa dihapus.</p>
         </div>
       </div>
     </div>

@@ -600,7 +600,7 @@ export function AppSidebar({
           </div>
           <div className="px-2 py-1 space-y-0.5">
             <div className="text-label text-tertiary leading-relaxed">
-              Gunakan sub-tab <span className="text-secondary font-medium">Leaders</span>, <span className="text-secondary font-medium">Recovery</span>, dan <span className="text-secondary font-medium">Risk</span> untuk analisis lebih dalam.
+              Gunakan sub-tab <span className="text-secondary font-medium">Leaders</span>, <span className="text-secondary font-medium">Turnaround</span>, dan <span className="text-secondary font-medium">Risk</span> untuk analisis lebih dalam.
             </div>
           </div>
         </div>

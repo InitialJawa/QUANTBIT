@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { SlidersHorizontal, Flame, ShieldAlert } from "lucide-react";
 import { LeadersTab } from "./LeadersTab";
-import { RecoveryOpsTab } from "./RecoveryOpsTab";
+import { TurnaroundOpsTab } from "./TurnaroundOpsTab";
 import { CapitalProtectionTab } from "./CapitalProtectionTab";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 
-type SubTab = "leaders" | "recovery" | "risk";
+type SubTab = "leaders" | "turnaround" | "risk";
 
 interface AnalyticsTabProps {
   activeConfig: string;
@@ -19,7 +19,7 @@ interface AnalyticsTabProps {
 
 const SUB_TABS = [
   { id: "leaders" as const, icon: SlidersHorizontal, label: "Leaders" },
-  { id: "recovery" as const, icon: Flame, label: "Recovery" },
+  { id: "turnaround" as const, icon: Flame, label: "Turnaround" },
   { id: "risk" as const, icon: ShieldAlert, label: "Proteksi Modal" },
 ];
 
@@ -30,7 +30,7 @@ export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, port
   const [subTab, setSubTab] = useState<SubTab>(() => {
     try {
       const saved = localStorage.getItem(SUB_TAB_STORAGE_KEY);
-      if (saved === "leaders" || saved === "recovery" || saved === "risk") return saved;
+      if (saved === "leaders" || saved === "turnaround" || saved === "risk") return saved;
     } catch {}
     return "leaders";
   });
@@ -53,11 +53,7 @@ export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, port
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
-            {id === "recovery" && isIHSGInCrisis && (
-              <span className="text-label font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                Krisis
-              </span>
-            )}
+
           </button>
         ))}
       </div>
@@ -73,9 +69,8 @@ export function AnalyticsTab({ activeConfig: _activeConfig, onSelectTicker, port
             getDynamicStock={getDynamicStock}
           />
         )}
-        {subTab === "recovery" && (
-          <RecoveryOpsTab
-            isIHSGInCrisis={isIHSGInCrisis}
+        {subTab === "turnaround" && (
+          <TurnaroundOpsTab
             onSelectTicker={onSelectTicker}
             portfolio={portfolio}
             watchlist={watchlist}
