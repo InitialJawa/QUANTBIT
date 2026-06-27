@@ -391,6 +391,8 @@ function AppContent({ logout }: { logout: () => void }) {
   cash={pm.cash}
   pm={pm}
   getDynamicStock={df.getDynamicStock}
+  activeTab={ui.activeTab}
+  isDrawerOpen={ui.isDrawerOpen}
 />
       <StockDrawer
         isOpen={ui.isDrawerOpen}

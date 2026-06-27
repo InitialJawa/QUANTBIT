@@ -19,6 +19,8 @@ interface FloatingAIChatProps {
   cash?: number;
   pm: PortfolioAPI;
   getDynamicStock?: (ticker: string) => StockData | undefined;
+  activeTab?: string;
+  isDrawerOpen?: boolean;
 }
 
 const WELCOME: AIChatMessage = {
@@ -54,7 +56,7 @@ async function persistMessage(
   }
 }
 
-export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock }: FloatingAIChatProps) {
+export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock, activeTab = "market", isDrawerOpen }: FloatingAIChatProps) {
   const { pendingExplain, clearExplain, pendingActions, approveAction, rejectAction, addPendingAction, proactiveAlerts, openChatWithPrompt, setOpenChatWithPrompt } = useAICockpit();
   const { engineConfig, backtestConfig, isConfigSynced, setActiveProfile, syncFromBacktest, updateConfigValue } = useEngineConfig();
   const { notifications } = useNotifications();
@@ -87,19 +89,62 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     return -1;
   }, [messages]);
 
-  // Contextual follow-up suggestion chips
-  const followUpSuggestions = useMemo(() => {
-    const base = [
-      { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, kondisi tiap posisi." },
-      { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
-      { label: "Regime detail", query: "Status regime — health, risk, action, dan alasannya." },
-    ];
-    if (selectedStock) {
-      const t = selectedStock.ticker;
-      base.push({ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${selectedStock.name}. Pake data live.` });
+  // Context-aware suggestions per tab (no duplicates between follow-up & quick prompts)
+  const tabSuggestions = useMemo(() => {
+    const t = selectedStock?.ticker;
+    const n = selectedStock?.name;
+    switch (activeTab) {
+      case "portfolio":
+        return {
+          followUp: [
+            { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, kondisi tiap posisi." },
+            { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+            { label: "Rekomendasi beli", query: "Saham apa yang bagus dibeli sekarang berdasarkan data?" },
+          ],
+          quick: [
+            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
+            { label: "Kas darurat", query: "Berapa kas yang harus saya sisakan? Cek reserve buffer." },
+            { label: "Strategi aktif", query: "Strategi apa yang sedang aktif? Profil, universe, top N." },
+          ],
+        };
+      case "backtest":
+        return {
+          followUp: [
+            { label: "Hasil backtest", query: "Ringkas hasil backtest terakhir — metrik utama dan kesimpulan." },
+            { label: "Bandingkan", query: "Bandingkan hasil backtest ini dengan strategi default." },
+            ...(t ? [{ label: `Cek ${t}`, query: `Kinerja ${t} di backtest — beli, jual, dividen.` }] : []),
+          ],
+          quick: [
+            { label: "Settings backtest", query: "Apa setting backtest saya sekarang? Profile, mode, universe." },
+            { label: "BPS skrg", query: "Berapa BPS sekarang? Cocok buat backtest?" },
+          ],
+        };
+      case "analytics":
+        return {
+          followUp: [
+            { label: "Metrik utama", query: "Ringkas metrik utama di tab Analitik — apa artinya." },
+            { label: "Sektor terbaik", query: "Sektor apa yang paling bagus saat ini berdasarkan ranking." },
+            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ${t} — ${n}. Skor, rank, sektor.` }] : []),
+          ],
+          quick: [
+            { label: "Top N saat ini", query: "Saham top N rekomendasi sistem berdasarkan profil aktif." },
+            { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
+          ],
+        };
+      default: // market
+        return {
+          followUp: [
+            { label: "Ringkas pasar", query: "Kondisi pasar IHSG terkait dan implikasinya buat keputusan saya." },
+            { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
+            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
+          ],
+          quick: [
+            { label: "Top movers", query: "Siapa top movers hari ini dan kenapa?" },
+            { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+          ],
+        };
     }
-    return base;
-  }, [selectedStock]);
+  }, [activeTab, selectedStock]);
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
@@ -143,6 +188,20 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [openChatWithPrompt, setOpenChatWithPrompt]);
+
+  // Auto-analyze stock when StockDrawer opens
+  const lastDrawerStockRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isDrawerOpen && selectedStock?.ticker && selectedStock.ticker !== lastDrawerStockRef.current) {
+      lastDrawerStockRef.current = selectedStock.ticker;
+      if (!isOpen) setIsOpen(true);
+      send(`Analisa ringkas ${selectedStock.ticker} — ${selectedStock.name}. Pake data live.`, `StockDrawer: ${selectedStock.ticker}`);
+    }
+    if (!isDrawerOpen) {
+      lastDrawerStockRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDrawerOpen, selectedStock?.ticker]);
 
   // Surface proactive alerts as unread chip on the chat button.
   useEffect(() => {
@@ -407,16 +466,6 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     setMessages([WELCOME]);
   }, []);
 
-  const quickPrompts: { label: string; query: string }[] = useMemo(() => [
-    { label: "Ringkas pasar", query: "Kondisi pasar IHSG terkait dan implikasinya buat keputusan saya, ringkas." },
-    { label: "Jelaskan regime", query: "Status regime saat ini dan kenapa sistem milih action ini, ringkas." },
-    { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, dan kondisi tiap posisi." },
-    { label: "BPS sekarang", query: "Berapa BPS saya sekarang? Action yang disarankan?" },
-    ...(selectedStock
-      ? [{ label: `Analisa ${selectedStock.ticker}`, query: `Analisa ringkas ${selectedStock.ticker} — ${selectedStock.name}. Pake data live.` }]
-      : []),
-  ], [selectedStock]);
-
   // ── Render ────────────────────────────────────────────────────
 
   if (!isOpen) {
@@ -540,7 +589,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             {lastAssistantIdx >= 0 && !isLoading && (
               <div className="px-3 pb-0 pt-0 border-t border-white/5">
                 <div className="flex flex-wrap gap-1.5 py-1.5">
-                  {followUpSuggestions.map((s, idx) => (
+                  {tabSuggestions.followUp.map((s, idx) => (
                     <button
                       key={idx}
                       onClick={() => send(s.query)}
@@ -553,10 +602,10 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               </div>
             )}
 
-            {/* Quick prompts — always visible */}
+            {/* Quick prompts — context-aware per tab */}
             <div className="px-3 pb-1 pt-1 border-t border-white/5">
               <div className="flex flex-wrap gap-1.5">
-                {quickPrompts.map((p, idx) => (
+                {tabSuggestions.quick.map((p, idx) => (
                   <button
                     key={idx}
                     onClick={() => send(p.query)}
