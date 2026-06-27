@@ -623,16 +623,15 @@ export function AppSidebar({
             <div className="flex items-center justify-between">
               <span className="text-label text-tertiary">Gunakan Strategi Portofolio</span>
               <button onClick={() => {
-                if (!backtestUseLiveStrategy && !draftEqual) {
-                  // Triggering ON with unsynced draft — caller (SimulationTab) should handle
-                  // the modal via onSyncRequest. For now, we dispatch a custom event.
+                if (backtestUseLiveStrategy) {
+                  setBacktestUseLiveStrategy(false);
+                } else if (!draftEqual) {
                   window.dispatchEvent(new CustomEvent("backtest:draft-unsynced-toggle", { detail: { draft: backtestConfig, engine: engineConfig } }));
-                  return;
+                } else {
+                  setBacktestUseLiveStrategy(true);
                 }
-                setBacktestUseLiveStrategy(true);
               }}
-                disabled={backtestUseLiveStrategy}
-                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer disabled:opacity-40"
+                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer"
                 style={{
                   backgroundColor: backtestUseLiveStrategy ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
                   color: backtestUseLiveStrategy ? '#00c9a5' : '#7a7a7a',

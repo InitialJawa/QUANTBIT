@@ -9,7 +9,6 @@ import {
   Briefcase, 
   Plus, 
   Coins, 
-  ArrowRightLeft, 
   Calendar, 
   ChevronRight, 
   Clock, 
@@ -211,7 +210,7 @@ export function SimulationTab({
     }
     return null;
   };
-  const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, syncFromBacktest, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
+  const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
   // Sesi 12: when backtestUseLiveStrategy=true, strategy fields used at run-time
   // are sourced from engineConfig (not backtestConfig) so results are always
   // coherent with Portfolio. Date range, capital, and singleTicker remain
@@ -1005,52 +1004,7 @@ export function SimulationTab({
 
 
 
-          {/* Sync to Portfolio Button */}
-          <div className="flex justify-end pb-2">
-            <button
-              onClick={() => {
-                if (!backtestActiveProfile) {
-                  toast.error("No active profile selected");
-                  return;
-                }
-                if (!backtestResult) {
-                  toast.error("Run a backtest first before syncing to portfolio");
-                  return;
-                }
-                try {
-                  syncFromBacktest({
-                    profile: backtestActiveProfile,
-                    simulationMode: backtestConfig.simulationMode,
-                    universe: backtestConfig.universe,
-                    customUniverse: backtestConfig.customUniverse || [],
-                    enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
-                    topNCount: backtestConfig.topNCount,
-                    singleTicker: backtestConfig.singleTicker,
-                    singleSellTrigger: backtestConfig.singleSellTrigger,
-                    singleBuyTrigger: backtestConfig.singleBuyTrigger,
-                    enableCrashProtection: backtestConfig.enableCrashProtection,
-                    crashSensitivity: backtestConfig.crashSensitivity,
-                    safeHavenAsset: backtestConfig.safeHavenAsset,
-                    enableCrossover: backtestConfig.enableCrossover,
-                    reserveBufferPct: backtestConfig.reserveBufferPct,
-                  });
-                  toast.success("Strategy synced to portfolio");
-                } catch (err: any) {
-                  toast.error(`Sync failed: ${err.message || "Unknown error"}`);
-                }
-              }}
-              disabled={!backtestResult || isBacktesting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                backgroundColor: backtestResult ? 'rgba(0,201,165,0.12)' : 'rgba(255,255,255,0.04)',
-                color: backtestResult ? '#00c9a5' : '#7a7a7a',
-                border: '1px solid rgba(255,255,255,0.06)'
-              }}
-            >
-              <ArrowRightLeft className="w-3 h-3" />
-              SYNC TO PORTFOLIO
-            </button>
-          </div>
+
 
           {/* Strategy Profile Card */}
           <div className="bg-[#080808] border border-white/5 rounded-xl p-4 space-y-3">
@@ -1203,45 +1157,48 @@ export function SimulationTab({
                       )}
                     </div>
 
-                    <div className="p-4 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl space-y-1.5">
-                      <span className="text-label uppercase font-bold tracking-widest text-emerald-400/70 block">Dividen Kumulatif (Nett 90%)</span>
-                      <span className="text-base font-black font-mono text-emerald-400 block">
-                        +{formatRupiah(backtestResult.totalDividends)}
-                      </span>
-                      <div className="pt-1 mt-1 border-t border-emerald-500/10 space-y-0.5">
-                        <div className="text-[10px] font-mono text-white/40 flex justify-between">
-                          <span>Rebalances</span>
-                          <span className="text-amber-400 font-bold">{backtestResult.totalTrades}</span>
+                  </div>
+
+                  {/* Dividen Kumulatif — full-width insight section */}
+                  <div className="p-4 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="shrink-0">
+                        <span className="text-label uppercase font-bold tracking-widest text-emerald-400/70 block">Dividen Kumulatif (Nett 90%)</span>
+                        <span className="text-base font-black font-mono text-emerald-400 block mt-1">
+                          +{formatRupiah(backtestResult.totalDividends)}
+                        </span>
+                      </div>
+                      <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                        <div className="p-2 bg-white/[0.02] rounded-lg">
+                          <span className="text-[10px] font-mono text-white/40 block">Rebalances</span>
+                          <span className="text-caption font-bold text-amber-400 font-mono">{backtestResult.totalTrades}</span>
                         </div>
-                        {(() => {
-                          const years = Math.max(1, (new Date(backtestConfig.simEndDate).getTime() - new Date(backtestConfig.simStartDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-                          const annualized = backtestResult.finalValue > 0
-                            ? (backtestResult.totalDividends / years / backtestResult.finalValue * 100).toFixed(2)
-                            : "0.00";
-                          return (
-                            <div className="text-[10px] font-mono text-white/40 flex justify-between">
-                              <span>Avg yield/thn</span>
-                              <span className="text-emerald-400/80 font-bold">{annualized}%</span>
-                            </div>
-                          );
-                        })()}
+                        <div className="p-2 bg-white/[0.02] rounded-lg">
+                          <span className="text-[10px] font-mono text-white/40 block">Avg yield/thn</span>
+                          <span className="text-caption font-bold text-emerald-400/80 font-mono">
+                            {(() => {
+                              const years = Math.max(1, (new Date(backtestConfig.simEndDate).getTime() - new Date(backtestConfig.simStartDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                              return backtestResult.finalValue > 0
+                                ? (backtestResult.totalDividends / years / backtestResult.finalValue * 100).toFixed(2)
+                                : "0.00";
+                            })()}%
+                          </span>
+                        </div>
                         {backtestResult.dividendByTicker && Object.keys(backtestResult.dividendByTicker).length > 0 && (
-                          <div className="pt-1 mt-1 border-t border-emerald-500/10">
-                            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-0.5">Top Kontributor</div>
+                          <>
                             {Object.entries(backtestResult.dividendByTicker)
                               .sort((a, b) => (b[1] as number) - (a[1] as number))
-                              .slice(0, 3)
+                              .slice(0, 2)
                               .map(([ticker, amt]) => (
-                                <div key={ticker} className="text-[10px] font-mono text-white/60 flex justify-between">
-                                  <span>{ticker}</span>
-                                  <span className="text-emerald-400/70">+{((amt as number) / 1e6).toFixed(1)}M</span>
+                                <div key={ticker} className="p-2 bg-white/[0.02] rounded-lg">
+                                  <span className="text-[10px] font-mono text-white/40 block">Top: {ticker}</span>
+                                  <span className="text-caption font-bold text-emerald-400/70 font-mono">+{((amt as number) / 1e6).toFixed(1)}M</span>
                                 </div>
                               ))}
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
-
                   </div>
 
                   {/* Advanced Professional Risk/Metrics Scorecard Grid */}
