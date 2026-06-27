@@ -266,7 +266,6 @@ function AppContent({ logout }: { logout: () => void }) {
                   <AlertBanner
                     isIHSGInCrisis={isIHSGInCrisis}
                     hideAlertBanner={!ui.showCrisisSignals || ui.hideAlertBanner}
-                    portfolio={pm.portfolio}
                     onDismiss={() => ui.setHideAlertBanner(true)}
                     onGoToLedger={() => {
                       ui.setActiveTab("portfolio");

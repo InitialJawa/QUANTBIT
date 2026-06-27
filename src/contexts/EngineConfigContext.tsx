@@ -215,6 +215,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     "activeProfileId", "universe", "topNCount", "simulationMode",
     "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
     "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
+    "singleSellTrigger", "singleBuyTrigger", "enableCrossover",
   ];
   const isDraftEqualToEngine = () => {
     return STRATEGY_KEYS.every(k =>

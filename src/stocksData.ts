@@ -1,6 +1,6 @@
 import { StockData } from "./types";
 import { DataStatus } from "./types/DataStatus";
-import { PF, FD, EX, L, getScanData, setScanData } from "./marketData";
+import { PF, FD, L, getScanData, setScanData } from "./marketData";
 import { COMBINED_TICKERS } from "./constants/idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
 import scanDataRaw from "../data/idx80_scan.json";
@@ -246,14 +246,13 @@ export function getStock(ticker: string): StockData {
   // 2. Synthesize fallback details if not found in the manual 30, so any ticker from 80 works perfectly
   const profile = PF[cleanTicker];
   const fundamentals = FD[cleanTicker + ".JK"] || FD[cleanTicker];
-  const exitItem = EX.find(e => e.ticker === cleanTicker + ".JK" || e.ticker === cleanTicker);
   const leaderItem = L.find(l => l.ticker === cleanTicker + ".JK" || l.ticker === cleanTicker);
 
   // Prefer scan data FIRST before any fallback
   const scanCache = getScanData();
   const scanStock = scanCache?.stocks.find(st => st.ticker.replace(".JK", "") === cleanTicker);
 
-  const currentPrice = scanStock?.currentPrice > 0 ? scanStock.currentPrice : (exitItem ? parseFloat(exitItem.close) : 1000);
+  const currentPrice = scanStock?.currentPrice > 0 ? scanStock.currentPrice : 1000;
   const hasScanPrice = scanStock?.currentPrice > 0;
 
   const name = scanStock?.companyName || profile?.name || `${cleanTicker} Tbk`;
@@ -404,7 +403,7 @@ export function getStock(ticker: string): StockData {
     dividendYield,
     metrics,
     dataSources: {
-      price: hasScanPrice ? DataStatus.LIVE : (exitItem ? DataStatus.CACHED : DataStatus.ESTIMATED),
+      price: hasScanPrice ? DataStatus.LIVE : DataStatus.ESTIMATED,
       fundamentals: hasRealFinancials ? DataStatus.LIVE : (scanStock?.peRatio > 0 ? DataStatus.LIVE : (fundamentals?.pe_ratio ? DataStatus.CACHED : DataStatus.ESTIMATED)),
       charts: DataStatus.ESTIMATED,
       description: scanStock?.longBusinessSummary ? DataStatus.LIVE : (PF[ticker]?.summary ? DataStatus.CACHED : DataStatus.ESTIMATED),

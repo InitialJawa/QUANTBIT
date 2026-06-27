@@ -128,7 +128,7 @@ export const SYSTEM_KNOWLEDGE: string = [
   "- Drawdown60: (close-peak60)/peak60*100, peak60=max close 60 hari",
   "- Breadth: above60 = saham skor≥60; lowBreadth = above60 < lenL*0.15",
   "- Exit risk: EXIT+EXITRISK > 40% = highExitRisk",
-  "- Krisis: IHSG bulanan < -crashSensitivity (default -10%)",
+  "- Krisis: IHSG 60d drawdown < -crashSensitivity (default -10%)",
 
   "## 7. REGIME DECISION TREE (prioritas, ambil pertama cocok)",
   "- crisis&bearish → GOLD_DEFENSE | crisis → CASH_DEFENSE",

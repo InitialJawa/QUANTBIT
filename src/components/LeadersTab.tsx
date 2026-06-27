@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { L, CW_MAP, CW_AMAN, EX, getProcessedLeaders } from "../marketData";
+import { L, CW_MAP, CW_AMAN, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
@@ -50,8 +50,11 @@ export function getRotationData(ticker: string, dynamicChange?: number) {
   const stk = STOCKS_DATA.find(s => s.ticker === clean);
   const change = dynamicChange !== undefined ? dynamicChange : (stk ? stk.change : 0);
   
-  // Kombinasi data riil dan faktor deterministik untuk rotasi yang realistis
-  const tHash = clean.charCodeAt(0) * 11 + (clean.charCodeAt(1) || 0) * 7;
+  // Deterministic fallback based on real change data and full ticker hash
+  let tHash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    tHash = (tHash * 31 + clean.charCodeAt(i)) | 0;
+  }
   const isUp = change > 0 || (change === 0 && tHash % 2 === 0);
   
   // Top hits & drop hits disesuaikan dengan profil pertumbuhan emiten
@@ -335,28 +338,10 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                                      <TrendingDown className="w-2 h-2" /> {item.rankChange}
                                    </span>
                                  )}
-                                 {(() => {
-                                   const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
-                                   if (matchEX?.exit_state === "EXIT") {
-                                      return (
-                                        <span className="text-label font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
-                                          EXIT
-                                        </span>
-                                      );
-                                   }
-                                   if (matchEX?.exit_state === "EXIT RISK") {
-                                      return (
-                                        <span className="text-label font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
-                                          RISK
-                                        </span>
-                                      );
-                                   }
-                                   return null;
-                                 })()}
-                               </div>
-                            </div>
-                          </div>
-                        </td>
+                                </div>
+                             </div>
+                           </div>
+                         </td>
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.quality}</td>
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.growth}</td>
                         <td className="py-3 px-3 text-center text-white/50 font-mono text-xs hidden md:table-cell">{item.value}</td>
@@ -435,24 +420,6 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                             {item.rankChange > 0 ? "+" : ""}{item.rankChange} Rnk
                           </span>
                         )}
-                        {(() => {
-                           const matchEX = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === clean);
-                           if (matchEX?.exit_state === "EXIT") {
-                             return (
-                               <span className="text-label font-black text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
-                                 EXIT
-                               </span>
-                             );
-                           }
-                           if (matchEX?.exit_state === "EXIT RISK") {
-                             return (
-                               <span className="text-label font-bold text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest font-sans">
-                                 RISK
-                               </span>
-                             );
-                           }
-                           return null;
-                        })()}
                     </div>
 
                   {/* Visual Progress Rails */}

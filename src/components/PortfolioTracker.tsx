@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
-import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
+import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { DataBadge } from "./DataBadge";
 import { getIhsgDrawdown60 } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
@@ -8,7 +8,7 @@ import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
-import { EX, getProcessedLeaders, MKT } from "../marketData";
+import { getProcessedLeaders, MKT } from "../marketData";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import {
@@ -36,7 +36,6 @@ import {
   Eye,
   Wallet,
   FileSpreadsheet,
-  ArrowRight,
   ArrowRightLeft,
   Sparkles,
   ShoppingBag,
@@ -437,14 +436,9 @@ export function PortfolioTracker({
     const isSafeHaven = item.ticker === "EMAS" || item.ticker === "GOLD";
     const liveStock = visibleStocks.find((s) => s.ticker === item.ticker);
     const drop = liveStock ? liveStock.change : 0;
-    const exData = EX.find((e) => e.ticker.split(".")[0] === item.ticker);
-    const isExitStatic =
-      exData &&
-      (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
     const isExitLive = drop <= -0.5;
     const outOfTop5 = !isSafeHaven && item.rank > engineConfig.topNCount;
     return (
-      isExitStatic ||
       isExitLive ||
       (engineConfig.enableCrossover !== false && outOfTop5)
     );
@@ -514,25 +508,8 @@ export function PortfolioTracker({
         const inUniverse = engineConfig.customUniverse.some(
           (u) => u.toUpperCase().replace(".JK", "") === cleanT
         );
-        const exData = EX.find(
-          (e) => e.ticker.replace(".JK", "").toUpperCase() === cleanT,
-        );
-        const isExitStatic =
-          exData &&
-          (exData.exit_state === "EXIT" || exData.exit_state === "EXIT RISK");
 
-        if (isExitStatic) {
-          list.push({
-            id: `sell-exit-custom-${item.ticker}`,
-            type: "EXIT_SIGNAL",
-            ticker: item.ticker,
-            name: stock ? stock.name : item.ticker,
-            price,
-            shares,
-            reason: `Exit Ops (${exData.exit_state === "EXIT" ? "Sinyal Jual Kuat" : "Risiko Tinggi"}).`,
-            badge: "EXIT REBALANCING",
-          });
-        } else if (!inUniverse) {
+        if (!inUniverse) {
           list.push({
             id: `sell-outside-universe-${item.ticker}`,
             type: "SELL",
@@ -880,13 +857,6 @@ export function PortfolioTracker({
                 (s) => s.ticker === item.ticker,
               );
               const drop = liveStock ? liveStock.change : 0;
-              const exData = EX.find(
-                (e) => e.ticker.split(".")[0] === item.ticker,
-              );
-              const isExitStatic = exData && exData.exit_state === "EXIT";
-              const isExitRiskStatic =
-                exData && exData.exit_state === "EXIT RISK";
-
               let reason = "";
               if (drop <= -2.2)
                 reason =
@@ -894,11 +864,6 @@ export function PortfolioTracker({
               else if (drop <= -0.5)
                 reason =
                   "Dalam zona EXIT RISK secara LIVE (Penurunan Harian > -0.5%)";
-              else if (isExitStatic)
-                reason = "Masuk zona EXIT Historis (Sinyal Jual Terkonfirmasi)";
-              else if (isExitRiskStatic)
-                reason =
-                  "Dalam zona EXIT RISK Historis (Risiko Tinggi Penurunan)";
               else if (item.rank > 5)
                 reason = `Terlempar dari Top 5 (Peringkat Saat Ini: ${item.rank})`;
 
@@ -943,7 +908,7 @@ export function PortfolioTracker({
               </div>
               <h4 className="text-3xl font-black text-white font-mono flex items-baseline gap-2">
                 <span className="text-xs text-white/30 font-semibold uppercase">IDR</span>
-                {(totalInvestment + cash + (portfolio.find(p => p.ticker === "EMAS" || p.ticker === "GOLD")?.shares ?? 0) * (typeof MKT !== "undefined" ? MKT.gold.value : 0)).toLocaleString("id-ID")}
+                {(totalCurrentValue + cash).toLocaleString("id-ID")}
               </h4>
               <div className="mt-1.5 flex items-center gap-2 text-label font-mono text-white/40">
                 <span>Modal: {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}</span>
@@ -1664,7 +1629,7 @@ export function PortfolioTracker({
       <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">
-            <Eye className="w-4 h-4 text-emerald-450 text-emerald-400" />
+            <Eye className="w-4 h-4 text-emerald-400" />
             Daftar Pantau
           </h3>
           <div className="flex items-center gap-2 max-w-sm w-full sm:w-auto">

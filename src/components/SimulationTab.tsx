@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { 
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceArea } from "recharts";
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   TrendingUp, 
@@ -28,8 +28,7 @@ import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { runStrategy } from "../engine";
 import { runBaselineDca, type BaselineResult, type DcaBaseline } from "../engine/dcaBaselines";
 import { SearchableSelect } from "./SearchableSelect";
-import { EX, RS, MKT } from "../marketData";
-import { isCrisisMode } from "../marketRegimeEngine";
+import { RS, MKT } from "../marketData";
 import { api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
@@ -421,33 +420,6 @@ export function SimulationTab({
       returnPct,
     };
   }, [portfolio, getDynamicStock]);
-
-  const ledgerAlerts = useMemo(() => {
-    const stockAlerts: { ticker: string; exit_state: string; rules: string; drawdown: string; close: number }[] = [];
-    
-    portfolio.forEach((item) => {
-      const cleanT = item.ticker.toUpperCase().replace(".JK", "");
-      const match = EX.find(e => e.ticker.toUpperCase().replace(".JK", "") === cleanT);
-      if (match && (match.exit_state === "EXIT" || match.exit_state === "EXIT RISK")) {
-        stockAlerts.push({
-          ticker: cleanT,
-          exit_state: match.exit_state,
-          rules: match.triggered_rules,
-          drawdown: match.drawdown_from_entry,
-          close: parseFloat(match.close) || item.buyPrice
-        });
-      }
-    });
-
-    const isIHSGInCrisis = isCrisisMode();
-
-    return {
-      stockAlerts,
-      isIHSGInCrisis,
-      ihsgMonthlyPct: MKT.ihsg.monthly,
-      ihsgCurrentValue: MKT.ihsg.value,
-    };
-  }, [portfolio]);
 
   const handleRunAlgoBacktest = async () => {
     setBacktesting(true);
@@ -930,7 +902,7 @@ export function SimulationTab({
             <div className="space-y-1">
               <span className="text-caption uppercase font-bold text-white/30 block">Pemberitahuan Hasil Simulasi:</span>
               <div className="flex items-center gap-2">
-                <span className={`text-base font-black font-mono ${simReturnDetails.absoluteProfitLoss >= 0 ? "text-emerald-400" : "text-rose-455 text-rose-400"}`}>
+                <span className={`text-base font-black font-mono ${simReturnDetails.absoluteProfitLoss >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {simReturnDetails.absoluteProfitLoss >= 0 ? "+" : ""}{formatRupiah(simReturnDetails.absoluteProfitLoss)}
                 </span>
                 <span className={`text-xs font-black font-mono px-2 py-0.5 rounded ${

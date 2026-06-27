@@ -1,4 +1,4 @@
-import { MKT, L, EX, RS, CW_AMAN, CW_MAP, getProcessedLeaders } from "./marketData";
+import { MKT, L, RS, CW_AMAN, CW_MAP, getProcessedLeaders } from "./marketData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "./constants/idx80";
 
 export type RegimeState =
@@ -35,11 +35,7 @@ export interface RegimeOutput {
     totalTracked: number;
     allScores: number[];
   };
-  exitRisk: {
-    exitCount: number;
-    exitRiskCount: number;
-    healthyCount: number;
-  };
+
 }
 
 let _lastIhsgData: { close: number; date: string; isCarriedForward?: boolean }[] = [];
@@ -81,17 +77,16 @@ export function getIhsgData(): { close: number; date: string; isCarriedForward?:
 
 export function computeRSI(data: number[], period: number = 14): number | null {
   if (data.length < period + 1) return null;
-  const closes = data.slice(-period - 1);
   let gains = 0, losses = 0;
-  for (let i = 1; i < closes.length; i++) {
-    const diff = closes[i] - closes[i - 1];
+  for (let i = 1; i <= period; i++) {
+    const diff = data[i] - data[i - 1];
     if (diff >= 0) gains += diff;
     else losses -= diff;
   }
   let avgGain = gains / period;
   let avgLoss = losses / period;
   if (avgLoss === 0) return 100;
-  for (let i = closes.length; i < data.length; i++) {
+  for (let i = period + 1; i < data.length; i++) {
     const diff = data[i] - data[i - 1];
     avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
     avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
@@ -205,7 +200,6 @@ export function computeMarketRegime(): RegimeOutput {
 
   const universeTickers = filterTickersForUniverse(L.map(s => s.ticker));
   const universeL = L.filter(s => universeTickers.includes(s.ticker));
-  const universeEX = EX.filter(e => universeTickers.includes(e.ticker));
 
   const lenL = universeL.length || 1;
   const configWeights = _activeWeights ?? CW_AMAN;
@@ -219,11 +213,6 @@ export function computeMarketRegime(): RegimeOutput {
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;
 
-  const exCount = universeEX.filter(e => e.exit_state === "EXIT").length;
-  const exRiskCount = universeEX.filter(e => e.exit_state === "EXIT RISK").length;
-  const healthyCount = universeEX.filter(e => e.exit_state === "HEALTHY").length;
-  const totalEx = universeEX.length || 1;
-
   // Unified: pakai 60d-drawdown (sama dengan isCrisisMode()) bukan monthly
   const drawdown60 = getIhsgDrawdown60();
   const crisisThreshold = _crashProtectionEnabled && drawdown60 !== null && drawdown60 <= -_crashSensitivity;
@@ -231,7 +220,6 @@ export function computeMarketRegime(): RegimeOutput {
   const bullishTrend = aboveMa20 && aboveMa50;
   const recoveringTrend = aboveMa20 && !aboveMa50;
 
-  const highExitRisk = exCount + exRiskCount > totalEx * 0.4;
   const lowBreadth = above60 < lenL * 0.15;
 
   let regime: RegimeState;
@@ -246,15 +234,11 @@ export function computeMarketRegime(): RegimeOutput {
     regime = "CASH_DEFENSE";
     decision = "HOLD_CASH";
     rationale = `IHSG drawdown 60-hari ${drawdown60!.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
-  } else if (bearishTrend && highExitRisk) {
-    regime = "RISK_OFF";
-    decision = "WAIT_RECOVERY";
-    rationale = `IHSG di bawah MA20 dan MA50 dengan ${exCount + exRiskCount}/${totalEx} emiten dalam status exit/exit risk. Pasar belum layak diserang.`;
   } else if (bearishTrend) {
     regime = "RECOVERY_WATCH";
     decision = "WAIT_RECOVERY";
-    rationale = `IHSG di bawah MA jangka panjang. Tunggu recovery confirmation + kandidat saham lolos rank/score sebelum entry.`;
-  } else if (recoveringTrend && !highExitRisk && lowBreadth) {
+    rationale = `IHSG di bawah MA20 dan MA50. Tunggu recovery confirmation + kandidat saham lolos rank/score sebelum entry.`;
+  } else if (recoveringTrend && lowBreadth) {
     regime = "RECOVERY_WATCH";
     decision = "WAIT_RECOVERY";
     rationale = `IHSG kembali di atas MA20 tetapi breadth masih rendah (${above60}/${lenL} saham >=60). Butuh konfirmasi lanjutan untuk mode RISK_ON.`;
@@ -262,10 +246,10 @@ export function computeMarketRegime(): RegimeOutput {
     regime = "RISK_OFF";
     decision = "WAIT_RECOVERY";
     rationale = `IHSG mulai membaik (di atas MA20) tetapi masih di bawah MA50. Pasar dalam transisi, wait for full recovery.`;
-  } else if (lowBreadth || highExitRisk) {
+  } else if (lowBreadth) {
     regime = "RISK_OFF";
     decision = "WAIT_RECOVERY";
-    rationale = `IHSG secara teknikal di atas MA, namun breadth (${above60}/${lenL}) masih lemah atau exit risk tinggi. Belum aman untuk RISK_ON.`;
+    rationale = `IHSG secara teknikal di atas MA, namun breadth (${above60}/${lenL}) masih lemah. Belum aman untuk RISK_ON.`;
   } else {
     regime = "RISK_ON";
     decision = "BUY_STOCKS";
@@ -274,9 +258,8 @@ export function computeMarketRegime(): RegimeOutput {
 
   const healthScore = Math.min(99, Math.max(1,
     Math.round(
-      (bullishTrend ? 25 : bearishTrend ? -15 : 5) +
+      (bullishTrend ? 40 : bearishTrend ? -15 : 5) +
       (above60 / Math.max(1, lenL)) * 30 +
-      (1 - (exCount + exRiskCount) / Math.max(1, totalEx)) * 25 +
       Math.max(0, Math.min(20, 20 + ihsgMonthly * 2))
     )
   ));
@@ -290,14 +273,14 @@ export function computeMarketRegime(): RegimeOutput {
   const riskScore = Math.min(99, Math.max(1,
     regime === "GOLD_DEFENSE" ? 85 :
     regime === "RISK_ON" ? Math.round(15 + (1 - (above60 / Math.max(1, lenL))) * 20) :
-    Math.round(40 + (exCount + exRiskCount) / Math.max(1, totalEx) * 30)
+    Math.round(40 + (1 - (above60 / Math.max(1, lenL))) * 20)
   ));
 
   const confidenceScore = Math.min(99, Math.max(1,
     Math.round(
       (bullishTrend ? 30 : bearishTrend ? 10 : 20) +
       (above60 / Math.max(1, lenL)) * 25 +
-      (healthyCount / Math.max(1, totalEx)) * 25 +
+      (above60 / Math.max(1, lenL)) * 25 +
       Math.max(0, Math.min(20, 30 + ihsgMonthly * 1.5))
     )
   ));
@@ -334,11 +317,7 @@ export function computeMarketRegime(): RegimeOutput {
       totalTracked: lenL,
       allScores: scores,
     },
-    exitRisk: {
-      exitCount: exCount,
-      exitRiskCount: exRiskCount,
-      healthyCount,
-    },
+
   };
 }
 
@@ -408,7 +387,7 @@ export function getAuditTrail(): AuditTrailEntry {
     regime.regime === "GOLD_DEFENSE"
       ? "IHSG harus kembali di atas MA20 dan MA50. Minimal 20% kandidat saham harus lolos score >=60. Tidak ada exit risk dominan."
       : regime.regime === "CASH_DEFENSE"
-        ? `Konfirmasi pemulihan IHSG bulanan > -${_crashSensitivity}% + MA20 crossing.`
+        ? `Konfirmasi pemulihan IHSG (60d drawdown > -${_crashSensitivity}%) + MA20 crossing.`
         : regime.regime === "RISK_OFF"
           ? "IHSG crossing di atas MA50 + breadth membaik (>=20% saham score >=60)."
           : regime.regime === "RECOVERY_WATCH"
@@ -431,9 +410,6 @@ export function getAuditTrail(): AuditTrailEntry {
     if (regime.breadth.stocksAbove60 < Math.max(1, Math.round(regime.breadth.totalTracked * 0.2))) {
       reasons.push(`Breadth rendah (<20% saham score >=60): hanya ${regime.breadth.stocksAbove60}/${regime.breadth.totalTracked}`);
     }
-    if (regime.exitRisk.exitCount + regime.exitRisk.exitRiskCount > 0) {
-      reasons.push(`${regime.exitRisk.exitCount + regime.exitRisk.exitRiskCount} emiten dalam status EXIT/EXIT RISK`);
-    }
     if (regime.marketHealth < 40) {
       reasons.push("Skor kesehatan pasar di bawah 40");
     }
@@ -451,7 +427,7 @@ export function getAuditTrail(): AuditTrailEntry {
     ihsgMa20Above: regime.ihsgTrend.aboveMa20,
     ihsgMa50Above: regime.ihsgTrend.aboveMa50,
     breadthPercent: `${Math.round(regime.breadth.stocksAbove60 / Math.max(1, regime.breadth.totalTracked) * 100)}%`,
-    exitRiskPercent: `${Math.round((regime.exitRisk.exitCount + regime.exitRisk.exitRiskCount) / Math.max(1, regime.exitRisk.exitCount + regime.exitRisk.exitRiskCount + regime.exitRisk.healthyCount) * 100)}%`,
+    exitRiskPercent: `${Math.round((1 - regime.breadth.stocksAbove60 / Math.max(1, regime.breadth.totalTracked)) * 100)}%`,
     noBuyReasons: reasons,
   };
 }
