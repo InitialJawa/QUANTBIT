@@ -1,7 +1,7 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
 import {
   X, Plus, Minus, Trash2, Bookmark, BookmarkCheck,
-  LineChart, BookOpen, Sparkles, Coins
+  LineChart, BookOpen, Sparkles, Coins, Info
 } from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
 import { HistoricalChart } from "./HistoricalChart";
@@ -15,8 +15,8 @@ interface StockDrawerProps {
   activeStock: StockData;
   portfolio: PortfolioItem[];
   watchlist: WatchlistItem[];
-  drawerTab: "chart" | "sheets" | "gemini-ai" | "forecast";
-  onTabChange: (tab: "chart" | "sheets" | "gemini-ai" | "forecast") => void;
+  drawerTab: "chart" | "sheets" | "gemini-ai" | "forecast" | "profile";
+  onTabChange: (tab: "chart" | "sheets" | "gemini-ai" | "forecast" | "profile") => void;
   drawerLots: number | "";
   onLotsChange: (lots: number | "") => void;
   onBuy: (ticker: string, shares: number, price: number) => void;
@@ -30,6 +30,7 @@ const DRAWER_TABS = [
   { id: "chart" as const, icon: LineChart, label: "Chart" },
   { id: "sheets" as const, icon: BookOpen, label: "Financials" },
   { id: "forecast" as const, icon: Coins, label: "Dividend" },
+  { id: "profile" as const, icon: Info, label: "Profile" },
 ];
 
 export function StockDrawer({
@@ -170,12 +171,13 @@ export function StockDrawer({
               </div>
 
               <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-3">
                   {[
                     ["P/E", activeStock.peRatio < 0 ? "Loss" : `${activeStock.peRatio}x`],
                     ["P/B", `${activeStock.pbRatio}x`],
                     ["ROE", `${activeStock.roe}%`],
                     ["Div Yield", `${activeStock.dividendYield}%`],
+                    ["D/E", `${activeStock.der}x`],
                   ].map(([label, val]) => (
                     <div key={label as string} className="text-center">
                       <span className="text-label text-white/30 block">{label}</span>
@@ -221,6 +223,9 @@ export function StockDrawer({
                               ["Total Assets", activeStock.metrics.map(m => m.totalAssets), false],
                               ["Liabilities", activeStock.metrics.map(m => m.totalLiabilities), false],
                               ["Equity", activeStock.metrics.map(m => m.totalEquity), false],
+                              ["Op. CF", activeStock.metrics.map(m => m.cashFlowOperating), true],
+                              ["Inv. CF", activeStock.metrics.map(m => m.cashFlowInvesting), false],
+                              ["Fin. CF", activeStock.metrics.map(m => m.cashFlowFinancing), false],
                             ].map(([label, values, isGreen]) => (
                               <tr key={label as string} className="hover:bg-white/[0.02]">
                                 <td className={`py-2 text-white/70 ${isGreen ? "text-emerald-500" : ""}`}>{label}</td>
@@ -250,12 +255,45 @@ export function StockDrawer({
                       />
                     </motion.div>
                   )}
-                </AnimatePresence>
 
-                <div className="border-t border-white/[0.04] pt-4">
-                  <span className="text-label text-white/25 uppercase tracking-wider font-medium">Profile</span>
-                  <p className="text-body text-white/60 mt-1.5 leading-relaxed">{activeStock.description}</p>
-                </div>
+                  {drawerTab === "profile" && (
+                    <motion.div
+                      key="drawer-profile"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="border border-white/[0.06] rounded-lg p-4">
+                        <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Company Profile</span>
+                        <div className="mt-3 space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <span className="text-label text-white/30 block">Sector</span>
+                              <span className="text-body text-white/70">{activeStock.sector}</span>
+                            </div>
+                            <div>
+                              <span className="text-label text-white/30 block">Sub Sector</span>
+                              <span className="text-body text-white/70">{activeStock.subSector}</span>
+                            </div>
+                            <div>
+                              <span className="text-label text-white/30 block">Market Cap</span>
+                              <span className="text-body text-white/70">Rp{activeStock.marketCap.toLocaleString('id-ID')} T</span>
+                            </div>
+                            <div>
+                              <span className="text-label text-white/30 block">Ticker</span>
+                              <span className="text-body text-white/70">{activeStock.ticker}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-label text-white/30 block">Description</span>
+                            <p className="text-body text-white/60 mt-1 leading-relaxed">{activeStock.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
