@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Layers, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
@@ -23,6 +23,7 @@ interface AppSidebarProps {
 }
 
 function formatRupiah(val: number) {
+  if (!Number.isFinite(val)) return "Rp 0";
   return "Rp " + Math.round(val).toLocaleString("id-ID");
 }
 
@@ -369,105 +370,9 @@ export function AppSidebar({
 
   const renderPortfolioContent = () => {
     const { isSettingsLocked, setIsSettingsLocked, engineConfig, activeProfile, updateConfigValue, setActiveProfile } = useEngineConfig();
-    const sectorMap: Record<string, number> = {};
-    portfolio.forEach(p => {
-      const stock = getDynamicStock(p.ticker);
-      const sector = stock?.sector || "Unknown";
-      sectorMap[sector] = (sectorMap[sector] || 0) + p.shares * (stock?.currentPrice || p.buyPrice);
-    });
-    const sectorEntries = Object.entries(sectorMap).sort((a, b) => b[1] - a[1]);
 
     return (
       <>
-        <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-            <Wallet className="w-3 h-3 text-tertiary" />
-            <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Ringkasan</span>
-          </div>
-          <div className="px-2 py-1.5 space-y-1">
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-label text-tertiary">Investasi</span>
-              <span className="text-body text-secondary font-mono">{formatRupiah(totalInvestment)}</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Nilai Saat Ini</span>
-              <span className="text-body text-secondary font-mono">{formatRupiah(totalCurrentValue)}</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Return</span>
-              <span className={`text-body font-mono ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {totalReturn >= 0 ? "+" : ""}{formatRupiah(totalReturn)} ({totalReturnPct >= 0 ? "+" : ""}{totalReturnPct.toFixed(1)}%)
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Kas</span>
-              <span className="text-body text-secondary font-mono">{formatRupiah(cash)}</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-label text-tertiary">Total Aset</span>
-              <span className="text-body text-secondary font-mono">{formatRupiah(totalCurrentValue + cash)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-            <PieChart className="w-3 h-3 text-tertiary" />
-            <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Sektor</span>
-            <span className="ml-auto"><ExplainButton label="Alokasi Sektor (bobot nilai portfolio per sektor)" /></span>
-          </div>
-          <div className="px-2 py-2 space-y-1.5">
-            {sectorEntries.length === 0 ? (
-              <span className="text-label text-tertiary italic">Belum ada posisi</span>
-            ) : (
-              sectorEntries.slice(0, 6).map(([sector, value]) => (
-                <div key={sector}>
-                  <div className="flex justify-between text-label text-tertiary mb-0.5">
-                    <span>{sector}</span>
-                    <span className="text-secondary font-mono">{formatRupiah(value)}</span>
-                  </div>
-                  <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-emerald-400/60"
-                      style={{ width: `${(value / (totalCurrentValue || 1)) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="mx-2">
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-            <Layers className="w-3 h-3 text-tertiary" />
-            <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Posisi Terbuka</span>
-          </div>
-          <div className="px-2 space-y-0 max-h-[240px] overflow-y-auto scrollbar-thin">
-            {portfolio.length === 0 ? (
-              <span className="text-label text-tertiary italic">Kosong</span>
-            ) : (
-              portfolio.map(p => {
-                const stock = getDynamicStock(p.ticker);
-                const currentPrice = stock?.currentPrice || p.buyPrice;
-                const gainPct = ((currentPrice - p.buyPrice) / p.buyPrice) * 100;
-                return (
-                  <div key={p.ticker} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-white/[0.02] transition-colors">
-                    <div className="flex items-center gap-2">
-                      <span className="text-body font-bold text-primary">{p.ticker}</span>
-                      <span className="text-label text-tertiary">{p.shares} lbr</span>
-                    </div>
-                    <span className={`text-body font-mono ${gainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                      {gainPct >= 0 ? "+" : ""}{gainPct.toFixed(1)}%
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Sesi 12: unified settings via StrategySettingsPanel (Live mode) */}
         <div className="mx-2">
           <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
             <Settings className="w-3 h-3 text-tertiary" />

@@ -1052,6 +1052,47 @@ export function SimulationTab({
               ) : backtestResult ? (
                 <div className="space-y-6">
 
+                  {/* Recharts chart — moved to top for visibility */}
+                  <div className="space-y-4">
+                    <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
+                    <div className="h-64 sm:h-72 w-full font-mono text-xs">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={backtestResult.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorStrategy" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                            </linearGradient>
+                            <linearGradient id="colorIHSGBench" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.05}/>
+                              <stop offset="95%" stopColor="#9ca3af" stopOpacity={0.0}/>
+                            </linearGradient>
+                            <linearGradient id="colorGoldBench" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1}/>
+                              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="date" stroke="#333" tickLine={false} dy={8} tick={{ fill: "#666" }} />
+                          <YAxis scale="log" stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={["auto", "auto"]} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
+                          <Tooltip
+                            formatter={(value: any) => [formatRupiah(Number(value)), ""]}
+                            contentStyle={{
+                              backgroundColor: "#000000",
+                              border: "1px solid rgba(255,255,255,0.15)",
+                              borderRadius: "10px",
+                              color: "#dddddd"
+                            }}
+                            itemStyle={{ color: "#ffffff" }}
+                          />
+                          <Legend verticalAlign="top" height={36} iconType="circle" />
+                          <Area type="monotone" name="Strategi Rebalance Algo" dataKey="Strategi Rebalancer" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorStrategy)" />
+                          <Area type="monotone" name="Benchmark IHSG (Beli & Simpan)" dataKey="Benchmark IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorIHSGBench)" />
+                          <Area type="monotone" name="Benchmark Emas Fisik" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
                   {/* Stats Bento Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
@@ -1302,47 +1343,6 @@ export function SimulationTab({
                       })()}
                     </div>
                   )}
-
-                  {/* Recharts chart */}
-                  <div className="space-y-4">
-                    <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
-                    <div className="h-64 sm:h-72 w-full font-mono text-xs">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={backtestResult.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="colorStrategy" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                            </linearGradient>
-                            <linearGradient id="colorIHSGBench" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.05}/>
-                              <stop offset="95%" stopColor="#9ca3af" stopOpacity={0.0}/>
-                            </linearGradient>
-                            <linearGradient id="colorGoldBench" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1}/>
-                              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="date" stroke="#333" tickLine={false} dy={8} tick={{ fill: "#666" }} />
-                          <YAxis scale="log" stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={["auto", "auto"]} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
-                          <Tooltip
-                            formatter={(value: any) => [formatRupiah(Number(value)), ""]}
-                            contentStyle={{
-                              backgroundColor: "#000000",
-                              border: "1px solid rgba(255,255,255,0.15)",
-                              borderRadius: "10px",
-                              color: "#dddddd"
-                            }}
-                            itemStyle={{ color: "#ffffff" }}
-                          />
-                          <Legend verticalAlign="top" height={36} iconType="circle" />
-                          <Area type="monotone" name="Strategi Rebalance Algo" dataKey="Strategi Rebalancer" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorStrategy)" />
-                          <Area type="monotone" name="Benchmark IHSG (Beli & Simpan)" dataKey="Benchmark IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorIHSGBench)" />
-                          <Area type="monotone" name="Benchmark Emas Fisik" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
 
                   {/* Historical Factor Rank Component */}
                   {backtestConfig.simulationMode === "algo" && (
