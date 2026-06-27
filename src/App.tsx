@@ -265,7 +265,7 @@ function AppContent({ logout }: { logout: () => void }) {
                 <div className="space-y-2 flex-1 flex flex-col w-full h-full">
                   <AlertBanner
                     isIHSGInCrisis={isIHSGInCrisis}
-                    hideAlertBanner={ui.hideAlertBanner}
+                    hideAlertBanner={!ui.showCrisisSignals || ui.hideAlertBanner}
                     portfolio={pm.portfolio}
                     onDismiss={() => ui.setHideAlertBanner(true)}
                     onGoToLedger={() => {
