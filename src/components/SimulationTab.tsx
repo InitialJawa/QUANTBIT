@@ -1506,14 +1506,7 @@ export function SimulationTab({
                 <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-3">
                   <span className="text-2xl">⚡</span>
                   <p className="text-xs text-white/50 font-sans">Belum ada hasil backtest.</p>
-                  <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Klik tombol di bawah atau gunakan tombol "Jalankan Backtest" di header untuk menghitung trajectory rotasi portofolio Anda.</p>
-                  <button
-                    onClick={() => handleRunAlgoBacktest()}
-                    disabled={isBacktesting || historicalData.length === 0}
-                    className="mt-2 px-4 py-2 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                  >
-                    {isBacktesting ? "Berjalan..." : "Jalankan Backtest"}
-                  </button>
+                  <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Gunakan tombol "Jalankan Backtest" di header untuk menghitung trajectory rotasi portofolio Anda.</p>
                 </div>
               )}
 
