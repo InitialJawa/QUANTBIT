@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { DataBadge } from "./DataBadge";
-import { getIhsgDrawdown60, isCrisisMode } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrisisMode, getIhsgData } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -169,8 +169,8 @@ export function PortfolioTracker({
 
   const strategyEval = useMemo(() => evaluateStrategy(
     engineConfig as any,
-    { ihsgPrice: MKT.ihsg.value, peak60: ihsgDrawdown60 !== null ? MKT.ihsg.value / (1 + ihsgDrawdown60 / 100) : undefined },
-  ), [engineConfig.enableCrashProtection, engineConfig.crashSensitivity, engineConfig.simulationMode, engineConfig.safeHavenAsset, ihsgDrawdown60]);
+    { ihsgPrices: getIhsgData().map(d => d.close), currentIhsgPrice: MKT.ihsg.value },
+  ), [engineConfig.enableCrashProtection, engineConfig.crashSensitivity, engineConfig.simulationMode, engineConfig.safeHavenAsset]);
   const activeUniverse = useMemo(() => getActiveUniverse(engineConfig as any), [engineConfig]);
 
   const currentSelectedStock =
@@ -761,7 +761,7 @@ export function PortfolioTracker({
             <AlertTriangle className="w-5 h-5 animate-pulse" />
             <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
               Strategy Says: Exit ke {strategyEval.targetSafeHaven?.toUpperCase()}
-              <ExplainButton label="evaluateStrategy() — IHSG drop > crashSensitivity" />
+              <ExplainButton label="evaluateStrategy() — detectCrashAlgo + detectRecoveryAlgo (SMA20, 5d momentum)" />
             </h3>
           </div>
           <p className="text-xs text-rose-200/70 font-sans max-w-3xl">

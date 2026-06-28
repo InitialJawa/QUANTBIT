@@ -596,7 +596,7 @@ export interface StrategyEvaluation {
 
 export function evaluateStrategy(
   config: BacktestConfig,
-  marketData: { ihsgPrice: number; peak60?: number; dayRanks?: Record<string, number> }
+  marketData: { ihsgPrices: number[]; currentIhsgPrice: number }
 ): StrategyEvaluation {
   if (!config.enableCrashProtection) {
     return { shouldExit: false, reason: "Crash protection disabled", targetSafeHaven: null };
@@ -606,40 +606,41 @@ export function evaluateStrategy(
     return { shouldExit: false, reason: "Non-algo mode uses own trigger", targetSafeHaven: null };
   }
 
-  if (marketData.peak60 !== undefined) {
-    const drop = ((marketData.ihsgPrice - marketData.peak60) / marketData.peak60) * 100;
-    if (drop <= -config.crashSensitivity) {
-      return {
-        shouldExit: true,
-        reason: `IHSG dropped ${Math.abs(drop).toFixed(1)}% from 60d peak (threshold: ${config.crashSensitivity}%)`,
-        targetSafeHaven: config.safeHavenAsset,
-      };
-    }
-    // Recovery: IHSG drawdown is shallower than the recovery buffer
-    // (default 5%). This signals "time to leave the safe haven and go back
-    // to stocks" if the user is still holding one.
-    const recoveryBuffer = 5;
-    if (drop >= -recoveryBuffer) {
-      return {
-        shouldExit: false,
-        reason: drop >= 0
-          ? `IHSG recovered above 60d peak (${drop >= 0 ? "+" : ""}${drop.toFixed(1)}%) — safe haven exit zone`
-          : `IHSG recovering (drawdown ${drop.toFixed(1)}% within ${recoveryBuffer}% buffer) — safe haven exit zone`,
-        targetSafeHaven: null,
-        shouldExitSafeHaven: true,
-        recoveryBuffer,
-      };
-    }
+  if (marketData.ihsgPrices.length < 2) {
+    return { shouldExit: false, reason: "IHSG data tidak mencukupi", targetSafeHaven: null };
   }
 
-  return { shouldExit: false, reason: "IHSG within tolerance", targetSafeHaven: null };
+  // Sama persis dengan backtest state machine + isCrisisMode():
+  // crashDetector.detectCrashAlgo() + detectRecoveryAlgo() override.
+  const crash = detectCrashAlgo(marketData.ihsgPrices, marketData.currentIhsgPrice, config.crashSensitivity);
+  const recovery = detectRecoveryAlgo(marketData.ihsgPrices, marketData.currentIhsgPrice);
+
+  if (crash.signaled && !recovery.signaled) {
+    return {
+      shouldExit: true,
+      reason: crash.reason,
+      targetSafeHaven: config.safeHavenAsset,
+    };
+  }
+
+  if (recovery.signaled) {
+    return {
+      shouldExit: false,
+      reason: "Pasar pulih — IHSG kembali di atas rata-rata pergerakan",
+      targetSafeHaven: null,
+      shouldExitSafeHaven: true,
+      recoveryBuffer: 5,
+    };
+  }
+
+  return { shouldExit: false, reason: "IHSG dalam batas aman", targetSafeHaven: null };
 }
 
 export function shouldTriggerExit(
   ticker: string,
   position: { shares: number; buyPrice: number; currentPrice: number },
   config: BacktestConfig,
-  marketData: { ihsgPrice: number; peak60?: number }
+  marketData: { ihsgPrices: number[]; currentIhsgPrice: number }
 ): StrategyEvaluation {
   if (!position || position.shares <= 0) {
     return { shouldExit: false, reason: "No position", targetSafeHaven: null };
