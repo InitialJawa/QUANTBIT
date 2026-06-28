@@ -14,6 +14,7 @@
     "db:migrate:local": "tsx scripts/migrate.ts apply --local",
     "db:migrate:apply": "tsx scripts/migrate.ts apply",
     "db:migrate:dry-run": "tsx scripts/migrate.ts dry-run",
+    "db:seed": "tsx scripts/seed-db.ts",
     "split-data": "tsx scripts/split-data.ts",
     "build": "npm run build:db && npm run split-data && vite build && tsx scripts/build-cf.ts",
     "start": "npx wrangler pages dev dist",

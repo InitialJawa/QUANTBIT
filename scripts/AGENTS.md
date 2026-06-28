@@ -14,6 +14,7 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 
 ## Work Guidance
 - `npm run build:db` — build SQLite DB from JSON market data
+- `npm run db:seed` — seed SQLite DB from `data/years/*.json` + IDX scans
 - `npm run split-data` — split large JSON into yearly chunks
 - Scripts are NOT part of the main build (except via npm scripts)
 - `fetch_historical_data.ts` — master pipeline: downloads Yahoo prices + scores with IDX Warehouse fundamentals. Pinned to `2021-01-01` onwards (pre-2021 data archived 2026-06).
@@ -33,3 +34,4 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - `post_process_live_market.py` — derive live_market.json dari idx80_scan + GC=F fetch
 - `scrape_idx_fundamentals.py` — legacy, superseded by `collectors/fetch_idx_fundamental.py`
 - `run_backtest_comparison.cjs` — backtest weight-config comparison (used during rebalancing fix)
+- `seed-db.ts` — migrate `data/years/*.json` + IDX fundamentals ke SQLite (migration 0003 companion)

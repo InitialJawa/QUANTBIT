@@ -20,6 +20,7 @@ Database schema and migrations — sequential SQL files in `db/migrations/`.
 | 0000 | `_migrations_tracker` | Creates `_migrations` table for runner state | required |
 | 0001 | `init` | 8 original tables (users, sessions, portfolios, watchlists, trade_logs, cached_reports, idx_scan_data, engine_state) + 5 indexes | required |
 | 0002 | `ai_memory` | `ai_sessions` + `ai_messages` (per-user chat memory) + 3 indexes — see `src/server/aiMemory.ts` | required |
+| 0003 | `market_data` | `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots` — DB as SOT for market data, replaces file-based JSON | pending |
 
 ## Work Guidance
 - **New migration**: create `db/migrations/NNNN_descriptive_name.sql` with the next sequential number
