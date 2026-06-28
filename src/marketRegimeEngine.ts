@@ -222,9 +222,9 @@ export function computeMarketRegime(): RegimeOutput {
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;
 
-  // Unified: pakai 60d-drawdown (sama dengan isCrisisMode()) bukan monthly
-  const drawdown60 = getIhsgDrawdown60();
-  const crisisThreshold = _crashProtectionEnabled && drawdown60 !== null && drawdown60 <= -_crashSensitivity;
+  // Unified: pakai isCrisisMode() (detectCrashAlgo + detectRecoveryAlgo = same as backtest)
+  const crisisThreshold = isCrisisMode();
+  const dd60 = getIhsgDrawdown60();
   const bearishTrend = !aboveMa20 && !aboveMa50;
   const bullishTrend = aboveMa20 && aboveMa50;
   const recoveringTrend = aboveMa20 && !aboveMa50;
@@ -238,11 +238,11 @@ export function computeMarketRegime(): RegimeOutput {
   if (crisisThreshold && bearishTrend) {
     regime = "GOLD_DEFENSE";
     decision = "HOLD_GOLD";
-    rationale = `IHSG drawdown 60-hari ${drawdown60!.toFixed(1)}% melebihi threshold krisis (${_crashSensitivity}%). Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
+    rationale = `IHSG drawdown 60-hari ${dd60!.toFixed(1)}% melebihi threshold krisis (${_crashSensitivity}%). Trend bearish: MA20 dan MA50 sudah ditembus ke bawah. Prioritaskan proteksi kapital.`;
   } else if (crisisThreshold) {
     regime = "CASH_DEFENSE";
     decision = "HOLD_CASH";
-    rationale = `IHSG drawdown 60-hari ${drawdown60!.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
+    rationale = `IHSG drawdown 60-hari ${dd60!.toFixed(1)}% dalam zona krisis (threshold ${_crashSensitivity}%), namun harga masih di atas moving average jangka pendek. Hold cash, tunggu konfirmasi lanjutan.`;
   } else if (bearishTrend) {
     regime = "RECOVERY_WATCH";
     decision = "WAIT_RECOVERY";
