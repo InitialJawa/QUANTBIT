@@ -22,6 +22,12 @@ Delivered (Sesi 12 — Konsolidasi UI + Koherensi):
 - [x] `npx vitest run` — 18/18 passing
 - [ ] `npx vite build` — verify
 
+## P0 — Migration 0003: DB as SOT for Market Data
+- [ ] Apply 0003 ke D1: `npm run db:migrate`
+- [ ] Seed local DB: `npm run db:seed`
+- [ ] Verify tables: `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots`
+- [ ] Wiring engine/UI baca dari DB (replaces file-based JSON)
+
 ## P1 — UX Phase 3 (next sprint) — still open
 - [ ] A5 — Command palette (Cmd+K)
 - [ ] A9 — Table pagination (after B2 sort/filter)
