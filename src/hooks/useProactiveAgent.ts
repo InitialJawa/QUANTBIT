@@ -12,7 +12,7 @@ import { useBuyPressure } from "../engine/buyPressure";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useUIState } from "./useUIState";
 import { useNotifications } from "../contexts/NotificationContext";
-import { isCrisisMode, getIhsgDrawdown60 } from "../marketRegimeEngine";
+import { isCrisisMode } from "../marketRegimeEngine";
 
 export const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes per rule (legacy)
 
@@ -128,19 +128,7 @@ export function useProactiveAgent(): void {
       });
     }
 
-    // ── Rule 6: IHSG 60d-drawdown beyond crashSensitivity (unified with isCrisisMode) ─
-    const drawdown60 = getIhsgDrawdown60();
-    const sens = engineConfig.crashSensitivity ?? 10;
-    const r6 = drawdown60 !== null && drawdown60 <= -sens && engineConfig.enableCrashProtection;
-    if (transition("ihsgDrop", r6)) {
-      addNotification({
-        title: `IHSG drawdown 60h ${drawdown60.toFixed(1)}%`,
-        message: `Threshold crashSensitivity ${sens}% terlampaui. Tinjau portofolio + pertimbangkan safe haven.`,
-        type: "error",
-      });
-    }
-
     // Persist current states for next comparison.
     lastStateRef.current = curr;
-  }, [bps.score, bps.action, bps.deployPct, bps.valid, engineConfig.dcaActive, engineConfig.enableCrashProtection, engineConfig.crashSensitivity, proactiveAIEnabled, addNotification]);
+  }, [bps.score, bps.action, bps.deployPct, bps.valid, engineConfig.dcaActive, engineConfig.enableCrashProtection, proactiveAIEnabled, addNotification]);
 }

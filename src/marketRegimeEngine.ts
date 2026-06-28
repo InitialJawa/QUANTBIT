@@ -1,5 +1,6 @@
 import { MKT, L, RS, CW_AMAN, CW_MAP, getProcessedLeaders } from "./marketData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "./constants/idx80";
+import { detectCrashAlgo, detectRecoveryAlgo } from "./engine/crashDetector";
 
 export type RegimeState =
   | "RISK_ON"
@@ -64,11 +65,19 @@ export function setCrashProtectionEnabled(v: boolean) {
   _crashProtectionEnabled = v;
 }
 
-/** Unified crisis check — hormati enableCrashProtection + gunakan 60d drawdown, bukan monthly */
+/** Unified crisis check — match backtest engine's state machine logic:
+ *  uses detectCrashAlgo() + detectRecoveryAlgo() from crashDetector.ts
+ *  so live signals match backtest results exactly. */
 export function isCrisisMode(): boolean {
   if (!_crashProtectionEnabled) return false;
-  const dd = getIhsgDrawdown60();
-  return dd !== null && dd <= -_crashSensitivity;
+  if (_lastIhsgData.length < 2) return false;
+  const closes = _lastIhsgData.map(d => d.close);
+  const currentIhsg = closes[closes.length - 1];
+  const crash = detectCrashAlgo(closes, currentIhsg, _crashSensitivity);
+  if (!crash.signaled) return false;
+  const recovery = detectRecoveryAlgo(closes, currentIhsg);
+  if (recovery.signaled) return false;
+  return true;
 }
 
 export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {

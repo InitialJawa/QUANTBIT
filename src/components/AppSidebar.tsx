@@ -20,6 +20,8 @@ interface AppSidebarProps {
   portfolio: PortfolioItem[];
   onClearPortfolio?: () => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
+  isWalletOpen?: boolean;
+  onToggleWallet?: () => void;
 }
 
 function formatRupiah(val: number) {
@@ -64,6 +66,8 @@ export function AppSidebar({
   portfolio,
   onClearPortfolio,
   getDynamicStock,
+  isWalletOpen,
+  onToggleWallet,
 }: AppSidebarProps) {
   const isIHSGInCrisis = isCrisisMode();
   const [showProfileManager, setShowProfileManager] = useState(false);
@@ -107,15 +111,15 @@ export function AppSidebar({
 
   function rsiColorClass(rsi: number | null): string {
     if (rsi === null) return "text-tertiary";
-    if (rsi >= 70) return "text-emerald-400";
-    if (rsi <= 30) return "text-rose-400";
+    if (rsi >= 70) return "text-rose-400";
+    if (rsi <= 30) return "text-emerald-400";
     return "text-tertiary";
   }
 
   function rsiBgBar(rsi: number | null): string {
     if (rsi === null) return "bg-white/[0.06]";
-    if (rsi >= 70) return "bg-emerald-400/30";
-    if (rsi <= 30) return "bg-rose-400/30";
+    if (rsi >= 70) return "bg-rose-400/30";
+    if (rsi <= 30) return "bg-emerald-400/30";
     return "bg-white/[0.10]";
   }
 
@@ -652,10 +656,14 @@ export function AppSidebar({
               <PanelLeftOpen className="w-4 h-4" />
             </button>
             <div className="w-full h-px bg-white/[0.04]" />
-            <div className="flex flex-col items-center gap-1 text-label text-tertiary">
+            <button
+              onClick={onToggleWallet}
+              className="flex flex-col items-center gap-1 text-label text-tertiary hover:text-emerald-400 transition-colors cursor-pointer"
+              title="Buka Dompet"
+            >
               <Wallet className="w-4 h-4" />
               <span className="mt-1">Q</span>
-            </div>
+            </button>
           </div>
         ) : (
           <>
@@ -676,6 +684,20 @@ export function AppSidebar({
               {activeTab === "portfolio" && renderPortfolioContent()}
               {activeTab === "analytics" && renderAnalyticsContent()}
               {activeTab === "backtest" && renderBacktestContent()}
+            </div>
+            <div className="shrink-0 border-t border-white/[0.04] px-2 py-1.5">
+              <button
+                onClick={onToggleWallet}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors cursor-pointer ${
+                  isWalletOpen
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : "text-white/50 hover:bg-white/[0.04] hover:text-white/70"
+                }`}
+                title="Buka Dompet"
+              >
+                <Wallet className="w-4 h-4" />
+                <span className="text-label font-medium uppercase tracking-wider">Dompet</span>
+              </button>
             </div>
           </>
         )}

@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { DataBadge } from "./DataBadge";
-import { getIhsgDrawdown60 } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrisisMode } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -165,10 +165,7 @@ export function PortfolioTracker({
   };
 
   const ihsgDrawdown60 = getIhsgDrawdown60();
-  const isIHSGInCrisis =
-    engineConfig.enableCrashProtection !== false &&
-    ihsgDrawdown60 !== null &&
-    ihsgDrawdown60 <= -(engineConfig.crashSensitivity ?? 10);
+  const isIHSGInCrisis = isCrisisMode();
 
   const strategyEval = useMemo(() => evaluateStrategy(
     engineConfig as any,
@@ -670,19 +667,19 @@ export function PortfolioTracker({
             </div>
             <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
               <div className="text-right">
-                <div className="text-white/30 text-[10px]">QUALITY</div>
+                <div className="text-white/30 text-label">QUALITY</div>
                 <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
               </div>
               <div className="text-right">
-                <div className="text-white/30 text-[10px]">GROWTH</div>
+                <div className="text-white/30 text-label">GROWTH</div>
                 <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
               </div>
               <div className="text-right">
-                <div className="text-white/30 text-[10px]">VALUE</div>
+                <div className="text-white/30 text-label">VALUE</div>
                 <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
               </div>
               <div className="text-right">
-                <div className="text-white/30 text-[10px]">MOMENTUM</div>
+                <div className="text-white/30 text-label">MOMENTUM</div>
                 <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
               </div>
             </div>
@@ -758,23 +755,23 @@ export function PortfolioTracker({
       )}
 
       {showCrisisSignals && strategyEval.shouldExit && (
-        <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
-          <div className="flex items-center gap-2 text-amber-400">
+        <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+          <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5 animate-pulse" />
             <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
               Strategy Says: Exit ke {strategyEval.targetSafeHaven?.toUpperCase()}
               <ExplainButton label="evaluateStrategy() — IHSG drop > crashSensitivity" />
             </h3>
           </div>
-          <p className="text-xs text-amber-200/70 font-sans max-w-3xl">
+          <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
             {strategyEval.reason}
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
             <span className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
               IHSG live: {MKT.ihsg.value.toLocaleString("id-ID")} ({ihsgDrawdown60 !== null ? `${ihsgDrawdown60 >= 0 ? "+" : ""}${ihsgDrawdown60.toFixed(1)}%` : "—"})
             </span>
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
+            <div className="text-label font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20">
               TARGET: {strategyEval.targetSafeHaven?.toUpperCase()}
             </div>
             <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
@@ -825,10 +822,10 @@ export function PortfolioTracker({
       })()}
 
       {visibleWarnings.length > 0 && (
-        <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+        <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-rose-400">
+            <div className="flex items-center gap-2 text-amber-400">
               <AlertTriangle className="w-5 h-5 animate-pulse" />
               <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
                 Peringatan Portofolio: Sinyal Keluar / Turun Peringkat
@@ -838,14 +835,14 @@ export function PortfolioTracker({
             {visibleWarnings.length > 1 && (
               <button
                 onClick={() => setDismissedWarnings(new Set(visibleWarnings.map((w) => w.ticker)))}
-                className="text-caption text-rose-300/60 hover:text-rose-300 font-bold uppercase tracking-widest shrink-0"
+                className="text-caption text-amber-300/60 hover:text-amber-300 font-bold uppercase tracking-widest shrink-0"
                 title="Tandai semua sebagai sudah dibaca"
               >
                 Tandai Dibaca
               </button>
             )}
           </div>
-          <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
+          <p className="text-xs text-amber-200/70 font-sans max-w-3xl">
             Sistem mendeteksi satu atau lebih saham dalam portofolio Anda telah
             memicu sinyal jual atau tidak lagi berada dalam posisi unggulan (Top
             5). Pertimbangkan untuk mengamankan keuntungan atau membatasi
@@ -870,17 +867,17 @@ export function PortfolioTracker({
               return (
                 <div
                   key={item.ticker}
-                  className="flex items-center gap-2.5 p-2 bg-rose-500/5 rounded-lg border border-rose-500/10"
+                  className="flex items-center gap-2.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/10"
                 >
-                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-rose-500/20">
+                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-amber-500/20">
                     {item.ticker}
                   </div>
-                  <span className="text-xs text-rose-300 font-semibold flex-1">
+                  <span className="text-xs text-amber-300 font-semibold flex-1">
                     {reason}
                   </span>
                   <button
                     onClick={() => setDismissedWarnings((prev) => new Set(prev).add(item.ticker))}
-                    className="text-rose-300/40 hover:text-rose-300 text-caption font-bold px-1.5 py-0.5 rounded transition-colors shrink-0"
+                    className="text-amber-300/40 hover:text-amber-300 text-caption font-bold px-1.5 py-0.5 rounded transition-colors shrink-0"
                     title="Tandai sudah dibaca"
                     aria-label={`Dismiss warning for ${item.ticker}`}
                   >

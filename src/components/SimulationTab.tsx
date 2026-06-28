@@ -1068,8 +1068,8 @@ export function SimulationTab({
                   {/* Stats Bento Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
-                    <div className="p-4 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-[#E0E0E0]/30 block">Hasil Akhir Strategi</span>
+                    <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Hasil Akhir Strategi</span>
                       <span className="text-base font-black font-mono text-emerald-400 block">
                         {formatRupiah(backtestResult.finalValue)}
                       </span>
@@ -1143,7 +1143,7 @@ export function SimulationTab({
                   </div>
 
                   {/* Dividen Kumulatif — full-width insight section */}
-                  <div className="p-4 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl">
+                  <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                       <div className="shrink-0">
                         <span className="text-label uppercase font-bold tracking-widest text-emerald-400/70 block">Dividen Kumulatif (Nett 90%)</span>
@@ -1153,11 +1153,11 @@ export function SimulationTab({
                       </div>
                       <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                         <div className="p-2 bg-white/[0.02] rounded-lg">
-                          <span className="text-[10px] font-mono text-white/40 block">Rebalances</span>
+                          <span className="text-label font-mono text-white/40 block">Rebalances</span>
                           <span className="text-caption font-bold text-amber-400 font-mono">{backtestResult.totalTrades}</span>
                         </div>
                         <div className="p-2 bg-white/[0.02] rounded-lg">
-                          <span className="text-[10px] font-mono text-white/40 block">Avg yield/thn</span>
+                          <span className="text-label font-mono text-white/40 block">Avg yield/thn</span>
                           <span className="text-caption font-bold text-emerald-400/80 font-mono">
                             {(() => {
                               const years = Math.max(1, (new Date(backtestConfig.simEndDate).getTime() - new Date(backtestConfig.simStartDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
@@ -1174,7 +1174,7 @@ export function SimulationTab({
                               .slice(0, 2)
                               .map(([ticker, amt]) => (
                                 <div key={ticker} className="p-2 bg-white/[0.02] rounded-lg">
-                                  <span className="text-[10px] font-mono text-white/40 block">Top: {ticker}</span>
+                                  <span className="text-label font-mono text-white/40 block">Top: {ticker}</span>
                                   <span className="text-caption font-bold text-emerald-400/70 font-mono">+{((amt as number) / 1e6).toFixed(1)}M</span>
                                 </div>
                               ))}
@@ -1262,7 +1262,7 @@ export function SimulationTab({
                           <span className={`text-caption font-bold font-mono ${backtestResult.totalReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                             {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(1)}%
                           </span>
-                          <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-[10px] font-mono text-white/50">
+                          <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-label font-mono text-white/50">
                             <div>CAGR: {backtestResult.cagr.toFixed(1)}%</div>
                             <div>Max DD: -{backtestResult.maxDrawdown.toFixed(1)}%</div>
                             <div className="text-emerald-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
@@ -1281,7 +1281,7 @@ export function SimulationTab({
                               {bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "+" : ""}
                               {(((bl.finalValue / (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)) - 1) * 100).toFixed(1)}%
                             </span>
-                            <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-[10px] font-mono text-white/50">
+                            <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-label font-mono text-white/50">
                               <div>CAGR: {bl.cagr.toFixed(1)}%</div>
                               <div>Max DD: -{bl.maxDrawdown.toFixed(1)}%</div>
                               <div>Avg Price: {formatRupiah(bl.avgBuyPrice)}</div>
@@ -1449,19 +1449,19 @@ export function SimulationTab({
                           BUY: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
                           SELL: ["bg-rose-500/20 text-rose-400 border-rose-500/20", "text-rose-300"],
                           REBALANCE: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
-                          CRASH_TRIGGER: ["bg-red-500/25 text-red-400 border-red-500/30", "text-red-300"],
+                          CRASH_TRIGGER: ["bg-rose-500/25 text-rose-400 border-rose-500/30", "text-rose-300"],
                           CRASH_RECOVERY: ["bg-amber-500/20 text-amber-400 border-amber-500/20", "text-amber-300"],
                         }[log.type] || ["bg-white/5 text-white/60 border-white/10", "text-white/60"];
                         return (
                           <div key={idx} className="border-b border-white/5 pb-2.5 last:border-0 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
                             <div className="flex items-start gap-2.5">
-                              <span className="text-[10px] text-zinc-600 font-mono shrink-0 mt-0.5 w-6 text-right">{idx + 1}</span>
+                              <span className="text-label text-zinc-600 font-mono shrink-0 mt-0.5 w-6 text-right">{idx + 1}</span>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase font-sans tracking-wider shrink-0 border ${typeColor}`}>
+                                  <span className={`inline-block px-1.5 py-0.5 rounded text-label font-extrabold uppercase font-sans tracking-wider shrink-0 border ${typeColor}`}>
                                     {log.type === "CRASH_TRIGGER" ? "CRASH" : log.type === "CRASH_RECOVERY" ? "RECOVERY" : log.type}
                                   </span>
-                                  <span className="text-[10px] text-zinc-500 font-mono">{dateStr}</span>
+                                  <span className="text-label text-zinc-500 font-mono">{dateStr}</span>
                                 </div>
                                 <p className="text-xs leading-relaxed text-zinc-300">{log.message}</p>
                               </div>

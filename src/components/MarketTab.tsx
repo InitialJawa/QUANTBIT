@@ -504,7 +504,7 @@ export function MarketTab({
                       trail.regime === "RISK_ON" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                       trail.regime === "RISK_OFF" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
                       trail.regime === "GOLD_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
-                      trail.regime === "CASH_DEFENSE" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                      trail.regime === "CASH_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
                       "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
                     }`}>
                       {trail.regime === "RISK_ON" ? "RISK ON" :
@@ -693,9 +693,9 @@ export function MarketTab({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
-                          <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/15">AI Monitor</span>
+                          <span className="text-label uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/15">AI Monitor</span>
                           {status && status !== "LIVE" && (
-                            <span className={`text-[10px] uppercase font-bold tracking-widest px-1 py-0.5 rounded border ${
+                            <span className={`text-label uppercase font-bold tracking-widest px-1 py-0.5 rounded border ${
                               status === "CACHED" ? "text-amber-400/60 bg-amber-500/5 border-amber-500/10" :
                               status === "STALE" ? "text-rose-400/60 bg-rose-500/5 border-rose-500/10" :
                               "text-white/30 bg-white/5 border-white/10"

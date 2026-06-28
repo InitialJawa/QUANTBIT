@@ -479,12 +479,12 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       >
         <Bot className="w-6 h-6" />
         {totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md">
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-label font-bold flex items-center justify-center shadow-md">
             {totalUnread > 9 ? "9+" : totalUnread}
           </span>
         )}
         {proactiveCount > 0 && (
-          <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shadow-md">
+          <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-amber-500 text-black text-label font-bold flex items-center justify-center shadow-md">
             <Bell className="w-3 h-3" />
           </span>
         )}
@@ -493,7 +493,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[999] flex flex-col" style={{ width: "380px", maxHeight: "620px" }}>
+    <div className="fixed bottom-6 right-6 z-[999] flex flex-col w-[calc(100vw-24px)] sm:w-[380px]" style={{ maxHeight: "620px" }}>
       <div className={`bg-surface-alt border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden ${isMinimized ? "h-auto" : "flex-1 max-h-[620px]"}`}
         style={{ background: "#0a0a0a" }}
       >

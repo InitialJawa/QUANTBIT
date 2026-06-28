@@ -12,6 +12,8 @@ interface FloatingWalletProps {
   onWithdraw: (amount: number) => void;
   onMoveToGold: (amount: number) => void;
   onSellGold: (shares: number) => void;
+  /** When true, hide the floating action button (FAB) so it can be rendered elsewhere (e.g. sidebar) */
+  hideFab?: boolean;
 }
 
 export function FloatingWallet({
@@ -24,9 +26,11 @@ export function FloatingWallet({
   onWithdraw,
   onMoveToGold,
   onSellGold,
+  hideFab = false,
 }: FloatingWalletProps) {
   return (
     <>
+      {!hideFab && (
       <button
         onClick={onToggle}
         className="fixed bottom-24 right-6 z-[999] w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center cursor-pointer group"
@@ -34,6 +38,7 @@ export function FloatingWallet({
       >
         <Wallet className="w-6 h-6" />
       </button>
+      )}
 
       <AnimatePresence>
         {isOpen && (
@@ -51,7 +56,7 @@ export function FloatingWallet({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="fixed top-0 right-0 z-[999] h-full w-[380px] border-l border-white/10 shadow-2xl overflow-y-auto"
+              className="fixed top-0 right-0 z-[999] h-full w-full sm:w-[380px] border-l border-white/10 shadow-2xl overflow-y-auto"
               style={{ backgroundColor: "#0a0a0a" }}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/5" style={{ backgroundColor: "#0a0a0a" }}>

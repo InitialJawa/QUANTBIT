@@ -244,7 +244,7 @@ export function AppHeader({
                       {showToasts ? "ON" : "OFF"}
                     </span>
                   </button>
-                  <div className="px-2 pt-1 pb-1.5 text-[10px] text-white/25 leading-snug italic">
+                  <div className="px-2 pt-1 pb-1.5 text-label text-white/25 leading-snug italic">
                     Notifikasi persistent (bell icon) selalu aktif, event disimpan dan dibaca AI walaupun toast mati.
                   </div>
                 </div>

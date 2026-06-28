@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 import { api } from "../services/api";
 import { MKT, RS } from "../marketData";
-import { getIhsgDrawdown60 } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrisisMode } from "../marketRegimeEngine";
 import { computeBuyPressureFromMarket } from "../engine/buyPressure";
 import { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS } from "./toolCallParser";
 import { generateMockResponse } from "./devMockAI";
@@ -91,17 +91,14 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
     }
 
     if (c.enableCrashProtection) {
-      const ihsgDrawdown60 = getIhsgDrawdown60();
-      if (typeof MKT.ihsg?.value === "number") {
-        const shouldExit = ihsgDrawdown60 !== null && ihsgDrawdown60 <= -(c.crashSensitivity ?? 10);
-        ctx.strategyEvaluation = {
-          shouldExit,
-          reason: shouldExit
-            ? `IHSG drop ${Math.abs(ihsgDrawdown60!).toFixed(1)}% from 60d peak (threshold ${c.crashSensitivity}%)`
-            : `IHSG toleran (${ihsgDrawdown60 !== null ? ihsgDrawdown60.toFixed(1) : "N/A"}%, threshold ${c.crashSensitivity}%)`,
-          targetSafeHaven: shouldExit ? c.safeHavenAsset : null,
-        };
-      }
+      const shouldExit = isCrisisMode();
+      ctx.strategyEvaluation = {
+        shouldExit,
+        reason: shouldExit
+          ? `Crisis mode aktif — IHSG memenuhi threshold crash (${c.crashSensitivity}%) dengan konfirmasi trend bearish`
+          : `IHSG dalam zona aman — tidak ada sinyal krisis terdeteksi`,
+        targetSafeHaven: shouldExit ? c.safeHavenAsset : null,
+      };
     }
   }
 

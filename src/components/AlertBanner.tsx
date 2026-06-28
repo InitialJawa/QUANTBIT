@@ -73,21 +73,21 @@ export function AlertBanner({
           onMouseLeave={() => setPaused(false)}
         >
           <div
-            className="relative overflow-hidden rounded-xl border border-[#f23645]/20 bg-gradient-to-br from-[#f23645]/[0.08] via-[#0a0a0a] to-[#0a0a0a] shadow-2xl"
+            className="relative overflow-hidden rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-500/[0.08] via-[#0a0a0a] to-[#0a0a0a] shadow-2xl"
           >
             <div className="p-3.5">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-[#f23645]/15 text-[#f23645]">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-rose-500/15 text-rose-500">
                   <ShieldAlert className="w-4 h-4" />
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-[11px] font-black uppercase tracking-widest font-mono flex items-center gap-1.5 text-[#f23645]">
+                    <h4 className="text-caption font-black uppercase tracking-widest font-mono flex items-center gap-1.5 text-rose-500">
                       Sinyal Krisis Makro
                       <span className="flex h-1.5 w-1.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[#f23645]" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#f23645]" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-rose-500" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
                       </span>
                     </h4>
                     <button
@@ -99,9 +99,9 @@ export function AlertBanner({
                     </button>
                   </div>
 
-                  <p className="text-[11px] text-white/35 leading-relaxed">
+                  <p className="text-caption text-white/35 leading-relaxed">
                     IHSG turun{" "}
-                    <strong className="text-[#f23645] font-mono">
+                    <strong className="text-rose-500 font-mono">
                       {MKT.ihsg.monthly.toFixed(2)}%
                     </strong>{" "}
                     — hentikan beli baru, alokasi ke cash/emas, tunggu
@@ -111,7 +111,7 @@ export function AlertBanner({
                   <div className="flex justify-end pt-1">
                     <button
                       onClick={onGoToLedger}
-                      className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md font-sans transition-all cursor-pointer bg-[#f23645]/15 hover:bg-[#f23645]/25 text-[#f23645]"
+                      className="flex items-center gap-1 text-label font-bold uppercase tracking-widest px-2.5 py-1 rounded-md font-sans transition-all cursor-pointer bg-rose-500/15 hover:bg-rose-500/25 text-rose-500"
                     >
                       Buka Ledger <ExternalLink className="w-2.5 h-2.5" />
                     </button>
@@ -123,7 +123,7 @@ export function AlertBanner({
             {/* Progress bar */}
             <div className="h-0.5 w-full bg-white/5">
               <div
-                className="h-full transition-all ease-linear bg-[#f23645]"
+                className="h-full transition-all ease-linear bg-rose-500"
                 style={{
                   width: `${progress}%`,
                   transitionDuration: paused ? "0ms" : "100ms",

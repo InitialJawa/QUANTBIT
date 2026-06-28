@@ -86,7 +86,7 @@ const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon,
         <div className="flex items-center gap-1.5">
           <Icon className="w-3 h-3 text-white/40" />
           <span className="text-white/70 font-medium">{label}</span>
-          <span className="text-white/20 font-mono text-[10px]">({weight}%)</span>
+          <span className="text-white/20 font-mono text-label">({weight}%)</span>
         </div>
         <span className="text-white font-mono font-bold text-caption">{value.toFixed(0)}</span>
       </div>
@@ -98,7 +98,7 @@ const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon,
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
-      <p className="text-[10px] text-white/30 leading-snug font-sans">{description}</p>
+      <p className="text-label text-white/30 leading-snug font-sans">{description}</p>
     </div>
   );
 };

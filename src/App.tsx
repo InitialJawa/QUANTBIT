@@ -256,6 +256,8 @@ function AppContent({ logout }: { logout: () => void }) {
                 portfolio={pm.portfolio}
                 onClearPortfolio={pm.handleClearPortfolio}
                 getDynamicStock={df.getDynamicStock}
+                isWalletOpen={ui.isWalletOpen}
+                onToggleWallet={() => ui.setIsWalletOpen(!ui.isWalletOpen)}
               />
 
               <main
@@ -380,6 +382,7 @@ function AppContent({ logout }: { logout: () => void }) {
             </div>
           
 <FloatingWallet
+        hideFab
         isOpen={ui.isWalletOpen}
         onToggle={() => ui.setIsWalletOpen(!ui.isWalletOpen)}
         cash={pm.cash}
