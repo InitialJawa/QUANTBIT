@@ -50,6 +50,39 @@ app.post("/api/send-notification", async (req, res) => {
 
 app.get("/api/yahoo", handleYahooRequest);
 
+// Local dev live prices — mirrors functions/api/[[path]].ts:handleYahooPrices
+// so useDataFeed.ts gets real IHSG/USDIDR/GOLD prices in dev mode.
+let _lastYahooPrices: Record<string, { close: number; change: number; pct: number }> | null = null;
+app.get("/api/yahoo/live-prices", async (_req, res) => {
+  try {
+    const tickers = ["BBCA.JK","BBRI.JK","BMRI.JK","TLKM.JK","ASII.JK","ADRO.JK","PTBA.JK","ESSA.JK","GOTO.JK","^JKSE","USDIDR=X","GC=F"];
+    const resp = await fetch(`https://query1.finance.yahoo.com/v8/finance/spark?symbols=${tickers.join(",")}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", Accept: "application/json" },
+    });
+    if (!resp.ok) throw new Error(`Yahoo HTTP ${resp.status}`);
+    const apiRes: any = await resp.json();
+    const prices: Record<string, { close: number; change: number; pct: number }> = {};
+    for (const [symRaw, item] of Object.entries(apiRes)) {
+      let sym = (symRaw as string).split(".")[0];
+      if (symRaw === "^JKSE") sym = "IHSG";
+      if (symRaw === "USDIDR=X") sym = "USDIDR";
+      if (symRaw === "GC=F") sym = "GOLD";
+      const d = item as any;
+      if (d?.close?.length) {
+        const closes = d.close.filter((c: any) => typeof c === "number");
+        const lc = closes[closes.length - 1];
+        const prev = d.previousClose || lc || 1;
+        prices[sym] = { close: Number(lc || 0), change: Number((lc || 0) - prev), pct: Number(((lc || 0) - prev) / prev * 100) };
+      }
+    }
+    _lastYahooPrices = prices;
+    res.json({ success: true, prices, source: "Yahoo Finance (Live)" });
+  } catch (e: any) {
+    if (_lastYahooPrices) return res.json({ success: true, prices: _lastYahooPrices, source: "Yahoo Finance (Cached)" });
+    res.json({ success: false, error: e.message, source: "Offline Mock" });
+  }
+});
+
 // Local dev AI chat — same logic as Cloudflare Pages Functions
 // (functions/api/[[path]].ts) but reads API keys from process.env.
 // Provider chain: Groq → Gemini → Groq-fallback → OpenRouter.
