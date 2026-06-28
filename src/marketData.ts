@@ -87,8 +87,9 @@ export const MKT = {
   last_update: "2026-06-23",
   market_last_update: "2026-06-23 17:00:00 WIB",
   // NOTE: daily/weekly/monthly di-overwrite oleh refreshRSFromRegime() dari historical IHSG data.
+  // prices[] diisi oleh setIhsgHistory() dari /api/backtest-data; value di-update dari Yahoo live price.
   // Nilai di bawah hanya dipakai sebagai fallback pre-data-load.
-  ihsg: { value: 6101.0, daily: 0, daily_pct: 0, weekly: 0, monthly: 0 },
+  ihsg: { value: 6101.0, daily: 0, daily_pct: 0, weekly: 0, monthly: 0, prices: [] as { close: number; date: string; isCarriedForward?: boolean }[] },
   usdidr: { value: 17840.0, daily: 0, weekly: 0, monthly: 0 },
   gold: { value: 2371593, daily: 0, weekly: 0, monthly: 0 },
   oil: { value: 88, daily: 0, weekly: 0, monthly: 0 }

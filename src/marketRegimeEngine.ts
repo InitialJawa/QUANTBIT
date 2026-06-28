@@ -39,14 +39,15 @@ export interface RegimeOutput {
 
 }
 
-let _lastIhsgData: { close: number; date: string; isCarriedForward?: boolean }[] = [];
 let _activeUniverse: "all" | "idx80" | "idx30" | "lq45" = "all";
 let _activeWeights: { quality: number; growth: number; value: number; momentum: number; dividend: number } | null = null;
 let _crashSensitivity = 10;
 let _crashProtectionEnabled = true;
 
+/** Single source of truth: writes historical IHSG close data into MKT.ihsg.prices.
+ *  Live current price (MKT.ihsg.value) di-update terpisah oleh data feed (Yahoo/GoAPI). */
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
-  _lastIhsgData = data;
+  MKT.ihsg.prices = data;
 }
 
 export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
@@ -67,12 +68,14 @@ export function setCrashProtectionEnabled(v: boolean) {
 
 /** Unified crisis check — match backtest engine's state machine logic:
  *  uses detectCrashAlgo() + detectRecoveryAlgo() from crashDetector.ts
- *  so live signals match backtest results exactly. */
+ *  so live signals match backtest results exactly.
+ *  History dari MKT.ihsg.prices; current price dari MKT.ihsg.value (Yahoo live). */
 export function isCrisisMode(): boolean {
   if (!_crashProtectionEnabled) return false;
-  if (_lastIhsgData.length < 2) return false;
-  const closes = _lastIhsgData.map(d => d.close);
-  const currentIhsg = closes[closes.length - 1];
+  const prices = MKT.ihsg.prices;
+  if (prices.length < 2) return false;
+  const closes = prices.map(d => d.close);
+  const currentIhsg = MKT.ihsg.value ?? closes[closes.length - 1];
   const crash = detectCrashAlgo(closes, currentIhsg, _crashSensitivity);
   if (!crash.signaled) return false;
   const recovery = detectRecoveryAlgo(closes, currentIhsg);
@@ -81,7 +84,7 @@ export function isCrisisMode(): boolean {
 }
 
 export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {
-  return _lastIhsgData;
+  return MKT.ihsg.prices;
 }
 
 export function computeRSI(data: number[], period: number = 14): number | null {
@@ -139,37 +142,43 @@ export function computeMACD(data: number[]): { macd: number; signal: number; his
 }
 
 export function getIhsgDrawdown60(): number | null {
-  if (_lastIhsgData.length < 2) return null;
-  const closes = _lastIhsgData.map(d => d.close);
+  const prices = MKT.ihsg.prices;
+  if (prices.length < 2) return null;
+  const closes = prices.map(d => d.close);
   const window = closes.slice(-60);
   const peak = Math.max(...window);
-  const current = closes[closes.length - 1];
+  const current = MKT.ihsg.value ?? closes[closes.length - 1];
   return ((current - peak) / peak) * 100;
 }
 
-/** 30-day IHSG return (%), computed dari _lastIhsgData. Null kalau data <2 hari. */
+/** Helper: ambil closes array dari MKT.ihsg.prices. */
+function ihsgPrices(): number[] {
+  return MKT.ihsg.prices.map(d => d.close);
+}
+
+/** 30-day IHSG return (%), computed dari MKT.ihsg.prices. Null kalau data <2 hari. */
 export function getIhsgMonthlyReturn(): number | null {
-  if (_lastIhsgData.length < 2) return null;
-  const closes = _lastIhsgData.map(d => d.close);
-  const current = closes[closes.length - 1];
+  const closes = ihsgPrices();
+  if (closes.length < 2) return null;
+  const current = MKT.ihsg.value ?? closes[closes.length - 1];
   const lookback = closes[Math.max(0, closes.length - 30)];
   return ((current - lookback) / lookback) * 100;
 }
 
 /** 7-day IHSG return (%). */
 export function getIhsgWeeklyReturn(): number | null {
-  if (_lastIhsgData.length < 2) return null;
-  const closes = _lastIhsgData.map(d => d.close);
-  const current = closes[closes.length - 1];
+  const closes = ihsgPrices();
+  if (closes.length < 2) return null;
+  const current = MKT.ihsg.value ?? closes[closes.length - 1];
   const lookback = closes[Math.max(0, closes.length - 7)];
   return ((current - lookback) / lookback) * 100;
 }
 
 /** 1-day IHSG return (%). */
 export function getIhsgDailyReturn(): number | null {
-  if (_lastIhsgData.length < 2) return null;
-  const closes = _lastIhsgData.map(d => d.close);
-  const current = closes[closes.length - 1];
+  const closes = ihsgPrices();
+  if (closes.length < 2) return null;
+  const current = MKT.ihsg.value ?? closes[closes.length - 1];
   const prev = closes[closes.length - 2];
   return ((current - prev) / prev) * 100;
 }
@@ -200,7 +209,7 @@ export function computeMarketRegime(): RegimeOutput {
   const ihsgMonthly = MKT.ihsg.monthly;
   const ihsgCurrent = MKT.ihsg.value;
 
-  const closes = _lastIhsgData.map(d => d.close);
+  const closes = ihsgPrices();
   const sma20 = computeSMA(closes, 20);
   const sma50 = computeSMA(closes, 50);
 
