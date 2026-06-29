@@ -261,6 +261,48 @@ in the notification loop. (Tidak berubah dari sesi sebelumnya.)
 
 ## Session 2026-06-26 (session 12): Konsolidasi UI + Backtest ↔ Portfolio Koherensi — COMPLETED
 
+---
+
+## Session 2026-06-29 (session 13): Migration 0003 — DB as SOT for Market Data
+
+### 🟢 Migration 0003 Applied Locally
+- **Migration file**: `db/migrations/0003_market_data.sql` (already existed, 51 lines)
+- **Tables created** in `data/historical_market.sqlite`:
+  - `daily_overview` — 1320 rows (IHSG close, Gold IDR, USD/IDR per day)
+  - `stock_fundamentals` — 164 rows (quality, growth, value, momentum, dividend scores per ticker)
+  - `stock_daily` — 120,603 rows (close, adj_close, volume, ranks, norm_scores per ticker per day)
+  - `engine_snapshots` — 0 rows (ready for engine state persistence)
+- **Seed script**: `scripts/seed-db.py` (Python, uses built-in sqlite3 — works in constrained environments where better-sqlite3 can't build)
+
+### 🟢 DB Wiring Complete — All Endpoints Read from DB
+**Semua endpoint yang sebelumnya baca dari file JSON sekarang baca dari DB (single source of truth).**
+
+| Endpoint | Sebelum | Sesudah |
+|----------|---------|---------|
+| `server.ts` `/api/backtest-data` (dev) | `readFileSync` year JSONs | Python bridge → `daily_overview` + `stock_daily` |
+| `functions/api/[[path]].ts` `/api/backtest-data` (prod) | `env.ASSETS.fetch()` year JSONs | D1 query → `daily_overview` + `stock_daily` |
+| `functions/api/[[path]].ts` `/api/fundamentals` (prod) | `env.ASSETS.fetch()` idx_fundamentals_all.json | D1 query → `stock_fundamentals` |
+| `src/mcp/index.ts` `get_historical_data` | `readFileSync` year JSONs | Python bridge → `stock_daily` |
+
+### 🟢 Python Bridge Scripts (2 NEW)
+- **`scripts/db-query.py`** — generic SQLite query bridge: `python3 db-query.py "<sql>" '<params_json>'` → JSON stdout
+- **`scripts/export-backtest-json.py`** — reconstructs full day entries (nested stock dicts) from normalized DB tables
+- Fallback ke file JSON jika DB error, jadi tidak ada downtime
+
+### ⏳ Remaining
+- **Production D1 migration**: blocked until Node >= 22 or manual `wrangler d1 execute` with valid auth
+- Client-side build-time imports (`dividend_snapshots.json`, `idx80_scan.json`) tetap file-based — data ini snapshot tidak masuk migration 0003
+
+### Files Modified/Added
+- `scripts/seed-db.py` (NEW) — Python seed script
+- `scripts/db-query.py` (NEW) — Python DB query bridge
+- `scripts/export-backtest-json.py` (NEW) — Python backtest data export
+- `src/db/localDb.ts` (NEW) — TypeScript DB access layer (unused, for future)
+- `scripts/seed-db.ts` — fixed `import.meta.dirname` → `fileURLToPath` for Node 18 compat
+- `server.ts` — `/api/backtest-data` reads from SQLite via Python bridge
+- `functions/api/[[path]].ts` — `/api/backtest-data` + `/api/fundamentals` read from D1
+- `src/mcp/index.ts` — `get_historical_data` reads from SQLite via Python bridge
+
 ### 🟢 Root cause
 User: "backtest untuk eksperimen dan aku udah nemu hasil yang pas, langsung sync ke porto dong... tapi di kasus ini backtest sudah masuk fase recovery dan sudah membeli saham lagi tapi pas di porto dan market malah masih crash. kalau kek gtu 2 mesin itu baca data yang beda atau ada setting yang ngga sync semua"
 

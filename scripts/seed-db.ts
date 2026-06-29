@@ -10,10 +10,13 @@
  */
 
 import { readFileSync, existsSync, readdirSync } from "fs";
-import { join, resolve } from "path";
+import { join, resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import Database from "better-sqlite3";
 
-const ROOT = resolve(import.meta.dirname, "..");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const ROOT = resolve(__dirname, "..");
 const DB_PATH = join(ROOT, "data", "historical_market.sqlite"); // local SQLite
 const YEARS_DIR = join(ROOT, "data", "years");
 

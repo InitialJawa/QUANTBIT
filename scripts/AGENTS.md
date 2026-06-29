@@ -34,4 +34,5 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - `post_process_live_market.py` — derive live_market.json dari idx80_scan + GC=F fetch
 - `scrape_idx_fundamentals.py` — legacy, superseded by `collectors/fetch_idx_fundamental.py`
 - `run_backtest_comparison.cjs` — backtest weight-config comparison (used during rebalancing fix)
-- `seed-db.ts` — migrate `data/years/*.json` + IDX fundamentals ke SQLite (migration 0003 companion)
+- `seed-db.ts` — migrate `data/years/*.json` + IDX fundamentals ke SQLite (migration 0003 companion, requires better-sqlite3)
+- `seed-db.py` — Python fallback seed script (pure sqlite3, no native deps). Use when better-sqlite3 can't build

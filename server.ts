@@ -3,6 +3,7 @@ import express from "express";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { createTransport } from "nodemailer";
+import { execSync } from "child_process";
 import { handleYahooRequest } from "./src/server/yahooApi";
 import { runAiChat, getAiStatus, getAiStatusWithQuota, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
 
@@ -316,19 +317,48 @@ function getAiStatusFromEnv() {
   );
 }
 
-app.get("/api/backtest-data", (req, res) => {
+// ── DB-backed backtest data (replaces file-based JSON) ────
+
+const DB_SCRIPT = join(process.cwd(), "scripts", "export-backtest-json.py");
+
+/** Load all historical data from SQLite DB (via Python bridge). */
+function loadBacktestDataFromDb(startDate: string, endDate: string): any[] {
   try {
-    const configType = (req.query.configType as string) === "res" ? "res" : "prod";
-    const yearStart = parseInt(req.query.from as string) || 2000;
-    const yearEnd = parseInt(req.query.to as string) || 2026;
+    const stdout = execSync(
+      `python3 "${DB_SCRIPT}" "${startDate}" "${endDate}"`,
+      { encoding: "utf-8", timeout: 30000 },
+    );
+    const result = JSON.parse(stdout);
+    if (result && typeof result === "object" && "error" in result) {
+      throw new Error(result.error);
+    }
+    return result as any[];
+  } catch (err: any) {
+    console.error("DB load failed, falling back to file-based:", err.message);
+    // Fallback: read from year files (legacy path)
     const allData: any[] = [];
-    for (let y = yearStart; y <= yearEnd; y++) {
+    const yStart = parseInt(startDate.slice(0, 4));
+    const yEnd = parseInt(endDate.slice(0, 4));
+    for (let y = yStart; y <= yEnd; y++) {
       const yearPath = join(process.cwd(), "data", "years", `${y}.json`);
       if (existsSync(yearPath)) {
         const chunk = JSON.parse(readFileSync(yearPath, "utf-8"));
         allData.push(...chunk);
       }
     }
+    return allData;
+  }
+}
+
+app.get("/api/backtest-data", (req, res) => {
+  try {
+    const configType = (req.query.configType as string) === "res" ? "res" : "prod";
+    const yearStart = parseInt(req.query.from as string) || 2000;
+    const yearEnd = parseInt(req.query.to as string) || 2026;
+    const startDate = `${yearStart}-01-01`;
+    const endDate = `${yearEnd}-12-31`;
+
+    const allData = loadBacktestDataFromDb(startDate, endDate);
     if (allData.length === 0) {
       res.status(503).json({ error: "No historical data available" });
       return;

@@ -20,7 +20,13 @@ Database schema and migrations — sequential SQL files in `db/migrations/`.
 | 0000 | `_migrations_tracker` | Creates `_migrations` table for runner state | required |
 | 0001 | `init` | 8 original tables (users, sessions, portfolios, watchlists, trade_logs, cached_reports, idx_scan_data, engine_state) + 5 indexes | required |
 | 0002 | `ai_memory` | `ai_sessions` + `ai_messages` (per-user chat memory) + 3 indexes — see `src/server/aiMemory.ts` | required |
-| 0003 | `market_data` | `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots` — DB as SOT for market data, replaces file-based JSON | pending |
+| 0003 | `market_data` | `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots` — DB as SOT for market data, replaces file-based JSON | applied (local SQLite) |
+
+## Seed Script
+
+- `npm run db:seed` runs `scripts/seed-db.ts` (TypeScript, requires better-sqlite3 native build)
+- **Fallback**: `python3 scripts/seed-db.py` (pure Python, no native deps) — use when better-sqlite3 fails or in constrained environments
+  - Creates all 4 migration-0003 tables and seeds from `data/years/*.json` + `data/idx80_scan.json` + `data/fundamental_snapshots.json`
 
 ## Work Guidance
 - **New migration**: create `db/migrations/NNNN_descriptive_name.sql` with the next sequential number
@@ -45,4 +51,8 @@ Database schema and migrations — sequential SQL files in `db/migrations/`.
 ## Child DOX Index
 - `db/migrations/` — sequential migration files (NNNN_name.sql format)
 - `scripts/migrate.ts` — migration runner (status / apply / dry-run subcommands)
+- `scripts/db-query.py` — Python SQLite query bridge (used by server.ts + MCP for local dev)
+- `scripts/export-backtest-json.py` — Python backtest data export (reconstructs day entries from normalized tables)
+- `scripts/seed-db.py` — Python seed script (fallback when better-sqlite3 can't build)
+- `src/db/localDb.ts` — TypeScript DB access layer (for future use)
 - `db/AGENTS.md` — this file

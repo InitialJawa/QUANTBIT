@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 import { z } from "zod";
 import { RAW_STOCKS_DATA } from "../data/raw_stocks_data.ts";
 
@@ -100,27 +101,39 @@ server.registerTool("get_top_movers", {
 });
 
 server.registerTool("get_historical_data", {
-  description: "Get historical daily prices for a stock from backtest data",
+  description: "Get historical daily prices for a stock from backtest data (DB-backed, replaces file JSONs)",
   inputSchema: {
     ticker: z.string().describe("Stock ticker (e.g. BBCA)"),
-    from: z.string().optional().describe("Start year (default 2026)"),
+    from: z.string().optional().describe("Start year (default 2021)"),
     to: z.string().optional().describe("End year (default 2026)"),
   },
 }, async (args) => {
   const ticker = args.ticker.toUpperCase();
-  const fromY = parseInt(args.from || "2026");
-  const toY = parseInt(args.to || "2026");
-  const result: { date: string; price: number; adjPrice: number }[] = [];
-  for (let y = fromY; y <= toY; y++) {
-    const data = loadJSON<DayData[]>(`data/years/${y}.json`);
-    if (!data) continue;
-    for (const day of data) {
-      const price = day.stockPrices[ticker];
-      const adjPrice = day.stockAdjPrices[ticker];
-      if (price !== undefined) result.push({ date: day.date, price, adjPrice });
+  const fromY = args.from || "2021";
+  const toY = args.to || "2026";
+  try {
+    const stdout = execSync(
+      `python3 "${join(ROOT, "scripts", "db-query.py")}" 'SELECT sd.date, sd.close, sd.adj_close FROM stock_daily sd JOIN daily_overview d ON sd.date = d.date WHERE sd.ticker = ? AND sd.date >= ? AND sd.date <= ? ORDER BY sd.date' '["${ticker}", "${fromY}-01-01", "${toY}-12-31"]'`,
+      { encoding: "utf-8", timeout: 10000 },
+    );
+    const rows = JSON.parse(stdout);
+    if (rows && typeof rows === "object" && "error" in rows) throw new Error(rows.error);
+    const result = (rows as any[]).map((r: any) => ({ date: r.date, price: r.close, adjPrice: r.adj_close }));
+    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result.slice(0, 100) }, null, 2) }] };
+  } catch {
+    // Fallback to file-based
+    const result: { date: string; price: number; adjPrice: number }[] = [];
+    for (let y = parseInt(fromY); y <= parseInt(toY); y++) {
+      const data = loadJSON<DayData[]>(`data/years/${y}.json`);
+      if (!data) continue;
+      for (const day of data) {
+        const price = day.stockPrices[ticker];
+        const adjPrice = day.stockAdjPrices[ticker];
+        if (price !== undefined) result.push({ date: day.date, price, adjPrice });
+      }
     }
+    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result.slice(0, 100) }, null, 2) }] };
   }
-  return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result.slice(0, 100) }, null, 2) }] };
 });
 
 server.registerResource("market_overview", "quantbit://market/overview", {

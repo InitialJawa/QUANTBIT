@@ -305,7 +305,7 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
 
   // ── Public API proxies (authenticated) ──────────────────
 
-  // GET /api/backtest-data
+  // GET /api/backtest-data — from D1 (migration 0003 tables)
   if (path === "/api/backtest-data" && method === "GET") {
     const configType = (url.searchParams.get("configType") === "res" ? "res" : "prod") as string;
     try {
@@ -314,24 +314,82 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
       if (yearStart < 2021 || yearEnd < 2021) {
         return error("Pre-2021 data has been archived. Use from >= 2021.", 400);
       }
-      const allData: any[] = [];
-      for (let y = yearStart; y <= yearEnd; y++) {
-        const resp = await env.ASSETS.fetch(new URL(`/data/years/${y}.json`, url));
-        if (resp.ok) {
-          const chunk: any[] = await resp.json();
-          allData.push(...chunk);
-        }
+      const startDate = `${yearStart}-01-01`;
+      const endDate = `${yearEnd}-12-31`;
+
+      // 1. Get daily overview rows
+      const overviewRows = await env.DB.prepare(
+        "SELECT date, ihsg_close, gold_idr, usdidr_rate FROM daily_overview WHERE date >= ? AND date <= ? ORDER BY date"
+      ).bind(startDate, endDate).all<any>();
+      const overviewMap = new Map<string, any>();
+      for (const row of overviewRows.results || []) {
+        overviewMap.set(row.date, row);
       }
-      if (allData.length === 0) {
+      const dates = Array.from(overviewMap.keys()).sort();
+      if (dates.length === 0) {
         return error("No historical data available", 503);
       }
+
+      // 2. Get stock daily rows
+      const stockRows = await env.DB.prepare(
+        "SELECT date, ticker, close, adj_close, volume, rank_prod, rank_res, norm_score, raw_metrics FROM stock_daily WHERE date >= ? AND date <= ? ORDER BY date, ticker"
+      ).bind(startDate, endDate).all<any>();
+
+      // Group by date
+      const stocksByDate = new Map<string, Map<string, any>>();
+      for (const row of stockRows.results || []) {
+        if (!stocksByDate.has(row.date)) {
+          stocksByDate.set(row.date, new Map());
+        }
+        stocksByDate.get(row.date)!.set(row.ticker, row);
+      }
+
+      // 3. Reconstruct per-day entries
+      const allData: any[] = [];
+      for (const date of dates) {
+        const od = overviewMap.get(date);
+        const dayStocks = stocksByDate.get(date) || new Map();
+        const stockPrices: Record<string, number> = {};
+        const stockAdjPrices: Record<string, number> = {};
+        const stockVolumes: Record<string, number> = {};
+        const stockRanksProd: Record<string, number> = {};
+        const stockRanksRes: Record<string, number> = {};
+        const stockNormScores: Record<string, any> = {};
+
+        for (const [ticker, s] of dayStocks) {
+          if (s.close != null) stockPrices[ticker] = s.close;
+          if (s.adj_close != null) stockAdjPrices[ticker] = s.adj_close;
+          if (s.volume != null) stockVolumes[ticker] = s.volume;
+          if (s.rank_prod != null) stockRanksProd[ticker] = s.rank_prod;
+          if (s.rank_res != null) stockRanksRes[ticker] = s.rank_res;
+          if (s.raw_metrics) {
+            try {
+              const raw = JSON.parse(s.raw_metrics);
+              if (raw.norm_scores) stockNormScores[ticker] = raw.norm_scores;
+            } catch {}
+          }
+        }
+
+        allData.push({
+          date,
+          ihsgPrice: od.ihsg_close,
+          goldPrice: od.gold_idr,
+          stockPrices,
+          stockAdjPrices,
+          stockVolumes,
+          stockRanksProd,
+          stockRanksRes,
+          stockNormScores,
+        });
+      }
+
       const bridged = bridgeHistoricalData(allData);
       const data = bridged.map((day: any) => ({
         date: day.date, ihsgPrice: day.ihsgPrice, goldPrice: day.goldPrice,
         stockPrices: day.stockAdjPrices, stockAdjPrices: day.stockAdjPrices,
         stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
         stockRanksProd: day.stockRanksProd, stockRanksRes: day.stockRanksRes,
-        stockRawMetrics: day.stockRawMetrics ?? null,
+        stockRawMetrics: null,
         stockNormScores: day.stockNormScores ?? null,
         isCarriedForward: day.isCarriedForward || false,
       }));
@@ -345,13 +403,23 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     }
   }
 
-  // GET /api/fundamentals
+  // GET /api/fundamentals — from D1 stock_fundamentals (migration 0003)
   if (path === "/api/fundamentals" && method === "GET") {
     try {
-      const resp = await env.ASSETS.fetch(new URL("/data/idx_fundamentals_all.json", url));
-      if (!resp.ok) return json({ success: false, count: 0, data: [] });
-      const raw = await resp.json();
-      const data = Array.isArray(raw) ? raw : [];
+      const rows = await env.DB.prepare(
+        "SELECT ticker, quality, growth, value, momentum, dividend, final_score, sector, industry, updated_at FROM stock_fundamentals ORDER BY ticker"
+      ).all<any>();
+      const data = (rows.results || []).map((r: any) => ({
+        ticker: r.ticker.replace(".JK", ""),
+        quality: r.quality,
+        growth: r.growth,
+        value: r.value,
+        momentum: r.momentum,
+        dividend: r.dividend,
+        finalScore: r.final_score,
+        sector: r.sector,
+        industry: r.industry,
+      }));
       return json({ success: true, count: data.length, data });
     } catch {
       return json({ success: false, count: 0, data: [] });

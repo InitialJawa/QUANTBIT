@@ -23,10 +23,15 @@ Delivered (Sesi 12 — Konsolidasi UI + Koherensi):
 - [ ] `npx vite build` — verify
 
 ## P0 — Migration 0003: DB as SOT for Market Data
-- [ ] Apply 0003 ke D1: `npm run db:migrate`
-- [ ] Seed local DB: `npm run db:seed`
-- [ ] Verify tables: `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots`
-- [ ] Wiring engine/UI baca dari DB (replaces file-based JSON)
+- [x] Migration file exists: `db/migrations/0003_market_data.sql`
+- [x] Local SQLite DB seeded: `data/historical_market.sqlite` (32.8 MB, 4 tables)
+- [x] Tables verified: 1320 daily_overview, 164 stock_fundamentals, 120603 stock_daily, 0 engine_snapshots
+- [x] **`server.ts`** /api/backtest-data → SQLite (via Python bridge `scripts/export-backtest-json.py`)
+- [x] **`functions/api/[[path]].ts`** /api/backtest-data → D1 (daily_overview + stock_daily queries)
+- [x] **`functions/api/[[path]].ts`** /api/fundamentals → D1 (stock_fundamentals table)
+- [x] **`src/mcp/index.ts`** get_historical_data → SQLite (via Python bridge `scripts/db-query.py`)
+- [ ] Apply 0003 ke production D1: need Node >= 22 + CLOUDFLARE_API_TOKEN (currently Node 18 blocks wrangler)
+- [ ] Seed local D1 (miniflare): blocked by Node 18 (wrangler requires Node 22+)
 
 ## P1 — UX Phase 3 (next sprint) — still open
 - [ ] A5 — Command palette (Cmd+K)
