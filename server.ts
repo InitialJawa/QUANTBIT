@@ -1,11 +1,30 @@
 // server.ts
 import express from "express";
 import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { createTransport } from "nodemailer";
 import { execSync } from "child_process";
 import { handleYahooRequest } from "./src/server/yahooApi";
 import { runAiChat, getAiStatus, getAiStatusWithQuota, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
+
+// Node 18 compat: load .env.local manually (--env-file requires Node >=20.12)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const envPath = join(__dirname, "..", ".env.local");
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, "utf-8").split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const eq = trimmed.indexOf("=");
+      if (eq > 0) {
+        const key = trimmed.slice(0, eq).trim();
+        const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+        if (!process.env[key]) process.env[key] = val;
+      }
+    }
+  }
+}
 
 const app = express();
 app.use(express.json());
