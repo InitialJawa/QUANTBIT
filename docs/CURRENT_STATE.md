@@ -67,6 +67,32 @@ Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (D
 - **PortfolioTracker.tsx** — added "Sync Status" indicator bar (Last synced, stale warning, Sync Now button)
 - **MarketTab.tsx** — added DB Sync indicator in the status bar area
 
+### Session 14c — Decision Engine DB SOT (2026-06-30)
+
+**Fix konsistensi IHSG data source**: semua decision engine (`isCrisisMode()`, `getIhsgDrawdown60()`, `evaluateStrategy()`, `computeMarketRegime()`) kini pakai **DB last close** (`MKT.ihsg.prices[last]`) sebagai `currentIhsgPrice`, bukan Yahoo live (`MKT.ihsg.value`).
+
+**Akar masalah**: Backtest dan portfolio sudah pakai algoritma unified (`detectCrashAlgo` + `detectRecoveryAlgo`), tapi portfolio tetap menggunakan `MKT.ihsg.value` (Yahoo live) untuk harga IHSG saat ini, sementara backtest menggunakan data historis DB. Akibatnya, jika live IHSG sedang drawdown (misal 5.643 vs peak 6.400 = -11,8%), portfolio menampilkan "Strategy Says: Exit" meski backtest di `simEndDate` tidak mendeteksi krisis.
+
+**Perubahan**:
+- `src/marketRegimeEngine.ts` — 6 fungsi (`isCrisisMode`, `getIhsgDrawdown60`, `getIhsgMonthlyReturn`, `getIhsgWeeklyReturn`, `getIhsgDailyReturn`, `computeMarketRegime`) hapus fallback ke `MKT.ihsg.value`, pakai `closes[last]` dari DB
+- `src/components/PortfolioTracker.tsx` — `evaluateStrategy()` dan `rule_crashProtectionTriggered()` pakai DB close, bukan `MKT.ihsg.value`
+- Visual overlay (`IHSG live: 5.643` di UI) tetap pakai `MKT.ihsg.value` sebagai display — sesuai AGENTS.md: live hanya visual overlay
+
+### Session 14d — Crisis State Machine Hysteresis (2026-06-30)
+
+**Fix mismatch antara backtest dan DCA**: `isCrisisMode()` sekarang memiliki **state machine dengan cooldown** yang identik dengan backtest (`core.ts:286-369`).
+
+**Akar masalah**: Backtest menggunakan stateful hysteresis (crash → cooldown 20 hari → recovery → cooldown 20 hari), sedangkan `isCrisisMode()` sebelumnya stateless — setiap panggilan evaluasi dari nol. Akibatnya:
+- Backtest log: "Recovered dari 1 crash" (recovery 2026-06-15, cooldown masih 9/20 saat 2026-06-30)
+- DCA/BuyPressure: tetap merah karena `isCrisisMode()` start dengan cooldown=0, langsung masuk krisis
+
+**Perubahan** (`src/marketRegimeEngine.ts`):
+- Module-level state: `_crisisInCrisis`, `_crisisCooldown`, `_crisisLastDataLen`, `_crisisInitialized`
+- `_initCrisisState()` — **lazy init**: fast-forward state machine melalui ALL data IHSG historis untuk reproduksi persis backtest's end state. Tanpa ini, session baru start dengan cooldown=0 dan masuk krisis padahal backtest masih dalam cooldown pasca-recovery.
+- `isCrisisMode()` — panggil `_initCrisisState()` di awal (first call atau setelah config/data berubah)
+- Cooldown decrement hanya saat ada data baru (`prices.length` bertambah), bukan setiap render
+- Reset `_crisisInitialized=false` saat `setIhsgHistory()`, `setCrashSensitivity()`, `setCrashProtectionEnabled(false)`
+
 ### Session 14b — Bug Fix & Consolidation
 - **Yahoo batchSize 50→20** — Spark endpoint max 20 symbols per request (sebelumnya HTTP 400)
 - **Gold price IDR/gram conversion** — Yahoo return USD/oz, data simpan IDR/gram (÷31.1035 × USD/IDR)

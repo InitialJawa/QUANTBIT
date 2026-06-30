@@ -44,10 +44,59 @@ let _activeWeights: { quality: number; growth: number; value: number; momentum: 
 let _crashSensitivity = 10;
 let _crashProtectionEnabled = true;
 
+// Crisis state machine — matches backtest's hysteresis (core.ts:286-369):
+// crash → cooldown=20 → recovery → cooldown=20 → re-enter crash if conditions recur
+let _crisisInCrisis = false;
+let _crisisCooldown = 0;
+let _crisisLastDataLen = 0;
+let _crisisInitialized = false;
+
+/** Fast-forward the crisis state machine through ALL historical IHSG data
+ *  to match the backtest's per-day state transitions exactly.
+ *  Without this, a new session would start with cooldown=0 and immediately
+ *  enter crisis, while the backtest (which already processed all days)
+ *  may have cooldown still active and show "Recovered" state. */
+function _initCrisisState(): void {
+  if (_crisisInitialized) return;
+  const prices = MKT.ihsg.prices;
+  if (prices.length < 2) return;
+  _crisisInCrisis = false;
+  _crisisCooldown = 0;
+
+  for (let i = 0; i < prices.length; i++) {
+    const closesSoFar = prices.slice(0, i + 1).map(d => d.close);
+    const dayIhsg = closesSoFar[closesSoFar.length - 1];
+
+    if (_crisisCooldown > 0) _crisisCooldown--;
+
+    const crash = detectCrashAlgo(closesSoFar, dayIhsg, _crashSensitivity);
+    if (crash.signaled && !_crisisInCrisis && _crisisCooldown <= 0) {
+      _crisisInCrisis = true;
+      _crisisCooldown = 20;
+      continue;
+    }
+
+    if (_crisisInCrisis && _crisisCooldown <= 0) {
+      const recovery = detectRecoveryAlgo(closesSoFar, dayIhsg);
+      if (recovery.signaled) {
+        _crisisInCrisis = false;
+        _crisisCooldown = 20;
+      }
+    }
+  }
+
+  _crisisLastDataLen = prices.length;
+  _crisisInitialized = true;
+}
+
 /** Single source of truth: writes historical IHSG close data into MKT.ihsg.prices.
- *  Live current price (MKT.ihsg.value) di-update terpisah oleh data feed (Yahoo/GoAPI). */
+ *  Live current price (MKT.ihsg.value) di-update terpisah oleh data feed (Yahoo/GoAPI).
+ *  Decision engines (evaluateStrategy, isCrisisMode, dll) pakai DB last close dari prices[],
+ *  bukan MKT.ihsg.value — lihat AGENTS.md: DB = SOT untuk semua decision engine.
+ *  Resets crisis state machine so next isCrisisMode() call re-initializes from scratch. */
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
   MKT.ihsg.prices = data;
+  _crisisInitialized = false;
 }
 
 export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
@@ -60,27 +109,64 @@ export function setActiveConfig(c: { quality: number; growth: number; value: num
 
 export function setCrashSensitivity(n: number) {
   _crashSensitivity = n;
+  _crisisInitialized = false;
 }
 
 export function setCrashProtectionEnabled(v: boolean) {
   _crashProtectionEnabled = v;
+  if (!v) _crisisInitialized = false;
 }
 
-/** Unified crisis check — match backtest engine's state machine logic:
- *  uses detectCrashAlgo() + detectRecoveryAlgo() from crashDetector.ts
- *  so live signals match backtest results exactly.
- *  History dari MKT.ihsg.prices; current price dari MKT.ihsg.value (Yahoo live). */
+/** Unified crisis check — state machine with hysteresis matching backtest engine
+ *  (core.ts:286-369). Uses detectCrashAlgo() + detectRecoveryAlgo() but maintains
+ *  a 20-data-point cooldown after crash entry and after recovery exit, exactly
+ *  like the backtest's crashCooldown mechanism.
+ *  On first call (or after data/config change), simulates through ALL historical
+ *  IHSG data to reproduce the backtest's final crisis state, so the live evaluation
+ *  is identical to what the backtest would show at the current date.
+ *  Cooldown decrements only when new data arrives (prices.length increases), not on
+ *  re-renders — so it tracks trading days, not wall-clock time. */
 export function isCrisisMode(): boolean {
-  if (!_crashProtectionEnabled) return false;
+  if (!_crashProtectionEnabled) {
+    _crisisInCrisis = false;
+    _crisisCooldown = 0;
+    return false;
+  }
+
   const prices = MKT.ihsg.prices;
-  if (prices.length < 2) return false;
+  if (prices.length < 2) return _crisisInCrisis;
+
+  // Lazy init: fast-forward through all data to match backtest's end state
+  _initCrisisState();
+
   const closes = prices.map(d => d.close);
-  const currentIhsg = MKT.ihsg.value ?? closes[closes.length - 1];
+  const currentIhsg = closes[closes.length - 1];
+
+  // Advance cooldown only on new data points (trading days), not on re-renders
+  if (prices.length > _crisisLastDataLen && _crisisCooldown > 0) {
+    _crisisCooldown--;
+  }
+  _crisisLastDataLen = prices.length;
+
   const crash = detectCrashAlgo(closes, currentIhsg, _crashSensitivity);
-  if (!crash.signaled) return false;
-  const recovery = detectRecoveryAlgo(closes, currentIhsg);
-  if (recovery.signaled) return false;
-  return true;
+
+  // Enter crisis? Same condition as backtest: crash signaled, not already in crisis, cooldown expired
+  if (crash.signaled && !_crisisInCrisis && _crisisCooldown <= 0) {
+    _crisisInCrisis = true;
+    _crisisCooldown = 20;
+    return true;
+  }
+
+  // Exit crisis (recovery)? Same as backtest: in crisis, cooldown expired, recovery signaled
+  if (_crisisInCrisis && _crisisCooldown <= 0) {
+    const recovery = detectRecoveryAlgo(closes, currentIhsg);
+    if (recovery.signaled) {
+      _crisisInCrisis = false;
+      _crisisCooldown = 20;
+    }
+  }
+
+  return _crisisInCrisis;
 }
 
 export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {
@@ -147,7 +233,7 @@ export function getIhsgDrawdown60(): number | null {
   const closes = prices.map(d => d.close);
   const window = closes.slice(-60);
   const peak = Math.max(...window);
-  const current = MKT.ihsg.value ?? closes[closes.length - 1];
+  const current = closes[closes.length - 1];
   return ((current - peak) / peak) * 100;
 }
 
@@ -160,7 +246,7 @@ function ihsgPrices(): number[] {
 export function getIhsgMonthlyReturn(): number | null {
   const closes = ihsgPrices();
   if (closes.length < 2) return null;
-  const current = MKT.ihsg.value ?? closes[closes.length - 1];
+  const current = closes[closes.length - 1];
   const lookback = closes[Math.max(0, closes.length - 30)];
   return ((current - lookback) / lookback) * 100;
 }
@@ -169,7 +255,7 @@ export function getIhsgMonthlyReturn(): number | null {
 export function getIhsgWeeklyReturn(): number | null {
   const closes = ihsgPrices();
   if (closes.length < 2) return null;
-  const current = MKT.ihsg.value ?? closes[closes.length - 1];
+  const current = closes[closes.length - 1];
   const lookback = closes[Math.max(0, closes.length - 7)];
   return ((current - lookback) / lookback) * 100;
 }
@@ -178,7 +264,7 @@ export function getIhsgWeeklyReturn(): number | null {
 export function getIhsgDailyReturn(): number | null {
   const closes = ihsgPrices();
   if (closes.length < 2) return null;
-  const current = MKT.ihsg.value ?? closes[closes.length - 1];
+  const current = closes[closes.length - 1];
   const prev = closes[closes.length - 2];
   return ((current - prev) / prev) * 100;
 }
@@ -207,9 +293,9 @@ function computeSMA(data: number[], period: number): number {
 
 export function computeMarketRegime(): RegimeOutput {
   const ihsgMonthly = MKT.ihsg.monthly;
-  const ihsgCurrent = MKT.ihsg.value;
-
   const closes = ihsgPrices();
+  const ihsgCurrent = closes.length > 0 ? closes[closes.length - 1] : MKT.ihsg.value;
+
   const sma20 = computeSMA(closes, 20);
   const sma50 = computeSMA(closes, 50);
 

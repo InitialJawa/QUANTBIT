@@ -178,9 +178,10 @@ export function PortfolioTracker({
   const ihsgDrawdown60 = getIhsgDrawdown60();
   const isIHSGInCrisis = isCrisisMode();
 
+  const dbIhsgPrices = getIhsgData().map(d => d.close);
   const strategyEval = useMemo(() => evaluateStrategy(
     engineConfig as any,
-    { ihsgPrices: getIhsgData().map(d => d.close), currentIhsgPrice: MKT.ihsg.value },
+    { ihsgPrices: dbIhsgPrices, currentIhsgPrice: dbIhsgPrices[dbIhsgPrices.length - 1] ?? 0 },
   ), [engineConfig.enableCrashProtection, engineConfig.crashSensitivity, engineConfig.simulationMode, engineConfig.safeHavenAsset]);
   const activeUniverse = useMemo(() => getActiveUniverse(engineConfig as any), [engineConfig]);
 
@@ -252,20 +253,21 @@ export function PortfolioTracker({
     return map;
   }, [processedLeaders]);
 
-  const peak60Price = ihsgDrawdown60 !== null ? MKT.ihsg.value / (1 + ihsgDrawdown60 / 100) : undefined;
+  const dbIhsgClose = dbIhsgPrices.length > 0 ? dbIhsgPrices[dbIhsgPrices.length - 1] : 0;
+  const peak60Price = ihsgDrawdown60 !== null && dbIhsgClose > 0 ? dbIhsgClose / (1 + ihsgDrawdown60 / 100) : undefined;
 
   useEffect(() => {
     const ruleCtx: Partial<RuleContext> = {
       config: engineConfig as any,
       topN: engineConfig.topNCount,
-      ihsgPrice: MKT.ihsg.value,
+      ihsgPrice: dbIhsgClose,
       peak60: peak60Price,
     };
 
     if (engineConfig.enableCrashProtection) {
       const crashResult = rule_crashProtectionTriggered({
         ...ruleCtx as RuleContext,
-        ihsgPrice: MKT.ihsg.value,
+        ihsgPrice: dbIhsgClose,
         peak60: peak60Price,
       });
       if (crashResult.triggered) {
