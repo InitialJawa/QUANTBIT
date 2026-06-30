@@ -408,15 +408,30 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
       }
 
       const bridged = bridgeHistoricalData(allData);
-      const data = bridged.map((day: any) => ({
-        date: day.date, ihsgPrice: day.ihsgPrice, goldPrice: day.goldPrice,
-        stockPrices: day.stockAdjPrices, stockAdjPrices: day.stockAdjPrices,
-        stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
-        stockRanksProd: day.stockRanksProd, stockRanksRes: day.stockRanksRes,
-        stockRawMetrics: null,
-        stockNormScores: day.stockNormScores ?? null,
-        isCarriedForward: day.isCarriedForward || false,
-      }));
+      const data = bridged.map((day: any) => {
+        const stockPrices = (day.stockPrices && Object.keys(day.stockPrices).length > 0)
+          ? day.stockPrices
+          : day.stockAdjPrices;
+        const stockAdjPrices = (day.stockAdjPrices && Object.keys(day.stockAdjPrices).length > 0)
+          ? day.stockAdjPrices
+          : day.stockPrices;
+        const stockRanks = configType === "prod" 
+          ? (day.stockRanksProd || day.stockRanks || {})
+          : (day.stockRanksRes || day.stockRanks || {});
+        return {
+          date: day.date,
+          ihsgPrice: day.ihsgPrice,
+          goldPrice: day.goldPrice,
+          stockPrices,
+          stockAdjPrices,
+          stockRanks,
+          stockRanksProd: day.stockRanksProd || {},
+          stockRanksRes: day.stockRanksRes || {},
+          stockRawMetrics: null,
+          stockNormScores: day.stockNormScores ?? null,
+          isCarriedForward: day.isCarriedForward || false,
+        };
+      });
       const defaultWeights = {
         prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
         res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
@@ -431,19 +446,34 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
         }
         
         const bridged = bridgeHistoricalData(allData);
-        const data = bridged.map((day: any) => ({
-          date: day.date,
-          ihsgPrice: day.ihsgPrice,
-          goldPrice: day.goldPrice,
-          stockPrices: day.stockAdjPrices || day.stockPrices,
-          stockAdjPrices: day.stockAdjPrices || day.stockPrices,
-          stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
-          stockRanksProd: day.stockRanksProd,
-          stockRanksRes: day.stockRanksRes,
-          stockRawMetrics: null,
-          stockNormScores: day.stockNormScores ?? null,
-          isCarriedForward: day.isCarriedForward || false,
-        }));
+        const data = bridged.map((day: any) => {
+          // Fix: prioritize stockPrices over stockAdjPrices (year files have BOTH,
+          // but stockPrices is the primary source). stockAdjPrices may be empty
+          // object {} which is truthy and would defeat the || fallback.
+          const stockPrices = (day.stockPrices && Object.keys(day.stockPrices).length > 0)
+            ? day.stockPrices
+            : day.stockAdjPrices;
+          const stockAdjPrices = (day.stockAdjPrices && Object.keys(day.stockAdjPrices).length > 0)
+            ? day.stockAdjPrices
+            : day.stockPrices;
+          // Fix: ensure stockRanks is the full ranking object (not just ranksProd/Res)
+          const stockRanks = configType === "prod" 
+            ? (day.stockRanksProd || day.stockRanks || {})
+            : (day.stockRanksRes || day.stockRanks || {});
+          return {
+            date: day.date,
+            ihsgPrice: day.ihsgPrice,
+            goldPrice: day.goldPrice,
+            stockPrices,
+            stockAdjPrices,
+            stockRanks,
+            stockRanksProd: day.stockRanksProd || {},
+            stockRanksRes: day.stockRanksRes || {},
+            stockRawMetrics: null,
+            stockNormScores: day.stockNormScores ?? null,
+            isCarriedForward: day.isCarriedForward || false,
+          };
+        });
         const defaultWeights = {
           prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
           res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
