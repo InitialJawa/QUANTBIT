@@ -79,72 +79,86 @@ Peran AI (5 provider — OpenRouter / Groq / Gemini / Cohere / Mistral) diisolas
 
 ## 🏗️ Arsitektur
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Data Sources                                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │  IDX API     │  │ Yahoo Finance│  │  GoAPI.id (opt)  │   │
-│  │ (fundamental)│  │ (price, IHSG,│  │  (live prices)   │   │
-│  │  ★ primary   │  │  GC=F, div)  │  │                  │   │
-│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘   │
-└─────────┼─────────────────┼───────────────────┼─────────────┘
-          │                 │                   │
-          ▼                 ▼                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Collectors & Fetchers (scripts/ + collectors/)             │
-│  • fetch_idx_fundamental.py  (cloudscraper, 947 companies)  │
-│  • fetch_historical_data.ts  (Yahoo prices 2021+, scoring)  │
-│  • fetch_dividend_history.ts (per-ticker events)            │
-│  • post_process_live_market.py (gold + IHSG synthesis)     │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Deterministic Engine (src/engine/, src/marketData.ts,      │
-│  src/marketRegimeEngine.ts) — NO AI                        │
-│                                                              │
-│  • Multi-factor scoring (Q/G/V/M/D)                        │
-│  • runStrategy() — algo / custom / adaptive_dca             │
-│  • shouldTriggerExit() — per-ticker exit evaluation        │
-│  • BPS (Buy Pressure Score) — 5-faktor market timing       │
-│  • Crash protection (60-day drawdown)                       │
-│  • DCA baselines (Lump Sum / Monthly / Quarterly)          │
-└──────────────────────────┬──────────────────────────────────┘
-                           │  numbers only
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  AI Layer (src/ai/, src/components/AICockpit.tsx)          │
-│  • Executive Summary (Gemini 2.5 Flash)                    │
-│  • 8 read-only tools (JSON-block function calling)         │
-│  • 10 actions → AIActionApprovalCard (user approves)       │
-│  • 6 proactive rules (5-min cooldown per rule)             │
-│  • Per-user session memory (D1 / in-memory)                │
-│  • 5 provider chain (OpenRouter → Cohere → Mistral          │
-│    → Groq → Gemini) with circuit breaker                    │
-│  • Dev mock (offline testing)                               │
-│  • "Rico Lubis" Jakarta Tech Founder persona               │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  React UI (src/components/) + Tailwind CSS 4               │
-│  • Portfolio / Market / Backtest / Leaders / Analytics     │
-│  • Floating AI Chat (bottom-right, with proactive badge)    │
-│  • BuyPressureDashboard (circular gauge + 5 sub-factors)  │
-│  • AlertBanner (regime-based)                               │
-│  • Notification center (persistent, rule engine)            │
-│  • AI Test Harness (dev-only, 4 tabs)                       │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  State / Persistence                                        │
-│  • D1 (Cloudflare) / SQLite (local) — 8 tables + AI memory │
-│  • EngineConfigContext — single source of truth (PRD-009)  │
-│  • localStorage — chat history, UI prefs, notifications,    │
-│    fired rules, dev session                                 │
-│  • MCP server (Model Context Protocol) — external AI agents │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    DS["Data Sources"]
+    DS_IDX["IDX API (fundamental) ★ primary"]
+    DS_YF["Yahoo Finance (price, IHSG, GC=F, div)"]
+    DS_GO["GoAPI.id (opt) (live prices)"]
+    DS --> DS_IDX & DS_YF & DS_GO
+
+    DS_IDX & DS_YF & DS_GO --> CF["Collectors & Fetchers<br/>(scripts/ + collectors/)"]
+    
+    CF -->|numbers only| ENG["Deterministic Engine — NO AI<br/>src/engine/, marketData.ts, marketRegimeEngine.ts"]
+    
+    ENG --> AI["AI Layer — interface only<br/>src/ai/, FloatingAIChat.tsx"]
+    
+    AI --> UI["React UI + Tailwind CSS 4<br/>src/components/"]
+    
+    UI --> SP["State / Persistence"]
+    
+    ENG -.-> SP
+    AI -.-> SP
+
+    subgraph CF_Detail["Collectors & Fetchers"]
+        direction TB
+        C1["fetch_idx_fundamental.py<br/>(cloudscraper, 947 companies)"]
+        C2["fetch_historical_data.ts<br/>(Yahoo 2021+, scoring)"]
+        C3["fetch_dividend_history.ts<br/>(per-ticker events)"]
+        C4["post_process_live_market.py<br/>(gold + IHSG synthesis)"]
+    end
+    CF --> CF_Detail
+
+    subgraph ENG_Detail["Deterministic Engine"]
+        direction TB
+        E1["Multi-factor scoring (Q/G/V/M/D)"]
+        E2["runStrategy() — algo / custom / adaptive_dca"]
+        E3["shouldTriggerExit() — per-ticker exit"]
+        E4["BPS (Buy Pressure Score) — 5 faktor"]
+        E5["Crash protection (60-day drawdown)"]
+        E6["DCA baselines (Lump Sum / Monthly / Quarterly)"]
+    end
+    ENG --> ENG_Detail
+
+    subgraph AI_Detail["AI Layer"]
+        direction TB
+        A1["Executive Summary (Gemini 2.5 Flash)"]
+        A2["8 read-only tools (JSON-block function calling)"]
+        A3["10 actions → AIActionApprovalCard (user approves)"]
+        A4["6 proactive rules (5-min cooldown per rule)"]
+        A5["Per-user session memory (D1 / in-memory)"]
+        A6["5 provider chain with circuit breaker"]
+        A7["Dev mock (offline testing)"]
+        A8["Rico Lubis persona"]
+    end
+    AI --> AI_Detail
+
+    subgraph UI_Detail["React UI"]
+        direction TB
+        U1["Portfolio / Market / Backtest / Leaders / Analytics"]
+        U2["Floating AI Chat (proactive badge)"]
+        U3["BuyPressureDashboard (circular gauge)"]
+        U4["AlertBanner (regime-based)"]
+        U5["Notification center (persistent)"]
+        U6["AI Test Harness (dev-only, 4 tabs)"]
+    end
+    UI --> UI_Detail
+
+    subgraph SP_Detail["State / Persistence"]
+        direction TB
+        S1["D1 (Cloudflare) / SQLite (local)<br/>8 tables + AI memory"]
+        S2["EngineConfigContext — single source of truth"]
+        S3["localStorage — chat, UI prefs, notifications"]
+        S4["MCP server — external AI agents"]
+    end
+    SP --> SP_Detail
+
+    style DS fill:#1e3a5f,color:#fff
+    style CF fill:#2d4a3e,color:#fff
+    style ENG fill:#4a1a1a,color:#fff
+    style AI fill:#3a2a5f,color:#fff
+    style UI fill:#1a3a3a,color:#fff
+    style SP fill:#3a3a1a,color:#fff
 ```
 
 ---
