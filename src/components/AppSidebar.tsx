@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
@@ -103,21 +103,6 @@ export function AppSidebar({
   const gainersWithRSI = useMemo(() => topMovers.gainers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
   const losersWithRSI = useMemo(() => topMovers.losers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
 
-  const topPicks = useMemo(() => {
-    const maxVol = Math.max(...STOCKS_DATA.map(s => s.chartDataDaily?.[s.chartDataDaily.length - 1]?.volume || 0), 1);
-    const maxChange = Math.max(...STOCKS_DATA.filter(s => s.change > 0).map(s => s.change), 0.1);
-    const scored = STOCKS_DATA
-      .filter(s => s.change > 0)
-      .map(stock => {
-        const volume = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
-        const volScore = (volume / maxVol) * 30;
-        const momScore = (stock.change / maxChange) * 70;
-        const score = Math.min(100, Math.round(momScore + volScore));
-        return { stock, score };
-      });
-    return scored.sort((a, b) => b.score - a.score).slice(0, 3);
-  }, []);
-
   const breadth = useMemo(() => {
     const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
     const decliners = STOCKS_DATA.filter(s => s.change < 0).length;
@@ -147,34 +132,6 @@ export function AppSidebar({
 
   const renderMarketContent = () => (
     <>
-      {/* TOP PICKS — 3 saham momentum terkuat */}
-      <div id="sidebar-top-picks" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <Award className="w-3 h-3 text-tertiary" />
-          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Picks</span>
-          <span className="ml-auto"><ExplainButton label="3 saham dengan momentum harga &amp; volume terkuat — skor gabungan 70% perubahan harga + 30% volume" /></span>
-        </div>
-        <div className="px-2 py-1.5 space-y-1">
-          {topPicks.map(({ stock, score }) => {
-            const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
-            return (
-              <div key={stock.ticker} className="flex items-center gap-2 py-0.5">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
-                    <span className="text-caption font-mono font-bold text-emerald-400">+{stock.change.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <MiniSparkline data={sparkData} color="#34d399" />
-                    <span className="text-label font-mono text-white/40">{score}/100</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* AI QUICK PULSE — 1 baris */}
       <div id="sidebar-ai-pulse" className="mx-2">
         <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
