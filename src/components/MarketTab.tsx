@@ -3,7 +3,6 @@ import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem } from "../types";
 import { getAuditTrail, isCrisisMode, computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
-import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -30,37 +29,6 @@ interface MarketTabProps {
   onSellTransaction: (ticker: string, shares: number) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
   filteredStocks?: (StockData | undefined)[];
-}
-
-function formatRupiah(val: number) {
-  if (!Number.isFinite(val)) return "Rp 0";
-  return "Rp " + Math.round(val).toLocaleString("id-ID");
-}
-
-function formatVolume(vol: number): string {
-  if (vol >= 1_000_000_000) return (vol / 1_000_000_000).toFixed(1) + "B";
-  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + "M";
-  if (vol >= 1_000) return (vol / 1_000).toFixed(0) + "K";
-  return vol.toString();
-}
-
-function MiniSparkline({ data, width = 36, height = 14, color = "currentColor" }: {
-  data: number[]; width?: number; height?: number; color?: string;
-}) {
-  if (data.length < 2) return null;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(" ");
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 export function MarketTab({ 
@@ -187,32 +155,10 @@ export function MarketTab({
   const isFilteredByStrategy =
     engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0;
 
-  const maxAbsChange = useMemo(() => {
-    return Math.max(...STOCKS_DATA.map(s => Math.abs(s.change)), 1);
-  }, []);
-
-  const topMovers = useMemo(() => {
-    const sorted = [...STOCKS_DATA].sort((a, b) => b.change - a.change);
-    return { gainers: sorted.slice(0, 5), losers: sorted.slice(-5).reverse() };
-  }, []);
-
   const ihsgData = useMemo(() => getIhsgData(), []);
   const ihsgCloses = useMemo(() => ihsgData.map(d => d.close), [ihsgData]);
   const rsiIHSG = useMemo(() => computeRSI(ihsgCloses, 14), [ihsgCloses]);
   const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);
-
-  function stockRSI(stock: StockData): number | null {
-    const prices = stock.chartDataDaily?.map(d => d.price);
-    if (!prices || prices.length < 15) return null;
-    return computeRSI(prices, 14);
-  }
-
-  function rsiColorClass(rsi: number | null): string {
-    if (rsi === null) return "text-white/30";
-    if (rsi >= 70) return "text-rose-400";
-    if (rsi <= 30) return "text-emerald-400";
-    return "text-white/60";
-  }
 
   const breadth = useMemo(() => {
     const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
@@ -256,6 +202,9 @@ export function MarketTab({
       {/* ───── I K H T I S A R ───── */}
       {marketSubTab === "ikhtisar" && (
       <>
+        {/* Chart utama — IHSG vs Gold vs Portfolio */}
+        <MarketOverviewCharts portfolio={portfolio} />
+
         {/* Status bar — compact 1 row */}
         <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
@@ -500,75 +449,6 @@ export function MarketTab({
       {/* ───── P E R G E R A K A N ───── */}
       {marketSubTab === "pergerakan" && (
         <div className="space-y-4">
-          <MarketOverviewCharts portfolio={portfolio} />
-
-          {/* Top Movers + Teknikal */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Gainers */}
-            <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
-              <div className="flex items-center gap-1.5 mb-3">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-caption font-bold text-emerald-400 uppercase tracking-wider">Top Gainers</span>
-              </div>
-              <div className="space-y-2">
-                {topMovers.gainers.map((stock) => {
-                  const rsi = stockRSI(stock);
-                  const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
-                  return (
-                    <div key={stock.ticker} className="flex items-center gap-2 py-1.5 border-b border-white/[0.03] last:border-0">
-                      <TickerLogo ticker={stock.ticker} size="sm" fallbackColor={stock.logoColor} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-caption font-medium text-white/90 truncate">{stock.ticker.replace(".JK","")}</span>
-                          <span className="text-caption font-mono font-bold text-emerald-400">+{stock.change.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <MiniSparkline data={sparkData} color="#34d399" />
-                          <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-emerald-400/50" style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }} />
-                          </div>
-                          <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>{rsi !== null ? rsi.toFixed(0) : "--"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Losers */}
-            <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
-              <div className="flex items-center gap-1.5 mb-3">
-                <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                <span className="text-caption font-bold text-rose-400 uppercase tracking-wider">Top Losers</span>
-              </div>
-              <div className="space-y-2">
-                {topMovers.losers.map((stock) => {
-                  const rsi = stockRSI(stock);
-                  const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
-                  return (
-                    <div key={stock.ticker} className="flex items-center gap-2 py-1.5 border-b border-white/[0.03] last:border-0">
-                      <TickerLogo ticker={stock.ticker} size="sm" fallbackColor={stock.logoColor} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-caption font-medium text-white/90 truncate">{stock.ticker.replace(".JK","")}</span>
-                          <span className="text-caption font-mono font-bold text-rose-400">{stock.change.toFixed(1)}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <MiniSparkline data={sparkData} color="#fb7185" />
-                          <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-rose-400/50" style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }} />
-                          </div>
-                          <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>{rsi !== null ? rsi.toFixed(0) : "--"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
           {/* Teknikal strip */}
           <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
