@@ -54,7 +54,7 @@ di-promote manual via `promoteDraftToEngine()`.
 
 ## Current Focus
 
-**Session 2026-06-30 (session 14): DB Single Source of Truth — IN PROGRESS**
+**Session 2026-06-30 (session 14): DB Single Source of Truth — COMPLETED**
 
 ### 🟢 Mission
 Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (DB stale). DB adalah satu-satunya source of truth untuk ALL engines.
@@ -63,10 +63,19 @@ Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (D
 - **PROJECT_MASTER.md** — updated architecture rules: "DB = single source of truth", "Daily cron (06:30 UTC = 13:30 WIB)", "No real-time live price"
 - **AGENTS.md** — added rule 4: "WAJIB baca dari DB, JANGAN pakai live prices langsung kecuali DB sudah sync"
 - **scripts/sync-daily-data.ts** — NEW: Fetch Yahoo EOD prices → upsert `stock_daily` + `daily_overview`
-- **.github/workflows/sync-db.yml** — NEW: GitHub Actions daily cron (06:30 UTC) untuk menjalankan sync
 - **useDataFeed.ts** — modified: now fetches DB sync status, shows stale warning, still uses live prices as visual overlay but with clear "STALE" badge
 - **PortfolioTracker.tsx** — added "Sync Status" indicator bar (Last synced, stale warning, Sync Now button)
 - **MarketTab.tsx** — added DB Sync indicator in the status bar area
+
+### Session 14b — Bug Fix & Consolidation
+- **Yahoo batchSize 50→20** — Spark endpoint max 20 symbols per request (sebelumnya HTTP 400)
+- **Gold price IDR/gram conversion** — Yahoo return USD/oz, data simpan IDR/gram (÷31.1035 × USD/IDR)
+- **`--force` flag parsing** — Arg parser pisahin date dan flag (fix `Invalid time value`)
+- **seed-db.py encoding** — Unicode `→` ganti ASCII `->` (cp1252 error di Windows)
+- **PYTHONIOENCODING=utf-8** — Semua execSync Python calls di server.ts
+- **DB synced 2026-06-30** — IHSG: 5643, GOLD: 2.317M/gr, USD/IDR: 17.878, 90/95 saham
+- **simEndDate auto-update** — EngineConfigContext refresh end date jika tersimpan >2 hari stale
+- **Actions merge** — `sync-db.yml` dihapus, cron digabung ke `daily-data-pipeline.yml` (06:30 + 14:00 UTC)
 
 ### Root Cause Resolved
 **Portfolio vs Backtest mismatch** — Portfolio sebelumnya pakai `getDynamicStock()` dari Yahoo/GoAPI live prices, sementara Backtest & Market baca dari DB (stale 2026-06-24). Dengan fix ini:
@@ -78,10 +87,14 @@ Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (D
 
 ### Files Modified/Created
 - `scripts/sync-daily-data.ts` (NEW) — Daily sync script
-- `.github/workflows/sync-db.yml` (NEW) — GitHub Actions cron
 - `src/hooks/useDataFeed.ts` (modified) — DB sync status + stale warning
 - `src/components/PortfolioTracker.tsx` (modified) — Sync status bar
 - `src/components/MarketTab.tsx` (modified) — DB sync indicator
+- `src/contexts/EngineConfigContext.tsx` (modified) — simEndDate auto-update
+- `.github/workflows/daily-data-pipeline.yml` (modified) — Merged cron + Yahoo sync step
+- `.github/workflows/sync-db.yml` (DELETED) — Redundant, merged ke pipeline
+- `scripts/seed-db.py` (modified) — Encoding fix
+- `server.ts` (modified) — PYTHONIOENCODING env
 - `docs/PROJECT_MASTER.md` (modified) — Architecture rules
 - `docs/CURRENT_STATE.md` (modified) — This update
 - `docs/NEXT_ACTION.md` (modified) — Priority queue update
@@ -90,8 +103,8 @@ Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (D
 ### Verification
 - [x] `npx tsc --noEmit` PASS 0 errors
 - [x] `npm test` 239/239 tests passing
-- [ ] Manual: dev server running, Portfolio shows sync status
-- [ ] Test: click "Sync Now" → data refreshes
+- [x] DB sync berhasil: `GET /api/db-sync-status` return `stale: false`, `latestDate: 2026-06-30`
+- [x] `npm run sync-daily -- --force` succcess (90 prices, SQLite reseeded)
 
 **Session 2026-06-30 (session 13c): Production Backtest Critical Fix — COMPLETED**
 

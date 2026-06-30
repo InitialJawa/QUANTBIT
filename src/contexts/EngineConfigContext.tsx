@@ -157,6 +157,12 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         else if (parseInt(parsed.simStartDate.slice(0, 4), 10) < 2021) parsed.simStartDate = "2021-01-04";
         if (!parsed.simEndDate) parsed.simEndDate = getTodayWIB();
         else if (parseInt(parsed.simEndDate.slice(0, 4), 10) < 2021) parsed.simEndDate = getTodayWIB();
+        else {
+          const today = getTodayWIB();
+          const msDay = 86400000;
+          const diffDays = (new Date(today).getTime() - new Date(parsed.simEndDate).getTime()) / msDay;
+          if (diffDays > 2) parsed.simEndDate = today;
+        }
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customUniverse) parsed.customUniverse = [];
         if (parsed.enableAdaptiveWeights === undefined) parsed.enableAdaptiveWeights = false;

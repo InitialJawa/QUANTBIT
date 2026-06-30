@@ -2,7 +2,10 @@ name: Daily Data Pipeline
 
 on:
   schedule:
+    # Cron 1: Live market + IDX fundamentals
     - cron: '0 14 * * 1-5'
+    # Cron 2: Yahoo EOD sync (06:30 UTC = 13:30 WIB, after IDX close)
+    - cron: '30 6 * * 1-5'
   workflow_dispatch:
     inputs:
       run_fetch:
@@ -47,6 +50,10 @@ jobs:
         run: python scripts/post_process_live_market.py
         timeout-minutes: 5
 
+      - name: Sync daily market data (Yahoo EOD)
+        run: npx tsx scripts/sync-daily-data.ts --force
+        timeout-minutes: 10
+
       - name: Scrape IDX fundamentals (manual only)
         if: inputs.run_fundamentals
         run: python scripts/scrape_idx_fundamentals.py
@@ -64,7 +71,7 @@ jobs:
         run: |
           git config user.name "QuantBot"
           git config user.email "bot@quantbit.app"
-          git add data/live_market.json data/idx_fundamentals_all.json data/regime_history.json data/years/
+          git add data/live_market.json data/idx_fundamentals_all.json data/regime_history.json data/years/ data/historical_market.sqlite
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

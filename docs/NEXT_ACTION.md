@@ -1,22 +1,24 @@
 # NEXT ACTION
 ## P0 — Migration 0003 COMPLETION: DB as SOT (2026-06-30, Sesi 14)
-**Status**: All changes DONE. Verification pending.
+**Status**: COMPLETED ✅
 
 ### Delivered
 - [x] **PROJECT_MASTER.md** — Architecture rules updated: DB = SOT, daily cron, no live prices
 - [x] **AGENTS.md** — Rule 4 added: "WAJIB baca dari DB, JANGAN pakai live prices langsung"
-- [x] **scripts/sync-daily-data.ts** — Fetch Yahoo EOD → upsert `stock_daily` + `daily_overview`
-- [x] **.github/workflows/sync-db.yml** — Daily cron (06:30 UTC = 13:30 WIB)
+- [x] **scripts/sync-daily-data.ts** — Fetch Yahoo EOD → upsert year file + rebuild SQLite
 - [x] **useDataFeed.ts** — DB sync status fetch, stale warning, live prices as visual overlay only
 - [x] **PortfolioTracker.tsx** — Sync status indicator bar (Last synced, Sync Now, stale warning)
 - [x] **MarketTab.tsx** — DB Sync indicator chip
+- [x] **Actions merge** — sync-db.yml dihapus, cron 06:30 + 14:00 UTC di daily-data-pipeline.yml
+- [x] **simEndDate auto-update** — EngineConfigContext refresh jika >2 hari stale
+- [x] **Bug fixes** — Yahoo batchSize 50→20, gold IDR/gram conversion, --force parsing, Python encoding
 - [x] **docs update** — PROJECT_MASTER, CURRENT_STATE, NEXT_ACTION, AGENTS.md
 
 ### Verification
 - [x] `npx tsc --noEmit` — PASS 0 errors
 - [x] `npm test` — 239/239 tests passing
-- [ ] Manual: dev server running, Portfolio shows sync status bar
-- [ ] Test: click "Sync Now" → check console logs for sync API call
+- [x] `npm run sync-daily -- --force` — success (90 prices, SQLite reseeded, DB: 2026-06-30)
+- [x] `GET /api/db-sync-status` — `stale: false`, `latestDate: 2026-06-30`
 
 ## P0 — CRITICAL FIX (2026-06-30, Sesi 13d)
 **Status**: Production chart loading fix DEPLOYED.
@@ -126,6 +128,15 @@ Delivered (Sesi 12 — Konsolidasi UI + Koherensi):
 - [ ] CI workflow untuk Playwright E2E
 - [ ] Cross-browser E2E (Firefox, WebKit)
 - [ ] PWA / install prompt
+
+## Done Recently (Sesi 14 — DB SOT + Daily Sync Pipeline)
+- ✅ Sync pipeline: `scripts/sync-daily-data.ts` (Yahoo → year files → SQLite rebuild)
+- ✅ DB stale indicator: SyncStatus bar di PortfolioTracker + MarketTab chip
+- ✅ useDataFeed.ts: syncStatus + triggerSync, price tagged STALE saat DB stale
+- ✅ Actions merged: dual cron di daily-data-pipeline.yml (06:30 + 14:00 UTC)
+- ✅ simEndDate auto-update: refresh ke hari ini jika >2 hari stale
+- ✅ Bug fixes: Yahoo batchSize 20, gold IDR/gram, --force parsing, Python encoding
+- ✅ DB synced: 2026-06-30, IHSG 5643, gold 2.317M/gr, USD/IDR 17.878, 90/95 saham
 
 ## Done Recently (Sesi 12 — Konsolidasi)
 - ✅ StrategySettingsPanel component (unified)
