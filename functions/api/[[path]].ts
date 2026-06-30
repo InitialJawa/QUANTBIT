@@ -332,15 +332,15 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
   // GET /api/backtest-data — from D1 (migration 0003 tables)
   if (path === "/api/backtest-data" && method === "GET") {
     const configType = (url.searchParams.get("configType") === "res" ? "res" : "prod") as string;
+    const yearStart = parseInt(url.searchParams.get("from") || "2021");
+    const yearEnd = parseInt(url.searchParams.get("to") || "2026");
+    if (yearStart < 2021 || yearEnd < 2021) {
+      return error("Pre-2021 data has been archived. Use from >= 2021.", 400);
+    }
+    const startDate = `${yearStart}-01-01`;
+    const endDate = `${yearEnd}-12-31`;
+    
     try {
-      const yearStart = parseInt(url.searchParams.get("from") || "2021");
-      const yearEnd = parseInt(url.searchParams.get("to") || "2026");
-      if (yearStart < 2021 || yearEnd < 2021) {
-        return error("Pre-2021 data has been archived. Use from >= 2021.", 400);
-      }
-      const startDate = `${yearStart}-01-01`;
-      const endDate = `${yearEnd}-12-31`;
-
       // 1. Get daily overview rows
       const overviewRows = await env.DB.prepare(
         "SELECT date, ihsg_close, gold_idr, usdidr_rate FROM daily_overview WHERE date >= ? AND date <= ? ORDER BY date"
@@ -423,7 +423,42 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
       };
       return json({ success: true, count: data.length, configType, weights: defaultWeights, data });
     } catch (err: any) {
-      return error(err.message, 500);
+      // Fallback: load from year files (static assets) when D1 fails (DB not seeded)
+      try {
+        const allData = await loadYearFilesFromAssets(request, yearStart, yearEnd);
+        if (allData.length === 0) {
+          return error(`D1 query failed: ${err.message}. Year files fallback also empty.`, 503);
+        }
+        
+        const bridged = bridgeHistoricalData(allData);
+        const data = bridged.map((day: any) => ({
+          date: day.date,
+          ihsgPrice: day.ihsgPrice,
+          goldPrice: day.goldPrice,
+          stockPrices: day.stockAdjPrices || day.stockPrices,
+          stockAdjPrices: day.stockAdjPrices || day.stockPrices,
+          stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
+          stockRanksProd: day.stockRanksProd,
+          stockRanksRes: day.stockRanksRes,
+          stockRawMetrics: null,
+          stockNormScores: day.stockNormScores ?? null,
+          isCarriedForward: day.isCarriedForward || false,
+        }));
+        const defaultWeights = {
+          prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
+          res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
+        };
+        return json({ 
+          success: true, 
+          count: data.length, 
+          configType, 
+          weights: defaultWeights, 
+          data, 
+          source: "year_files_fallback" 
+        });
+      } catch (fallbackErr: any) {
+        return error(`D1 failed: ${err.message}. Year files fallback failed: ${fallbackErr.message}`, 500);
+      }
     }
   }
 
