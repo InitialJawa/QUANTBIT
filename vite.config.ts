@@ -125,6 +125,8 @@ export default defineConfig(() => {
       host: true,
       proxy: {
         '/api/backtest-data': 'http://localhost:3001',
+        '/api/db-sync-status': 'http://localhost:3001',
+        '/api/market/sync': 'http://localhost:3001',
         '/api/yahoo': 'http://localhost:3001',
         // Local dev AI chat + memory — Express server reads
         // OPENROUTER_API_KEY / GROQ_API_KEY / GEMINI_API_KEY from

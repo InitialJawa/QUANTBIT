@@ -104,7 +104,14 @@ function devMock(path: string, options: RequestInit): any {
       weights: { prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 } },
     };
   }
-  throw new Error("No dev mock for " + path);
+  if (path === "/api/db-sync-status") {
+    return { success: true, latestDate: new Date().toISOString().slice(0, 10), stale: false };
+  }
+  if (path === "/api/market/sync") {
+    return { success: true, message: "Sync selesai (mock)" };
+  }
+  console.warn("[devMock] No mock for", path, "→ returning fallback");
+  return { success: false, error: "No dev mock" };
 }
 
 function generateMockBacktestData() {
