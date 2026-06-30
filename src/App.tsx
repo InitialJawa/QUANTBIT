@@ -94,6 +94,8 @@ function AppContent({ logout }: { logout: () => void }) {
   const ui = useUIState();
   const notif = useNotifications();
   const pm = usePortfolioManager(user, df.getDynamicStock, ui.showToasts ? ui.setAppNotification : undefined, notif);
+  const dbSyncStatus = df.syncStatus;
+  const triggerSync = df.triggerSync;
   // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
   const { engineConfig, setActiveProfile } = useEngineConfig();
 
@@ -298,6 +300,8 @@ function AppContent({ logout }: { logout: () => void }) {
                           onSellTransaction={pm.handleSellTransaction}
                           getDynamicStock={df.getDynamicStock}
                           filteredStocks={filteredStocks}
+                          syncStatus={dbSyncStatus}
+                          triggerSync={triggerSync}
                         />
                         </Suspense>
                       </motion.div>
@@ -326,6 +330,8 @@ function AppContent({ logout }: { logout: () => void }) {
                           tradeLogs={pm.tradeLogs}
                           setTradeLogs={pm.customSetTradeLogs}
                           showCrisisSignals={ui.showCrisisSignals}
+                          syncStatus={dbSyncStatus}
+                          triggerSync={triggerSync}
                         />
                         </Suspense>
                       </motion.div>

@@ -16,6 +16,13 @@ import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 
+interface SyncStatus {
+  lastSynced: string | null;
+  latestDate: string | null;
+  stale: boolean;
+  syncing: boolean;
+}
+
 interface MarketTabProps {
   onSelectTicker: (ticker: string) => void;
   onChangeActiveTicker?: (ticker: string) => void;
@@ -26,6 +33,8 @@ interface MarketTabProps {
   onSellTransaction: (ticker: string, shares: number) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
   filteredStocks?: (StockData | undefined)[];
+  syncStatus?: SyncStatus;
+  triggerSync?: () => void;
 }
 
 export function MarketTab({ 
@@ -37,7 +46,9 @@ export function MarketTab({
   onRemoveTransaction,
   onSellTransaction,
   getDynamicStock,
-  filteredStocks
+  filteredStocks,
+  syncStatus,
+  triggerSync,
 }: MarketTabProps) {
   const { engineConfig } = useEngineConfig();
 
@@ -334,7 +345,30 @@ export function MarketTab({
             Ringkasan Parameter
             <ExplainButton label="IHSG, USD/IDR, Quant Score Gap, Market Breadth" />
           </h3>
-          <LastUpdatedChip iso={MKT.market_last_update} />
+          <div className="flex items-center gap-3">
+            <LastUpdatedChip iso={MKT.market_last_update} />
+            {syncStatus && (
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  syncStatus.stale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+                }`} />
+                <span className={`text-label font-mono font-bold ${
+                  syncStatus.stale ? "text-amber-400" : "text-emerald-400"
+                }`}>
+                  DB: {syncStatus.latestDate || "—"}
+                </span>
+                {syncStatus.stale && (
+                  <button
+                    onClick={triggerSync}
+                    disabled={syncStatus.syncing}
+                    className="text-label font-bold uppercase tracking-wider text-white/50 hover:text-white cursor-pointer disabled:opacity-30"
+                  >
+                    {syncStatus.syncing ? "..." : "Sync"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">

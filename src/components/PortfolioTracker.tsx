@@ -48,6 +48,13 @@ import { motion } from "motion/react";
 
 type SortKey = "ticker" | "rank" | "shares" | "buyPrice" | "currentPrice" | "valueNow" | "profitOrLoss" | "percentChange" | "annualDividend" | "dividendYield";
 
+interface SyncStatus {
+  lastSynced: string | null;
+  latestDate: string | null;
+  stale: boolean;
+  syncing: boolean;
+}
+
 interface PortfolioTrackerProps {
   portfolio: PortfolioItem[];
   watchlist: WatchlistItem[];
@@ -63,6 +70,8 @@ interface PortfolioTrackerProps {
   setTradeLogs: React.Dispatch<React.SetStateAction<any[]>>;
   /** When OFF, hide "Strategy Says: Exit..." + "Exit Safe Haven → Stock" banners. */
   showCrisisSignals?: boolean;
+  syncStatus?: SyncStatus;
+  triggerSync?: () => void;
 }
 
 export function PortfolioTracker({
@@ -79,6 +88,8 @@ export function PortfolioTracker({
   tradeLogs,
   setTradeLogs,
   showCrisisSignals = true,
+  syncStatus,
+  triggerSync,
 }: PortfolioTrackerProps) {
   const visibleStocks = STOCKS_DATA.map((s) => getDynamicStock(s.ticker) || s);
   const [selectedTicker, setSelectedTicker] = useState(visibleStocks[0].ticker);
@@ -650,7 +661,44 @@ export function PortfolioTracker({
 
   return (
     <div id="portfolio-container" className="space-y-3">
-      {/* Portfolio Tracker Content Layout */}
+      {/* Sync Status Bar */}
+      {syncStatus && (
+        <div className={`flex items-center justify-between px-4 py-2 rounded-2xl border text-caption font-mono ${
+          syncStatus.stale
+            ? "bg-amber-500/5 border-amber-500/20 text-amber-300"
+            : "bg-emerald-500/5 border-emerald-500/20 text-emerald-300"
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full ${
+              syncStatus.stale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+            }`} />
+            <span className="font-bold uppercase tracking-widest">
+              {syncStatus.stale ? "DATA STALE" : "DATA SYNCED"}
+            </span>
+            {syncStatus.latestDate && (
+              <span className="text-white/50">
+                Latest: {syncStatus.latestDate}
+              </span>
+            )}
+            {syncStatus.stale && (
+              <span className="text-amber-400/70 text-label">
+                — mungkin perlu sync. DB mungkin belum update.
+              </span>
+            )}
+          </div>
+          <button
+            onClick={triggerSync}
+            disabled={syncStatus.syncing}
+            className={`px-3 py-1.5 rounded-lg text-label font-bold uppercase tracking-widest cursor-pointer transition-all shrink-0 ${
+              syncStatus.syncing
+                ? "bg-white/5 text-white/30 cursor-not-allowed"
+                : "bg-white/10 hover:bg-white/20 text-white"
+            }`}
+          >
+            {syncStatus.syncing ? "Syncing..." : "Sync Now"}
+          </button>
+        </div>
+      )}
 
       {/* Active Strategy Banner */}
       <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 rounded-2xl shadow-sm">

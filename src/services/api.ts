@@ -95,7 +95,50 @@ function devMock(path: string, options: RequestInit): any {
     ];
     return { success: true, stocks, lastUpdated: new Date().toISOString() };
   }
+  if (path.startsWith("/api/backtest-data")) {
+    return {
+      success: true,
+      data: generateMockBacktestData(),
+      count: 1300,
+      configType: "prod",
+      weights: { prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 } },
+    };
+  }
   throw new Error("No dev mock for " + path);
+}
+
+function generateMockBacktestData() {
+  const data: any[] = [];
+  const start = new Date("2021-01-04");
+  const end = new Date();
+  let ihsg = 6100;
+  let gold = 4100;
+  const prices: Record<string, number> = {
+    "BBCA.JK": 6125, "BBRI.JK": 2910, "BMRI.JK": 4120, "TLKM.JK": 2540,
+    "ASII.JK": 4680, "ADRO.JK": 2290, "PTBA.JK": 2480, "ESSA.JK": 660,
+    "GOTO.JK": 50, "UNVR.JK": 3200, "INDF.JK": 5800, "HMSP.JK": 1600,
+  };
+  const tickers = Object.keys(prices);
+  const curr = new Date(start);
+  while (curr <= end) {
+    const dow = curr.getDay();
+    if (dow !== 0 && dow !== 6) {
+      const date = curr.toISOString().slice(0, 10);
+      ihsg += (Math.random() - 0.48) * 50;
+      ihsg = Math.max(ihsg, 5000);
+      gold += (Math.random() - 0.47) * 30;
+      gold = Math.max(gold, 3500);
+      const stockAdjPrices: Record<string, number> = {};
+      for (const t of tickers) {
+        const p = prices[t] + (Math.random() - 0.49) * (prices[t] * 0.02);
+        stockAdjPrices[t] = Math.max(p, 10);
+        prices[t] = stockAdjPrices[t];
+      }
+      data.push({ date, ihsgPrice: Math.round(ihsg * 100) / 100, goldPrice: Math.round(gold * 100) / 100, stockAdjPrices });
+    }
+    curr.setDate(curr.getDate() + 1);
+  }
+  return data;
 }
 
 async function request<T = any>(path: string, options: RequestInit = {}): Promise<T> {

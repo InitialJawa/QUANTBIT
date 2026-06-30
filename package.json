@@ -29,7 +29,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium",
     "serve-api": "tsx server.ts",
-    "serve-mcp": "tsx src/mcp/index.ts"
+    "serve-mcp": "tsx src/mcp/index.ts",
+    "sync-daily": "tsx scripts/sync-daily-data.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

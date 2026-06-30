@@ -117,3 +117,4 @@ Read docs/AI_ONBOARDING.md and continue the project.
 - **No refactor without DOX pass**
 - **Update docs after setiap sesi**
 - **Buat handover setelah sesi berakhir**
+- **DB = single source of truth untuk market data** — WAJIB baca dari DB (`daily_overview` / `stock_daily`), JANGAN pakai live prices langsung (Yahoo/GoAPI) kecuali DB sudah sync. Live prices hanya boleh sebagai visual overlay dengan label DataStatus.STALE jika DB belum sync. Semua decision engine (backtest, strategy evaluation, portfolio valuation) HARUS pake data DB yang konsisten.

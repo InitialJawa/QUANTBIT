@@ -5,7 +5,7 @@
 | Tanggal | 2026-06-30 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sesi 13c — Production Backtest Critical Fix (2026-06-30) |
+| Sprint | Sesi 14 — DB Single Source of Truth + Daily Sync Pipeline (2026-06-30) |
 
 ## Active Architecture
 
@@ -53,6 +53,45 @@ di-promote manual via `promoteDraftToEngine()`.
 `algoCapital`, `singleTicker`, `singleSellTrigger`, `singleBuyTrigger`.
 
 ## Current Focus
+
+**Session 2026-06-30 (session 14): DB Single Source of Truth — IN PROGRESS**
+
+### 🟢 Mission
+Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (DB stale). DB adalah satu-satunya source of truth untuk ALL engines.
+
+### 🟢 Delivered
+- **PROJECT_MASTER.md** — updated architecture rules: "DB = single source of truth", "Daily cron (06:30 UTC = 13:30 WIB)", "No real-time live price"
+- **AGENTS.md** — added rule 4: "WAJIB baca dari DB, JANGAN pakai live prices langsung kecuali DB sudah sync"
+- **scripts/sync-daily-data.ts** — NEW: Fetch Yahoo EOD prices → upsert `stock_daily` + `daily_overview`
+- **.github/workflows/sync-db.yml** — NEW: GitHub Actions daily cron (06:30 UTC) untuk menjalankan sync
+- **useDataFeed.ts** — modified: now fetches DB sync status, shows stale warning, still uses live prices as visual overlay but with clear "STALE" badge
+- **PortfolioTracker.tsx** — added "Sync Status" indicator bar (Last synced, stale warning, Sync Now button)
+- **MarketTab.tsx** — added DB Sync indicator in the status bar area
+
+### Root Cause Resolved
+**Portfolio vs Backtest mismatch** — Portfolio sebelumnya pakai `getDynamicStock()` dari Yahoo/GoAPI live prices, sementara Backtest & Market baca dari DB (stale 2026-06-24). Dengan fix ini:
+- Portfolio tetap bisa tampilkan live prices visual (intraday fluktuasi) 
+- TAPI dengan label "STALE" yang jelas jika DB belum sync
+- Semua decision engine (backtest, strategy evaluation) pake data DB yang konsisten
+- Tombol "Sync Now" untuk trigger manual update DB
+- Daily cron otomatis setiap 13:30 WIB via GitHub Actions
+
+### Files Modified/Created
+- `scripts/sync-daily-data.ts` (NEW) — Daily sync script
+- `.github/workflows/sync-db.yml` (NEW) — GitHub Actions cron
+- `src/hooks/useDataFeed.ts` (modified) — DB sync status + stale warning
+- `src/components/PortfolioTracker.tsx` (modified) — Sync status bar
+- `src/components/MarketTab.tsx` (modified) — DB sync indicator
+- `docs/PROJECT_MASTER.md` (modified) — Architecture rules
+- `docs/CURRENT_STATE.md` (modified) — This update
+- `docs/NEXT_ACTION.md` (modified) — Priority queue update
+- `AGENTS.md` (modified) — DB SOT rule
+
+### Verification
+- [ ] `npx tsc --noEmit` PASS 0 errors
+- [ ] `npx vitest run` All tests passing
+- [ ] Manual: dev server running, Portfolio shows sync status
+- [ ] Test: click "Sync Now" → data refreshes
 
 **Session 2026-06-30 (session 13c): Production Backtest Critical Fix — COMPLETED**
 

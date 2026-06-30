@@ -7,6 +7,13 @@ import { refreshRSFromRegime, setIhsgHistory } from "../marketRegimeEngine";
 import { api } from "../services/api";
 import type { StockData } from "../types";
 
+interface SyncStatus {
+  lastSynced: string | null;
+  latestDate: string | null;
+  stale: boolean;
+  syncing: boolean;
+}
+
 export function useDataFeed() {
   const [goapiPrices, setGoapiPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
   const [yahooPrices, setYahooPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
@@ -15,6 +22,44 @@ export function useDataFeed() {
   const [isYahooConnected, setIsYahooConnected] = useState(false);
   const [priceFluctuations, setPriceFluctuations] = useState<Record<string, number>>({});
   const [mktRevision, setMktRevision] = useState(0);
+  const [dbSyncStatus, setDbSyncStatus] = useState<SyncStatus>({
+    lastSynced: null,
+    latestDate: null,
+    stale: false,
+    syncing: false,
+  });
+
+  const fetchDbSyncStatus = () => {
+    api.get<{ success: boolean; latestDate: string; stale: boolean; lastSynced?: string }>("/api/db-sync-status")
+      .then((res) => {
+        if (res.success) {
+          setDbSyncStatus((prev) => ({
+            ...prev,
+            latestDate: res.latestDate,
+            stale: res.stale,
+            lastSynced: res.lastSynced || res.latestDate,
+          }));
+        }
+      })
+      .catch(() => {});
+  };
+
+  const triggerSync = async () => {
+    setDbSyncStatus((prev) => ({ ...prev, syncing: true }));
+    try {
+      const res = await api.post<{ success: boolean; message?: string }>("/api/market/sync", {});
+      if (res.success) {
+        fetchDbSyncStatus();
+      }
+    } catch {}
+    setDbSyncStatus((prev) => ({ ...prev, syncing: false }));
+  };
+
+  useEffect(() => {
+    fetchDbSyncStatus();
+    const interval = setInterval(fetchDbSyncStatus, 120000); // check every 2 min
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchPrices = () => {
@@ -165,7 +210,9 @@ export function useDataFeed() {
       change: dynamicChange,
       dataSources: {
         ...rawStock.dataSources,
-        price: hasLivePrice ? DataStatus.LIVE : rawStock.dataSources.price,
+        price: hasLivePrice
+          ? (dbSyncStatus.stale ? DataStatus.STALE : DataStatus.LIVE)
+          : rawStock.dataSources.price,
       },
       chartDataDaily: buildChart(8, 0.5, ["09:00","10:00","11:00","12:00","13:30","14:30","15:30","16:00"]),
       chartDataWeekly: buildChart(5, 1, ["Mon","Tue","Wed","Thu","Fri"]),
@@ -179,5 +226,7 @@ export function useDataFeed() {
     isGoapiConnected, isYahooConnected,
     priceFluctuations, mktRevision,
     getDynamicStock,
+    syncStatus: dbSyncStatus,
+    triggerSync,
   };
 }

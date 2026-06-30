@@ -19,13 +19,24 @@
                                                                   [Executive Summary]
 ```
 
+## Architecture Rules (DOX)
+
+- **No AI for financial math** — semua kalkulasi keuangan deterministic
+- **DB = single source of truth** — SEMUA engine (Portfolio, Backtest, Market) baca dari DB. Live prices hanya boleh digunakan sebagai fallback display, BUKAN untuk decision engine.
+- **Daily cron (06:30 UTC = 13:30 WIB)** — satu-satunya update pipeline. Fetch Yahoo EOD → upsert `stock_daily` + `daily_overview` → commit.
+- **No real-time live price** — bukan scalping, cukup data harian.
+- **No refactor without DOX pass**
+- **Ask before adding dependencies**
+
 ## Source of Truth
 | Item | Location |
 |------|----------|
-| State DB | Cloudflare D1 (`quantbit-db`) / local `*.sqlite` |
+| State DB | Cloudflare D1 (`quantbit-db`) / local `historical_market.sqlite` |
+| Market Data | `daily_overview`, `stock_daily`, `stock_fundamentals`, `engine_snapshots` (0003 migration) |
 | Config | `.env`, `wrangler.toml`, `tsconfig.json`, `vite.config.ts` |
-| Schema | `db/schema.sql` |
+| Schema | `db/migrations/` (sequential NNNN_name.sql) |
 | Stock List | `data/DaftarSaham.csv` (830 IDX stocks) |
+| Fallback | `data/years/*.json` (year files, only when DB unavailable) |
 
 ## Production
 | Aspect | Detail |

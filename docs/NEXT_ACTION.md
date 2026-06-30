@@ -1,4 +1,37 @@
 # NEXT ACTION
+## P0 — Migration 0003 COMPLETION: DB as SOT (2026-06-30, Sesi 14)
+**Status**: All changes DONE. Verification pending.
+
+### Delivered
+- [x] **PROJECT_MASTER.md** — Architecture rules updated: DB = SOT, daily cron, no live prices
+- [x] **AGENTS.md** — Rule 4 added: "WAJIB baca dari DB, JANGAN pakai live prices langsung"
+- [x] **scripts/sync-daily-data.ts** — Fetch Yahoo EOD → upsert `stock_daily` + `daily_overview`
+- [x] **.github/workflows/sync-db.yml** — Daily cron (06:30 UTC = 13:30 WIB)
+- [x] **useDataFeed.ts** — DB sync status fetch, stale warning, live prices as visual overlay only
+- [x] **PortfolioTracker.tsx** — Sync status indicator bar (Last synced, Sync Now, stale warning)
+- [x] **MarketTab.tsx** — DB Sync indicator chip
+- [x] **docs update** — PROJECT_MASTER, CURRENT_STATE, NEXT_ACTION, AGENTS.md
+
+### Verification
+- [ ] `npx tsc --noEmit` — PASS 0 errors
+- [ ] `npx vitest run` — All tests passing
+- [ ] Manual: dev server running, Portfolio shows sync status bar
+- [ ] Test: click "Sync Now" → check console logs for sync API call
+
+## P0 — CRITICAL FIX (2026-06-30, Sesi 13d)
+**Status**: Production chart loading fix DEPLOYED.
+
+Delivered (Sesi 13d — Cloudflare Workers Asset Fix):
+- **env.ASSETS.fetch() fix** — Cloudflare Workers cannot use plain fetch() for static assets
+- **loadYearFilesFromAssets** now receives and uses env.ASSETS binding
+- **Root cause**: Worker runtime returns HTML error page instead of JSON when using plain fetch()
+
+**Verification**:
+- [x] `npx tsc --noEmit` — PASS 0 errors
+- [x] Pushed to main (commit 6ca2395)
+- [ ] Wait ~3 min for Cloudflare Pages deploy
+- [ ] Test production backtest — chart should load
+
 ## P0 — CRITICAL FIX (2026-06-30, Sesi 13c)
 **Status**: Production data mapping bug FIXED. Deployed to main.
 
@@ -61,17 +94,6 @@ Delivered (Sesi 12 — Konsolidasi UI + Koherensi):
 - [x] `npx tsc --noEmit` — PASS 0 errors
 - [x] `npx vitest run` — 18/18 passing
 - [ ] `npx vite build` — verify
-
-## P0 — Migration 0003: DB as SOT for Market Data
-- [x] Migration file exists: `db/migrations/0003_market_data.sql`
-- [x] Local SQLite DB seeded: `data/historical_market.sqlite` (32.8 MB, 4 tables)
-- [x] Tables verified: 1320 daily_overview, 164 stock_fundamentals, 120603 stock_daily, 0 engine_snapshots
-- [x] **`server.ts`** /api/backtest-data → SQLite (via Python bridge `scripts/export-backtest-json.py`)
-- [x] **`functions/api/[[path]].ts`** /api/backtest-data → D1 (daily_overview + stock_daily queries)
-- [x] **`functions/api/[[path]].ts`** /api/fundamentals → D1 (stock_fundamentals table)
-- [x] **`src/mcp/index.ts`** get_historical_data → SQLite (via Python bridge `scripts/db-query.py`)
-- [ ] Apply 0003 ke production D1: need Node >= 22 + CLOUDFLARE_API_TOKEN (currently Node 18 blocks wrangler)
-- [ ] Seed local D1 (miniflare): blocked by Node 18 (wrangler requires Node 22+)
 
 ## P1 — UX Phase 3 (next sprint) — still open
 - [ ] A5 — Command palette (Cmd+K)

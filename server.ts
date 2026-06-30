@@ -336,6 +336,41 @@ function getAiStatusFromEnv() {
   );
 }
 
+// ── DB sync status ──────────────────────────────────────────
+
+app.get("/api/db-sync-status", async (_req, res) => {
+  try {
+    const pythonCmd = process.platform === "win32" ? "python" : "python3";
+    const queryScript = join(process.cwd(), "scripts", "db-query.py");
+    const stdout = execSync(
+      `${pythonCmd} "${queryScript}" "SELECT MAX(date) as latest FROM daily_overview" "[]"`,
+      { encoding: "utf-8", timeout: 10000 },
+    );
+    const result = JSON.parse(stdout);
+    const latestDate = result?.[0]?.latest || null;
+    const stale = latestDate
+      ? (Date.now() - new Date(latestDate + "T23:59:59+07:00").getTime()) > 86400000 * 2
+      : true;
+    res.json({ success: true, latestDate, stale });
+  } catch {
+    res.json({ success: true, latestDate: null, stale: true });
+  }
+});
+
+app.post("/api/market/sync", async (_req, res) => {
+  try {
+    const pythonCmd = process.platform === "win32" ? "python" : "python3";
+    const syncScript = join(process.cwd(), "scripts", "sync-daily-data.ts");
+    execSync(
+      `npx tsx "${syncScript}" --force`,
+      { encoding: "utf-8", timeout: 120000, cwd: process.cwd() },
+    );
+    res.json({ success: true, message: "Sync selesai" });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── DB-backed backtest data (replaces file-based JSON) ────
 
 const DB_SCRIPT = join(process.cwd(), "scripts", "export-backtest-json.py");

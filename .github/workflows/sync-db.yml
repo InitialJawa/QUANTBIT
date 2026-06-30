@@ -1,0 +1,55 @@
+name: Sync DB — Daily Market Data
+
+on:
+  schedule:
+    # 06:30 UTC = 13:30 WIB (after IDX close at 12:00 WIB)
+    - cron: '30 6 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Tanggal (YYYY-MM-DD, optional — default hari terakhir)'
+        required: false
+        type: string
+
+concurrency:
+  group: sync-db
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: npm ci
+
+      - name: Sync daily market data
+        run: npx tsx scripts/sync-daily-data.ts ${{ inputs.date || '' }}
+
+      - name: Build (verify)
+        run: npm run build
+
+      - name: Commit & push updated data
+        run: |
+          git config user.name "QuantBot"
+          git config user.email "bot@quantbit.app"
+          git add data/years/ data/historical_market.sqlite
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: daily market data sync [skip ci]"
+            git push
+          fi

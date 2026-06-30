@@ -587,6 +587,22 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     }
   }
 
+  // GET /api/db-sync-status
+  if (path === "/api/db-sync-status" && method === "GET") {
+    try {
+      const row = await env.DB.prepare(
+        "SELECT MAX(date) as latest FROM daily_overview"
+      ).first<{ latest: string | null }>();
+      const latestDate = row?.latest || null;
+      const stale = latestDate
+        ? (Date.now() - new Date(latestDate + "T23:59:59+07:00").getTime()) > 86400000 * 2
+        : true;
+      return json({ success: true, latestDate, stale });
+    } catch {
+      return json({ success: true, latestDate: null, stale: true });
+    }
+  }
+
   // POST /api/market/sync
   if (path === "/api/market/sync" && method === "POST") {
     return json({ success: false, error: "Direct market sync not available in cloud environment. Run sync locally and redeploy." });
