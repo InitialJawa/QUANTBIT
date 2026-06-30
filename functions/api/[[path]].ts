@@ -73,15 +73,16 @@ async function getUserFromSession(env: Env, token: string | null): Promise<strin
 
 // ── Data fallback helpers ───────────────────────────────────
 
-/** Load year files from static assets (fallback when D1 is not seeded) */
-async function loadYearFilesFromAssets(request: Request, yearStart: number, yearEnd: number): Promise<any[]> {
+/** Load year files from static assets (fallback when D1 is not seeded).
+ *  MUST use env.ASSETS.fetch() in Cloudflare Workers — plain fetch() to
+ *  same origin won't resolve static files in the Worker runtime. */
+async function loadYearFilesFromAssets(assets: { fetch: (req: Request) => Promise<Response> }, yearStart: number, yearEnd: number): Promise<any[]> {
   const allData: any[] = [];
-  const origin = new URL(request.url).origin;
   
   for (let year = yearStart; year <= yearEnd; year++) {
     try {
-      const url = `${origin}/data/years/${year}.json`;
-      const response = await fetch(url);
+      const url = `https://placeholder/data/years/${year}.json`;
+      const response = await assets.fetch(new Request(url));
       if (!response.ok) continue;
       const yearData = await response.json();
       if (Array.isArray(yearData)) {
@@ -440,7 +441,7 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
     } catch (err: any) {
       // Fallback: load from year files (static assets) when D1 fails (DB not seeded)
       try {
-        const allData = await loadYearFilesFromAssets(request, yearStart, yearEnd);
+        const allData = await loadYearFilesFromAssets(env.ASSETS, yearStart, yearEnd);
         if (allData.length === 0) {
           return error(`D1 query failed: ${err.message}. Year files fallback also empty.`, 503);
         }
