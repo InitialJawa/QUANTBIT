@@ -223,14 +223,26 @@ export function SimulationTab({
   // engine runs against the right stockRanksProd/Res dataset. Previously this
   // was hardcoded to configType=prod, which silently fed QM ranks into BG
   // backtests and vice versa.
+  // Sesi 13 fix: tambah dependency simStartDate/simEndDate agar data re-fetch
+  // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
     const configType = backtestConfig.activeProfileId === "agresif" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
+    console.log(`[Backtest] Fetching data: ${backtestConfig.simStartDate} to ${backtestConfig.simEndDate}, configType=${configType}`);
     api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
-      .then(res => { if (res.success && Array.isArray(res.data)) setHistoricalData(res.data); })
-      .catch(() => {
+      .then(res => { 
+        if (res.success && Array.isArray(res.data)) {
+          console.log(`[Backtest] Loaded ${res.data.length} days from API`);
+          setHistoricalData(res.data);
+        } else {
+          console.warn('[Backtest] API returned invalid data, falling back to synthetic');
+          setHistoricalData(generateClientBacktestData());
+        }
+      })
+      .catch((err) => {
+        console.warn('[Backtest] API fetch failed, using synthetic data:', err);
         setHistoricalData(generateClientBacktestData());
       });
-  }, [backtestConfig.activeProfileId]);
+  }, [backtestConfig.activeProfileId, backtestConfig.simStartDate, backtestConfig.simEndDate]);
 
   // Today ledger addition state
   const [tradeTicker, setTradeTicker] = useState("BBCA");
@@ -531,6 +543,7 @@ export function SimulationTab({
   // FASE 2.7 — Backtest TIDAK auto-run lagi. User klik tombol "Jalankan Backtest"
   // eksplisit di sidebar. Mengurangi flicker + backtest sia-sia saat drag slider.
   // Initial run: jalankan sekali saat historicalData pertama kali dimuat.
+  // Sesi 13 fix: auto-run juga saat config parameter berubah (strategy fields)
   const initialRunRef = useRef(false);
   useEffect(() => {
     if (historicalData.length === 0 || initialRunRef.current) return;
@@ -538,6 +551,15 @@ export function SimulationTab({
     handleRunAlgoBacktest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historicalData.length]);
+
+  // Sesi 13: Auto-run backtest saat strategy config berubah
+  useEffect(() => {
+    if (historicalData.length === 0 || !initialRunRef.current) return;
+    if (configChanged) {
+      handleRunAlgoBacktest();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configFingerprint, historicalData.length]);
 
   useEffect(() => {
     const handler = () => {

@@ -343,14 +343,17 @@ const DB_SCRIPT = join(process.cwd(), "scripts", "export-backtest-json.py");
 /** Load all historical data from SQLite DB (via Python bridge). */
 function loadBacktestDataFromDb(startDate: string, endDate: string): any[] {
   try {
+    // Try python3 first (Linux/Mac), then fallback to python (Windows)
+    const pythonCmd = process.platform === "win32" ? "python" : "python3";
     const stdout = execSync(
-      `python3 "${DB_SCRIPT}" "${startDate}" "${endDate}"`,
+      `${pythonCmd} "${DB_SCRIPT}" "${startDate}" "${endDate}"`,
       { encoding: "utf-8", timeout: 30000 },
     );
     const result = JSON.parse(stdout);
     if (result && typeof result === "object" && "error" in result) {
       throw new Error(result.error);
     }
+    console.log(`✓ Loaded ${result.length} days from DB (${startDate} to ${endDate})`);
     return result as any[];
   } catch (err: any) {
     console.error("DB load failed, falling back to file-based:", err.message);
@@ -361,9 +364,17 @@ function loadBacktestDataFromDb(startDate: string, endDate: string): any[] {
     for (let y = yStart; y <= yEnd; y++) {
       const yearPath = join(process.cwd(), "data", "years", `${y}.json`);
       if (existsSync(yearPath)) {
-        const chunk = JSON.parse(readFileSync(yearPath, "utf-8"));
-        allData.push(...chunk);
+        try {
+          const chunk = JSON.parse(readFileSync(yearPath, "utf-8"));
+          allData.push(...chunk);
+          console.log(`✓ Loaded ${chunk.length} days from ${yearPath}`);
+        } catch (e) {
+          console.warn(`Failed to parse ${yearPath}:`, (e as any).message);
+        }
       }
+    }
+    if (allData.length === 0) {
+      throw new Error(`No historical data found for ${startDate} to ${endDate}`);
     }
     return allData;
   }
@@ -377,9 +388,12 @@ app.get("/api/backtest-data", (req, res) => {
     const startDate = `${yearStart}-01-01`;
     const endDate = `${yearEnd}-12-31`;
 
+    console.log(`[API] /api/backtest-data requested: ${startDate} to ${endDate}, configType=${configType}`);
+
     const allData = loadBacktestDataFromDb(startDate, endDate);
     if (allData.length === 0) {
-      res.status(503).json({ error: "No historical data available" });
+      console.error(`[API] No historical data available for ${startDate} to ${endDate}`);
+      res.status(503).json({ success: false, error: "No historical data available" });
       return;
     }
     const bridged = bridgeHistoricalData(allData);
@@ -387,8 +401,8 @@ app.get("/api/backtest-data", (req, res) => {
       date: day.date,
       ihsgPrice: day.ihsgPrice,
       goldPrice: day.goldPrice,
-      stockPrices: day.stockAdjPrices,
-      stockAdjPrices: day.stockAdjPrices,
+      stockPrices: day.stockAdjPrices || day.stockPrices,
+      stockAdjPrices: day.stockAdjPrices || day.stockPrices,
       stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
       stockRanksProd: day.stockRanksProd,
       stockRanksRes: day.stockRanksRes,
@@ -400,13 +414,15 @@ app.get("/api/backtest-data", (req, res) => {
       prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
       res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
     };
+    console.log(`[API] Returning ${data.length} days (bridged from ${allData.length})`);
     res.json({
       success: true, count: data.length, configType,
       weights: defaultWeights,
       data,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error(`[API] /api/backtest-data error:`, err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

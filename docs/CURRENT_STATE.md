@@ -2,10 +2,10 @@
 
 | Field | Value |
 |-------|-------|
-| Tanggal | 2026-06-26 |
+| Tanggal | 2026-06-30 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sesi 12 — Konsolidasi UI + Backtest↔Portfolio Koherensi (selesai 2026-06-26) |
+| Sprint | Sesi 13 — Backtest Chart Reactivity + Data Loading Fixes (2026-06-30) |
 
 ## Active Architecture
 
@@ -53,6 +53,22 @@ di-promote manual via `promoteDraftToEngine()`.
 `algoCapital`, `singleTicker`, `singleSellTrigger`, `singleBuyTrigger`.
 
 ## Current Focus
+
+**Session 2026-06-30 (session 13): Backtest Chart Fixes — IN PROGRESS**
+
+### 🟢 4 Fixes Delivered
+- **FIX 1 — Auto-run on config change**: SimulationTab useEffect re-triggers `handleRunAlgoBacktest()` when `configFingerprint` berubah. Fix: chart tidak update saat ubah parameter.
+- **FIX 2 — Data re-fetch on date range change**: `useEffect` dependencies tambah `simStartDate`/`simEndDate`. Fix: data tidak reload saat ganti date range.
+- **FIX 3 — Python Windows compatibility**: `server.ts` gunakan `python` (Windows) via `process.platform` check, bukan `python3`. Fix: DB load gagal silently di Windows → fallback ke synthetic data.
+- **FIX 4 — Comprehensive logging**: Server + client console logs untuk trace data flow (DB → year files → synthetic fallback). Easier debugging.
+
+### Root Cause Analysis
+- **Chart flat 2025-2026**: `python3` tidak ada di Windows → DB load gagal → fallback year files (works) → tapi jika ANY error → client `generateClientBacktestData()` synthetic data (seed=42) → flat random walk chart.
+- **Chart tidak update**: FASE 2.7 menghapus auto-run (backtest hanya sekali saat initial load). Fix: tambah useEffect dependency ke `configFingerprint`.
+
+### Files Modified
+- `src/components/SimulationTab.tsx` — auto-run useEffect, data re-fetch dependencies, logging
+- `server.ts` — python command, error handling, logging
 
 **Session 2026-06-26 (session 8): Sync Drift + Feature Overhaul — COMPLETED**
 

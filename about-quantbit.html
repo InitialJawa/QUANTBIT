@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUANTBIT — Terminal Kuantitatif IDX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  cursor: none;
+}
+body { cursor: default; }
+
+/* HIDDEN SCROLLBAR */
+::-webkit-scrollbar { display: none; }
+
+/* SLIDE CONTAINER */
+#slides {
+  position: fixed; inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  transform: scale(0.95);
+}
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+.slide.exit {
+  opacity: 0;
+  transform: scale(1.05);
+}
+
+.slide .line {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.slide .line.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* TYPOGRAPHY */
+h1 {
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+h2 {
+  font-size: clamp(32px, 4.5vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+h3 {
+  font-size: clamp(24px, 3vw, 48px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+p, .body-text {
+  font-size: clamp(18px, 2vw, 32px);
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.7);
+}
+.small {
+  font-size: clamp(14px, 1.2vw, 20px);
+  color: rgba(255,255,255,0.5);
+}
+
+/* ACCENT */
+.accent { color: #00c9a5; }
+.accent-light { color: rgba(0,201,165,0.6); }
+.accent-glow { text-shadow: 0 0 40px rgba(0,201,165,0.3); }
+
+/* LARGE NUMBERS */
+.big-number {
+  font-size: clamp(100px, 15vw, 200px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+}
+
+/* LOGO */
+.logo-svg {
+  width: clamp(80px, 10vw, 140px);
+  height: auto;
+  margin-bottom: 24px;
+}
+
+/* SUBTLE LINE */
+.divider-line {
+  width: 60px; height: 3px;
+  background: #00c9a5;
+  margin: 20px auto;
+  border-radius: 2px;
+}
+
+/* PROGRESS BAR */
+#progress {
+  position: fixed; bottom: 0; left: 0;
+  height: 3px;
+  background: #00c9a5;
+  transition: width 0.5s ease;
+  z-index: 100;
+}
+
+/* COUNTER */
+#counter {
+  position: fixed; bottom: 20px; right: 30px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.2);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  z-index: 100;
+}
+
+/* HINT */
+#hint {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255,255,255,0.15);
+  transition: opacity 2s ease;
+  z-index: 100;
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .slide { padding: 30px; }
+  h1 { font-size: clamp(28px, 8vw, 40px); }
+  h2 { font-size: clamp(24px, 6vw, 36px); }
+  p, .body-text { font-size: clamp(16px, 4vw, 22px); }
+  .big-number { font-size: clamp(60px, 20vw, 100px); }
+}
+</style>
+</head>
+<body>
+
+<div id="slides">
+  <!-- SLIDE 0: Logo -->
+  <div class="slide active" data-index="0">
+    <svg class="logo-svg" viewBox="0 0 115 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="48" cy="45" r="28" stroke="#ffffff" stroke-width="16" fill="none"/>
+      <path d="M 61 58 L 81 78" stroke="#ffffff" stroke-width="16" stroke-linecap="square"/>
+      <circle cx="98" cy="70" r="10" fill="#00c9a5"/>
+    </svg>
+    <h1 class="line">QUANTBIT</h1>
+    <p class="line small" style="margin-top:12px;">Klik di mana saja untuk mulai</p>
+  </div>
+
+  <!-- SLIDE 1: Tagline -->
+  <div class="slide" data-index="1">
+    <h1 class="line">Terminal Kuantitatif</h1>
+    <h1 class="line accent" style="margin-top:8px;">untuk Bursa Efek Indonesia</h1>
+  </div>
+
+  <!-- SLIDE 2: Masalah -->
+  <div class="slide" data-index="2">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Masalah</p>
+    <h2 class="line">Investor IDX tidak punya</h2>
+    <h2 class="line" style="margin-top:4px;">alat kuantitatif yang <span class="accent">accessible</span>.</h2>
+    <p class="line body-text" style="margin-top:20px;max-width:700px;">Bloomberg mahal. TradingView terbatas.<br>AI halusinasi angka berbahaya.</p>
+  </div>
+
+  <!-- SLIDE 3: Solusi -->
+  <div class="slide" data-index="3">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Solusi</p>
+    <h2 class="line">Mesin kuantitatif <span class="accent">deterministik</span></h2>
+    <h2 class="line" style="margin-top:4px;">dipadukan dengan <span class="accent">AI narasi</span>.</h2>
+    <div class="divider-line line" style="margin-top:24px;"></div>
+    <p class="line body-text" style="margin-top:24px;font-weight:500;color:#fff;">Math is math. AI is narrative.</p>
+  </div>
+
+  <!-- SLIDE 4: Filosofi -->
+  <div class="slide" data-index="4">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Filosofi</p>
+    <h2 class="line">Data Akurat</h2>
+    <h2 class="line accent" style="margin-top:4px;">vs</h2>
+    <h2 class="line" style="margin-top:4px;">AI Halusinasi</h2>
+    <p class="line body-text" style="margin-top:20px;max-width:600px;">Semua angka diproses secara deterministik di TypeScript. AI hanya untuk narasi dan Q&A — tidak pernah menyentuh kalkulasi.</p>
+  </div>
+
+  <!-- SLIDE 5: Angka - 830 -->
+  <div class="slide" data-index="5">
+    <div class="line big-number accent">830</div>
+    <h2 class="line" style="margin-top:8px;">Saham IDX</h2>
+    <p class="line body-text small" style="margin-top:12px;">Coverage penuh Bursa Efek Indonesia</p>
+  </div>
+
+  <!-- SLIDE 6: Angka - 947 -->
+  <div class="slide" data-index="6">
+    <div class="line big-number accent">947</div>
+    <h2 class="line" style="margin-top:8px;">Perusahaan</h2>
+    <p class="line body-text small" style="margin-top:12px;">Fundamental lengkap: 32 fields per emiten</p>
+  </div>
+
+  <!-- SLIDE 7: Angka - 203+ -->
+  <div class="slide" data-index="7">
+    <div class="line big-number accent">203<sup style="font-size:0.5em;">+</sup></div>
+    <h2 class="line" style="margin-top:8px;">Automated Tests</h2>
+    <p class="line body-text small" style="margin-top:12px;">Unit test, component test, E2E — 4 lapis pengujian</p>
+  </div>
+
+  <!-- SLIDE 8: Angka - 5 -->
+  <div class="slide" data-index="8">
+    <div class="line big-number accent">5</div>
+    <h2 class="line" style="margin-top:8px;">AI Providers</h2>
+    <p class="line body-text small" style="margin-top:12px;">9 model dengan circuit breaker auto-cooldown</p>
+  </div>
+
+  <!-- SLIDE 9: Multi-Factor Scoring -->
+  <div class="slide" data-index="9">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Fitur #1</p>
+    <h1 class="line">Multi-Factor Scoring</h1>
+    <p class="line body-text" style="margin-top:16px;max-width:700px;">Quality · Growth · Value · Momentum · Dividend</p>
+    <p class="line small" style="margin-top:24px;">3 profil optimal: <span class="accent">AMAN</span> · <span class="accent">AGRESIF</span> · <span class="accent">DIVIDEN</span></p>
+  </div>
+
+  <!-- SLIDE 10: Adaptive DCA -->
+  <div class="slide" data-index="10">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Fitur #2</p>
+    <h1 class="line">Adaptive DCA Engine</h1>
+    <p class="line body-text" style="margin-top:16px;max-width:700px;">Buy Pressure Score — 5 faktor market timing</p>
+    <p class="line small" style="margin-top:24px;">Perbandingan 4-way: Adaptive vs Lump Sum vs Monthly DCA vs Quarterly DCA</p>
+  </div>
+
+  <!-- SLIDE 11: Crash Protection -->
+  <div class="slide" data-index="11">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Fitur #3</p>
+    <h1 class="line">Crash Protection</h1>
+    <p class="line body-text" style="margin-top:16px;max-width:700px;">Deteksi drawdown IHSG 60-hari → auto-rotasi ke <span class="accent">Gold</span> atau <span class="accent">Cash</span></p>
+  </div>
+
+  <!-- SLIDE 12: AI Agent 4-Level -->
+  <div class="slide" data-index="12">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Fitur #4</p>
+    <h1 class="line">AI Agent</h1>
+    <h2 class="line accent" style="margin-top:4px;">Zero Auto-Execute</h2>
+    <p class="line body-text" style="margin-top:16px;max-width:650px;">Level 1: Q&A · Level 2: 8 Tools · Level 3: 10 Actions (approval) · Level 4: Proactive</p>
+  </div>
+
+  <!-- SLIDE 13: One More Thing -->
+  <div class="slide" data-index="13">
+    <p class="line small" style="margin-bottom:16px;color:rgba(255,255,255,0.3);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;">Dan ada satu hal lagi...</p>
+    <h1 class="line accent-glow">Rico Lubis</h1>
+    <p class="line body-text" style="margin-top:12px;max-width:600px;">Persona AI ala Jakarta Tech Founder.<br>Natural Bahasa Indonesia. Domain-locked ke QUANTBIT.</p>
+  </div>
+
+  <!-- SLIDE 14: Penutup -->
+  <div class="slide" data-index="14">
+    <svg class="logo-svg line" viewBox="0 0 115 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="48" cy="45" r="28" stroke="#00c9a5" stroke-width="16" fill="none"/>
+      <path d="M 61 58 L 81 78" stroke="#00c9a5" stroke-width="16" stroke-linecap="square"/>
+      <circle cx="98" cy="70" r="10" fill="#00c9a5"/>
+    </svg>
+    <h1 class="line accent">QUANTBIT</h1>
+    <p class="line body-text" style="margin-top:8px;">quantbit-terminal.pages.dev</p>
+    <p class="line small" style="margin-top:24px;color:rgba(255,255,255,0.3);">Terima Kasih</p>
+  </div>
+</div>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">Klik atau tekan Enter untuk lanjut</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const progress = document.getElementById('progress');
+const counter = document.getElementById('counter');
+const hint = document.getElementById('hint');
+let current = 0;
+let isAnimating = false;
+let autoTimer = null;
+const LINES_PER_SLIDE = 8;
+
+function showSlide(index) {
+  if (isAnimating) return;
+  if (index < 0 || index >= slides.length) return;
+  isAnimating = true;
+
+  // Hide hint after first interaction
+  hint.style.opacity = '0';
+
+  // Exit current slide
+  const prev = document.querySelector('.slide.active');
+  if (prev) {
+    prev.classList.remove('active');
+    prev.classList.add('exit');
+    // Reset all lines
+    prev.querySelectorAll('.line').forEach(l => l.classList.remove('show'));
+    setTimeout(() => prev.classList.remove('exit'), 800);
+  }
+
+  // Enter new slide
+  current = index;
+  const slide = slides[current];
+  slide.classList.add('active');
+  slide.querySelectorAll('.line').forEach((l, i) => {
+    setTimeout(() => l.classList.add('show'), 200 + (i * 200));
+  });
+
+  // Update progress & counter
+  progress.style.width = ((current + 1) / slides.length * 100) + '%';
+  counter.textContent = `${current + 1} / ${slides.length}`;
+
+  setTimeout(() => { isAnimating = false; }, 1200);
+}
+
+function nextSlide() {
+  if (current < slides.length - 1) {
+    showSlide(current + 1);
+  }
+}
+
+function prevSlide() {
+  if (current > 0) {
+    showSlide(current - 1);
+  }
+}
+
+// Navigation: click anywhere
+document.addEventListener('click', (e) => {
+  // Click left half = prev, right half = next
+  if (e.clientX < window.innerWidth / 3) {
+    prevSlide();
+  } else {
+    nextSlide();
+  }
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    nextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    prevSlide();
+  } else if (e.key === 'Escape') {
+    showSlide(0);
+  }
+});
+
+// Touch navigation
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+});
+document.addEventListener('touchend', (e) => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextSlide();
+    else prevSlide();
+  }
+});
+
+// Auto-start: show first slide lines
+setTimeout(() => {
+  slides[0].querySelectorAll('.line').forEach((l, i) => {
+    setTimeout(() => l.classList.add('show'), 400 + (i * 400));
+  });
+  progress.style.width = ((1) / slides.length * 100) + '%';
+  counter.textContent = `1 / ${slides.length}`;
+}, 300);
+
+// Auto-hide hint after 5s
+setTimeout(() => {
+  hint.style.opacity = '0';
+}, 8000);
+</script>
+</body>
+</html>

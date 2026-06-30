@@ -1,4 +1,24 @@
 # NEXT ACTION
+## P0 — VERIFY (2026-06-30, Sesi 13)
+**Status**: Backtest chart reactivity + data loading fixes DONE. tsc passing.
+
+Delivered (Sesi 13 — Backtest Chart Fixes):
+- **Auto-run backtest saat config berubah** — SimulationTab useEffect sekarang trigger re-run saat configFingerprint berubah (fix: chart tidak update saat ubah parameter)
+- **Data re-fetch saat date range berubah** — Added simStartDate/simEndDate ke dependencies (fix: data tidak reload saat ganti range)
+- **Python command Windows compatibility** — server.ts gunakan `python` (Windows) instead of `python3` (Linux/Mac) via process.platform check
+- **Comprehensive logging** — Server + client console logs untuk debug data flow (DB → file fallback → synthetic fallback)
+- **Better error handling** — Improved fallback chain dengan specific error messages
+
+**Root cause analysis (chart flat 2025-2026)**:
+- `python3` tidak ada di Windows → DB load failed silently
+- Fallback ke year files (2025.json, 2026.json) worked, tapi tidak log jelas
+- Jika ANY error, client fallback ke `generateClientBacktestData()` synthetic data (seed=42)
+- Synthetic random walk formula menghasilkan ~flat chart karena range kecil per hari
+
+**Verification**:
+- [x] `npx tsc --noEmit` — PASS 0 errors
+- [ ] Test runtime: start dev server + API server, run backtest 2025-2026, verify chart realistic
+
 ## P0 — VERIFY (2026-06-26, Sesi 12)
 **Status**: Code changes done, docs updated, tsc + vitest passing. vite build pending.
 
