@@ -344,7 +344,7 @@ app.get("/api/db-sync-status", async (_req, res) => {
     const queryScript = join(process.cwd(), "scripts", "db-query.py");
     const stdout = execSync(
       `${pythonCmd} "${queryScript}" "SELECT MAX(date) as latest FROM daily_overview" "[]"`,
-      { encoding: "utf-8", timeout: 10000 },
+      { encoding: "utf-8", timeout: 10000, env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
     );
     const result = JSON.parse(stdout);
     const latestDate = result?.[0]?.latest || null;
@@ -363,7 +363,7 @@ app.post("/api/market/sync", async (_req, res) => {
     const syncScript = join(process.cwd(), "scripts", "sync-daily-data.ts");
     execSync(
       `npx tsx "${syncScript}" --force`,
-      { encoding: "utf-8", timeout: 120000, cwd: process.cwd() },
+      { encoding: "utf-8", timeout: 120000, cwd: process.cwd(), env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
     );
     res.json({ success: true, message: "Sync selesai" });
   } catch (err: any) {
@@ -382,7 +382,7 @@ function loadBacktestDataFromDb(startDate: string, endDate: string): any[] {
     const pythonCmd = process.platform === "win32" ? "python" : "python3";
     const stdout = execSync(
       `${pythonCmd} "${DB_SCRIPT}" "${startDate}" "${endDate}"`,
-      { encoding: "utf-8", timeout: 30000 },
+      { encoding: "utf-8", timeout: 30000, env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
     );
     const result = JSON.parse(stdout);
     if (result && typeof result === "object" && "error" in result) {

@@ -38,7 +38,7 @@ function sleep(ms: number) {
 }
 
 async function fetchYahooSpark(tickers: string[]): Promise<Record<string, { close: number; volume: number }>> {
-  const batchSize = 50;
+  const batchSize = 20;
   const result: Record<string, { close: number; volume: number }> = {};
 
   for (let i = 0; i < tickers.length; i += batchSize) {
@@ -86,8 +86,19 @@ async function fetchYahooSpark(tickers: string[]): Promise<Record<string, { clos
   return result;
 }
 
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let dateStr: string | null = null;
+  let force = false;
+  for (const a of args) {
+    if (a === "--force") force = true;
+    else if (!a.startsWith("--")) dateStr = a;
+  }
+  return { dateStr, force };
+}
+
 async function main() {
-  const targetDate = process.argv[2];
+  const { dateStr: targetDate, force } = parseArgs();
   const today = targetDate
     ? new Date(targetDate)
     : new Date(Date.now() + 7 * 60 * 60 * 1000); // WIB
@@ -115,7 +126,7 @@ async function main() {
   if (allData.some((d) => d.date === dateStr)) {
     console.log(`  Data untuk ${dateStr} sudah ada. Lewati.`);
     console.log("  Gunakan `--force` untuk menimpa.");
-    if (!process.argv.includes("--force")) {
+    if (!force) {
       process.exit(0);
     }
   }
@@ -146,7 +157,7 @@ async function main() {
     console.log(`  IHSG tidak dapat (${
       prices["IHSG"] ? "0 atau undefined" : "missing"
     }). Mungkin hari libur. Skip.`);
-    if (!process.argv.includes("--force")) {
+    if (!force) {
       process.exit(0);
     }
   }
@@ -172,8 +183,12 @@ async function main() {
     }
   }
 
-  const goldPrice = prices["GOLD"]?.close || lastEntry.goldPrice;
+  // Konversi: Yahoo gold dalam USD/oz, data menyimpan IDR/gram
+  const goldUsdOz = prices["GOLD"]?.close || 0;
   const usdidrRate = prices["USDIDR"]?.close || lastEntry.usdidrRate;
+  const goldPrice = goldUsdOz > 0 && usdidrRate > 0
+    ? Math.round(goldUsdOz * usdidrRate / 31.1035 * 100) / 100
+    : lastEntry.goldPrice;
 
   const newEntry: Record<string, any> = {
     date: dateStr,

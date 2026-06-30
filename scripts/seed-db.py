@@ -171,7 +171,7 @@ def seed_fundamentals(db: sqlite3.Connection):
                             )
                             total += 1
                 db.commit()
-                print(f"  {fp.name}: (dividend snapshots) → {total} total")
+                print(f"  {fp.name}: (dividend snapshots) -> {total} total")
                 continue
         elif isinstance(raw, list):
             stocks = raw
@@ -198,7 +198,7 @@ def seed_fundamentals(db: sqlite3.Connection):
             )
             total += 1
         db.commit()
-        print(f"  {fp.name}: {len(stocks)} entries → {total} total")
+        print(f"  {fp.name}: {len(stocks)} entries -> {total} total")
 
     print(f"  Done: {total} fundamentals rows")
 

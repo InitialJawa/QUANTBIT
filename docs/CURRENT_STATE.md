@@ -88,8 +88,8 @@ Eliminasi misalignment data antara Portfolio (live prices) vs Backtest/Market (D
 - `AGENTS.md` (modified) — DB SOT rule
 
 ### Verification
-- [ ] `npx tsc --noEmit` PASS 0 errors
-- [ ] `npx vitest run` All tests passing
+- [x] `npx tsc --noEmit` PASS 0 errors
+- [x] `npm test` 239/239 tests passing
 - [ ] Manual: dev server running, Portfolio shows sync status
 - [ ] Test: click "Sync Now" → data refreshes
 

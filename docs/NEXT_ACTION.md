@@ -13,8 +13,8 @@
 - [x] **docs update** — PROJECT_MASTER, CURRENT_STATE, NEXT_ACTION, AGENTS.md
 
 ### Verification
-- [ ] `npx tsc --noEmit` — PASS 0 errors
-- [ ] `npx vitest run` — All tests passing
+- [x] `npx tsc --noEmit` — PASS 0 errors
+- [x] `npm test` — 239/239 tests passing
 - [ ] Manual: dev server running, Portfolio shows sync status bar
 - [ ] Test: click "Sync Now" → check console logs for sync API call
 
