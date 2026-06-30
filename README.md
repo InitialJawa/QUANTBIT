@@ -568,11 +568,8 @@ QUANTBIT/
 │   ├── DECISIONS.md                 # Architecture decisions log
 │   ├── MASTER_CHRONICLE.md          # Major milestones
 │   ├── KNOWN_ISSUES.md              # Known issues tracker
-│   ├── agent.md                     # Quick reference (Indonesian)
 │   ├── DEPLOY_D1_MIGRATIONS.md      # Production D1 migration guide
 │   ├── MANUAL_TEST_GUIDE.md         # 30+ manual test cases (AI Levels 1-4)
-│   ├── about-quantbit.html          # Project presentation HTML
-│   ├── presentasi-script.md         # Presentation script
 │   ├── ADR-*.md                     # Architecture Decision Records
 │   ├── audit/                       # Research reports & audit data
 │   └── archive/                     # Historical task lists

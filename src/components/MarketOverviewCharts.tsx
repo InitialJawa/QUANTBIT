@@ -127,30 +127,27 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
 
   const chartData: ChartDay[] = useMemo(() => {
     if (slicedData.length < 2) return [];
-    const baseIhsg = slicedData[0].ihsgPrice;
-    const baseGold = slicedData[0].goldPrice;
-    if (!baseIhsg || !baseGold) return [];
 
     const portMap = new Map<string, number>();
     for (const p of portfolioIndexed) {
       if (p.portfolioValue !== null) portMap.set(p.date, p.portfolioValue);
     }
 
-    const indexed: ChartDay[] = slicedData.map(d => ({
+    const raw: ChartDay[] = slicedData.map(d => ({
       date: d.date,
-      ihsg: d.ihsgPrice ? (d.ihsgPrice / baseIhsg) * 100 : null,
-      gold: d.goldPrice ? (d.goldPrice / baseGold) * 100 : null,
+      ihsg: d.ihsgPrice ?? null,
+      gold: d.goldPrice ?? null,
       portfolio: portMap.get(d.date) ?? null,
       ihsgSma20: null,
       ihsgSma50: null,
     }));
 
-    const ihsgValues = indexed.map(d => d.ihsg).filter((v): v is number => v !== null);
+    const ihsgValues = raw.map(d => d.ihsg).filter((v): v is number => v !== null);
     const sma20 = computeSMA(ihsgValues, 20);
     const sma50 = computeSMA(ihsgValues, 50);
 
     let smaIdx = 0;
-    return indexed.map((d, i) => {
+    return raw.map((d, i) => {
       if (d.ihsg !== null) {
         d.ihsgSma20 = sma20[smaIdx];
         d.ihsgSma50 = sma50[smaIdx];
@@ -182,7 +179,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-heading font-bold text-white">IHSG vs Gold vs Portfolio — Indexed to 100</h3>
+            <h3 className="text-heading font-bold text-white">IHSG vs Gold vs Portfolio</h3>
           </div>
           <div className="flex items-center gap-1">
             {timeframeBtns.map(tf => (
@@ -271,12 +268,23 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
                 interval="preserveStartEnd"
               />
               <YAxis
+                yAxisId="left"
                 stroke="#333"
                 tickLine={false}
                 dx={-4}
                 tick={{ fill: "#666", fontSize: 10 }}
                 domain={["auto", "auto"]}
                 tickFormatter={(val) => val.toFixed(0)}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#333"
+                tickLine={false}
+                dx={4}
+                tick={{ fill: "#666", fontSize: 10 }}
+                domain={["auto", "auto"]}
+                tickFormatter={(val) => val.toLocaleString("id-ID")}
               />
               <Tooltip
                 contentStyle={{
@@ -289,22 +297,24 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
                 labelFormatter={(label) => `Tanggal: ${label}`}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = { ihsg: "IHSG", gold: "Gold", portfolio: "Portfolio", ihsgSma20: "SMA20", ihsgSma50: "SMA50" };
-                  return [value.toFixed(1), labels[name] || name];
+                  if (name === "gold") return [value.toLocaleString("id-ID"), labels[name] || name];
+                  if (name === "portfolio") return [value.toLocaleString("id-ID"), labels[name] || name];
+                  return [value.toFixed(0), labels[name] || name];
                 }}
               />
-              <Area type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
-              <Area type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
+              <Area yAxisId="left" type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
+              <Area yAxisId="right" type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
               {portfolio && portfolio.length > 0 && (
-                <Area type="monotone" dataKey="portfolio" stroke="#00c9a5" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
+                <Area yAxisId="left" type="monotone" dataKey="portfolio" stroke="#00c9a5" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
               )}
-              <Line type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
-              <Line type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
+              <Line yAxisId="left" type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
+              <Line yAxisId="left" type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
 
         <div className="flex items-center justify-between mt-2 text-caption text-white/30">
-          <span>Base: {slicedData[0]?.date || "-"} = 100</span>
+          <span>Dual axis — IHSG kiri, Gold kanan</span>
           <span>{slicedData.length} hari</span>
         </div>
       </div>
