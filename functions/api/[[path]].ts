@@ -71,6 +71,30 @@ async function getUserFromSession(env: Env, token: string | null): Promise<strin
   return row?.user_id ?? "dev-user";
 }
 
+// ── Data fallback helpers ───────────────────────────────────
+
+/** Load year files from static assets (fallback when D1 is not seeded) */
+async function loadYearFilesFromAssets(request: Request, yearStart: number, yearEnd: number): Promise<any[]> {
+  const allData: any[] = [];
+  const origin = new URL(request.url).origin;
+  
+  for (let year = yearStart; year <= yearEnd; year++) {
+    try {
+      const url = `${origin}/data/years/${year}.json`;
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      const yearData = await response.json();
+      if (Array.isArray(yearData)) {
+        allData.push(...yearData);
+      }
+    } catch {
+      // Skip year if fetch fails
+    }
+  }
+  
+  return allData;
+}
+
 // ── Router ──────────────────────────────────────────────────
 
 export async function onRequest(context: EventContext<Env, string, unknown>) {

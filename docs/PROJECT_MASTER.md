@@ -25,7 +25,7 @@
 | State DB | Cloudflare D1 (`quantbit-db`) / local `*.sqlite` |
 | Config | `.env`, `wrangler.toml`, `tsconfig.json`, `vite.config.ts` |
 | Schema | `db/schema.sql` |
-| Stock List | `DaftarSaham.csv` (830 IDX stocks) |
+| Stock List | `data/DaftarSaham.csv` (830 IDX stocks) |
 
 ## Production
 | Aspect | Detail |

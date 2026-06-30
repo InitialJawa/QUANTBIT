@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Award, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
@@ -103,6 +103,21 @@ export function AppSidebar({
   const gainersWithRSI = useMemo(() => topMovers.gainers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
   const losersWithRSI = useMemo(() => topMovers.losers.map(s => ({ stock: s, rsi: stockRSI(s) })), [topMovers]);
 
+  const topPicks = useMemo(() => {
+    const maxVol = Math.max(...STOCKS_DATA.map(s => s.chartDataDaily?.[s.chartDataDaily.length - 1]?.volume || 0), 1);
+    const maxChange = Math.max(...STOCKS_DATA.filter(s => s.change > 0).map(s => s.change), 0.1);
+    const scored = STOCKS_DATA
+      .filter(s => s.change > 0)
+      .map(stock => {
+        const volume = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
+        const volScore = (volume / maxVol) * 30;
+        const momScore = (stock.change / maxChange) * 70;
+        const score = Math.min(100, Math.round(momScore + volScore));
+        return { stock, score };
+      });
+    return scored.sort((a, b) => b.score - a.score).slice(0, 3);
+  }, []);
+
   const breadth = useMemo(() => {
     const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
     const decliners = STOCKS_DATA.filter(s => s.change < 0).length;
@@ -132,13 +147,78 @@ export function AppSidebar({
 
   const renderMarketContent = () => (
     <>
+      {/* TOP PICKS — 3 saham momentum terkuat */}
+      <div id="sidebar-top-picks" className="mx-2">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <Award className="w-3 h-3 text-tertiary" />
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Picks</span>
+          <span className="ml-auto"><ExplainButton label="3 saham dengan momentum harga &amp; volume terkuat — skor gabungan 70% perubahan harga + 30% volume" /></span>
+        </div>
+        <div className="px-2 py-1.5 space-y-1">
+          {topPicks.map(({ stock, score }) => {
+            const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
+            return (
+              <div key={stock.ticker} className="flex items-center gap-2 py-0.5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
+                    <span className="text-caption font-mono font-bold text-emerald-400">+{stock.change.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <MiniSparkline data={sparkData} color="#34d399" />
+                    <span className="text-label font-mono text-white/40">{score}/100</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* AI QUICK PULSE — 1 baris */}
+      <div id="sidebar-ai-pulse" className="mx-2">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <Sparkles className="w-3 h-3 text-tertiary" />
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">AI Quick Pulse</span>
+        </div>
+        <div className="px-2 py-1.5">
+          <p className="text-caption text-tertiary leading-relaxed line-clamp-2 font-sans">
+            {RS.rationale}
+          </p>
+        </div>
+      </div>
+
+      {/* AKSI CEPAT — Dompet + Makro sekilas */}
+      <div id="sidebar-aksi-cepat" className="mx-2">
+        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <Zap className="w-3 h-3 text-tertiary" />
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Aksi Cepat</span>
+        </div>
+        <div className="px-2 py-1.5 space-y-1.5">
+          <button onClick={onToggleWallet}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-caption font-bold transition-colors cursor-pointer bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 border border-emerald-500/20">
+            <Wallet className="w-3.5 h-3.5" />
+            Buka Dompet
+          </button>
+          <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+            <span className="text-label text-tertiary">USD/IDR</span>
+            <span className="text-caption text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
+          </div>
+          <div className="flex items-center justify-between px-2 py-1 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+            <span className="text-label text-tertiary">Gold/gr</span>
+            <span className="text-caption text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* BERITA PASAR — compact 3 item */}
       <div id="sidebar-news-panel" className="mx-2">
         <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
           <Newspaper className="w-3 h-3 text-tertiary" />
-          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Berita</span>
+          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Berita Pasar</span>
         </div>
         <div className="pt-0.5 space-y-0 scrollbar-thin">
-          {idxNews.map((news, idx) => (
+          {idxNews.slice(0, 3).map((news, idx) => (
             <a
               key={idx}
               href={news.url}
@@ -156,177 +236,6 @@ export function AppSidebar({
               </h4>
             </a>
           ))}
-        </div>
-      </div>
-
-      <div id="sidebar-macro-indicators-panel" className="mx-2">
-        <div className="px-2 py-1 border-b border-white/[0.04] flex items-center justify-between">
-          <span className="text-label font-medium text-tertiary uppercase tracking-wider">Makro</span>
-        </div>
-        <div className="px-2 py-1.5 space-y-1">
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">USD/IDR</span>
-            <span className="text-body text-secondary font-mono">Rp{MKT.usdidr.value.toLocaleString("id-ID")}</span>
-          </div>
-          <div className="flex items-center justify-between py-1">
-            <span className="text-label text-tertiary">Gold/gr</span>
-            <span className="text-body text-secondary font-mono">Rp{MKT.gold.value.toLocaleString("id-ID")}</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="sidebar-top-movers" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <TrendingUp className="w-3 h-3 text-tertiary" />
-          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Top Movers</span>
-          <span className="ml-auto"><ExplainButton label="Top Gainers &amp; Losers — sparkline 20 hari, volume terakhir, RSI (Hijau ≥70, Abu 30-70, Merah ≤30)" /></span>
-        </div>
-        <div className="grid grid-cols-2 gap-1 px-2 py-1.5">
-          <div>
-            <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
-              <span className="text-caption font-medium text-emerald-400">Gainers</span>
-            </div>
-            <div className="space-y-1">
-              {gainersWithRSI.map(({ stock, rsi }) => {
-                const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
-                const lastVol = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
-                return (
-                  <div key={stock.ticker} className="flex items-center gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
-                        <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
-                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
-                            style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-label text-tertiary font-mono">{formatVolume(lastVol)}</span>
-                        <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
-                          {rsi !== null ? rsi.toFixed(0) : "--"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-1 mb-1">
-              <TrendingDown className="w-2.5 h-2.5 text-rose-400" />
-              <span className="text-caption font-medium text-rose-400">Losers</span>
-            </div>
-            <div className="space-y-1">
-              {losersWithRSI.map(({ stock, rsi }) => {
-                const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
-                const lastVol = stock.chartDataDaily?.[stock.chartDataDaily.length - 1]?.volume || 0;
-                return (
-                  <div key={stock.ticker} className="flex items-center gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-caption font-medium text-primary truncate">{stock.ticker.replace(".JK","")}</span>
-                        <span className={`text-caption font-mono font-bold ${stock.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {stock.change >= 0 ? "+" : ""}{stock.change.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <MiniSparkline data={sparkData} color={stock.change >= 0 ? "#34d399" : "#fb7185"} />
-                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${stock.change >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
-                            style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-label text-tertiary font-mono">{formatVolume(lastVol)}</span>
-                        <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>
-                          {rsi !== null ? rsi.toFixed(0) : "--"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="sidebar-technical-stats" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <BarChart3 className="w-3 h-3 text-tertiary" />
-          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Teknikal</span>
-          <span className="ml-auto"><ExplainButton label="Indikator teknikal IHSG: RSI, MACD, SMA, Market Breadth, Score Gap" /></span>
-        </div>
-        <div className="px-2 py-1.5 space-y-1.5">
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-            <div>
-              <span className="text-label text-tertiary block">RSI(14)</span>
-              <span className={`text-body font-mono font-bold ${rsiColorClass(rsiIHSG)}`}>
-                {rsiIHSG !== null ? rsiIHSG.toFixed(1) : "--"}
-              </span>
-            </div>
-            <div>
-              <span className="text-label text-tertiary block">MACD</span>
-              <span className="text-body font-mono font-bold text-secondary">
-                {macdResult !== null ? macdResult.macd.toFixed(1) : "--"}
-              </span>
-              {macdResult !== null && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className={`text-caption font-mono ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
-                  </span>
-                  <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${macdResult.histogram >= 0 ? "bg-emerald-400/50" : "bg-rose-400/50"}`}
-                      style={{ width: `${Math.min(Math.abs(macdResult.histogram) * 10, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-            <div>
-              <span className="text-label text-tertiary block">SMA20</span>
-              <span className="text-caption font-mono text-secondary">
-                {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
-              </span>
-            </div>
-            <div>
-              <span className="text-label text-tertiary block">SMA50</span>
-              <span className="text-caption font-mono text-secondary">
-                {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
-              </span>
-            </div>
-          </div>
-          <div className="border-t border-white/[0.04] pt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
-            <div>
-              <span className="text-label text-tertiary block">Breadth</span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-caption text-emerald-400 font-mono">{breadth.advancers}</span>
-                <span className="text-label text-tertiary">/</span>
-                <span className="text-caption text-rose-400 font-mono">{breadth.decliners}</span>
-                <span className="text-label text-tertiary">/</span>
-                <span className="text-caption text-tertiary font-mono">{breadth.total}</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-label text-tertiary block">Score Gap</span>
-              <span className="text-body font-mono font-bold text-secondary">
-                {RS.radar_context?.score_gap !== undefined
-                  ? RS.radar_context.score_gap.toFixed(1)
-                  : "--"}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </>

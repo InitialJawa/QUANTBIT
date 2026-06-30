@@ -1,9 +1,8 @@
 ﻿import React, { useState, useMemo } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { StockData, PortfolioItem, WatchlistItem, DataStatus } from "../types";
-import { getAuditTrail, isCrisisMode } from "../marketRegimeEngine";
-import { SearchableSelect } from "./SearchableSelect";
+import { StockData, PortfolioItem } from "../types";
+import { getAuditTrail, isCrisisMode, computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { motion, AnimatePresence } from "motion/react";
@@ -12,21 +11,11 @@ import {
   TrendingDown,
   ChevronDown,
   ChevronUp,
-  Newspaper,
-  ExternalLink,
-  MessageSquare,
-  Send,
-  Check,
   Sparkles,
   Globe,
-  BookOpen,
-  Search,
-  Eye,
-  Trash2,
-  BarChart3,
+  Activity,
 } from "lucide-react";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
-import { getDataStatus } from "../utils/getDataStatus";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
@@ -36,13 +25,42 @@ interface MarketTabProps {
   onChangeActiveTicker?: (ticker: string) => void;
   activeStock: StockData;
   portfolio: PortfolioItem[];
-  watchlist: WatchlistItem[];
   onAddTransaction: (ticker: string, shares: number, buyPrice: number) => void;
   onRemoveTransaction: (ticker: string) => void;
   onSellTransaction: (ticker: string, shares: number) => void;
-  onToggleWatchlist: (ticker: string) => void;
   getDynamicStock: (ticker: string) => StockData | undefined;
   filteredStocks?: (StockData | undefined)[];
+}
+
+function formatRupiah(val: number) {
+  if (!Number.isFinite(val)) return "Rp 0";
+  return "Rp " + Math.round(val).toLocaleString("id-ID");
+}
+
+function formatVolume(vol: number): string {
+  if (vol >= 1_000_000_000) return (vol / 1_000_000_000).toFixed(1) + "B";
+  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + "M";
+  if (vol >= 1_000) return (vol / 1_000).toFixed(0) + "K";
+  return vol.toString();
+}
+
+function MiniSparkline({ data, width = 36, height = 14, color = "currentColor" }: {
+  data: number[]; width?: number; height?: number; color?: string;
+}) {
+  if (data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 export function MarketTab({ 
@@ -50,24 +68,20 @@ export function MarketTab({
   onChangeActiveTicker,
   activeStock,
   portfolio,
-  watchlist,
   onAddTransaction,
   onRemoveTransaction,
   onSellTransaction,
-  onToggleWatchlist,
   getDynamicStock,
   filteredStocks
 }: MarketTabProps) {
-  const [marketSubTab, setMarketSubTab] = useState<"overview" | "charts" | "watchlist">("overview");
+  const [marketSubTab, setMarketSubTab] = useState<"ikhtisar" | "pergerakan">("ikhtisar");
   const { engineConfig } = useEngineConfig();
 
-  // Match AnalyticsTab sub-tab style (flex-1 + icon + emerald underline).
-  // See AppSidebar.tsx for the same pattern in BacktestContent.
   const MARKET_SUB_TABS = [
-    { id: "overview" as const, icon: Globe, label: "Ikhtisar" },
-    { id: "charts" as const, icon: BarChart3, label: "Grafik" },
-    { id: "watchlist" as const, icon: BookOpen, label: "Watchlist" },
+    { id: "ikhtisar" as const, icon: Globe, label: "Ikhtisar" },
+    { id: "pergerakan" as const, icon: Activity, label: "Pergerakan" },
   ];
+
   const allVisibleStocks = useMemo(
     () => STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s),
     [getDynamicStock]
@@ -79,13 +93,10 @@ export function MarketTab({
     }
     return allVisibleStocks;
   }, [allVisibleStocks, engineConfig.simulationMode, engineConfig.customUniverse, engineConfig.singleTicker]);
+
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
-  const [watchlistTicker, setWatchlistTicker] = useState<string>(activeStock.ticker);
-  const [watchlistSearch, setWatchlistSearch] = useState("");
   const [showAuditTrail, setShowAuditTrail] = useState(false);
-
-  const [tickerStatus, setTickerStatus] = useState<Record<string, DataStatus>>({});
 
   const [marketSummary, setMarketSummary] = useState<{
     rationale: string;
@@ -99,100 +110,56 @@ export function MarketTab({
 
   const stocksWithPrices = STOCKS_DATA.map(st => {
     const live = getDynamicStock(st.ticker) || st;
-    return {
-      ticker: st.ticker,
-      currentPrice: live.currentPrice,
-      change: live.change
-    };
+    return { ticker: st.ticker, currentPrice: live.currentPrice, change: live.change };
   });
-
-  React.useEffect(() => {
-    let isMounted = true;
-    async function loadStatuses() {
-      const statuses: Record<string, DataStatus> = {};
-      for (const item of watchlist) {
-        const status = await getDataStatus(item.ticker);
-        statuses[item.ticker] = status;
-      }
-      if (isMounted) setTickerStatus(statuses);
-    }
-    loadStatuses();
-    return () => { isMounted = false; };
-  }, [watchlist]);
 
   const priceValuesString = stocksWithPrices.map(s => `${s.ticker}:${s.currentPrice}`).join("|") 
     + `|IHSG:${MKT.ihsg.value}|USDIDR:${MKT.usdidr.value}`;
 
   React.useEffect(() => {
     const now = Date.now();
-    if (now - lastFetchTimeRef.current < 12000) {
-      return;
-    }
-
+    if (now - lastFetchTimeRef.current < 12000) return;
     let isMounted = true;
     const fetchMarketSummary = async () => {
       try {
         setIsFetchingSummary(true);
         setSummaryError(null);
         lastFetchTimeRef.current = Date.now();
-
         const { data: responseData, status: marketStatus } = await fetchWithStatus("/api/gemini/market-summary", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            mkt: MKT,
-            rs: RS,
+            mkt: MKT, rs: RS,
             stocks: STOCKS_DATA.map(st => {
               const live = getDynamicStock(st.ticker) || st;
-              return {
-                ticker: st.ticker,
-                name: st.name,
-                currentPrice: live.currentPrice,
-                change: live.change,
-                sector: st.sector,
-              };
+              return { ticker: st.ticker, name: st.name, currentPrice: live.currentPrice, change: live.change, sector: st.sector };
             })
           })
         });
         const response = { json: async () => responseData } as any;
-
-        if (!response.ok) {
-          throw new Error(`Server returned status ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Server returned status ${response.status}`);
         const data = await response.json();
         if (isMounted) {
-          if (data && data.rationale) {
-            setMarketSummary(data);
-          } else {
-            throw new Error("Invalid structure returned");
-          }
+          if (data && data.rationale) setMarketSummary(data);
+          else throw new Error("Invalid structure returned");
         }
       } catch (err: any) {
         console.warn("Live daily market summary fetch failed, fallback active:", err);
         if (isMounted) {
           setMarketSummary({
-             rationale: "IHSG berfluktuasi didorong oleh dinamika makro global dan pergerakan teknis emiten blue-chip.",
-             bullishFactors: ["Ekspektasi moderasi suku bunga", "Rotasi masuk ke sektor pertahanan dan perbankan", "Valuasi atraktif di beberapa emiten Top Tier"],
-             bearishFactors: ["Volatilitas nilai tukar mata uang", "Realisasi profit taking jangka pendek", "Kelemahan teknikal di atas resisten"],
-             scenarioAnalysis: "Skenario defensif: pantau ketat momentum portofolio. Skenario agresif: akumulasi pada saham dengan skor Fundamental (Config Aman) tinggi jika IHSG membaik."
+            rationale: "IHSG berfluktuasi didorong oleh dinamika makro global dan pergerakan teknis emiten blue-chip.",
+            bullishFactors: ["Ekspektasi moderasi suku bunga", "Rotasi masuk ke sektor pertahanan dan perbankan", "Valuasi atraktif di beberapa emiten Top Tier"],
+            bearishFactors: ["Volatilitas nilai tukar mata uang", "Realisasi profit taking jangka pendek", "Kelemahan teknikal di atas resisten"],
+            scenarioAnalysis: "Skenario defensif: pantau ketat momentum portofolio. Skenario agresif: akumulasi pada saham dengan skor Fundamental (Config Aman) tinggi jika IHSG membaik."
           });
           setSummaryError("Sistem menggunakan data ringkasan statis (API Limit / Offline)");
         }
       } finally {
-        if (isMounted) {
-          setIsFetchingSummary(false);
-        }
+        if (isMounted) setIsFetchingSummary(false);
       }
     };
-
     fetchMarketSummary();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [priceValuesString]);
 
   let totalCost = 0;
@@ -205,10 +172,6 @@ export function MarketTab({
   });
   const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
-  React.useEffect(() => {
-    setWatchlistTicker(activeStock.ticker);
-  }, [activeStock.ticker]);
-
   const isIHSGInCrisis = isCrisisMode();
   const currentStatus = isIHSGInCrisis ? "RISK OFF" : RS.status;
   const currentAction = isIHSGInCrisis ? "LIQUIDATE / CASH OUT" : RS.action;
@@ -219,31 +182,52 @@ export function MarketTab({
     DANGER: "text-rose-400 bg-rose-500/10 border-rose-500/20",
     "RISK ON": "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     "RISK OFF": "text-rose-400 bg-rose-500/10 border-rose-500/20",
-    NETRAL: "text-amber-400 bg-amber-500/10 border-amber-500/20",
   };
-
-  const statusClass = statusColors[currentStatus] || "text-white bg-white/5 border-white/10";
-  const actionClass = isIHSGInCrisis 
-    ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-    : (RS.action === "ACCUMULATE" || RS.action === "AKUMULASI"
-      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-      : RS.action === "WAIT" || RS.action === "TUNGGU"
-      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-      : "bg-rose-500/10 text-rose-400 border-rose-500/20");
 
   const isFilteredByStrategy =
     engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0;
 
-  const strategyFilterLabel = `Custom Universe (${engineConfig.customUniverse.length})`;
+  const maxAbsChange = useMemo(() => {
+    return Math.max(...STOCKS_DATA.map(s => Math.abs(s.change)), 1);
+  }, []);
+
+  const topMovers = useMemo(() => {
+    const sorted = [...STOCKS_DATA].sort((a, b) => b.change - a.change);
+    return { gainers: sorted.slice(0, 5), losers: sorted.slice(-5).reverse() };
+  }, []);
+
+  const ihsgData = useMemo(() => getIhsgData(), []);
+  const ihsgCloses = useMemo(() => ihsgData.map(d => d.close), [ihsgData]);
+  const rsiIHSG = useMemo(() => computeRSI(ihsgCloses, 14), [ihsgCloses]);
+  const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);
+
+  function stockRSI(stock: StockData): number | null {
+    const prices = stock.chartDataDaily?.map(d => d.price);
+    if (!prices || prices.length < 15) return null;
+    return computeRSI(prices, 14);
+  }
+
+  function rsiColorClass(rsi: number | null): string {
+    if (rsi === null) return "text-white/30";
+    if (rsi >= 70) return "text-rose-400";
+    if (rsi <= 30) return "text-emerald-400";
+    return "text-white/60";
+  }
+
+  const breadth = useMemo(() => {
+    const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
+    const decliners = STOCKS_DATA.filter(s => s.change < 0).length;
+    return { advancers, decliners, total: STOCKS_DATA.length };
+  }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
       {isFilteredByStrategy && (
-        <div className="bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl px-4 py-2.5 flex items-center gap-2 text-caption font-mono">
+        <div className="bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl px-4 py-2 flex items-center gap-2 text-caption font-mono">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span className="text-emerald-400 font-bold">FILTERED BY PORTFOLIO STRATEGY:</span>
-          <span className="text-white/80 truncate">{strategyFilterLabel}</span>
+          <span className="text-white/80 truncate">Custom Universe ({engineConfig.customUniverse.length})</span>
         </div>
       )}
       {summaryError && (
@@ -252,13 +236,13 @@ export function MarketTab({
         </div>
       )}
 
-      {/* Sub-tab bar — match AnalyticsTab (flex-1 + icon + emerald underline) */}
-      <div className="flex border-b border-white/[0.04] mb-4">
+      {/* Sub-tab bar */}
+      <div className="flex border-b border-white/[0.04] mb-3">
         {MARKET_SUB_TABS.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => setMarketSubTab(id)}
-            className={`flex-1 py-2.5 text-body font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 text-caption font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
               marketSubTab === id
                 ? "text-emerald-500 border-b-2 border-emerald-500"
                 : "text-white/30 hover:text-white/60"
@@ -269,478 +253,369 @@ export function MarketTab({
         ))}
       </div>
 
-      {marketSubTab === "overview" && (
+      {/* ───── I K H T I S A R ───── */}
+      {marketSubTab === "ikhtisar" && (
       <>
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative bg-[#050505] border border-white/[0.03] rounded-2xl p-6 overflow-hidden"
-      >
-        <div className={`absolute top-0 right-0 w-48 h-48 ${isIHSGInCrisis ? "bg-rose-500/5 animate-pulse" : "bg-white/[0.02]"} rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none`} />
-        
-        <div className="flex flex-col md:flex-row flex-wrap justify-between items-start gap-6 pb-6 border-b border-white/[0.05] w-full">
-          <div className="flex flex-col sm:flex-row flex-wrap gap-6 w-full xl:w-auto">
-            <div>
-              <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS PASAR (SISTEM)</span>
-              <div className="flex items-center gap-3">
-                <span className="text-sm tracking-widest bg-white/[0.02] text-white/80 font-bold px-3 py-1.5 rounded-lg border border-white/[0.05]">
-                  {currentStatus === "SAFE" ? "RISK ON" : currentStatus === "RISK OFF" ? "RISK OFF" : currentStatus}
-                </span>
-                <div>
-                  <span className="text-caption text-[#E0E0E0]/60 leading-none block">Sikap Algoritma</span>
-                  <span className="text-caption font-semibold text-white/80 mt-1 block font-mono">
-                    Alokasi Modal: <span className={isIHSGInCrisis ? "text-rose-400" : "text-white font-bold"}>{isIHSGInCrisis ? "0%" : `${RS.capital_deployment}%`}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t sm:border-t-0 sm:border-l border-white/[0.05] pt-4 sm:pt-0 sm:pl-6">
-              <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-2 font-mono">STATUS ANDA (PORTOFOLIO)</span>
-              <div className="flex items-center gap-3">
-                {portfolio.length === 0 ? (
-                  <span className="text-caption font-bold px-3 py-1.5 bg-white/5 border border-white/5 text-white/40 tracking-wider rounded-lg font-sans">
-                    KOSONG / BELUM ADA SAHAM
-                  </span>
-                ) : (
-                  <span className={`text-body font-bold tracking-wider px-3 py-1.5 rounded-lg border font-mono ${
-                    myReturnPercent >= 0 
-                      ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" 
-                      : "text-rose-400 bg-rose-500/10 border-rose-500/20"
-                  }`}>
-                    {myReturnPercent >= 0 ? "CUAN" : "DROP"} {myReturnPercent >= 0 ? "+" : ""}{myReturnPercent.toFixed(2)}%
-                  </span>
-                )}
-                <div>
-                  <span className="text-caption text-[#E0E0E0]/60 leading-none block">Status Kesehatan</span>
-                  <span className="text-caption text-zinc-400 mt-1 block font-mono">
-                    {portfolio.length} Emiten Aktif
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-row flex-wrap gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
-            <div className="p-3 bg-white/[0.01] border border-white/[0.03] rounded-xl flex-1 lg:w-44">
-              <span className="text-label uppercase font-bold tracking-widest text-white/30 block mb-1">Tindakan</span>
-              <span className={`inline-block text-body font-bold tracking-wider px-2 py-0.5 rounded-md border ${currentAction === "WAIT" ? "bg-white/[0.05] text-white/80 border-white/5" : actionClass}`}>
-                {currentAction === "WAIT" ? "WAIT / TUNGGU" : currentAction}
+        {/* Status bar — compact 1 row */}
+        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-label uppercase tracking-wider">Status</span>
+              <span className={`text-caption font-bold px-2 py-0.5 rounded-md border ${statusColors[currentStatus] || "text-white bg-white/5 border-white/10"}`}>
+                {currentStatus === "SAFE" ? "RISK ON" : currentStatus}
               </span>
             </div>
-            <div className="p-3 bg-white/[0.01] border border-white/[0.03] rounded-xl flex-1 lg:w-44">
-              <span className="text-label uppercase font-bold tracking-widest text-white/30 block mb-1">Tren Momentum</span>
-              <span className={`text-xs font-bold tracking-wide flex items-center gap-1.5 ${isIHSGInCrisis ? "text-rose-400" : "text-emerald-400/80"}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-label uppercase tracking-wider">Deploy</span>
+              <span className={`font-mono font-bold ${isIHSGInCrisis ? "text-rose-400" : "text-white/80"}`}>
+                {isIHSGInCrisis ? "0%" : `${RS.capital_deployment}%`}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-label uppercase tracking-wider">Portfolio</span>
+              <span className={`font-mono font-bold ${myReturnPercent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {portfolio.length === 0 ? "—" : `${myReturnPercent >= 0 ? "+" : ""}${myReturnPercent.toFixed(2)}%`}
+              </span>
+            </div>
+            <div className="w-px h-4 bg-white/[0.06]" />
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-label uppercase tracking-wider">IHSG</span>
+              <span className="font-mono font-bold text-white/90">{MKT.ihsg.value.toLocaleString("id-ID")}</span>
+              <span className={`font-mono font-bold ${MKT.ihsg.daily >= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                {MKT.ihsg.daily >= 0 ? "+" : ""}{MKT.ihsg.daily}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-label uppercase tracking-wider">USD/IDR</span>
+              <span className="font-mono font-bold text-white/90">Rp {MKT.usdidr.value.toLocaleString("id-ID")}</span>
+            </div>
+            <div className="ml-auto">
+              <span className={`text-caption font-bold tracking-wide ${isIHSGInCrisis ? "text-rose-400" : "text-emerald-400/80"}`}>
                 {isIHSGInCrisis ? (
-                  <>
-                    <TrendingDown className="w-3.5 h-3.5 animate-pulse" /> Jatuh Sistemik
-                  </>
+                  <><TrendingDown className="w-3 h-3 inline animate-pulse" /> Jatuh Sistemik</>
                 ) : (
-                  <>
-                    <TrendingUp className="w-3.5 h-3.5" /> Menguat
-                  </>
+                  <><TrendingUp className="w-3 h-3 inline" /> {currentAction === "ACCUMULATE" ? "Akumulasi" : currentAction === "WAIT" ? "Tunggu" : currentAction}</>
                 )}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 text-center md:text-left">
-          <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Kesehatan Pasar</span>
-            <span className="text-2xl font-bold font-mono text-white block">{RS.market_health}</span>
-            <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
-              <div className="bg-white/40 h-full" style={{ width: `${RS.market_health}%` }} />
+        {/* Big 4 metrik — compact */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Kesehatan Pasar", value: RS.market_health, color: "bg-white/40" },
+            { label: "Peluang Cuan", value: RS.opportunity, color: "bg-white/40" },
+            { label: "Risiko Pasar", value: RS.risk, color: "bg-rose-500/50", textColor: "text-rose-400/80" },
+            { label: "Keyakinan", value: RS.confidence, color: "bg-white/40" },
+          ].map((m) => (
+            <div key={m.label} className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1.5">
+              <span className="text-label uppercase tracking-wider text-white/30">{m.label}</span>
+              <span className={`text-xl font-bold font-mono ${m.textColor || "text-white"} block`}>{m.value}</span>
+              <div className="w-full bg-white/[0.05] h-1 rounded-full overflow-hidden">
+                <div className={`${m.color} h-full rounded-full`} style={{ width: `${m.value}%` }} />
+              </div>
             </div>
-          </div>
-          <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Peluang Cuan</span>
-            <span className="text-2xl font-bold font-mono text-white/90 block">{RS.opportunity}</span>
-            <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
-              <div className="bg-white/40 h-full" style={{ width: `${RS.opportunity}%` }} />
-            </div>
-          </div>
-          <div className="border-r border-white/[0.05] last:border-0 pr-6">
-            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Risiko Pasar</span>
-            <span className="text-2xl font-bold font-mono text-rose-400/80 block">{RS.risk}</span>
-            <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
-              <div className="bg-rose-500/50 h-full" style={{ width: `${RS.risk}%` }} />
-            </div>
-          </div>
-          <div>
-            <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 block mb-1.5">Tingkat Keyakinan</span>
-            <span className="text-2xl font-bold font-mono text-white block">{RS.confidence}</span>
-            <div className="w-full bg-white/[0.05] h-0.5 rounded-full mt-2.5 overflow-hidden">
-              <div className="bg-white/40 h-full" style={{ width: `${RS.confidence}%` }} />
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="mt-6 pt-5 border-t border-white/[0.05] space-y-3">
+        {/* AI Brief — collapsible */}
+        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-white/50" />
-              <span className="text-body font-bold text-white/70 uppercase tracking-widest font-sans">
-                Analisa AI Harian
-              </span>
+              <Sparkles className="w-3.5 h-3.5 text-white/40" />
+              <span className="text-caption font-bold text-white/60 uppercase tracking-wider">AI Brief</span>
+              {isFetchingSummary && (
+                <span className="flex items-center gap-1.5 text-label text-white/30">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  Memuat...
+                </span>
+              )}
             </div>
             <button
               onClick={() => setIsBriefExpanded(!isBriefExpanded)}
-              className="flex items-center gap-1.5 text-caption uppercase tracking-widest font-bold text-white/60 hover:text-white transition-colors cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] px-3 py-1.5 rounded-lg border border-white/[0.05]"
+              className="flex items-center gap-1 text-label uppercase tracking-wider font-bold text-white/50 hover:text-white transition-colors cursor-pointer bg-white/[0.02] hover:bg-white/[0.05] px-2.5 py-1 rounded-lg border border-white/[0.05]"
             >
-              {isBriefExpanded ? (
-                <>
-                  Tutup <ChevronUp className="w-3 h-3" />
-                </>
-              ) : (
-                <>
-                  Detail <ChevronDown className="w-3 h-3" />
-                </>
-              )}
+              {isBriefExpanded ? "Tutup" : "Detail"}
+              {isBriefExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>
-
-          <div className="bg-white/[0.01] border border-white/[0.03] rounded-xl p-5">
-            <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-              <strong className="text-white/60 flex items-center justify-between mb-2 font-mono text-caption uppercase tracking-wider w-full" id="jci-rationale-header">
-                <span>Rangkuman Sistem:</span>
-                {isFetchingSummary && (
-                  <span className="flex items-center gap-1.5 text-label text-white/30">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    Menganalisis pasar...
-                  </span>
-                )}
-              </strong>
-              {marketSummary ? marketSummary.rationale : RS.rationale}
-            </p>
-            
-            <AnimatePresence>
-              {isBriefExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4 text-body leading-relaxed text-zinc-400">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-2">
-                        <h4 className="font-bold text-white/70 text-caption uppercase tracking-widest font-mono">Faktor Pendukung Pasar</h4>
-                        <ul className="list-disc pl-4 space-y-1.5 mt-2 text-zinc-400">
-                          {marketSummary && marketSummary.bullishFactors && marketSummary.bullishFactors.length > 0 ? (
-                            marketSummary.bullishFactors.map((f, i) => <li key={i}>{f}</li>)
-                          ) : (
-                            <>
-                              <li>Suku Bunga BI-Rate ditahan di level 6.25% menyokong stabilitas eksternal rupiah.</li>
-                              <li>Aliran modal asing (net buy) masuk cukup deras menjaga likuiditas bursa domestik.</li>
-                              <li>Gap kualitas antara Top 5 ({RS.radar_context?.top5_avg_score}) dan Bottom 5 ({RS.radar_context?.bot5_avg_score}) berada di level {RS.radar_context?.score_gap} poin.</li>
-                            </>
-                          )}
-                        </ul>
-                      </div>
-                      <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-2">
-                        <h4 className="font-bold text-white/70 text-caption uppercase tracking-widest font-mono">Faktor Risiko Pantauan</h4>
-                        <ul className="list-disc pl-4 space-y-1.5 mt-2 text-zinc-400">
-                          {marketSummary && marketSummary.bearishFactors && marketSummary.bearishFactors.length > 0 ? (
-                            marketSummary.bearishFactors.map((f, i) => <li key={i}>{f}</li>)
-                          ) : (
-                            <>
-                              <li>Faktor terlemah saat ini adalah Kualitas ({RS.radar_context?.weakest_factor_score}) yang membatasi luasnya momentum reli sektoral.</li>
-                              <li>Sifat sepinya transaksi di beberapa emiten pantauan menyulitkan likuiditas jangka pendek.</li>
-                              <li>IHSG masih dalam fase koreksi bulanan yang cukup tebal di kisaran {MKT.ihsg.monthly}%.</li>
-                            </>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-[#0a0a0a] border border-white/[0.05] rounded-xl flex items-start gap-3">
-                      <Sparkles className="w-4 h-4 text-white/40 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold text-white/80 block text-caption uppercase tracking-widest font-mono">Formulasi Strategi Saham AI</span>
-                        <p className="mt-1.5 text-zinc-400 text-xs">
-                          {marketSummary && marketSummary.scenarioAnalysis ? (
-                            marketSummary.scenarioAnalysis
-                          ) : (
-                            `Skenario saat ini: **${currentAction === "WAIT" ? "WAIT" : currentAction}** dengan alokasi **${RS.capital_deployment}%**. Skenario defensif: fokus pada emiten KBMI 4. Skenario agresif: akumulasi jika rotasi sektor IHSG mulai merangkak naik.`
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="mt-5 pt-5 border-t border-white/[0.05] space-y-4">
-              <button
-                onClick={() => setShowAuditTrail(!showAuditTrail)}
-                className="flex items-center justify-between w-full cursor-pointer"
+          <p className="text-caption text-zinc-400 mt-2 leading-relaxed font-sans">
+            {marketSummary ? marketSummary.rationale : RS.rationale}
+          </p>
+          <AnimatePresence>
+            {isBriefExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
               >
-                <span className="text-caption uppercase font-bold tracking-widest text-white/50 font-mono">Decision Audit Trail</span>
-                {showAuditTrail ? <ChevronUp className="w-3 h-3 text-white/40" /> : <ChevronDown className="w-3 h-3 text-white/40" />}
-              </button>
-              {showAuditTrail && <>
-              <div className="grid grid-cols-2 gap-4 text-body">
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Keputusan Saat Ini</span>
-                    <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                      trail.decision === "BUY_STOCKS" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                      trail.decision === "HOLD_GOLD" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                      trail.decision === "HOLD_CASH" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                      "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
-                    }`}>
-                      {trail.decision === "BUY_STOCKS" ? "BELI SAHAM" :
-                       trail.decision === "HOLD_GOLD" ? "PEGANG EMAS" :
-                       trail.decision === "HOLD_CASH" ? "PEGANG CASH" :
-                       "TUNGGU PEMULIHAN"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Rezim Pasar</span>
-                    <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                      trail.regime === "RISK_ON" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                      trail.regime === "RISK_OFF" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                      trail.regime === "GOLD_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
-                      trail.regime === "CASH_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
-                      "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
-                    }`}>
-                      {trail.regime === "RISK_ON" ? "RISK ON" :
-                       trail.regime === "RISK_OFF" ? "RISK OFF" :
-                       trail.regime === "GOLD_DEFENSE" ? "GOLD DEFENSE" :
-                       trail.regime === "CASH_DEFENSE" ? "CASH DEFENSE" :
-                       "RECOVERY WATCH"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Posisi</span>
-                    <span className="text-white font-bold">{trail.position}</span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">IHSG vs MA</span>
-                    <div className="flex gap-3">
-                      <span className={`text-xs font-bold ${trail.ihsgMa20Above ? "text-emerald-400" : "text-rose-400"}`}>
-                        MA20: {trail.ihsgMa20Above ? "DI ATAS" : "DI BAWAH"}
-                      </span>
-                      <span className={`text-xs font-bold ${trail.ihsgMa50Above ? "text-emerald-400" : "text-rose-400"}`}>
-                        MA50: {trail.ihsgMa50Above ? "DI ATAS" : "DI BAWAH"}
-                      </span>
+                <div className="mt-3 pt-3 border-t border-white/[0.05] space-y-3 text-caption leading-relaxed text-zinc-400">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
+                      <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Pendukung Pasar</h4>
+                      <ul className="list-disc pl-4 space-y-1 text-zinc-400">
+                        {marketSummary?.bullifulFactors?.length ? (
+                          marketSummary.bullifulFactors.map((f, i) => <li key={i}>{f}</li>)
+                        ) : (
+                          <>
+                            <li>Likuiditas domestik terjaga dengan aliran modal asing</li>
+                            <li>Valuasi atraktif di beberapa emiten unggulan</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                    <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
+                      <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Risiko Pantauan</h4>
+                      <ul className="list-disc pl-4 space-y-1 text-zinc-400">
+                        {marketSummary?.bearishFactors?.length ? (
+                          marketSummary.bearishFactors.map((f, i) => <li key={i}>{f}</li>)
+                        ) : (
+                          <>
+                            <li>Volatilitas nilai tukar rupiah</li>
+                            <li>Profit taking jangka pendek</li>
+                          </>
+                        )}
+                      </ul>
                     </div>
                   </div>
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Breadth (Score &ge;60)</span>
-                    <span className="text-white font-bold">{trail.breadthPercent}</span>
+                  <div className="p-3 bg-[#0a0a0a] border border-white/[0.05] rounded-xl flex items-start gap-3">
+                    <Sparkles className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-white/60 block text-label uppercase tracking-wider">Formulasi</span>
+                      <p className="mt-0.5 text-zinc-400">
+                        {marketSummary?.scenarioAnalysis || `Skenario: ${currentAction === "WAIT" ? "WAIT" : currentAction}, alokasi ${RS.capital_deployment}%`}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Exit Risk</span>
-                    <span className="text-white font-bold">{trail.exitRiskPercent}</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="pt-3 border-t border-white/[0.05] space-y-2">
-                <div>
-                  <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Alasan</span>
-                  <p className="text-zinc-400 text-xs leading-relaxed">{trail.reason}</p>
+                  {/* Audit trail toggle */}
+                  <button
+                    onClick={() => setShowAuditTrail(!showAuditTrail)}
+                    className="flex items-center gap-2 text-label uppercase tracking-wider font-bold text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+                  >
+                    {showAuditTrail ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    Decision Audit Trail
+                  </button>
+                  {showAuditTrail && (
+                    <div className="grid grid-cols-2 gap-3 text-caption">
+                      <div className="space-y-2">
+                        <div><span className="text-label uppercase tracking-wider text-white/30 block">Keputusan</span>
+                          <span className={`inline-block text-label font-bold px-2 py-0.5 rounded border ${
+                            trail.decision === "BUY_STOCKS" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                            trail.decision === "HOLD_GOLD" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                            trail.decision === "HOLD_CASH" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                            "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                          }`}>{trail.decision === "BUY_STOCKS" ? "BELI SAHAM" : trail.decision === "HOLD_GOLD" ? "PEGANG EMAS" : trail.decision === "HOLD_CASH" ? "PEGANG CASH" : "TUNGGU PEMULIHAN"}</span>
+                        </div>
+                        <div><span className="text-label uppercase tracking-wider text-white/30 block">Rezim</span>
+                          <span className={`inline-block text-label font-bold px-2 py-0.5 rounded border ${
+                            trail.regime === "RISK_ON" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                            trail.regime === "RISK_OFF" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                            trail.regime === "GOLD_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
+                            trail.regime === "CASH_DEFENSE" ? "text-rose-400 bg-rose-500/10 border-rose-500/20" :
+                            "text-yellow-400 bg-yellow-500/10 border-yellow-500/20"
+                          }`}>{trail.regime === "RISK_ON" ? "RISK ON" : trail.regime === "RISK_OFF" ? "RISK OFF" : trail.regime === "GOLD_DEFENSE" ? "GOLD DEFENSE" : trail.regime === "CASH_DEFENSE" ? "CASH DEFENSE" : "RECOVERY WATCH"}</span>
+                        </div>
+                        <div>
+                          <span className="text-label uppercase tracking-wider text-white/30 block">Posisi</span>
+                          <span className="text-white font-bold">{trail.position}</span>
+                        </div>
+                        <div>
+                          <span className="text-label uppercase tracking-wider text-white/30 block">IHSG vs MA</span>
+                          <div className="flex gap-2">
+                            <span className={`text-label font-bold ${trail.ihsgMa20Above ? "text-emerald-400" : "text-rose-400"}`}>MA20: {trail.ihsgMa20Above ? "↑" : "↓"}</span>
+                            <span className={`text-label font-bold ${trail.ihsgMa50Above ? "text-emerald-400" : "text-rose-400"}`}>MA50: {trail.ihsgMa50Above ? "↑" : "↓"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div><span className="text-label uppercase tracking-wider text-white/30 block">Breadth ≥60</span>
+                          <span className="text-white font-bold">{trail.breadthPercent}</span>
+                        </div>
+                        <div><span className="text-label uppercase tracking-wider text-white/30 block">Exit Risk</span>
+                          <span className="text-white font-bold">{trail.exitRiskPercent}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-label uppercase tracking-wider text-white/30 block">Alasan</span>
+                          <p className="text-zinc-400">{trail.reason}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {trail.noBuyReasons.length > 0 && (
-                  <div>
-                    <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Kenapa Belum Beli Saham?</span>
-                    <ul className="space-y-1">
-                      {trail.noBuyReasons.map((r, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-zinc-500">
-                          <span className="text-rose-400/70 mt-0.5 shrink-0">&bull;</span>
-                          {r}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div>
-                  <span className="text-label uppercase tracking-widest text-white/30 block mb-1 font-mono">Syarat Masuk Kembali</span>
-                  <p className="text-zinc-400 text-xs leading-relaxed">{trail.reentryCondition}</p>
-                </div>
-                </div>
-              </>}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Parameter strip — compact */}
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-label uppercase tracking-wider text-white/30 flex items-center gap-1.5">
+            Ringkasan Parameter
+            <ExplainButton label="IHSG, USD/IDR, Quant Score Gap, Market Breadth" />
+          </h3>
+          <LastUpdatedChip iso={MKT.market_last_update} />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+            <span className="text-label uppercase tracking-wider text-white/30 block">IHSG</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-body font-mono font-bold text-white/90">{MKT.ihsg.value.toLocaleString("id-ID")}</span>
+              <span className={`text-caption font-bold ${MKT.ihsg.daily >= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                {MKT.ihsg.daily >= 0 ? "+" : ""}{MKT.ihsg.daily}%
+              </span>
             </div>
+            <span className="text-label text-white/30">Bulanan: {MKT.ihsg.monthly}%</span>
           </div>
-        </div>
-      </motion.div>
-
-      <div className="flex items-center justify-between gap-2 px-1 pt-2">
-        <h3 className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/30 flex items-center gap-1.5">Ringkasan Parameter Real-Time<ExplainButton label="Ringkasan Parameter Real-Time (regime, breadth, exit, IHSG vs MA20/MA50)" /></h3>
-        <LastUpdatedChip iso={MKT.market_last_update} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">IHSG (JCI)</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-bold text-white/90">{MKT.ihsg.value.toLocaleString("id-ID")}</span>
-            <span className={`text-caption font-bold ${MKT.ihsg.daily >= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
-              {MKT.ihsg.daily >= 0 ? "+" : ""}{MKT.ihsg.daily}%
+          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+            <span className="text-label uppercase tracking-wider text-white/30 block">USD/IDR</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-body font-mono font-bold text-white/90">Rp {MKT.usdidr.value.toLocaleString("id-ID")}</span>
+              <span className={`text-caption font-bold flex items-center gap-0.5 ${MKT.usdidr.daily <= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                {MKT.usdidr.daily <= 0 ? "" : "+"}{MKT.usdidr.daily}%
+              </span>
+            </div>
+            <span className={`text-label font-bold ${MKT.usdidr.daily <= 0 ? "text-emerald-400/60" : "text-rose-400/60"}`}>
+              {MKT.usdidr.daily <= 0 ? "IDR MENGUAT" : "IDR MELEMAH"}
             </span>
           </div>
-          <span className="text-caption text-white/30 font-medium tracking-wide block">Bulanan: <span className="text-rose-400/80 font-bold">{MKT.ihsg.monthly}%</span></span>
-        </div>
-
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">USD / IDR</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-bold text-white/90">Rp {MKT.usdidr.value.toLocaleString("id-ID")}</span>
-            <span className={`text-caption font-bold flex items-center gap-0.5 ${MKT.usdidr.daily <= 0 ? "text-emerald-400/80" : "text-rose-400/80"}`}>
-              {MKT.usdidr.daily <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-              {MKT.usdidr.daily <= 0 ? "" : "+"}{MKT.usdidr.daily}%
-            </span>
+          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+            <span className="text-label uppercase tracking-wider text-white/30 block">Score Gap</span>
+            <span className="text-body font-mono font-bold text-white/90">{RS.radar_context?.score_gap || "40.6"}</span>
+            <span className="text-label text-white/30">Spread Top 5 vs Bottom 5</span>
           </div>
-          <span className={`text-caption tracking-wide block font-bold ${MKT.usdidr.daily <= 0 ? "text-emerald-400/60" : "text-rose-400/60"}`}>
-            {MKT.usdidr.daily <= 0 ? "IDR MENGUAT" : "IDR MELEMAH"}
-          </span>
-        </div>
-
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Quant Score Gap</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.score_gap || "40.6"}</span>
-            <span className="text-caption font-bold tracking-widest uppercase text-white/20">Spread</span>
+          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+            <span className="text-label uppercase tracking-wider text-white/30 block">Breadth ≥60</span>
+            <span className="text-body font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.idx_universe_size || 80}</span>
+            <span className="text-label text-emerald-400/60 font-bold">Broad Support</span>
           </div>
-          <span className="text-caption text-white/30 font-medium tracking-wide block">5D Change: <span className="text-white/50 font-bold uppercase">Stable</span></span>
         </div>
-
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-5 space-y-2 relative overflow-hidden">
-          <span className="text-caption uppercase font-bold tracking-widest text-white/30 block font-mono">Breadth &gt;60</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.idx_universe_size || 80}</span>
-            <span className="text-caption font-bold tracking-widest uppercase text-white/20">Assets</span>
-          </div>
-          <span className="text-caption text-emerald-400/60 block font-bold tracking-wide uppercase">Broad Market Support</span>
-        </div>
-
-      </div>
       </>
       )}
 
-      {marketSubTab === "watchlist" && (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/[0.05] pb-4">
-          <div className="flex items-center gap-2.5">
-            <BookOpen className="w-4 h-4 text-white/40" />
-            <span className="text-body uppercase font-bold tracking-widest text-white/80 block font-mono">Daftar Pantau Eksklusif</span>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="w-full sm:w-56">
-              <SearchableSelect
-                value={watchlistTicker}
-                options={visibleStocks.map(s => ({ value: s.ticker, label: `${s.ticker} - ${s.name}`, logoColor: s.logoColor }))}
-                onChange={(val) => setWatchlistTicker(val)}
-              />
-            </div>
-            <button
-               onClick={() => onToggleWatchlist(watchlistTicker)}
-               className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-caption font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0 border border-white/5"
-               disabled={watchlist.some(w => w.ticker === watchlistTicker)}
-               title="Tambahkan ke Daftar Pantau"
-             >
-                Tambah
-             </button>
-          </div>
-        </div>
-        
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-6 relative overflow-hidden">
-          {watchlist.length > 0 && (
-            <div className="relative mb-4">
-              <Search className="w-3.5 h-3.5 text-white/30 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                placeholder="Cari di daftar pantau..."
-                value={watchlistSearch}
-                onChange={(e) => setWatchlistSearch(e.target.value)}
-                className="w-full text-xs pl-10 pr-4 py-2.5 bg-white/[0.01] hover:bg-white/[0.02] border border-white/[0.05] rounded-xl outline-none text-white focus:border-white/20 transition-all font-mono placeholder:text-white/20"
-              />
-            </div>
-          )}
-          {watchlist.length === 0 ? (
-            <div className="p-12 text-center flex flex-col items-center gap-3 rounded-2xl bg-white/[0.01] border border-dashed border-white/[0.05]">
-              <span className="text-body uppercase tracking-widest font-bold text-white/40">Daftar Kosong</span>
-              <p className="text-zinc-600 font-sans text-body max-w-sm">Belum ada perusahaan dalam Daftar Pantau. Gunakan form di atas untuk menambahkannya agar AI memantau pergerakannya.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {watchlist
-                .filter(item => {
-                  if (!watchlistSearch) return true;
-                  const q = watchlistSearch.toLowerCase();
-                  const liveStock = getDynamicStock(item.ticker) || STOCKS_DATA.find((s) => s.ticker === item.ticker);
-                  return item.ticker.toLowerCase().includes(q) || (liveStock?.name || "").toLowerCase().includes(q);
-                })
-                .map((item) => {
-                const liveStock = getDynamicStock(item.ticker) || STOCKS_DATA.find((s) => s.ticker === item.ticker);
-                if (!liveStock) return null;
-                const isPos = liveStock.change >= 0;
-                const status = tickerStatus[item.ticker];
-                return (
-                  <div 
-                    key={item.ticker}
-                    onClick={() => onSelectTicker(liveStock.ticker)}
-                    className="p-5 rounded-2xl border border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/10 transition-all flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <TickerLogo ticker={liveStock.ticker} size="md" fallbackColor={liveStock.logoColor} />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold font-mono text-white/90 group-hover:text-white">{liveStock.ticker}</span>
-                          <span className="text-label uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/15">AI Monitor</span>
-                          {status && status !== "LIVE" && (
-                            <span className={`text-label uppercase font-bold tracking-widest px-1 py-0.5 rounded border ${
-                              status === "CACHED" ? "text-amber-400/60 bg-amber-500/5 border-amber-500/10" :
-                              status === "STALE" ? "text-rose-400/60 bg-rose-500/5 border-rose-500/10" :
-                              "text-white/30 bg-white/5 border-white/10"
-                            }`}>
-                              {status}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-caption text-zinc-500 block truncate max-w-32 mt-1 font-sans">{liveStock.name}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right flex items-center gap-4">
-                      <div>
-                        <span className="text-xs font-bold text-white/80 block font-mono">
-                          {liveStock.currentPrice.toLocaleString()}
-                        </span>
-                        <span className={`text-caption uppercase font-bold tracking-widest mt-0.5 inline-block ${isPos ? "text-emerald-400/80" : "text-rose-400/80"}`}>
-                          {isPos ? "+" : ""}{liveStock.change}%
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onToggleWatchlist(liveStock.ticker); }}
-                        className="p-1.5 text-white/20 hover:text-white hover:bg-rose-500 border border-transparent hover:border-rose-400 rounded-lg cursor-pointer transition-all focus:outline-none"
-                        title="Hapus Dari Daftar Pantau"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-      )}
-
-      {marketSubTab === "charts" && (
+      {/* ───── P E R G E R A K A N ───── */}
+      {marketSubTab === "pergerakan" && (
         <div className="space-y-4">
-          <MarketOverviewCharts />
+          <MarketOverviewCharts portfolio={portfolio} />
+
+          {/* Top Movers + Teknikal */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Gainers */}
+            <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+              <div className="flex items-center gap-1.5 mb-3">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-caption font-bold text-emerald-400 uppercase tracking-wider">Top Gainers</span>
+              </div>
+              <div className="space-y-2">
+                {topMovers.gainers.map((stock) => {
+                  const rsi = stockRSI(stock);
+                  const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
+                  return (
+                    <div key={stock.ticker} className="flex items-center gap-2 py-1.5 border-b border-white/[0.03] last:border-0">
+                      <TickerLogo ticker={stock.ticker} size="sm" fallbackColor={stock.logoColor} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-caption font-medium text-white/90 truncate">{stock.ticker.replace(".JK","")}</span>
+                          <span className="text-caption font-mono font-bold text-emerald-400">+{stock.change.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <MiniSparkline data={sparkData} color="#34d399" />
+                          <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-emerald-400/50" style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }} />
+                          </div>
+                          <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>{rsi !== null ? rsi.toFixed(0) : "--"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Losers */}
+            <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+              <div className="flex items-center gap-1.5 mb-3">
+                <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                <span className="text-caption font-bold text-rose-400 uppercase tracking-wider">Top Losers</span>
+              </div>
+              <div className="space-y-2">
+                {topMovers.losers.map((stock) => {
+                  const rsi = stockRSI(stock);
+                  const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
+                  return (
+                    <div key={stock.ticker} className="flex items-center gap-2 py-1.5 border-b border-white/[0.03] last:border-0">
+                      <TickerLogo ticker={stock.ticker} size="sm" fallbackColor={stock.logoColor} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-caption font-medium text-white/90 truncate">{stock.ticker.replace(".JK","")}</span>
+                          <span className="text-caption font-mono font-bold text-rose-400">{stock.change.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <MiniSparkline data={sparkData} color="#fb7185" />
+                          <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-rose-400/50" style={{ width: `${Math.min(Math.abs(stock.change) / maxAbsChange * 100, 100)}%` }} />
+                          </div>
+                          <span className={`text-label font-mono ${rsiColorClass(rsi)}`}>{rsi !== null ? rsi.toFixed(0) : "--"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Teknikal strip */}
+          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">RSI(14)</span>
+                <span className={`font-mono font-bold ${rsiIHSG !== null ? (rsiIHSG >= 70 ? "text-rose-400" : rsiIHSG <= 30 ? "text-emerald-400" : "text-white/80") : "text-white/30"}`}>
+                  {rsiIHSG !== null ? rsiIHSG.toFixed(1) : "--"}
+                </span>
+              </div>
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">MACD</span>
+                <span className="font-mono font-bold text-white/80">{macdResult !== null ? macdResult.macd.toFixed(1) : "--"}</span>
+                {macdResult !== null && (
+                  <span className={`text-label font-mono ml-1 ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">SMA20</span>
+                <span className="font-mono font-bold text-white/80">
+                  {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
+                </span>
+              </div>
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">SMA50</span>
+                <span className="font-mono font-bold text-white/80">
+                  {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
+                </span>
+              </div>
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">Breadth</span>
+                <span className="font-mono font-bold text-white/80">
+                  <span className="text-emerald-400">{breadth.advancers}</span>
+                  <span className="text-white/30"> / </span>
+                  <span className="text-rose-400">{breadth.decliners}</span>
+                </span>
+              </div>
+              <div>
+                <span className="text-white/30 text-label uppercase tracking-wider block">Score Gap</span>
+                <span className="font-mono font-bold text-white/80">{RS.radar_context?.score_gap?.toFixed(1) || "--"}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
     </div>
   );
 }
-

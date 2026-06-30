@@ -293,11 +293,9 @@ function AppContent({ logout }: { logout: () => void }) {
                           onChangeActiveTicker={ui.handleChangeActiveTicker}
                           activeStock={activeStock}
                           portfolio={pm.portfolio}
-                          watchlist={pm.watchlist}
                           onAddTransaction={pm.handleAddTransaction}
                           onRemoveTransaction={pm.handleRemoveTransaction}
                           onSellTransaction={pm.handleSellTransaction}
-                          onToggleWatchlist={pm.handleToggleWatchlist}
                           getDynamicStock={df.getDynamicStock}
                           filteredStocks={filteredStocks}
                         />
@@ -422,7 +420,11 @@ function AppContent({ logout }: { logout: () => void }) {
         chartTheme={ui.getChartTheme()}
       />
       <BackToTop />
- {import.meta.env?.DEV && <AITestHarness />}
+  {import.meta.env?.DEV && (() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("dev") === "ai") return <AITestHarness />;
+    return null;
+  })()}
     </div>
   );
 }

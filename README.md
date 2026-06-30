@@ -378,7 +378,7 @@ Karena **Cloudflare Pages edge geo-block** Gemini/Groq direct, default chain ada
 
 | File | Ukuran | Isi |
 |---|---:|---|
-| `DaftarSaham.csv` | 95 KB | **830 emiten IDX** — Code, Name, ListingDate, Shares, ListingBoard, Sector, LastPrice, MarketCap |
+| `data/DaftarSaham.csv` | 95 KB | **830 emiten IDX** — Code, Name, ListingDate, Shares, ListingBoard, Sector, LastPrice, MarketCap |
 | `data/idx_fundamentals_all.json` | 41 MB | IDX warehouse fundamentals (947 companies × 60 months) |
 | `data/idx80_scan.json` | 190 KB | Hasil scan IDX80 (Q/G/V/M/D scores per ticker) |
 | `data/fundamental_snapshots.json` | 20 KB | Snapshot fundamental + dividend history |
@@ -490,7 +490,7 @@ npm run test:e2e      # 17 Playwright E2E tests (auto-start dev server)
 npm run lint          # TypeScript type checking (tsc --noEmit)
 ```
 
-**Total: 203+ automated tests** + 30+ manual cases di [`MANUAL_TEST_GUIDE.md`](./MANUAL_TEST_GUIDE.md).
+**Total: 203+ automated tests** + 30+ manual cases di [`docs/MANUAL_TEST_GUIDE.md`](./docs/MANUAL_TEST_GUIDE.md).
 
 | Lapisan | Test runner | Tests | Speed |
 |---|---|---:|---:|
@@ -530,9 +530,9 @@ npm run db:migrate:apply 0002_ai_memory  # apply satu migration tertentu
 npm run db:status                     # cek applied vs pending
 ```
 
-Lihat [`DEPLOY_D1_MIGRATIONS.md`](./DEPLOY_D1_MIGRATIONS.md) untuk detail D1 setup (API token, wrangler login, dll).
+Lihat [`docs/DEPLOY_D1_MIGRATIONS.md`](./docs/DEPLOY_D1_MIGRATIONS.md) untuk detail D1 setup (API token, wrangler login, dll).
 
-Helper script: `apply-prod-migration.sh` — wrapper bash untuk apply migration ke production.
+Helper script: `scripts/apply-prod-migration.sh` — wrapper bash untuk apply migration ke production.
 
 ### CI/CD — Daily Data Pipeline
 
@@ -555,16 +555,31 @@ Konfigurasi: `wrangler.toml` (D1 binding, env vars, compatibility date 2026-06-1
 QUANTBIT/
 ├── AGENTS.md                        # Root DOX rail
 ├── README.md                        # File ini
-├── DaftarSaham.csv                  # 830 emiten IDX (static)
-├── agent.md                         # Quick reference (Indonesian)
-├── DEPLOY_D1_MIGRATIONS.md          # Production D1 migration guide
-├── MANUAL_TEST_GUIDE.md             # 30+ manual test cases (AI Levels 1-4)
-├── apply-prod-migration.sh          # Bash helper untuk D1 migration
 ├── vitest.config.ts                 # Vitest config (jsdom + React plugin)
 ├── vitest.setup.ts                  # Vitest setup (env shim, mocks, cleanup)
 ├── playwright.config.ts             # Playwright E2E config
 │
+├── docs/                            # Dokumentasi & guides
+│   ├── AGENTS.md                    # Docs DOX rail
+│   ├── PROJECT_MASTER.md            # Project identity & SOT
+│   ├── CURRENT_STATE.md             # Current state & tasks
+│   ├── NEXT_ACTION.md               # Priority queue
+│   ├── AI_ONBOARDING.md             # AI onboarding guide
+│   ├── DECISIONS.md                 # Architecture decisions log
+│   ├── MASTER_CHRONICLE.md          # Major milestones
+│   ├── KNOWN_ISSUES.md              # Known issues tracker
+│   ├── agent.md                     # Quick reference (Indonesian)
+│   ├── DEPLOY_D1_MIGRATIONS.md      # Production D1 migration guide
+│   ├── MANUAL_TEST_GUIDE.md         # 30+ manual test cases (AI Levels 1-4)
+│   ├── about-quantbit.html          # Project presentation HTML
+│   ├── presentasi-script.md         # Presentation script
+│   ├── ADR-*.md                     # Architecture Decision Records
+│   ├── audit/                       # Research reports & audit data
+│   └── archive/                     # Historical task lists
+│
 ├── data/                            # Raw datasets, historical market, caches
+│   ├── DaftarSaham.csv              # 830 emiten IDX (static)
+│   ├── idx_page.html                # IDX page snapshot (debug)
 │   ├── years/                       # 2021..2026 year-split historical (built via split-data)
 │   ├── idx80_scan.json              # IDX80 scan results (Q/G/V/M/D scores)
 │   ├── fundamental_idx_all.json     # IDX warehouse (JSON mirror, 41 MB)
@@ -581,7 +596,8 @@ QUANTBIT/
 │   ├── fetch_idx_fundamental.py     # IDX warehouse puller (cloudscraper)
 │   └── requirements.txt             # cloudscraper, pandas, dll
 │
-├── scripts/                         # TS data pipeline
+├── scripts/                         # TS data pipeline & helpers
+│   ├── AGENTS.md                    # Scripts DOX rail
 │   ├── fetch_historical_data.ts     # Yahoo prices + scoring (master, 2021+)
 │   ├── fetch_dividend_history.ts    # Dividend events per ticker
 │   ├── backtest_optimize_weights.ts # Weight grid search (step 0.05)
@@ -592,7 +608,16 @@ QUANTBIT/
 │   ├── migrate.ts                   # DB migration runner (status/apply/dry-run)
 │   ├── migrate-normscores.ts        # Rank-based normalization recompute
 │   ├── scrape_idx_fundamentals.py   # Legacy, superseded by collectors/
-│   └── run_backtest_comparison.cjs  # Backtest weight-config comparison
+│   ├── run_backtest_comparison.cjs  # Backtest weight-config comparison
+│   ├── apply-prod-migration.sh      # Bash helper untuk D1 migration
+│   ├── run-presentation.ps1         # PowerShell presentation launcher
+│   └── debug/                       # Debug & investigation scripts
+│       ├── debug_backtest.cjs       # Backtest debug runner
+│       ├── debug_full_backtest.cjs  # Full backtest debug
+│       ├── debug_ranks.cjs          # Rank calculation debug
+│       ├── idx_api_investigate.cjs  # IDX API investigation
+│       ├── idx_html_extract.cjs     # IDX HTML extractor
+│       └── audit_idx_api.py         # IDX API audit script
 │
 ├── db/                              # Schema & migrations
 │   ├── AGENTS.md                    # DB DOX rail

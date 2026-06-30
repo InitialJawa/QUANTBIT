@@ -58,7 +58,7 @@ function devMock(path: string, options: RequestInit): any {
         "2. Terminal 2: `npm run dev` (Vite di port 5173)\n\n" +
         "**Atau tanpa API key:**\n" +
         "- Settings → AI Agent → **Use Dev Mock** → ON (pattern-matching canned responses, support tool calls)\n\n" +
-        "Lihat `MANUAL_TEST_GUIDE.md` untuk detail.",
+        "Lihat `docs/MANUAL_TEST_GUIDE.md` untuk detail.",
       provider: "dev-mock",
     };
   }

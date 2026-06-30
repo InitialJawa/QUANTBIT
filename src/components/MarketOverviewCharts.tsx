@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line } from "recharts";
 import { api } from "../services/api";
 import { Activity, RefreshCw } from "lucide-react";
+import { portfolioIndexedHistory } from "../utils/reconstructPortfolioHistory";
+import type { PortfolioItem } from "../types";
 
 type Timeframe = "1M" | "6M" | "1Y" | "5Y" | "MAX";
 
@@ -13,21 +15,18 @@ function computeSMA(data: number[], period: number): (number | null)[] {
   });
 }
 
-function formatRupiah(val: number) {
-  if (!Number.isFinite(val)) return "Rp 0";
-  return "Rp " + Math.round(val).toLocaleString("id-ID");
-}
-
 interface RawDay {
   date: string;
   ihsgPrice: number;
   goldPrice: number;
+  stockAdjPrices?: Record<string, number>;
 }
 
 interface ChartDay {
   date: string;
   ihsg: number | null;
   gold: number | null;
+  portfolio: number | null;
   ihsgSma20: number | null;
   ihsgSma50: number | null;
 }
@@ -68,7 +67,11 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function MarketOverviewCharts() {
+interface MarketOverviewChartsProps {
+  portfolio?: PortfolioItem[];
+}
+
+export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>("1Y");
   const [rawData, setRawData] = useState<RawDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +83,12 @@ export function MarketOverviewCharts() {
     api.get<{ success: boolean; data: any[] }>("/api/backtest-data")
       .then(res => {
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          setRawData(res.data.map(d => ({ date: d.date, ihsgPrice: d.ihsgPrice, goldPrice: d.goldPrice })));
+          setRawData(res.data.map(d => ({
+            date: d.date,
+            ihsgPrice: d.ihsgPrice,
+            goldPrice: d.goldPrice,
+            stockAdjPrices: d.stockAdjPrices,
+          })));
         } else {
           setError(true);
         }
@@ -93,6 +101,11 @@ export function MarketOverviewCharts() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const portfolioIndexed = useMemo(() => {
+    if (!portfolio || portfolio.length === 0 || rawData.length === 0) return [];
+    return portfolioIndexedHistory(portfolio, rawData);
+  }, [portfolio, rawData]);
 
   const slicedData = useMemo(() => {
     if (rawData.length === 0) return [];
@@ -117,10 +130,16 @@ export function MarketOverviewCharts() {
     const baseGold = slicedData[0].goldPrice;
     if (!baseIhsg || !baseGold) return [];
 
+    const portMap = new Map<string, number>();
+    for (const p of portfolioIndexed) {
+      if (p.portfolioValue !== null) portMap.set(p.date, p.portfolioValue);
+    }
+
     const indexed: ChartDay[] = slicedData.map(d => ({
       date: d.date,
       ihsg: d.ihsgPrice ? (d.ihsgPrice / baseIhsg) * 100 : null,
       gold: d.goldPrice ? (d.goldPrice / baseGold) * 100 : null,
+      portfolio: portMap.get(d.date) ?? null,
       ihsgSma20: null,
       ihsgSma50: null,
     }));
@@ -138,7 +157,11 @@ export function MarketOverviewCharts() {
       }
       return d;
     });
-  }, [slicedData]);
+  }, [slicedData, portfolioIndexed]);
+
+  const lastPort = portfolioIndexed[portfolioIndexed.length - 1]?.portfolioValue;
+  const firstPort = portfolioIndexed.find(p => p.portfolioValue !== null)?.portfolioValue;
+  const portChange = firstPort && lastPort ? ((lastPort - firstPort) / firstPort) * 100 : null;
 
   const currentIhsg = slicedData.length > 0 ? slicedData[slicedData.length - 1].ihsgPrice : 0;
   const currentGold = slicedData.length > 0 ? slicedData[slicedData.length - 1].goldPrice : 0;
@@ -158,7 +181,7 @@ export function MarketOverviewCharts() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-heading font-bold text-white">IHSG vs Gold — Indexed to 100</h3>
+            <h3 className="text-heading font-bold text-white">IHSG vs Gold vs Portfolio — Indexed to 100</h3>
           </div>
           <div className="flex items-center gap-1">
             {timeframeBtns.map(tf => (
@@ -177,7 +200,7 @@ export function MarketOverviewCharts() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-3 text-caption">
+        <div className="flex items-center gap-4 mb-3 text-caption flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 rounded-full bg-white/80" />
             <span className="text-white/50">IHSG</span>
@@ -192,6 +215,15 @@ export function MarketOverviewCharts() {
               {goldChange >= 0 ? "+" : ""}{goldChange.toFixed(1)}%
             </span>
           </div>
+          {portChange !== null && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 rounded-full bg-emerald-400" />
+              <span className="text-white/50">Portfolio</span>
+              <span className={`font-mono font-medium ${portChange >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {portChange >= 0 ? "+" : ""}{portChange.toFixed(1)}%
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 border-t border-dashed border-white/40" />
             <span className="text-white/50">SMA20</span>
@@ -213,6 +245,10 @@ export function MarketOverviewCharts() {
                 <linearGradient id="colorGold" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.15} />
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.01} />
+                </linearGradient>
+                <linearGradient id="colorPortfolio" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00c9a5" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#00c9a5" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
@@ -246,12 +282,15 @@ export function MarketOverviewCharts() {
                 }}
                 labelFormatter={(label) => `Tanggal: ${label}`}
                 formatter={(value: number, name: string) => {
-                  const label = name === "ihsg" ? "IHSG" : name === "gold" ? "Gold" : name === "ihsgSma20" ? "SMA20" : "SMA50";
-                  return [value.toFixed(1), label];
+                  const labels: Record<string, string> = { ihsg: "IHSG", gold: "Gold", portfolio: "Portfolio", ihsgSma20: "SMA20", ihsgSma50: "SMA50" };
+                  return [value.toFixed(1), labels[name] || name];
                 }}
               />
               <Area type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
               <Area type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
+              {portfolio && portfolio.length > 0 && (
+                <Area type="monotone" dataKey="portfolio" stroke="#00c9a5" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
+              )}
               <Line type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
               <Line type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
             </AreaChart>

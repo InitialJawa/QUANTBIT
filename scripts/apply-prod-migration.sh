@@ -6,7 +6,7 @@
 
 set -e
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 echo "🔍 Checking Cloudflare auth..."
 if [ -z "$CLOUDFLARE_API_TOKEN" ]; then

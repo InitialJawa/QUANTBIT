@@ -1,4 +1,4 @@
-$html = Join-Path $PSScriptRoot "about-quantbit.html"
+$html = Join-Path $PSScriptRoot "..\docs\about-quantbit.html"
 if (!(Test-Path $html)) { Write-Host "File tidak ditemukan!" -Fore Red; exit }
 
 $browsers = @(
