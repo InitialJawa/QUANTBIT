@@ -96,7 +96,11 @@ function _initCrisisState(): void {
  *  Resets crisis state machine so next isCrisisMode() call re-initializes from scratch. */
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
   MKT.ihsg.prices = data;
-  _crisisInitialized = false;
+  // Only reset if data length changed — avoids unnecessary re-init when
+  // the same data is re-loaded (e.g. 60-sec polling with no new data).
+  if (data.length !== _crisisLastDataLen) {
+    _crisisInitialized = false;
+  }
 }
 
 export function setActiveUniverse(u: "all" | "idx80" | "idx30" | "lq45") {
