@@ -9,13 +9,52 @@
       },
       "models": {
         "Opencode": {
-          "name": "Opencode Combo"
+          "name": "Opencode Combo (34 models)"
+        },
+        "kr/auto": {
+          "name": "Kiro Auto"
         },
         "kr/claude-sonnet-4.5-agentic": {
           "name": "Claude Sonnet 4.5 Agentic"
         },
+        "kr/claude-sonnet-4.5": {
+          "name": "Claude Sonnet 4.5"
+        },
+        "kr/deepseek-3.2-agentic": {
+          "name": "DeepSeek 3.2 Agentic"
+        },
         "kr/deepseek-3.2": {
           "name": "DeepSeek 3.2"
+        },
+        "kr/qwen3-coder-next-agentic": {
+          "name": "Qwen3 Coder Next Agentic"
+        },
+        "kr/qwen3-coder-next": {
+          "name": "Qwen3 Coder Next"
+        },
+        "kr/glm-5-agentic": {
+          "name": "GLM-5 Agentic"
+        },
+        "kr/glm-5": {
+          "name": "GLM-5"
+        },
+        "kr/claude-haiku-4.5-agentic": {
+          "name": "Claude Haiku 4.5 Agentic"
+        },
+        "kr/claude-haiku-4.5": {
+          "name": "Claude Haiku 4.5"
+        },
+        "kr/minimax-m2.5-agentic": {
+          "name": "MiniMax M2.5 Agentic"
+        },
+        "kr/minimax-m2.5": {
+          "name": "MiniMax M2.5"
+        },
+        "kr/claude-sonnet-4-agentic": {
+          "name": "Claude Sonnet 4 Agentic"
+        },
+        "kr/claude-sonnet-4": {
+          "name": "Claude Sonnet 4"
         }
       }
     }
