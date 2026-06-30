@@ -81,12 +81,12 @@
 }
 
 [data-theme] .bg-header-gradient {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, var(--bg-surface) 100%) !important;
+  background: var(--bg-surface) !important;
   border-bottom: 1px solid var(--border-default) !important;
 }
 
 [data-theme="light"] .bg-header-gradient {
-  background: linear-gradient(180deg, rgba(15,23,42,0.02) 0%, var(--bg-surface) 100%) !important;
+  background: var(--bg-surface) !important;
   border-bottom: 1px solid var(--border-default) !important;
 }
 
