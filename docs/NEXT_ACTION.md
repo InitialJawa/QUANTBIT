@@ -1,5 +1,25 @@
 # NEXT ACTION
-## P0 — VERIFY (2026-06-30, Sesi 13)
+## P0 — CRITICAL FIX (2026-06-30, Sesi 13c)
+**Status**: Production data mapping bug FIXED. Deployed to main.
+
+Delivered (Sesi 13c — Production Backtest Fix):
+- **Critical data mapping bug fixed** — Empty object `{}` defeating `||` fallback operator
+- **stockPrices/stockAdjPrices validation** — Check Object.keys().length > 0 before using
+- **stockRanks fallback chain** — Ensure ranking data never empty/undefined
+- **Applied to both paths** — D1 success path + year files fallback path
+
+**Root Cause (Production Backtest Anjlok)**:
+- Empty object `{}` is truthy → `||` operator doesn't fallback
+- Engine received empty prices/ranks → picked random stocks
+- Result: -33.7% return, 14.6% win rate, 459 rebalances, 12723% turnover
+
+**Verification**:
+- [x] `npx tsc --noEmit` — PASS 0 errors
+- [x] Pushed to main (commit afafe36)
+- [ ] Wait ~3 min for Cloudflare Pages deploy
+- [ ] Test production backtest 2025-2026
+
+## P0 — VERIFY (2026-06-30, Sesi 13b)
 **Status**: Backtest chart reactivity + data loading fixes DONE. tsc passing.
 
 Delivered (Sesi 13 — Backtest Chart Fixes):

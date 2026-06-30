@@ -11,8 +11,6 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Globe,
-  Activity,
 } from "lucide-react";
 import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
@@ -42,13 +40,7 @@ export function MarketTab({
   getDynamicStock,
   filteredStocks
 }: MarketTabProps) {
-  const [marketSubTab, setMarketSubTab] = useState<"ikhtisar" | "pergerakan">("ikhtisar");
   const { engineConfig } = useEngineConfig();
-
-  const MARKET_SUB_TABS = [
-    { id: "ikhtisar" as const, icon: Globe, label: "Ikhtisar" },
-    { id: "pergerakan" as const, icon: Activity, label: "Pergerakan" },
-  ];
 
   const allVisibleStocks = useMemo(
     () => STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s),
@@ -182,31 +174,56 @@ export function MarketTab({
         </div>
       )}
 
-      {/* Sub-tab bar */}
-      <div className="flex border-b border-white/[0.04] mb-3">
-        {MARKET_SUB_TABS.map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setMarketSubTab(id)}
-            className={`flex-1 py-2 text-caption font-medium tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-              marketSubTab === id
-                ? "text-emerald-500 border-b-2 border-emerald-500"
-                : "text-white/30 hover:text-white/60"
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" /> {label}
-          </button>
-        ))}
+      {/* Chart utama — IHSG vs Gold vs Portfolio */}
+      <MarketOverviewCharts portfolio={portfolio} />
+
+      {/* Teknikal strip — RSI, MACD, SMA, Breadth, Score Gap */}
+      <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">RSI(14)</span>
+            <span className={`font-mono font-bold ${rsiIHSG !== null ? (rsiIHSG >= 70 ? "text-rose-400" : rsiIHSG <= 30 ? "text-emerald-400" : "text-white/80") : "text-white/30"}`}>
+              {rsiIHSG !== null ? rsiIHSG.toFixed(1) : "--"}
+            </span>
+          </div>
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">MACD</span>
+            <span className="font-mono font-bold text-white/80">{macdResult !== null ? macdResult.macd.toFixed(1) : "--"}</span>
+            {macdResult !== null && (
+              <span className={`text-label font-mono ml-1 ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
+              </span>
+            )}
+          </div>
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">SMA20</span>
+            <span className="font-mono font-bold text-white/80">
+              {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
+            </span>
+          </div>
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">SMA50</span>
+            <span className="font-mono font-bold text-white/80">
+              {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
+            </span>
+          </div>
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">Breadth</span>
+            <span className="font-mono font-bold text-white/80">
+              <span className="text-emerald-400">{breadth.advancers}</span>
+              <span className="text-white/30"> / </span>
+              <span className="text-rose-400">{breadth.decliners}</span>
+            </span>
+          </div>
+          <div>
+            <span className="text-white/30 text-label uppercase tracking-wider block">Score Gap</span>
+            <span className="font-mono font-bold text-white/80">{RS.radar_context?.score_gap?.toFixed(1) || "--"}</span>
+          </div>
+        </div>
       </div>
 
-      {/* ───── I K H T I S A R ───── */}
-      {marketSubTab === "ikhtisar" && (
-      <>
-        {/* Chart utama — IHSG vs Gold vs Portfolio */}
-        <MarketOverviewCharts portfolio={portfolio} />
-
-        {/* Status bar — compact 1 row */}
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+      {/* Status bar — compact 1 row */}
+      <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
             <div className="flex items-center gap-2">
               <span className="text-white/30 text-label uppercase tracking-wider">Status</span>
@@ -443,58 +460,6 @@ export function MarketTab({
             <span className="text-label text-emerald-400/60 font-bold">Broad Support</span>
           </div>
         </div>
-      </>
-      )}
-
-      {/* ───── P E R G E R A K A N ───── */}
-      {marketSubTab === "pergerakan" && (
-        <div className="space-y-4">
-          {/* Teknikal strip */}
-          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">RSI(14)</span>
-                <span className={`font-mono font-bold ${rsiIHSG !== null ? (rsiIHSG >= 70 ? "text-rose-400" : rsiIHSG <= 30 ? "text-emerald-400" : "text-white/80") : "text-white/30"}`}>
-                  {rsiIHSG !== null ? rsiIHSG.toFixed(1) : "--"}
-                </span>
-              </div>
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">MACD</span>
-                <span className="font-mono font-bold text-white/80">{macdResult !== null ? macdResult.macd.toFixed(1) : "--"}</span>
-                {macdResult !== null && (
-                  <span className={`text-label font-mono ml-1 ${macdResult.histogram >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {macdResult.histogram >= 0 ? "+" : ""}{macdResult.histogram.toFixed(1)}
-                  </span>
-                )}
-              </div>
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">SMA20</span>
-                <span className="font-mono font-bold text-white/80">
-                  {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
-                </span>
-              </div>
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">SMA50</span>
-                <span className="font-mono font-bold text-white/80">
-                  {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
-                </span>
-              </div>
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">Breadth</span>
-                <span className="font-mono font-bold text-white/80">
-                  <span className="text-emerald-400">{breadth.advancers}</span>
-                  <span className="text-white/30"> / </span>
-                  <span className="text-rose-400">{breadth.decliners}</span>
-                </span>
-              </div>
-              <div>
-                <span className="text-white/30 text-label uppercase tracking-wider block">Score Gap</span>
-                <span className="font-mono font-bold text-white/80">{RS.radar_context?.score_gap?.toFixed(1) || "--"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

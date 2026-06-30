@@ -638,34 +638,6 @@ export function SimulationTab({
 
   return (
     <div className="space-y-6">
-      {/* Sesi 12 — Live strategy mode banner (visible when toggle is OFF or draft diverges) */}
-      {!backtestUseLiveStrategy && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-          <div className="flex items-center gap-2 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-caption text-amber-200 font-sans leading-snug">
-              <strong>DRAFT MODE</strong> — perubahan settings tidak effect Portofolio. Eksperimen aman.
-            </span>
-            {!draftEqualNow && backtestResult && (
-              <span className="text-label font-mono text-amber-300 ml-2">⚠ ada perubahan unsaved</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {!draftEqualNow && backtestResult && (
-              <button
-                onClick={() => {
-                  promoteDraftToEngine();
-                  toast.success("Settings promoted to Portofolio");
-                }}
-                className="px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black cursor-pointer"
-              >
-                ↑ Promote to Portofolio
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Sesi 12 — Draft unsynced modal (Buang / Promote / Batal) */}
       <ConfirmModal
         open={showDraftModal}

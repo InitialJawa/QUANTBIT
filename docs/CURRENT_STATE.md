@@ -5,7 +5,7 @@
 | Tanggal | 2026-06-30 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sesi 13 — Backtest Chart Reactivity + Data Loading Fixes (2026-06-30) |
+| Sprint | Sesi 13c — Production Backtest Critical Fix (2026-06-30) |
 
 ## Active Architecture
 
@@ -54,7 +54,35 @@ di-promote manual via `promoteDraftToEngine()`.
 
 ## Current Focus
 
-**Session 2026-06-30 (session 13): Backtest Chart Fixes — IN PROGRESS**
+**Session 2026-06-30 (session 13c): Production Backtest Critical Fix — COMPLETED**
+
+### 🔴 Critical Bug Fixed
+- **Data mapping bug** causing strategy anjlok (-33.7% return, 14.6% win rate)
+- **Empty object handling** — `{}` is truthy, defeating `||` fallback operator
+- **Ranking data validation** — Ensure stockRanks never empty/undefined
+
+### Root Cause
+```typescript
+// BEFORE (WRONG):
+stockPrices: day.stockAdjPrices || day.stockPrices,  // {} defeats ||
+stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,  // undefined if missing
+
+// AFTER (FIXED):
+const stockPrices = (day.stockPrices && Object.keys(day.stockPrices).length > 0)
+  ? day.stockPrices : day.stockAdjPrices;
+const stockRanks = configType === "prod" 
+  ? (day.stockRanksProd || day.stockRanks || {})
+  : (day.stockRanksRes || day.stockRanks || {});
+```
+
+### Impact
+- **Before**: Engine received empty prices/ranks → picked random stocks → 14.6% win rate
+- **After**: Engine receives valid data → picks correct stocks → expected performance
+
+### Files Modified
+- `functions/api/[[path]].ts` — Fixed data mapping in both D1 and fallback paths
+
+**Session 2026-06-30 (session 13): Backtest Chart Fixes — COMPLETED**
 
 ### 🟢 4 Fixes Delivered
 - **FIX 1 — Auto-run on config change**: SimulationTab useEffect re-triggers `handleRunAlgoBacktest()` when `configFingerprint` berubah. Fix: chart tidak update saat ubah parameter.
