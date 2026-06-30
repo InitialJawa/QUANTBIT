@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem } from "../types";
@@ -12,7 +12,6 @@ import {
   ChevronUp,
   Sparkles,
 } from "lucide-react";
-import { fetchWithStatus } from "../utils/fetchWithStatus";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
@@ -57,70 +56,6 @@ export function MarketTab({
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
   const [showAuditTrail, setShowAuditTrail] = useState(false);
-
-  const [marketSummary, setMarketSummary] = useState<{
-    rationale: string;
-    bullishFactors: string[];
-    bearishFactors: string[];
-    scenarioAnalysis?: string;
-  } | null>(null);
-  const [isFetchingSummary, setIsFetchingSummary] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const lastFetchTimeRef = React.useRef<number>(0);
-
-  const stocksWithPrices = STOCKS_DATA.map(st => {
-    const live = getDynamicStock(st.ticker) || st;
-    return { ticker: st.ticker, currentPrice: live.currentPrice, change: live.change };
-  });
-
-  const priceValuesString = stocksWithPrices.map(s => `${s.ticker}:${s.currentPrice}`).join("|") 
-    + `|IHSG:${MKT.ihsg.value}|USDIDR:${MKT.usdidr.value}`;
-
-  React.useEffect(() => {
-    const now = Date.now();
-    if (now - lastFetchTimeRef.current < 12000) return;
-    let isMounted = true;
-    const fetchMarketSummary = async () => {
-      try {
-        setIsFetchingSummary(true);
-        setSummaryError(null);
-        lastFetchTimeRef.current = Date.now();
-        const { data: responseData, status: marketStatus } = await fetchWithStatus("/api/gemini/market-summary", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mkt: MKT, rs: RS,
-            stocks: STOCKS_DATA.map(st => {
-              const live = getDynamicStock(st.ticker) || st;
-              return { ticker: st.ticker, name: st.name, currentPrice: live.currentPrice, change: live.change, sector: st.sector };
-            })
-          })
-        });
-        const response = { json: async () => responseData } as any;
-        if (!response.ok) throw new Error(`Server returned status ${response.status}`);
-        const data = await response.json();
-        if (isMounted) {
-          if (data && data.rationale) setMarketSummary(data);
-          else throw new Error("Invalid structure returned");
-        }
-      } catch (err: any) {
-        console.warn("Live daily market summary fetch failed, fallback active:", err);
-        if (isMounted) {
-          setMarketSummary({
-            rationale: "IHSG berfluktuasi didorong oleh dinamika makro global dan pergerakan teknis emiten blue-chip.",
-            bullishFactors: ["Ekspektasi moderasi suku bunga", "Rotasi masuk ke sektor pertahanan dan perbankan", "Valuasi atraktif di beberapa emiten Top Tier"],
-            bearishFactors: ["Volatilitas nilai tukar mata uang", "Realisasi profit taking jangka pendek", "Kelemahan teknikal di atas resisten"],
-            scenarioAnalysis: "Skenario defensif: pantau ketat momentum portofolio. Skenario agresif: akumulasi pada saham dengan skor Fundamental (Config Aman) tinggi jika IHSG membaik."
-          });
-          setSummaryError("Sistem menggunakan data ringkasan statis (API Limit / Offline)");
-        }
-      } finally {
-        if (isMounted) setIsFetchingSummary(false);
-      }
-    };
-    fetchMarketSummary();
-    return () => { isMounted = false; };
-  }, [priceValuesString]);
 
   let totalCost = 0;
   let totalValueNow = 0;
@@ -168,12 +103,6 @@ export function MarketTab({
           <span className="text-white/80 truncate">Custom Universe ({engineConfig.customUniverse.length})</span>
         </div>
       )}
-      {summaryError && (
-        <div className="bg-amber-500/[0.04] border border-amber-500/15 rounded-xl px-4 py-2 text-caption text-amber-400/80 font-sans">
-          {summaryError}
-        </div>
-      )}
-
       {/* Chart utama — IHSG vs Gold vs Portfolio */}
       <MarketOverviewCharts portfolio={portfolio} />
 
@@ -291,12 +220,6 @@ export function MarketTab({
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-white/40" />
               <span className="text-caption font-bold text-white/60 uppercase tracking-wider">AI Brief</span>
-              {isFetchingSummary && (
-                <span className="flex items-center gap-1.5 text-label text-white/30">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  Memuat...
-                </span>
-              )}
             </div>
             <button
               onClick={() => setIsBriefExpanded(!isBriefExpanded)}
@@ -307,7 +230,7 @@ export function MarketTab({
             </button>
           </div>
           <p className="text-caption text-zinc-400 mt-2 leading-relaxed font-sans">
-            {marketSummary ? marketSummary.rationale : RS.rationale}
+            {RS.rationale}
           </p>
           <AnimatePresence>
             {isBriefExpanded && (
@@ -323,27 +246,15 @@ export function MarketTab({
                     <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
                       <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Pendukung Pasar</h4>
                       <ul className="list-disc pl-4 space-y-1 text-zinc-400">
-                        {marketSummary?.bullifulFactors?.length ? (
-                          marketSummary.bullifulFactors.map((f, i) => <li key={i}>{f}</li>)
-                        ) : (
-                          <>
-                            <li>Likuiditas domestik terjaga dengan aliran modal asing</li>
-                            <li>Valuasi atraktif di beberapa emiten unggulan</li>
-                          </>
-                        )}
+                        <li>Likuiditas domestik terjaga dengan aliran modal asing</li>
+                        <li>Valuasi atraktif di beberapa emiten unggulan</li>
                       </ul>
                     </div>
                     <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
                       <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Risiko Pantauan</h4>
                       <ul className="list-disc pl-4 space-y-1 text-zinc-400">
-                        {marketSummary?.bearishFactors?.length ? (
-                          marketSummary.bearishFactors.map((f, i) => <li key={i}>{f}</li>)
-                        ) : (
-                          <>
-                            <li>Volatilitas nilai tukar rupiah</li>
-                            <li>Profit taking jangka pendek</li>
-                          </>
-                        )}
+                        <li>Volatilitas nilai tukar rupiah</li>
+                        <li>Profit taking jangka pendek</li>
                       </ul>
                     </div>
                   </div>
@@ -352,7 +263,7 @@ export function MarketTab({
                     <div>
                       <span className="font-bold text-white/60 block text-label uppercase tracking-wider">Formulasi</span>
                       <p className="mt-0.5 text-zinc-400">
-                        {marketSummary?.scenarioAnalysis || `Skenario: ${currentAction === "WAIT" ? "WAIT" : currentAction}, alokasi ${RS.capital_deployment}%`}
+                        {`Skenario: ${currentAction === "WAIT" ? "WAIT" : currentAction}, alokasi ${RS.capital_deployment}%`}
                       </p>
                     </div>
                   </div>

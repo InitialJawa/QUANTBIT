@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line } from "recharts";
+import { motion, AnimatePresence } from "motion/react";
 import { api } from "../services/api";
 import { Activity, RefreshCw } from "lucide-react";
 import { portfolioIndexedHistory } from "../utils/reconstructPortfolioHistory";
@@ -234,7 +235,12 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
           </div>
         </div>
 
-        <div className="h-[320px]">
+        <motion.div 
+          className="h-[320px]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
@@ -295,7 +301,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
               <Line type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </motion.div>
 
         <div className="flex items-center justify-between mt-2 text-caption text-white/30">
           <span>Base: {slicedData[0]?.date || "-"} = 100</span>

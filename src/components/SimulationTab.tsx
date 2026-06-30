@@ -1016,7 +1016,12 @@ export function SimulationTab({
                   <span className="text-caption font-mono text-emerald-400 font-bold">{backtestProgress}% Complete</span>
                 </div>
               ) : backtestResult ? (
-                <div className="space-y-6">
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
 
                   {/* Recharts chart — moved to top for visibility */}
                   <div className="space-y-4">
@@ -1467,7 +1472,7 @@ export function SimulationTab({
                     </div>
                   </div>
 
-                </div>
+                </motion.div>
               ) : (
                 <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-3">
                   <span className="text-2xl">⚡</span>
