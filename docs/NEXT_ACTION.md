@@ -1,23 +1,16 @@
 # NEXT ACTION
-## P0 — DB sebagai Single Source of Truth: Seed Production D1 (2026-07-01, Sesi 16)
-**Status**: PENDING
+## P0 — DB sebagai Single Source of Truth: Seed Production D1 ✅ (2026-07-01, Sesi 16)
+**Status**: COMPLETED ✅
 
-### Context
-120.793 rows `stock_daily` + 1322 rows `daily_overview` udah ada di local SQLite (`data/historical_market.sqlite`, 2021-01-04 → 2026-07-01). Tapi production D1 masih kosong — endpoint `/api/backtest-data` fallback ke file statis.
-
-### What Needs to Happen (2 langkah)
-- [ ] **Bikin `scripts/seed-d1.py`** — baca dari local SQLite, generate batched SQL `INSERT OR REPLACE`, execute via `wrangler d1 execute --remote`. Handle D1 10MB batch limit (120k rows ~ perlu chunking ~3-5 batch).
-- [ ] **GA workflow** — tambah step `Seed D1` setelah `sync-daily-data.ts`, pake `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` dari secrets.
-
-### Prasyarat (user setup)
-- [ ] **GitHub Secrets**: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
-- [ ] **Env ini**: export `CLOUDFLARE_API_TOKEN` biar bisa verify
-
-### Catatan
-- User express frustration: "ini masih migration asu" — STOP planning, langsung eksekusi.
-- Migration 0003 sudah diapply (user bilang "kemarin aku udah migration"). Tapi data belum di-seed ke D1.
-- `stock_fundamentals` di D1 udah populated via `runIdx80Scan()` (force-sync di GA workflow).
-- Yang kurang cuma `stock_daily` + `daily_overview` di D1.
+### Done
+- [x] **Migration 0003 applied to remote D1** — `daily_overview`, `stock_daily`, `stock_fundamentals`, `engine_snapshots` created
+- [x] **`scripts/seed-d1.py`** — baca local SQLite, batch INSERT via Cloudflare REST API. Handles D1 80KB statement limit (250 rows/batch for stock_daily)
+- [x] **Seed execution**: 
+  - `daily_overview`: 1.322 rows → OK
+  - `stock_daily`: 120.793 rows (95 tickers × 1322 trading days) → OK
+  - `stock_fundamentals`: 192 rows → OK
+- [x] **GA workflow** — step `Seed D1` after `sync-daily-data.ts`, pake `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` dari secrets
+- [x] **Endpoint `/api/backtest-data`** sekarang otomatis baca dari D1 (sudah ada fallback logic, D1 primary path will activate since tables are populated)
 
 ## P0 — AI Router Backup Chain (2026-07-01, Sesi 15)
 **Status**: IN PROGRESS
@@ -39,22 +32,19 @@
 - [x] `ss -tlnp` — 9router:20128, keirouter:20180, virtusoul:4000 all LISTEN
 - [x] `/v1/models` — 9router: 62 models, keirouter: 241 models
 
-## P1 — QUANTBIT Landing Page Rebuild (2026-07-01, Sesi 15b)
-**Status**: IN PROGRESS
+## P1 — Token Revoke + Landing Page Monitoring (2026-07-01, Sesi 16)
+**Status**: PENDING
 
-### Delivered
-- [x] **Rebuild landing page from scratch** — sibling site `../QUANTBIT-landing` dibuat sebagai static HTML/CSS
-- [x] **Tambah visual screenshot panel** — hero mockup terminal dengan market overview, factor rank, portfolio heat
-- [x] **Tambah visual backtest** — section equity curve + metrik simulasi
-- [x] **Tambah AI brief visual** — narrative card agar value AI lebih jelas di first scroll
-- [x] **Tambah OG asset** — `../QUANTBIT-landing/public/og-preview.svg`
+### Delivered (Sesi 15b + Sesi 16)
+- [x] **Rebuild landing page** — sibling static site `../QUANTBIT-landing`
+- [x] **Full retheme black+green** — dari teal/amber/glass ke terminal aesthetic murni
+- [x] **4 real screenshots** — market, backtest, portfolio, analytics (Playwright)
+- [x] **Deploy ke Cloudflare Pages** — hash ca9729b6, live di `quantbit-landing.pages.dev`
 - [x] **Update docs** — PROJECT_MASTER, CURRENT_STATE, NEXT_ACTION, DECISIONS, MASTER_CHRONICLE, handover
 
 ### Pending
-- [ ] **Login Cloudflare** — `npx wrangler login` di `../QUANTBIT-landing`
-- [ ] **Create new Pages project** — project lama `quantbit-landing` sudah dihapus
-- [ ] **Deploy new landing** — `npx wrangler pages deploy . --project-name <new-project>`
-- [ ] **Verify public URL** — cek hero, preview screenshots, OG image
+- [ ] **Revoke CF API token** — `[REVOKED]` masih aktif, revoke di dashboard Cloudflare
+- [ ] **Pantau landing page** — verifikasi berkala hero images, layout, broken assets
 
 ## P0 — Migration 0003 COMPLETION: DB as SOT (2026-06-30, Sesi 14)
 **Status**: COMPLETED ✅

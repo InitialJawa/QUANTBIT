@@ -37,3 +37,4 @@ Data pipeline scripts — fetching historical data, building databases, splittin
 - `run_backtest_comparison.cjs` — backtest weight-config comparison (used during rebalancing fix)
 - `seed-db.ts` — migrate `data/years/*.json` + IDX fundamentals ke SQLite (migration 0003 companion, requires better-sqlite3)
 - `seed-db.py` — Python fallback seed script (pure sqlite3, no native deps). Use when better-sqlite3 can't build
+- `seed-d1.py` — Python script untuk seeding production D1 dari local SQLite via Cloudflare REST API. Tables: daily_overview, stock_daily, stock_fundamentals. Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env vars.
