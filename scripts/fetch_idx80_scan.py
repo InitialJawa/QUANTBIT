@@ -118,6 +118,20 @@ def load_existing():
     return {"lastUpdated": None, "stocks": []}
 
 
+def fetch_yahoo_price(symbol):
+    import urllib.request
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.request.quote(symbol)}?range=1d&interval=1d"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        resp = urllib.request.urlopen(req, timeout=10)
+        data = json.loads(resp.read())
+        meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
+        return meta.get("regularMarketPrice")
+    except Exception as e:
+        log.warning(f"urllib fallback failed for {symbol}: {e}")
+        return None
+
+
 def main():
     try:
         import yfinance as yf
@@ -135,9 +149,28 @@ def main():
         info = fetch_ticker(yf, ticker)
         if info:
             stock = build_stock(ticker, info)
+            if stock.get("currentPrice") is None:
+                price = fetch_yahoo_price(ticker)
+                if price is not None:
+                    stock["currentPrice"] = price
             stocks.append(stock)
         else:
-            if ticker in existing_map:
+            price = fetch_yahoo_price(ticker)
+            if price is not None:
+                now = datetime.now(timezone.utc).isoformat()
+                stock = {"ticker": ticker, "currentPrice": price, "lastUpdated": now}
+                for field in ["sector", "industry", "longBusinessSummary", "changePercent",
+                              "volume", "peRatio", "pbRatio", "dividendYield", "marketCap",
+                              "trailingEps", "fiftyTwoWeekHigh", "fiftyTwoWeekLow",
+                              "fiftyDayAverage", "twoHundredDayAverage", "totalRevenue",
+                              "netIncome", "operatingCashflow", "freeCashflow", "grossProfit",
+                              "ebitda", "revenueGrowth", "earningsGrowth", "returnOnEquity",
+                              "debtToEquity", "operatingMargin", "grossMargins"]:
+                    stock.setdefault(field, None)
+                for field in ["quality", "value", "growth", "momentum"]:
+                    stock.setdefault(field, 0)
+                stocks.append(stock)
+            elif ticker in existing_map:
                 log.info(f"  Using cached data for {ticker}")
                 stocks.append(existing_map[ticker])
         time.sleep(0.3)
