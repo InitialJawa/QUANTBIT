@@ -75,7 +75,16 @@ jobs:
         run: |
           git config user.name "QuantBot"
           git config user.email "bot@quantbit.app"
-          git add data/live_market.json data/idx_fundamentals_all.json data/regime_history.json data/years/
+          git add \
+            data/live_market.json \
+            data/idx80_scan.json \
+            data/idx_fundamentals_all.json \
+            data/fundamental_idx_all.json \
+            data/fundamental_idx.parquet \
+            data/fundamental_idx_pull_meta.json \
+            data/regime_history.json \
+            data/years/ \
+            src/data/dividend_snapshots.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

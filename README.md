@@ -504,7 +504,7 @@ npm run test:e2e      # 17 Playwright E2E tests (auto-start dev server)
 npm run lint          # TypeScript type checking (tsc --noEmit)
 ```
 
-**Total: 203+ automated tests** + 30+ manual cases di [`docs/MANUAL_TEST_GUIDE.md`](./docs/MANUAL_TEST_GUIDE.md).
+**Total: 203+ automated tests** + 30+ manual test cases via AITestHarness.
 
 | Lapisan | Test runner | Tests | Speed |
 |---|---|---:|---:|
@@ -583,7 +583,6 @@ QUANTBIT/
 │   ├── MASTER_CHRONICLE.md          # Major milestones
 │   ├── KNOWN_ISSUES.md              # Known issues tracker
 │   ├── DEPLOY_D1_MIGRATIONS.md      # Production D1 migration guide
-│   ├── MANUAL_TEST_GUIDE.md         # 30+ manual test cases (AI Levels 1-4)
 │   ├── ADR-*.md                     # Architecture Decision Records
 │   ├── audit/                       # Research reports & audit data
 │   └── archive/                     # Historical task lists

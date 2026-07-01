@@ -8,11 +8,20 @@
         "baseURL": "http://localhost:20128/v1"
       },
       "models": {
-        "Opencode": {
-          "name": "Opencode Combo (34 models)"
-        },
         "kr/auto": {
-          "name": "Kiro Auto"
+          "name": "Kiro Auto (recommended)"
+        },
+        "fm/gpt-5.5": {
+          "name": "GPT-5.5 (FreeModel)"
+        },
+        "fm/gpt-5.4": {
+          "name": "GPT-5.4 (FreeModel)"
+        },
+        "fm/gpt-5.4-mini": {
+          "name": "GPT-5.4 Mini (FreeModel)"
+        },
+        "fm/gpt-5.3-codex": {
+          "name": "GPT-5.3 Codex (FreeModel)"
         },
         "kr/claude-sonnet-4.5-agentic": {
           "name": "Claude Sonnet 4.5 Agentic"
@@ -27,37 +36,24 @@
           "name": "DeepSeek 3.2"
         },
         "kr/qwen3-coder-next-agentic": {
-          "name": "Qwen3 Coder Next Agentic"
-        },
-        "kr/qwen3-coder-next": {
           "name": "Qwen3 Coder Next"
         },
         "kr/glm-5-agentic": {
           "name": "GLM-5 Agentic"
         },
-        "kr/glm-5": {
-          "name": "GLM-5"
-        },
-        "kr/claude-haiku-4.5-agentic": {
-          "name": "Claude Haiku 4.5 Agentic"
-        },
         "kr/claude-haiku-4.5": {
           "name": "Claude Haiku 4.5"
-        },
-        "kr/minimax-m2.5-agentic": {
-          "name": "MiniMax M2.5 Agentic"
-        },
-        "kr/minimax-m2.5": {
-          "name": "MiniMax M2.5"
-        },
-        "kr/claude-sonnet-4-agentic": {
-          "name": "Claude Sonnet 4 Agentic"
-        },
-        "kr/claude-sonnet-4": {
-          "name": "Claude Sonnet 4"
         }
+      }
+    },
+    "openrouter": {
+      "models": {
+        "openai/gpt-oss-120b:free": {},
+        "nvidia/nemotron-3-super-120b:free": {},
+        "cohere/north-mini-code:free": {},
+        "meta-llama/llama-3.3-70b-instruct:free": {}
       }
     }
   },
-  "model": "9router/Opencode"
+  "model": "9router/kr/auto"
 }
