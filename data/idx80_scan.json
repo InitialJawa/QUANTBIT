@@ -1,9 +1,9 @@
 {
-  "lastUpdated": "2026-07-01T15:58:34.910623+00:00",
+  "lastUpdated": "2026-07-01T16:29:50.346779+00:00",
   "stocks": [
     {
       "ticker": "AADI.JK",
-      "lastUpdated": "2026-07-01T15:57:46.275480+00:00",
+      "lastUpdated": "2026-07-01T16:28:57.489867+00:00",
       "companyName": "Adaro Andalan Indonesia Tbk.",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -39,7 +39,7 @@
     },
     {
       "ticker": "AKRA.JK",
-      "lastUpdated": "2026-07-01T15:57:46.729732+00:00",
+      "lastUpdated": "2026-07-01T16:28:58.078048+00:00",
       "companyName": "PT AKR Corporindo Tbk",
       "sector": "Energy",
       "industry": "Oil & Gas Refining & Marketing",
@@ -75,7 +75,7 @@
     },
     {
       "ticker": "ADRO.JK",
-      "lastUpdated": "2026-07-01T15:57:47.302734+00:00",
+      "lastUpdated": "2026-07-01T16:28:58.531341+00:00",
       "companyName": "PT Alamtri Resources Indonesia Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -111,7 +111,7 @@
     },
     {
       "ticker": "ADMR.JK",
-      "lastUpdated": "2026-07-01T15:57:47.827887+00:00",
+      "lastUpdated": "2026-07-01T16:28:59.017390+00:00",
       "companyName": "PT Alamtri Minerals Indonesia Tbk",
       "sector": "Basic Materials",
       "industry": "Coking Coal",
@@ -147,7 +147,7 @@
     },
     {
       "ticker": "AMRT.JK",
-      "lastUpdated": "2026-07-01T15:57:48.290926+00:00",
+      "lastUpdated": "2026-07-01T16:28:59.475888+00:00",
       "companyName": "PT Sumber Alfaria Trijaya Tbk",
       "sector": "Consumer Defensive",
       "industry": "Grocery Stores",
@@ -183,7 +183,7 @@
     },
     {
       "ticker": "ASII.JK",
-      "lastUpdated": "2026-07-01T15:57:48.752050+00:00",
+      "lastUpdated": "2026-07-01T16:29:00.028698+00:00",
       "companyName": "PT Astra International Tbk",
       "sector": "Industrials",
       "industry": "Conglomerates",
@@ -219,7 +219,7 @@
     },
     {
       "ticker": "ANTM.JK",
-      "lastUpdated": "2026-07-01T15:57:49.208485+00:00",
+      "lastUpdated": "2026-07-01T16:29:00.473228+00:00",
       "companyName": "PT Antam (Persero) Tbk",
       "sector": "Basic Materials",
       "industry": "Gold",
@@ -255,7 +255,7 @@
     },
     {
       "ticker": "BBCA.JK",
-      "lastUpdated": "2026-07-01T15:57:49.659674+00:00",
+      "lastUpdated": "2026-07-01T16:29:01.402070+00:00",
       "companyName": "PT Bank Central Asia Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -291,7 +291,7 @@
     },
     {
       "ticker": "BBRI.JK",
-      "lastUpdated": "2026-07-01T15:57:50.136947+00:00",
+      "lastUpdated": "2026-07-01T16:29:01.893652+00:00",
       "companyName": "PT Bank Rakyat Indonesia (Persero) Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -327,7 +327,7 @@
     },
     {
       "ticker": "BBNI.JK",
-      "lastUpdated": "2026-07-01T15:57:50.597288+00:00",
+      "lastUpdated": "2026-07-01T16:29:02.469326+00:00",
       "companyName": "PT Bank Negara Indonesia (Persero) Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -363,7 +363,7 @@
     },
     {
       "ticker": "AMMN.JK",
-      "lastUpdated": "2026-07-01T15:57:51.086851+00:00",
+      "lastUpdated": "2026-07-01T16:29:03.068804+00:00",
       "companyName": "PT Amman Mineral Internasional Tbk",
       "sector": "Basic Materials",
       "industry": "Other Precious Metals & Mining",
@@ -399,7 +399,7 @@
     },
     {
       "ticker": "BBTN.JK",
-      "lastUpdated": "2026-07-01T15:57:51.549066+00:00",
+      "lastUpdated": "2026-07-01T16:29:03.593206+00:00",
       "companyName": "PT Bank Tabungan Negara (Persero) Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -435,7 +435,7 @@
     },
     {
       "ticker": "BMRI.JK",
-      "lastUpdated": "2026-07-01T15:57:52.011125+00:00",
+      "lastUpdated": "2026-07-01T16:29:04.160475+00:00",
       "companyName": "PT Bank Mandiri (Persero) Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -471,7 +471,7 @@
     },
     {
       "ticker": "BRPT.JK",
-      "lastUpdated": "2026-07-01T15:57:52.669061+00:00",
+      "lastUpdated": "2026-07-01T16:29:04.738080+00:00",
       "companyName": "PT Barito Pacific Tbk",
       "sector": "Basic Materials",
       "industry": "Chemicals",
@@ -507,7 +507,7 @@
     },
     {
       "ticker": "BUMI.JK",
-      "lastUpdated": "2026-07-01T15:57:53.177982+00:00",
+      "lastUpdated": "2026-07-01T16:29:05.265028+00:00",
       "companyName": "PT Bumi Resources Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -543,7 +543,7 @@
     },
     {
       "ticker": "CUAN.JK",
-      "lastUpdated": "2026-07-01T15:57:53.636510+00:00",
+      "lastUpdated": "2026-07-01T16:29:05.847501+00:00",
       "companyName": "PT Petrindo Jaya Kreasi Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -579,7 +579,7 @@
     },
     {
       "ticker": "EMTK.JK",
-      "lastUpdated": "2026-07-01T15:57:54.100980+00:00",
+      "lastUpdated": "2026-07-01T16:29:06.297262+00:00",
       "companyName": "PT Elang Mahkota Teknologi Tbk",
       "sector": "Communication Services",
       "industry": "Broadcasting",
@@ -615,7 +615,7 @@
     },
     {
       "ticker": "DEWA.JK",
-      "lastUpdated": "2026-07-01T15:57:54.569376+00:00",
+      "lastUpdated": "2026-07-01T16:29:06.800078+00:00",
       "companyName": "PT Darma Henwa Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -651,7 +651,7 @@
     },
     {
       "ticker": "ESSA.JK",
-      "lastUpdated": "2026-07-01T15:57:55.136477+00:00",
+      "lastUpdated": "2026-07-01T16:29:07.388689+00:00",
       "companyName": "PT ESSA Industries Indonesia Tbk.",
       "sector": "Basic Materials",
       "industry": "Chemicals",
@@ -687,7 +687,7 @@
     },
     {
       "ticker": "CPIN.JK",
-      "lastUpdated": "2026-07-01T15:57:55.607426+00:00",
+      "lastUpdated": "2026-07-01T16:29:07.996606+00:00",
       "companyName": "PT Charoen Pokphand Indonesia Tbk",
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
@@ -723,7 +723,7 @@
     },
     {
       "ticker": "GOTO.JK",
-      "lastUpdated": "2026-07-01T15:57:56.077998+00:00",
+      "lastUpdated": "2026-07-01T16:29:08.555487+00:00",
       "companyName": "PT GoTo Gojek Tokopedia Tbk",
       "sector": "Technology",
       "industry": "Software - Infrastructure",
@@ -759,7 +759,7 @@
     },
     {
       "ticker": "EXCL.JK",
-      "lastUpdated": "2026-07-01T15:57:56.550159+00:00",
+      "lastUpdated": "2026-07-01T16:29:09.119107+00:00",
       "companyName": "PT XLSMART Telecom Sejahtera Tbk",
       "sector": "Communication Services",
       "industry": "Telecom Services",
@@ -795,7 +795,7 @@
     },
     {
       "ticker": "HRTA.JK",
-      "lastUpdated": "2026-07-01T15:57:57.013210+00:00",
+      "lastUpdated": "2026-07-01T16:29:09.679470+00:00",
       "companyName": "PT Hartadinata Abadi Tbk",
       "sector": "Consumer Cyclical",
       "industry": "Luxury Goods",
@@ -831,7 +831,7 @@
     },
     {
       "ticker": "ICBP.JK",
-      "lastUpdated": "2026-07-01T15:57:57.510908+00:00",
+      "lastUpdated": "2026-07-01T16:29:10.398864+00:00",
       "companyName": "PT Indofood CBP Sukses Makmur Tbk",
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
@@ -867,7 +867,7 @@
     },
     {
       "ticker": "INDF.JK",
-      "lastUpdated": "2026-07-01T15:57:57.965521+00:00",
+      "lastUpdated": "2026-07-01T16:29:10.924439+00:00",
       "companyName": "PT Indofood Sukses Makmur Tbk",
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
@@ -903,7 +903,7 @@
     },
     {
       "ticker": "INKP.JK",
-      "lastUpdated": "2026-07-01T15:57:58.424934+00:00",
+      "lastUpdated": "2026-07-01T16:29:11.453994+00:00",
       "companyName": "PT Indah Kiat Pulp & Paper Tbk",
       "sector": "Basic Materials",
       "industry": "Paper & Paper Products",
@@ -939,7 +939,7 @@
     },
     {
       "ticker": "ITMG.JK",
-      "lastUpdated": "2026-07-01T15:57:58.971596+00:00",
+      "lastUpdated": "2026-07-01T16:29:11.978096+00:00",
       "companyName": "PT Indo Tambangraya Megah Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -975,7 +975,7 @@
     },
     {
       "ticker": "JPFA.JK",
-      "lastUpdated": "2026-07-01T15:57:59.569180+00:00",
+      "lastUpdated": "2026-07-01T16:29:12.550342+00:00",
       "companyName": "PT Japfa Comfeed Indonesia Tbk",
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
@@ -1011,7 +1011,7 @@
     },
     {
       "ticker": "INCO.JK",
-      "lastUpdated": "2026-07-01T15:58:00.089703+00:00",
+      "lastUpdated": "2026-07-01T16:29:13.101657+00:00",
       "companyName": "PT Vale Indonesia Tbk",
       "sector": "Basic Materials",
       "industry": "Other Industrial Metals & Mining",
@@ -1047,7 +1047,7 @@
     },
     {
       "ticker": "KLBF.JK",
-      "lastUpdated": "2026-07-01T15:58:00.553607+00:00",
+      "lastUpdated": "2026-07-01T16:29:13.660261+00:00",
       "companyName": "PT Kalbe Farma Tbk.",
       "sector": "Healthcare",
       "industry": "Drug Manufacturers - General",
@@ -1083,7 +1083,7 @@
     },
     {
       "ticker": "ISAT.JK",
-      "lastUpdated": "2026-07-01T15:58:01.027548+00:00",
+      "lastUpdated": "2026-07-01T16:29:14.189352+00:00",
       "companyName": "PT Indosat Ooredoo Hutchison Tbk",
       "sector": "Communication Services",
       "industry": "Telecom Services",
@@ -1119,7 +1119,7 @@
     },
     {
       "ticker": "MBMA.JK",
-      "lastUpdated": "2026-07-01T15:58:01.607841+00:00",
+      "lastUpdated": "2026-07-01T16:29:14.744554+00:00",
       "companyName": "PT Merdeka Battery Materials Tbk.",
       "sector": "Basic Materials",
       "industry": "Other Precious Metals & Mining",
@@ -1155,7 +1155,7 @@
     },
     {
       "ticker": "MAPI.JK",
-      "lastUpdated": "2026-07-01T15:58:02.085474+00:00",
+      "lastUpdated": "2026-07-01T16:29:15.323897+00:00",
       "companyName": "PT. Mitra Adiperkasa Tbk",
       "sector": "Consumer Cyclical",
       "industry": "Department Stores",
@@ -1191,7 +1191,7 @@
     },
     {
       "ticker": "PGAS.JK",
-      "lastUpdated": "2026-07-01T15:58:02.546165+00:00",
+      "lastUpdated": "2026-07-01T16:29:15.844065+00:00",
       "companyName": "PT Perusahaan Gas Negara (Persero) Tbk",
       "sector": "Utilities",
       "industry": "Utilities - Regulated Gas",
@@ -1227,7 +1227,7 @@
     },
     {
       "ticker": "PGEO.JK",
-      "lastUpdated": "2026-07-01T15:58:03.055303+00:00",
+      "lastUpdated": "2026-07-01T16:29:16.478464+00:00",
       "companyName": "PT Pertamina Geothermal Energy Tbk",
       "sector": "Utilities",
       "industry": "Utilities - Renewable",
@@ -1263,7 +1263,7 @@
     },
     {
       "ticker": "PTBA.JK",
-      "lastUpdated": "2026-07-01T15:58:03.543575+00:00",
+      "lastUpdated": "2026-07-01T16:29:17.041941+00:00",
       "companyName": "PT Bukit Asam (Persero) Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -1299,7 +1299,7 @@
     },
     {
       "ticker": "MDKA.JK",
-      "lastUpdated": "2026-07-01T15:58:04.044601+00:00",
+      "lastUpdated": "2026-07-01T16:29:17.612332+00:00",
       "companyName": "PT Merdeka Copper Gold Tbk",
       "sector": "Basic Materials",
       "industry": "Other Industrial Metals & Mining",
@@ -1335,7 +1335,7 @@
     },
     {
       "ticker": "SCMA.JK",
-      "lastUpdated": "2026-07-01T15:58:04.583771+00:00",
+      "lastUpdated": "2026-07-01T16:29:18.173107+00:00",
       "companyName": "PT Surya Citra Media Tbk",
       "sector": "Communication Services",
       "industry": "Broadcasting",
@@ -1371,7 +1371,7 @@
     },
     {
       "ticker": "SMGR.JK",
-      "lastUpdated": "2026-07-01T15:58:05.044242+00:00",
+      "lastUpdated": "2026-07-01T16:29:18.612785+00:00",
       "companyName": "PT Semen Indonesia (Persero) Tbk",
       "sector": "Basic Materials",
       "industry": "Building Materials",
@@ -1407,7 +1407,7 @@
     },
     {
       "ticker": "MEDC.JK",
-      "lastUpdated": "2026-07-01T15:58:05.513032+00:00",
+      "lastUpdated": "2026-07-01T16:29:19.196186+00:00",
       "companyName": "PT Medco Energi Internasional Tbk",
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
@@ -1443,7 +1443,7 @@
     },
     {
       "ticker": "TLKM.JK",
-      "lastUpdated": "2026-07-01T15:58:05.981921+00:00",
+      "lastUpdated": "2026-07-01T16:29:19.823454+00:00",
       "companyName": "Perusahaan Perseroan (Persero) PT Telekomunikasi Indonesia Tbk",
       "sector": "Communication Services",
       "industry": "Telecom Services",
@@ -1479,7 +1479,7 @@
     },
     {
       "ticker": "UNVR.JK",
-      "lastUpdated": "2026-07-01T15:58:06.443185+00:00",
+      "lastUpdated": "2026-07-01T16:29:20.331707+00:00",
       "companyName": "PT Unilever Indonesia Tbk",
       "sector": "Consumer Defensive",
       "industry": "Household & Personal Products",
@@ -1515,7 +1515,7 @@
     },
     {
       "ticker": "WIFI.JK",
-      "lastUpdated": "2026-07-01T15:58:06.914007+00:00",
+      "lastUpdated": "2026-07-01T16:29:20.807883+00:00",
       "companyName": "PT Solusi Sinergi Digital Tbk",
       "sector": "Technology",
       "industry": "Information Technology Services",
@@ -1551,7 +1551,7 @@
     },
     {
       "ticker": "BREN.JK",
-      "lastUpdated": "2026-07-01T15:58:07.431242+00:00",
+      "lastUpdated": "2026-07-01T16:29:21.395380+00:00",
       "companyName": "PT Barito Renewables Energy Tbk",
       "sector": "Utilities",
       "industry": "Utilities - Renewable",
@@ -1587,7 +1587,7 @@
     },
     {
       "ticker": "TPIA.JK",
-      "lastUpdated": "2026-07-01T15:58:07.925431+00:00",
+      "lastUpdated": "2026-07-01T16:29:21.984140+00:00",
       "companyName": "PT Chandra Asri Pacific Tbk",
       "sector": "Basic Materials",
       "industry": "Specialty Chemicals",
@@ -1623,7 +1623,7 @@
     },
     {
       "ticker": "UNTR.JK",
-      "lastUpdated": "2026-07-01T15:58:08.381663+00:00",
+      "lastUpdated": "2026-07-01T16:29:22.521036+00:00",
       "companyName": "PT United Tractors Tbk",
       "sector": "Basic Materials",
       "industry": "Other Industrial Metals & Mining",
@@ -1659,7 +1659,7 @@
     },
     {
       "ticker": "BYAN.JK",
-      "lastUpdated": "2026-07-01T15:58:08.883018+00:00",
+      "lastUpdated": "2026-07-01T16:29:23.021187+00:00",
       "companyName": "PT Bayan Resources Tbk.",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -1695,7 +1695,7 @@
     },
     {
       "ticker": "MIKA.JK",
-      "lastUpdated": "2026-07-01T15:58:09.353821+00:00",
+      "lastUpdated": "2026-07-01T16:29:23.577090+00:00",
       "companyName": "PT Mitra Keluarga Karyasehat Tbk",
       "sector": "Healthcare",
       "industry": "Medical Care Facilities",
@@ -1731,7 +1731,7 @@
     },
     {
       "ticker": "ENRG.JK",
-      "lastUpdated": "2026-07-01T15:58:09.903337+00:00",
+      "lastUpdated": "2026-07-01T16:29:24.077176+00:00",
       "companyName": "PT Energi Mega Persada Tbk",
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
@@ -1767,7 +1767,7 @@
     },
     {
       "ticker": "INDY.JK",
-      "lastUpdated": "2026-07-01T15:58:10.396697+00:00",
+      "lastUpdated": "2026-07-01T16:29:24.601394+00:00",
       "companyName": "PT. Indika Energy Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -1803,7 +1803,7 @@
     },
     {
       "ticker": "TOWR.JK",
-      "lastUpdated": "2026-07-01T15:58:10.866600+00:00",
+      "lastUpdated": "2026-07-01T16:29:25.041571+00:00",
       "companyName": "PT Sarana Menara Nusantara Tbk.",
       "sector": "Real Estate",
       "industry": "Real Estate Services",
@@ -1839,7 +1839,7 @@
     },
     {
       "ticker": "MIDI.JK",
-      "lastUpdated": "2026-07-01T15:58:11.500887+00:00",
+      "lastUpdated": "2026-07-01T16:29:25.485442+00:00",
       "companyName": "PT Midi Utama Indonesia Tbk",
       "sector": "Consumer Defensive",
       "industry": "Grocery Stores",
@@ -1875,7 +1875,7 @@
     },
     {
       "ticker": "MAPA.JK",
-      "lastUpdated": "2026-07-01T15:58:12.330878+00:00",
+      "lastUpdated": "2026-07-01T16:29:25.943037+00:00",
       "companyName": "PT Map Aktif Adiperkasa Tbk",
       "sector": "Consumer Cyclical",
       "industry": "Specialty Retail",
@@ -1911,7 +1911,7 @@
     },
     {
       "ticker": "ACES.JK",
-      "lastUpdated": "2026-07-01T15:58:12.799740+00:00",
+      "lastUpdated": "2026-07-01T16:29:26.509464+00:00",
       "companyName": "PT Aspirasi Hidup Indonesia Tbk",
       "sector": "Consumer Cyclical",
       "industry": "Specialty Retail",
@@ -1947,7 +1947,7 @@
     },
     {
       "ticker": "BUKA.JK",
-      "lastUpdated": "2026-07-01T15:58:13.266652+00:00",
+      "lastUpdated": "2026-07-01T16:29:27.037010+00:00",
       "companyName": "PT Bukalapak.com Tbk.",
       "sector": "Consumer Cyclical",
       "industry": "Internet Retail",
@@ -1983,7 +1983,7 @@
     },
     {
       "ticker": "HRUM.JK",
-      "lastUpdated": "2026-07-01T15:58:13.722925+00:00",
+      "lastUpdated": "2026-07-01T16:29:27.518622+00:00",
       "companyName": "PT Harum Energy Tbk",
       "sector": "Energy",
       "industry": "Thermal Coal",
@@ -2019,7 +2019,7 @@
     },
     {
       "ticker": "BNGA.JK",
-      "lastUpdated": "2026-07-01T15:58:14.271007+00:00",
+      "lastUpdated": "2026-07-01T16:29:28.010381+00:00",
       "companyName": "PT Bank CIMB Niaga Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2055,7 +2055,7 @@
     },
     {
       "ticker": "ARTO.JK",
-      "lastUpdated": "2026-07-01T15:58:14.772770+00:00",
+      "lastUpdated": "2026-07-01T16:29:28.539769+00:00",
       "companyName": "PT Bank Jago Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2091,7 +2091,7 @@
     },
     {
       "ticker": "BDMN.JK",
-      "lastUpdated": "2026-07-01T15:58:15.229482+00:00",
+      "lastUpdated": "2026-07-01T16:29:29.067389+00:00",
       "companyName": "PT Bank Danamon Indonesia Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2127,7 +2127,7 @@
     },
     {
       "ticker": "BRIS.JK",
-      "lastUpdated": "2026-07-01T15:58:15.695519+00:00",
+      "lastUpdated": "2026-07-01T16:29:29.578173+00:00",
       "companyName": "PT Bank Syariah Indonesia Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2163,7 +2163,7 @@
     },
     {
       "ticker": "JSMR.JK",
-      "lastUpdated": "2026-07-01T15:58:16.184877+00:00",
+      "lastUpdated": "2026-07-01T16:29:30.156845+00:00",
       "companyName": "PT Jasa Marga (Persero) Tbk",
       "sector": "Industrials",
       "industry": "Infrastructure Operations",
@@ -2199,7 +2199,7 @@
     },
     {
       "ticker": "NISP.JK",
-      "lastUpdated": "2026-07-01T15:58:16.651425+00:00",
+      "lastUpdated": "2026-07-01T16:29:30.644134+00:00",
       "companyName": "PT Bank OCBC NISP Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2235,7 +2235,7 @@
     },
     {
       "ticker": "WIKA.JK",
-      "lastUpdated": "2026-07-01T15:58:17.111976+00:00",
+      "lastUpdated": "2026-07-01T16:29:31.202937+00:00",
       "companyName": "PT Wijaya Karya (Persero) Tbk",
       "sector": "Industrials",
       "industry": "Engineering & Construction",
@@ -2271,7 +2271,7 @@
     },
     {
       "ticker": "ADHI.JK",
-      "lastUpdated": "2026-07-01T15:58:17.591229+00:00",
+      "lastUpdated": "2026-07-01T16:29:31.678024+00:00",
       "companyName": "PT Adhi Karya (Persero) Tbk",
       "sector": "Industrials",
       "industry": "Engineering & Construction",
@@ -2307,7 +2307,7 @@
     },
     {
       "ticker": "PTPP.JK",
-      "lastUpdated": "2026-07-01T15:58:18.101237+00:00",
+      "lastUpdated": "2026-07-01T16:29:32.227489+00:00",
       "companyName": "PT PP (Persero) Tbk",
       "sector": "Industrials",
       "industry": "Engineering & Construction",
@@ -2343,7 +2343,7 @@
     },
     {
       "ticker": "WSKT.JK",
-      "lastUpdated": "2026-07-01T15:58:18.595869+00:00",
+      "lastUpdated": "2026-07-01T16:29:32.662765+00:00",
       "companyName": "PT Waskita Karya (Persero) Tbk",
       "changePercent": 0.0,
       "pbRatio": -15.958287,
@@ -2379,7 +2379,7 @@
     },
     {
       "ticker": "PNBN.JK",
-      "lastUpdated": "2026-07-01T15:58:19.445426+00:00",
+      "lastUpdated": "2026-07-01T16:29:33.318753+00:00",
       "companyName": "PT Bank Pan Indonesia Tbk",
       "sector": "Financial Services",
       "industry": "Banks - Regional",
@@ -2415,7 +2415,7 @@
     },
     {
       "ticker": "INTP.JK",
-      "lastUpdated": "2026-07-01T15:58:19.923543+00:00",
+      "lastUpdated": "2026-07-01T16:29:33.835792+00:00",
       "companyName": "PT Indocement Tunggal Prakarsa Tbk",
       "sector": "Basic Materials",
       "industry": "Building Materials",
@@ -2451,7 +2451,7 @@
     },
     {
       "ticker": "SMRA.JK",
-      "lastUpdated": "2026-07-01T15:58:20.429286+00:00",
+      "lastUpdated": "2026-07-01T16:29:34.412759+00:00",
       "companyName": "PT Summarecon Agung Tbk",
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
@@ -2487,7 +2487,7 @@
     },
     {
       "ticker": "CTRA.JK",
-      "lastUpdated": "2026-07-01T15:58:20.921357+00:00",
+      "lastUpdated": "2026-07-01T16:29:34.902476+00:00",
       "companyName": "PT Ciputra Development Tbk",
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
@@ -2523,7 +2523,7 @@
     },
     {
       "ticker": "ASRI.JK",
-      "lastUpdated": "2026-07-01T15:58:21.473586+00:00",
+      "lastUpdated": "2026-07-01T16:29:35.422534+00:00",
       "companyName": "PT Alam Sutera Realty Tbk",
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
@@ -2559,7 +2559,7 @@
     },
     {
       "ticker": "PWON.JK",
-      "lastUpdated": "2026-07-01T15:58:21.940272+00:00",
+      "lastUpdated": "2026-07-01T16:29:36.033677+00:00",
       "companyName": "PT Pakuwon Jati Tbk",
       "sector": "Real Estate",
       "industry": "Real Estate - Diversified",
@@ -2595,7 +2595,7 @@
     },
     {
       "ticker": "TBIG.JK",
-      "lastUpdated": "2026-07-01T15:58:22.398419+00:00",
+      "lastUpdated": "2026-07-01T16:29:36.565668+00:00",
       "companyName": "PT Tower Bersama Infrastructure Tbk",
       "sector": "Communication Services",
       "industry": "Telecom Services",
@@ -2631,7 +2631,7 @@
     },
     {
       "ticker": "TINS.JK",
-      "lastUpdated": "2026-07-01T15:58:22.889105+00:00",
+      "lastUpdated": "2026-07-01T16:29:37.056525+00:00",
       "companyName": "PT TIMAH Tbk",
       "sector": "Basic Materials",
       "industry": "Other Industrial Metals & Mining",
@@ -2667,7 +2667,7 @@
     },
     {
       "ticker": "MTEL.JK",
-      "lastUpdated": "2026-07-01T15:58:23.391017+00:00",
+      "lastUpdated": "2026-07-01T16:29:37.582201+00:00",
       "companyName": "PT Dayamitra Telekomunikasi Tbk.",
       "sector": "Communication Services",
       "industry": "Telecom Services",
@@ -2703,7 +2703,7 @@
     },
     {
       "ticker": "BSDE.JK",
-      "lastUpdated": "2026-07-01T15:58:23.869578+00:00",
+      "lastUpdated": "2026-07-01T16:29:38.147830+00:00",
       "companyName": "PT Bumi Serpong Damai Tbk",
       "sector": "Real Estate",
       "industry": "Real Estate - Development",
@@ -2739,7 +2739,7 @@
     },
     {
       "ticker": "SMDR.JK",
-      "lastUpdated": "2026-07-01T15:58:24.369052+00:00",
+      "lastUpdated": "2026-07-01T16:29:38.639295+00:00",
       "companyName": "PT Samudera Indonesia Tbk",
       "sector": "Industrials",
       "industry": "Marine Shipping",
@@ -2775,7 +2775,7 @@
     },
     {
       "ticker": "TMAS.JK",
-      "lastUpdated": "2026-07-01T15:58:24.862432+00:00",
+      "lastUpdated": "2026-07-01T16:29:39.231557+00:00",
       "companyName": "PT Temas Tbk.",
       "sector": "Industrials",
       "industry": "Marine Shipping",
@@ -2811,7 +2811,7 @@
     },
     {
       "ticker": "NELY.JK",
-      "lastUpdated": "2026-07-01T15:58:25.362240+00:00",
+      "lastUpdated": "2026-07-01T16:29:39.770880+00:00",
       "companyName": "PT Pelayaran Nelly Dwi Putri Tbk",
       "sector": "Industrials",
       "industry": "Marine Shipping",
@@ -2847,7 +2847,7 @@
     },
     {
       "ticker": "SIDO.JK",
-      "lastUpdated": "2026-07-01T15:58:25.867070+00:00",
+      "lastUpdated": "2026-07-01T16:29:40.285724+00:00",
       "companyName": "PT Industri Jamu dan Farmasi Sido Muncul Tbk",
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
@@ -2883,7 +2883,7 @@
     },
     {
       "ticker": "MYOR.JK",
-      "lastUpdated": "2026-07-01T15:58:26.353007+00:00",
+      "lastUpdated": "2026-07-01T16:29:40.724720+00:00",
       "companyName": "PT Mayora Indah Tbk",
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
@@ -2919,7 +2919,7 @@
     },
     {
       "ticker": "ULTJ.JK",
-      "lastUpdated": "2026-07-01T15:58:26.846730+00:00",
+      "lastUpdated": "2026-07-01T16:29:41.309063+00:00",
       "companyName": "PT Ultrajaya Milk Industry & Trading Company Tbk",
       "sector": "Consumer Defensive",
       "industry": "Beverages - Non-Alcoholic",
@@ -2955,8 +2955,8 @@
     },
     {
       "ticker": "CLEO.JK",
-      "lastUpdated": "2026-07-01T15:58:27.303024+00:00",
-      "companyName": "Sariguna Primatirta Tbk.",
+      "lastUpdated": "2026-07-01T16:29:41.844190+00:00",
+      "companyName": "PT Sariguna Primatirta Tbk",
       "sector": "Consumer Defensive",
       "industry": "Beverages - Non-Alcoholic",
       "longBusinessSummary": "PT Sariguna Primatirta Tbk, together with its subsidiaries, produces and sells bottled drinking water products in Indonesia. The company operates through the Bottle, Non-Bottle, and Others segments. The company also has wholesale trading of food and beverages and the production and distribution of ice for food, beverage, and other uses. It sells drinking water under the Cleo, Super O2, VIO, Cleo Plantine, Anda, and S-Tube brands; and green tea under the NOGU brand. The company was formerly known as PT Sari Guna and changed its name to PT Sariguna Primatirta Tbk in December 1988. The company was founded in 1988 and is headquartered in Sidoarjo, Indonesia. PT Sariguna Primatirta Tbk operates as a asubsidiary of PT Tancorp Global Abadi.",
@@ -2966,6 +2966,7 @@
       "peRatio": 23.143564,
       "pbRatio": 3.7892604,
       "dividendYield": 68.0,
+      "marketCap": 8976000352256,
       "trailingEps": 16.16,
       "fiftyTwoWeekHigh": 635.0,
       "fiftyTwoWeekLow": 320.0,
@@ -2983,7 +2984,6 @@
       "debtToEquity": 17.606,
       "operatingMargin": 0.21669,
       "grossMargins": 0.54343,
-      "marketCap": null,
       "quality": 0,
       "value": 0,
       "growth": 0,
@@ -2991,7 +2991,7 @@
     },
     {
       "ticker": "ROTI.JK",
-      "lastUpdated": "2026-07-01T15:58:27.768351+00:00",
+      "lastUpdated": "2026-07-01T16:29:42.354019+00:00",
       "companyName": "PT Nippon Indosari Corpindo Tbk",
       "sector": "Consumer Defensive",
       "industry": "Packaged Foods",
@@ -3027,7 +3027,7 @@
     },
     {
       "ticker": "WOOD.JK",
-      "lastUpdated": "2026-07-01T15:58:28.261705+00:00",
+      "lastUpdated": "2026-07-01T16:29:42.863689+00:00",
       "companyName": "PT Integra Indocabinet Tbk",
       "sector": "Consumer Cyclical",
       "industry": "Furnishings, Fixtures & Appliances",
@@ -3063,7 +3063,7 @@
     },
     {
       "ticker": "TKIM.JK",
-      "lastUpdated": "2026-07-01T15:58:28.764844+00:00",
+      "lastUpdated": "2026-07-01T16:29:43.468598+00:00",
       "companyName": "PT Pabrik Kertas Tjiwi Kimia Tbk",
       "sector": "Basic Materials",
       "industry": "Paper & Paper Products",
@@ -3099,7 +3099,7 @@
     },
     {
       "ticker": "SMAR.JK",
-      "lastUpdated": "2026-07-01T15:58:29.226003+00:00",
+      "lastUpdated": "2026-07-01T16:29:44.002737+00:00",
       "companyName": "PT Sinar Mas Agro Resources and Technology Tbk",
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
@@ -3135,7 +3135,7 @@
     },
     {
       "ticker": "LSIP.JK",
-      "lastUpdated": "2026-07-01T15:58:29.679610+00:00",
+      "lastUpdated": "2026-07-01T16:29:44.506722+00:00",
       "companyName": "PT Perusahaan Perkebunan London Sumatra Indonesia Tbk",
       "sector": "Consumer Defensive",
       "industry": "Farm Products",
@@ -3171,7 +3171,7 @@
     },
     {
       "ticker": "TRAM.JK",
-      "lastUpdated": "2026-07-01T15:58:30.214693+00:00",
+      "lastUpdated": "2026-07-01T16:29:45.090537+00:00",
       "companyName": "PT Trada Alam Minera Tbk",
       "changePercent": 0.0,
       "peRatio": 14.367816,
@@ -3207,7 +3207,7 @@
     },
     {
       "ticker": "TRIL.JK",
-      "lastUpdated": "2026-07-01T15:58:30.770922+00:00",
+      "lastUpdated": "2026-07-01T16:29:45.730562+00:00",
       "companyName": "TRIL.JK,0P0000EOL4,0",
       "changePercent": 0.0,
       "fiftyTwoWeekHigh": 50.0,
@@ -3243,7 +3243,7 @@
     },
     {
       "ticker": "MYRX.JK",
-      "lastUpdated": "2026-07-01T15:58:31.360609+00:00",
+      "lastUpdated": "2026-07-01T16:29:46.449692+00:00",
       "companyName": "PT Hanson International Tbk",
       "changePercent": 0.0,
       "pbRatio": 0.61428076,
@@ -3279,7 +3279,7 @@
     },
     {
       "ticker": "RIMO.JK",
-      "lastUpdated": "2026-07-01T15:58:31.899420+00:00",
+      "lastUpdated": "2026-07-01T16:29:47.034862+00:00",
       "companyName": "PT Rimo International Lestari Tbk",
       "changePercent": 0.0,
       "peRatio": 18.248175,
@@ -3315,7 +3315,7 @@
     },
     {
       "ticker": "KREN.JK",
-      "lastUpdated": "2026-07-01T15:58:32.529741+00:00",
+      "lastUpdated": "2026-07-01T16:29:47.650428+00:00",
       "companyName": "PT Quantum Clovera Investama Tbk",
       "sector": "Financial Services",
       "industry": "Asset Management",
@@ -3351,7 +3351,7 @@
     },
     {
       "ticker": "SUGI.JK",
-      "lastUpdated": "2026-07-01T15:58:33.016605+00:00",
+      "lastUpdated": "2026-07-01T16:29:48.168044+00:00",
       "companyName": "SUGI.JK,0P0000BT07,0",
       "changePercent": 0.0,
       "fiftyTwoWeekHigh": 50.0,
@@ -3387,7 +3387,7 @@
     },
     {
       "ticker": "NUSA.JK",
-      "lastUpdated": "2026-07-01T15:58:33.525932+00:00",
+      "lastUpdated": "2026-07-01T16:29:48.888987+00:00",
       "companyName": "PT Sinergi Megah Internusa Tbk",
       "changePercent": 0.0,
       "pbRatio": 0.51189643,
@@ -3423,7 +3423,7 @@
     },
     {
       "ticker": "^JKSE",
-      "lastUpdated": "2026-07-01T15:58:34.038250+00:00",
+      "lastUpdated": "2026-07-01T16:29:49.485441+00:00",
       "companyName": "IDX COMPOSITE",
       "changePercent": 0.92008823,
       "volume": 0,
@@ -3459,7 +3459,7 @@
     },
     {
       "ticker": "IDR=X",
-      "lastUpdated": "2026-07-01T15:58:34.551198+00:00",
+      "lastUpdated": "2026-07-01T16:29:50.011345+00:00",
       "companyName": "USD/IDR",
       "changePercent": -0.005568859,
       "volume": 0,

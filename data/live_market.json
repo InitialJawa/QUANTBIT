@@ -1,21 +1,21 @@
 {
   "last_update": "2026-07-01",
-  "market_last_update": "2026-07-01T15:58:34.910623+00:00",
+  "market_last_update": "2026-07-01T16:29:50.346779+00:00",
   "ihsg": {
     "value": 5695.116,
-    "daily": -6.65,
+    "daily": 0.0,
     "weekly": 0,
     "monthly": 0
   },
   "usdidr": {
     "value": 17956.0,
-    "daily": 0.65,
+    "daily": 0.0,
     "weekly": 0,
     "monthly": 0
   },
   "gold": {
     "value": 2366057,
-    "daily": 0.72,
+    "daily": 0.0,
     "weekly": 0,
     "monthly": 0
   },
