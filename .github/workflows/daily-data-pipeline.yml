@@ -44,7 +44,11 @@ jobs:
 
       - run: npm ci
 
-      - run: pip install curl-cffi
+      - run: pip install curl-cffi yfinance
+
+      - name: Fetch IDX80 scan (Yahoo Finance)
+        run: python scripts/fetch_idx80_scan.py
+        timeout-minutes: 10
 
       - name: Generate live_market.json
         run: python scripts/post_process_live_market.py
