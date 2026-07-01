@@ -22,6 +22,14 @@ Database schema and migrations — sequential SQL files in `db/migrations/`.
 | 0002 | `ai_memory` | `ai_sessions` + `ai_messages` (per-user chat memory) + 3 indexes — see `src/server/aiMemory.ts` | required |
 | 0003 | `market_data` | `daily_overview`, `stock_fundamentals`, `stock_daily`, `engine_snapshots` — DB as SOT for market data, replaces file-based JSON | applied (local SQLite) |
 
+### Production Write Paths
+
+| Table | Source | How |
+|---|---|---|
+| `idx_scan_data` | `runIdx80Scan()` in CF function | `DELETE` + `INSERT` on force-sync (manual or GA cron) |
+| `stock_fundamentals` | `runIdx80Scan()` in CF function | `INSERT OR REPLACE` on force-sync (price-computed scores) |
+| `daily_overview` / `stock_daily` | (none in prod) | Static JSON fallback via `env.ASSETS.fetch()`; local SQLite only via `seed-db.py` |
+
 ## Seed Script
 
 - `npm run db:seed` runs `scripts/seed-db.ts` (TypeScript, requires better-sqlite3 native build)
