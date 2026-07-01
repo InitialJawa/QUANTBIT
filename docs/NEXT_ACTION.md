@@ -1,4 +1,24 @@
 # NEXT ACTION
+## P0 — DB sebagai Single Source of Truth: Seed Production D1 (2026-07-01, Sesi 16)
+**Status**: PENDING
+
+### Context
+120.793 rows `stock_daily` + 1322 rows `daily_overview` udah ada di local SQLite (`data/historical_market.sqlite`, 2021-01-04 → 2026-07-01). Tapi production D1 masih kosong — endpoint `/api/backtest-data` fallback ke file statis.
+
+### What Needs to Happen (2 langkah)
+- [ ] **Bikin `scripts/seed-d1.py`** — baca dari local SQLite, generate batched SQL `INSERT OR REPLACE`, execute via `wrangler d1 execute --remote`. Handle D1 10MB batch limit (120k rows ~ perlu chunking ~3-5 batch).
+- [ ] **GA workflow** — tambah step `Seed D1` setelah `sync-daily-data.ts`, pake `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` dari secrets.
+
+### Prasyarat (user setup)
+- [ ] **GitHub Secrets**: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
+- [ ] **Env ini**: export `CLOUDFLARE_API_TOKEN` biar bisa verify
+
+### Catatan
+- User express frustration: "ini masih migration asu" — STOP planning, langsung eksekusi.
+- Migration 0003 sudah diapply (user bilang "kemarin aku udah migration"). Tapi data belum di-seed ke D1.
+- `stock_fundamentals` di D1 udah populated via `runIdx80Scan()` (force-sync di GA workflow).
+- Yang kurang cuma `stock_daily` + `daily_overview` di D1.
+
 ## P0 — AI Router Backup Chain (2026-07-01, Sesi 15)
 **Status**: IN PROGRESS
 
