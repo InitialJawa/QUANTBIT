@@ -96,6 +96,26 @@ async function loadYearFilesFromAssets(assets: { fetch: (req: Request) => Promis
   return allData;
 }
 
+async function getLatestDateFromYearAssets(env: Env): Promise<string | null> {
+  const currentYear = new Date().getFullYear();
+  for (let year = currentYear; year >= 2021; year--) {
+    try {
+      const url = `https://placeholder/data/years/${year}.json`;
+      const response = await env.ASSETS.fetch(new Request(url));
+      if (!response.ok) continue;
+      const yearData: any[] = await response.json();
+      if (Array.isArray(yearData) && yearData.length > 0) {
+        const last = yearData[yearData.length - 1];
+        if (last?.date) return last.date;
+      }
+      break;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 // ── Router ──────────────────────────────────────────────────
 
 export async function onRequest(context: EventContext<Env, string, unknown>) {
@@ -593,13 +613,17 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
       const row = await env.DB.prepare(
         "SELECT MAX(date) as latest FROM daily_overview"
       ).first<{ latest: string | null }>();
-      const latestDate = row?.latest || null;
+      let latestDate = row?.latest || null;
+      if (!latestDate) {
+        latestDate = await getLatestDateFromYearAssets(env);
+      }
       const stale = latestDate
         ? (Date.now() - new Date(latestDate + "T23:59:59+07:00").getTime()) > 86400000 * 2
         : true;
       return json({ success: true, latestDate, stale });
     } catch {
-      return json({ success: true, latestDate: null, stale: true });
+      const fallbackDate = await getLatestDateFromYearAssets(env).catch(() => null);
+      return json({ success: true, latestDate: fallbackDate, stale: fallbackDate ? false : true });
     }
   }
 

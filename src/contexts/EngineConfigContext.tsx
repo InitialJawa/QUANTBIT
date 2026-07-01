@@ -161,7 +161,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
           const today = getTodayWIB();
           const msDay = 86400000;
           const diffDays = (new Date(today).getTime() - new Date(parsed.simEndDate).getTime()) / msDay;
-          if (diffDays > 2) parsed.simEndDate = today;
+          if (diffDays >= 1) parsed.simEndDate = today;
         }
         if (!parsed.algoCapital) parsed.algoCapital = "100000000";
         if (!parsed.customUniverse) parsed.customUniverse = [];
