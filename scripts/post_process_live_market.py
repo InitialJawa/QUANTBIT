@@ -48,7 +48,7 @@ def main():
 
     # --- USDIDR from IDR=X ticker ---
     usdidr_ticker = stock_map.get("IDR", {}) or stock_map.get("IDR=X", {})
-    usdidr_price = usdidr_ticker.get("currentPrice", 17840)
+    usdidr_price = usdidr_ticker.get("currentPrice") or (existing_live.get("usdidr", {}).get("value") if existing_live else None) or 17840
     usdidr_prev = None
     if existing_live:
         usdidr_prev = existing_live.get("usdidr", {}).get("value")
