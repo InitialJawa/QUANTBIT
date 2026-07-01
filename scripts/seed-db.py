@@ -214,7 +214,6 @@ def _float(obj, *keys):
                 except (ValueError, TypeError):
                     pass
         elif isinstance(key, (tuple, list)):
-            # Nested path like ("SCORES", "quality")
             cur = obj
             for k in key:
                 if isinstance(cur, dict):
@@ -230,6 +229,55 @@ def _float(obj, *keys):
     return 0.0
 
 
+def update_fundamentals_from_scores(db: sqlite3.Connection):
+    """Read norm_scores from stock_daily.raw_metrics (latest entry per ticker)
+    and update stock_fundamentals. Preserves existing dividend if already set."""
+    cur = db.cursor()
+    cur.execute("""
+        SELECT sd.ticker, sd.raw_metrics
+        FROM stock_daily sd
+        INNER JOIN (
+            SELECT ticker, MAX(date) as max_date
+            FROM stock_daily
+            GROUP BY ticker
+        ) latest ON sd.ticker = latest.ticker AND sd.date = latest.max_date
+        WHERE sd.raw_metrics IS NOT NULL
+    """)
+    rows = cur.fetchall()
+    updated = 0
+    for ticker, raw_json in rows:
+        if not raw_json:
+            continue
+        try:
+            raw = json.loads(raw_json)
+        except json.JSONDecodeError:
+            continue
+        ns = raw.get("norm_scores") or {}
+        quality = ns.get("quality")
+        growth = ns.get("growth")
+        value = ns.get("value")
+        momentum = ns.get("momentum")
+        if quality is None:
+            continue
+        final_score = (
+            quality * 0.30 + growth * 0.45 + value * 0.10
+            + momentum * 0.00 + 50 * 0.15
+        )
+        cur.execute("SELECT dividend FROM stock_fundamentals WHERE ticker=? OR ticker=? LIMIT 1", (ticker, ticker + ".JK"))
+        existing = cur.fetchone()
+        dividend = existing[0] if existing and existing[0] else 50
+        for t in [ticker, ticker + ".JK"]:
+            cur.execute(
+                "INSERT OR REPLACE INTO stock_fundamentals "
+                "(ticker, quality, growth, value, momentum, dividend, final_score, sector, industry, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, '', '', datetime('now'))",
+                (t, quality, growth, value, momentum, round(dividend, 2), round(final_score, 2)),
+            )
+        updated += 1
+    db.commit()
+    print(f"  Updated {updated} fundamentals from stock_daily norm_scores")
+
+
 def main():
     print("Seeding DB from data/years/*.json + idx scans\n")
 
@@ -241,6 +289,7 @@ def main():
     ensure_tables(db)
     seed_market_data(db)
     seed_fundamentals(db)
+    update_fundamentals_from_scores(db)
     db.close()
 
     size_mb = os.path.getsize(DB_PATH) / 1024 / 1024

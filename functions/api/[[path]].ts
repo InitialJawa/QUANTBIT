@@ -539,13 +539,22 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
   // GET /api/engine/idx80
   if (path === "/api/engine/idx80" && method === "GET") {
     try {
+      // Load scores from stock_fundamentals D1 table (quality, growth, value, momentum)
+      const fundRows = await env.DB.prepare(
+        "SELECT ticker, quality, growth, value, momentum FROM stock_fundamentals WHERE quality > 0"
+      ).all<{ ticker: string; quality: number; growth: number; value: number; momentum: number }>();
+      const fundMap: Record<string, { quality: number; growth: number; value: number; momentum: number }> = {};
+      if (fundRows && fundRows.results) {
+        for (const r of fundRows.results) {
+          fundMap[r.ticker.replace(".JK", "")] = { quality: r.quality, growth: r.growth, value: r.value, momentum: r.momentum };
+        }
+      }
+
+      // Load price data from idx_scan_data (D1) or fall back to static file
       const row = await env.DB.prepare(
         "SELECT data, last_updated FROM idx_scan_data ORDER BY id DESC LIMIT 1"
       ).first<{ data: string; last_updated: string }>();
       if (row) {
-        // D1 data (from runIdx80Scan via Yahoo chart API) is fresh for prices
-        // but lacks fields like dividendYield. Merge with bundled static
-        // idx80_scan.json so missing fields are filled in.
         const dbStocks: any[] = JSON.parse(row.data);
         const bundledResp = await env.ASSETS.fetch(new URL("/data/idx80_scan.json", url));
         const bundledMap: Record<string, any> = {};
@@ -564,12 +573,35 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
               s[k] = bund[k];
             }
           }
+          // Merge scores from stock_fundamentals (override computed scores with DB scores)
+          const dbScore = fundMap[key];
+          if (dbScore) {
+            s.quality = dbScore.quality;
+            s.growth = dbScore.growth;
+            s.value = dbScore.value;
+            s.momentum = dbScore.momentum;
+          }
         }
         return json({ stocks: dbStocks, lastUpdated: row.last_updated });
       }
-      // Fallback to static file
+      // Fallback to static file — merge scores from D1 if available
       const resp = await env.ASSETS.fetch(new URL("/data/idx80_scan.json", url));
-      if (resp.ok) return resp.clone();
+      if (resp.ok) {
+        const staticData: any = await resp.clone().json();
+        if (Object.keys(fundMap).length > 0) {
+          for (const s of staticData.stocks || []) {
+            const key = (s.ticker || "").replace(".JK", "");
+            const dbScore = fundMap[key];
+            if (dbScore) {
+              s.quality = dbScore.quality;
+              s.growth = dbScore.growth;
+              s.value = dbScore.value;
+              s.momentum = dbScore.momentum;
+            }
+          }
+        }
+        return json(staticData);
+      }
       return json({ stocks: [], lastUpdated: null });
     } catch {
       return json({ stocks: [], lastUpdated: null });
