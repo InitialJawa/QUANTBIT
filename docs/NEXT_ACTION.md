@@ -1,4 +1,41 @@
 # NEXT ACTION
+## P0 — AI Router Backup Chain (2026-07-01, Sesi 15)
+**Status**: IN PROGRESS
+
+### Delivered
+- [x] **Hapus stale docs**: MANUAL_TEST_GUIDE.md, TASK_STRATEGY_SYNC_ENGINE.md/v2
+- [x] **Fix README.md dead link** — hapus reference ke MANUAL_TEST_GUIDE.md (line 507 & 586)
+- [x] **README.md typo** — "Backtest" → "Backtest"
+- [x] **Fix 9router crash loop** — langsung `server.js` via PM2, bukan CLI wrapper (`detached:true` gak cocok fork mode)
+- [x] **PM2 multi-app** — `/root/ecosystem.config.js`, `pm2 startup` (systemd auto-start)
+- [x] **KeiRouter** — install v0.1.23 Go binary, port :20180, 241 models via Kiro
+- [x] **VirtuSoul Router** — install Python package, port :4000, ML-based query classifier (sentence-transformers)
+- [ ] **FreeRouter** — perlu simplify auth dari OpenClaw ke API key
+- [ ] **Update opencode.json** + add provider entries for all routers
+- [x] **Fallback proxy/chain** — `/root/ai-router-proxy/server.js` port 2050, auto-switch 9router→KeiRouter→VirtuSoul
+- [ ] **Verify end-to-end** — opencode bisa gonta-ganti provider
+
+### Verification
+- [x] `ss -tlnp` — 9router:20128, keirouter:20180, virtusoul:4000 all LISTEN
+- [x] `/v1/models` — 9router: 62 models, keirouter: 241 models
+
+## P1 — QUANTBIT Landing Page Rebuild (2026-07-01, Sesi 15b)
+**Status**: IN PROGRESS
+
+### Delivered
+- [x] **Rebuild landing page from scratch** — sibling site `../QUANTBIT-landing` dibuat sebagai static HTML/CSS
+- [x] **Tambah visual screenshot panel** — hero mockup terminal dengan market overview, factor rank, portfolio heat
+- [x] **Tambah visual backtest** — section equity curve + metrik simulasi
+- [x] **Tambah AI brief visual** — narrative card agar value AI lebih jelas di first scroll
+- [x] **Tambah OG asset** — `../QUANTBIT-landing/public/og-preview.svg`
+- [x] **Update docs** — PROJECT_MASTER, CURRENT_STATE, NEXT_ACTION, DECISIONS, MASTER_CHRONICLE, handover
+
+### Pending
+- [ ] **Login Cloudflare** — `npx wrangler login` di `../QUANTBIT-landing`
+- [ ] **Create new Pages project** — project lama `quantbit-landing` sudah dihapus
+- [ ] **Deploy new landing** — `npx wrangler pages deploy . --project-name <new-project>`
+- [ ] **Verify public URL** — cek hero, preview screenshots, OG image
+
 ## P0 — Migration 0003 COMPLETION: DB as SOT (2026-06-30, Sesi 14)
 **Status**: COMPLETED ✅
 
@@ -128,6 +165,16 @@ Delivered (Sesi 12 — Konsolidasi UI + Koherensi):
 - [ ] CI workflow untuk Playwright E2E
 - [ ] Cross-browser E2E (Firefox, WebKit)
 - [ ] PWA / install prompt
+
+## Done Recently (Sesi 15c — Backtest Audit Fix)
+- ✅ Fix 1A: Hapus MultiSearchableSelect options={[]} dari StrategySettingsPanel
+- ✅ Fix 1B: Tambah custom universe picker (STOCKS_DATA) di Portfolio sidebar AppSidebar
+- ✅ Fix 1C/2A: effectiveConfig selective merge — hanya STRATEGY_MERGE_KEYS dari engineConfig
+- ✅ Fix 1D: configFingerprint include customUniverse + depend effectiveConfig
+- ✅ Fix 3A: setTimeout(0) sebelum runStrategy() biar React commit progress state
+- ✅ Fix 3B: setBacktestProgress(0) di catch block
+- ✅ Fallback proxy: /root/ai-router-proxy/server.js port 2050 (auto-switch router)
+- ✅ npx tsc --noEmit PASS, 239/239 tests PASS
 
 ## Done Recently (Sesi 14 — DB SOT + Daily Sync Pipeline)
 - ✅ Sync pipeline: `scripts/sync-daily-data.ts` (Yahoo → year files → SQLite rebuild)

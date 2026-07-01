@@ -2,10 +2,10 @@
 
 | Field | Value |
 |-------|-------|
-| Tanggal | 2026-06-30 |
+| Tanggal | 2026-07-01 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sesi 14 — DB Single Source of Truth + Daily Sync Pipeline (2026-06-30) |
+| Sprint | Sesi 15 — AI Router Backup Chain + Landing Page Rebuild + Backtest Audit Fix (2026-07-01) |
 
 ## Active Architecture
 
@@ -53,6 +53,28 @@ di-promote manual via `promoteDraftToEngine()`.
 `algoCapital`, `singleTicker`, `singleSellTrigger`, `singleBuyTrigger`.
 
 ## Current Focus
+
+**Session 2026-07-01 (session 15b): QUANTBIT Landing Page Rebuild — COMPLETED (source done, deploy pending auth)**
+
+### 🟢 Mission
+Bangun ulang landing page QUANTBIT setelah project Cloudflare Pages lama dihapus, dan ubah visual agar langsung menampilkan screenshot panel terminal, mockup backtest, dan AI brief.
+
+### 🟢 Delivered
+- **New sibling static site** — `../QUANTBIT-landing` dibuat manual sebagai static HTML/CSS site karena environment Node 18 tidak kompatibel dengan Astro terbaru
+- **Hero visual upgraded** — hero sekarang menampilkan mockup terminal besar dengan market overview, top score, portfolio heat, dan floating insight cards
+- **Preview sections** — ditambahkan showcase khusus untuk dashboard panel, backtest curve, dan AI narrative note
+- **Open Graph asset** — `../QUANTBIT-landing/public/og-preview.svg` untuk social preview sederhana
+- **Deploy prep** — `wrangler@3.114.14` berhasil dipasang di sibling project agar tetap kompatibel dengan Node 18
+
+### 🟡 Current blocker
+- **Cloudflare auth belum login** — `npx wrangler whoami` di `../QUANTBIT-landing` return `You are not authenticated. Please run wrangler login`
+- **Project lama dihapus** — target Cloudflare Pages baru perlu dibuat ulang setelah login, lalu deploy manual dari sibling directory
+
+### Files Created Outside Repo
+- `../QUANTBIT-landing/index.html` — landing page static baru
+- `../QUANTBIT-landing/styles.css` — visual system + layout responsive
+- `../QUANTBIT-landing/public/og-preview.svg` — OG preview asset
+- `../QUANTBIT-landing/package.json` — helper scripts untuk preview/deploy
 
 **Session 2026-06-30 (session 14): DB Single Source of Truth — COMPLETED**
 
@@ -379,7 +401,86 @@ in the notification loop. (Tidak berubah dari sesi sebelumnya.)
 ### Verification
 - `npx tsc --noEmit` PASS 0 errors
 - `npx vitest run` 18/18 tests passing
-- `npx vite build` 10.9s PASS
+
+## Session 2026-07-01 (session 15): AI Router Backup Chain — IN PROGRESS
+
+### 🟢 Mission
+Infrastructure multi-router AI backup chain: 9router → KeiRouter → VirtuSoul Router, semuanya 24/7 via PM2 dengan auto-start saat VPS reboot.
+
+### 🟢 Deliverables
+- **Stale docs cleanup**: `docs/MANUAL_TEST_GUIDE.md` (replaced oleh AI_ONBOARDING.md), `docs/archive/TASK_STRATEGY_SYNC_ENGINE.md` + `TASK_STRATEGY_SYNC_ENGINE_V2.md` (sesi 14 selesai) — dihapus
+- **README.md dead link fix**: hapus reference ke MANUAL_TEST_GUIDE.md (line 507, 586), typo "Backtest" → "Backtest"
+- **src/services/api.ts**: `MANUAL_TEST_GUIDE.md` → `AI_ONBOARDING.md`
+- **9router PM2 fix**: langsung `server.js` dari `/usr/local/lib/node_modules/9router/app/server.js`, bukan CLI wrapper (`detached: true` gak cocok PM2 fork mode)
+- **PM2 multi-app**: `/root/ecosystem.config.js` dengan 3 apps (9router, keirouter, virtusoul). `pm2 startup` untuk systemd auto-start VPS boot.
+- **KeiRouter v0.1.23**: Go binary statis di `/usr/local/bin/keirouter`, port :20180, API key `kr_WZBymR3RkbslPjx5kWDYdjf3JAJFyLuP`. 241 models dari Kiro + providers lain.
+- **VirtuSoul Router**: Python FastAPI package di `/opt/virtusoul-router/venv`, port :4000, ML-based query classifier (sentence-transformers). Perlu OpenRouter API key untuk routing ke upstream.
+
+### ⏳ Remaining
+- **FreeRouter** — perlu simplify auth dari OpenClaw ke API key sederhana
+- **opencode.json** — perlu final provider entries untuk semua router
+- **End-to-end verification** — test opencode dengan masing-masing provider
+
+### Files Changed
+- `docs/MANUAL_TEST_GUIDE.md` (DELETED)
+- `docs/archive/TASK_STRATEGY_SYNC_ENGINE.md` (DELETED)
+- `docs/archive/TASK_STRATEGY_SYNC_ENGINE_V2.md` (DELETED)
+- `README.md` (modified — dead link fix + typo)
+- `src/services/api.ts` (modified — dead link fix)
+- `opencode.json` (modified — added keirouter + virtusoul providers)
+- `/root/ecosystem.config.js` (NEW) — PM2 multi-app config
+- `/root/ai-router-proxy/server.js` (NEW) — Fallback proxy port 2050
+
+### Verification
+- [x] `ss -tlnp`: 9router:20128 LISTEN, keirouter:20180 LISTEN, virtusoul:4000 LISTEN, proxy:2050 LISTEN
+- [x] `/v1/models`: 9router = 62 models, keirouter = 241 models, virtusoul = 1 model (virtusoul-v1)
+- [n/a] `npx tsc --noEmit` — router chain, not applicable
+- [n/a] `npm test` — router chain, not applicable
+
+## Session 2026-07-01 (session 15c): Backtest Audit Fix — COMPLETED
+
+### 🔴 Mission
+Fix 3 bugs dari audit Backtest: Custom Universe, sync dengan Portfolio, loading indicator.
+
+### 🟢 Fixes Delivered
+
+**Fix 1A — Custom Universe: Hapus MultiSearchableSelect kosong dari StrategySettingsPanel**
+- Hapus `StrategySettingsPanel.tsx:153-168` yang render `MultiSearchableSelect` dengan `options={[]}`
+- Hapus import `MultiSearchableSelect` dari panel
+- **Akibat**: User tidak bisa memilih custom universe di backtest sidebar karena panel render picker kosong (tidak ada options)
+
+**Fix 1B — Custom Universe: Tambah picker beneran di Portfolio sidebar**
+- `AppSidebar.tsx:277-289`: tambah custom universe picker di Portfolio sidebar
+- Pakai `STOCKS_DATA` sebagai sumber data ticker (bukan `options={[]}`)
+- **Akibat**: Custom universe picker hanya ada di backtest sidebar (yang rusak), tidak ada di Portfolio sidebar
+
+**Fix 1C/2A — effectiveConfig selective merge**
+- Sebelumnya: `{ ...backtestConfig, ...engineConfig }` — semua field engine override
+- Sesudah: hanya `STRATEGY_MERGE_KEYS` (13 field strategi) diambil dari `engineConfig`
+- Backtest-specific fields (`algoCapital`, `simStartDate`, `simEndDate`) tetap dari `backtestConfig`
+- **Akibat**: Sebelumnya strategy fields dari engineConfig bisa meng-override date range/capital backtest
+
+**Fix 1D — configFingerprint include customUniverse**
+- `configFingerprint` sekarang include `customUniverse` + depend ke `effectiveConfig`
+- **Akibat**: Sebelumnya fingerprint tidak depend ke customUniverse, jadi configChanged banner tidak muncul saat custom universe berubah
+
+**Fix 3A — setTimeout(0) untuk loading progress**
+- `await new Promise(r => setTimeout(r, 0))` sebelum `runStrategy()`
+- Biarkan React commit state `setBacktestProgress(45)` ke DOM sebelum blocking computation
+- **Akibat**: Progress bar macet di 45% karena React batch state update → render terjadi setelah runStrategy() selesai
+
+**Fix 3B — setBacktestProgress(0) di catch**
+- Tambah `setBacktestProgress(0)` di catch block
+- **Akibat**: Progress bar tetap di 45% saat backtest gagal
+
+### Files Modified
+- `src/components/StrategySettingsPanel.tsx` — Hapus MultiSearchableSelect + import
+- `src/components/AppSidebar.tsx` — Tambah custom universe picker Portfolio sidebar
+- `src/components/SimulationTab.tsx` — effectiveConfig selective merge, configFingerprint dengan customUniverse + depend effectiveConfig, setTimeout(0), setBacktestProgress(0) di catch
+
+### Verification
+- [x] `npx tsc --noEmit` PASS 0 errors
+- [x] `npm test` 239/239 tests passing
 
 ## Session 2026-06-26 (session 12): Konsolidasi UI + Backtest ↔ Portfolio Koherensi — COMPLETED
 
