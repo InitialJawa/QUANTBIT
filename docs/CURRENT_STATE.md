@@ -5,7 +5,7 @@
 | Tanggal | 2026-07-01 |
 | Status | Development |
 | Progress | ~99% |
-| Sprint | Sesi 16 — DB sebagai SOT: Seed Production D1 (2026-07-01) |
+| Sprint | Sesi 16 — DB Seed Production D1 + Landing Page Retheme & Deploy (2026-07-01) |
 
 ## Active Architecture
 
@@ -85,3 +85,20 @@ stock_fundamentals: 188 rows dengan quality>0
 - **Analytics scores**: dari DB (`stock_fundamentals`)
 - **User settings** (`crashSensitivity`) harus di-respect semua komponen
 - **DB is single source of truth** — semua engine baca dari D1, bukan file statis
+
+---
+
+## Landing Page Retheme & Deploy (Sesi 16 — 2026-07-01)
+
+### Mission
+Retheme landing page dari teal/amber/glass ke black+green (terminal aesthetic) murni, ganti semua mockup SVG dengan 4 real screenshots dari QUANTBIT app, dan deploy ulang ke Cloudflare Pages.
+
+### Delivered
+- **Full retheme** — `../QUANTBIT-landing/styles.css` dan `index.html` diubah dari teal/amber/glass ke black + green terminal aesthetic murni. Semua gradien, glassmorphism, dan aksen teal dihapus, diganti dengan monokrom hitam + hijau neon.
+- **4 real screenshots** — Mockup SVG di hero dan preview section diganti dengan screenshot asli dari Playwright: `market-terminal.png`, `backtest-terminal.png`, `portfolio-terminal.png`, `analytics-terminal.png`
+- **Deploy sukses** — Cloudflare Pages deploy via wrangler CLI: `https://ca9729b6.quantbit-landing.pages.dev`
+- **Token tersimpan** — `[REVOKED]` (belum di-revoke)
+
+### Pending
+- **Revoke CF API token** — Token `cfut_...5923e109a` masih aktif, revoke jika tidak diperlukan
+- **Pantau landing page** — Verifikasi berkala hero images, layout responsive, broken assets

@@ -44,5 +44,6 @@
 | Branch | `main` |
 | Version | 1.0.0 |
 | Host | Cloudflare Pages |
+| Landing Page | Static site di sibling directory `../QUANTBIT-landing` — retheme black+green terminal aesthetic, 4 real app screenshots sebagai hero/preview (deploy `ca9729b6` via wrangler CLI 2026-07-01) |
 | API | Cloudflare Pages Functions + local Express (port 3001) |
 | Repo | https://github.com/InitialJawa/QUANTBIT |

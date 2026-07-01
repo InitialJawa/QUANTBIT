@@ -211,6 +211,20 @@ $ npx vite build     # PASS
 ## 2026-06-25 — Quantbit AI Depth Upgrade (Levels 1+2+3+4)
 **Keputusan:** Meng-upgrade `Quantbit AI` (FloatingAIChat) dari Q&A only menjadi **fully integrated agent** dengan 4 levels, sesuai spec di `docs/AI_DEPTH_UPGRADE_PLAN.md`. Semua keputusan sudah dikunci sejak plan; eksekusi dilakukan dalam satu sesi (S6) tanpa klarifikasi tambahan.
 
+## 2026-07-01 — Landing Page Dipisah ke Static Sibling Project
+**Keputusan:** Landing page marketing QUANTBIT dibangun sebagai sibling static project `../QUANTBIT-landing`, bukan dimasukkan ke dalam aplikasi terminal React utama.
+
+**Alasan:**
+- Aplikasi utama tidak punya landing route terpisah; pre-auth screen saat ini adalah `LoginScreen.tsx`, bukan halaman marketing
+- User sudah menghapus Cloudflare Pages landing lama dan ingin mengganti dengan versi visual baru tanpa mengganggu terminal production
+- Environment lokal masih Node 18, sehingga stack Astro terbaru tidak praktis; static HTML/CSS memberi hasil cepat, ringan, dan cukup untuk deploy manual
+- Screenshot-first layout lebih cocok untuk menjual fitur QUANTBIT daripada memperpanjang copy text saja
+
+**Konsekuensi:**
+- Source landing page tidak berada di bawah subtree repo `/root/QUANTBIT`, jadi deploy dan asset management dilakukan terpisah
+- Docs repo utama harus mencatat lokasi sibling project dan status deploy manualnya
+- Deploy landing page baru menunggu `wrangler login` dan pembuatan ulang Pages project Cloudflare yang lama sudah dihapus
+
 **Filosofi:** AI = presentation/interface layer. Math tetap deterministic di `engine/`. Semua action **WAJIB** dapat approval user sebelum eksekusi (zero auto-execute). Proactive alert default ON tapi user bisa disable via Settings.
 
 ### Level 1 — Smarter Q&A
@@ -515,3 +529,22 @@ Server fetches last 20 messages from past sessions (excluding current), formats 
 - Edge case: toggle ON dengan draft unsynced → modal konfirmasi 3 opsi
 - 8 file berubah (+821/-610 LOC, mostly removed inline settings), 1 file baru (StrategySettingsPanel.tsx)
 - Lihat ADR-011 untuk detail lengkap + SOT flow diagram
+
+## 2026-07-01 — Landing Page Retheme Black+Green + Real Screenshots (Sesi 16)
+**Keputusan:** Landing page di-retheme total dari teal/amber/glass ke black+green terminal aesthetic murni. Semua mockup SVG diganti dengan 4 real screenshots dari QUANTBIT app yang di-capture via Playwright. Deploy ke Cloudflare Pages menggunakan wrangler CLI.
+
+**Alasan:**
+- Teal/amber/glass tidak sesuai dengan identitas terminal yang ingin ditonjolkan
+- Screenshot asli lebih meyakinkan daripada mockup SVG buatan tangan
+- Playwright capture memastikan screenshot selalu representatif dengan app real
+
+**Detail teknis:**
+- Palette: background `#0a0a0a`, card `#1a1a1a`, accent `#00ff41` (hijau neon), border `#2a2a2a`
+- 4 screenshot di-capture dari `localhost:5173` via Playwright: market-terminal, backtest-terminal, portfolio-terminal, analytics-terminal
+- Deploy via `npx wrangler pages deploy . --project-name quantbit-landing` → hash `ca9729b6`
+- Token CF API `[REVOKED]` digunakan untuk deploy, masih aktif
+
+**Konsekuensi:**
+- Landing page visual berubah total — perlu monitoring post-deploy untuk regresi
+- Token CF API perlu di-revoke jika tidak digunakan lagi
+- Screenshot perlu di-capture ulang jika UI app berubah signifikan
