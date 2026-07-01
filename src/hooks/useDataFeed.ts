@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getStock, STOCKS_DATA } from "../stocksData";
+import { getStock } from "../stocksData";
 import { setFundamentalsData } from "../fundamentalsCache";
 import { DataStatus } from "../types/DataStatus";
 import { MKT, setScanData } from "../marketData";
@@ -20,7 +20,6 @@ export function useDataFeed() {
   const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">("yahoo");
   const [isGoapiConnected, setIsGoapiConnected] = useState(false);
   const [isYahooConnected, setIsYahooConnected] = useState(false);
-  const [priceFluctuations, setPriceFluctuations] = useState<Record<string, number>>({});
   const [mktRevision, setMktRevision] = useState(0);
   const [dbSyncStatus, setDbSyncStatus] = useState<SyncStatus>({
     lastSynced: null,
@@ -141,35 +140,6 @@ export function useDataFeed() {
 
   useEffect(() => { refreshRSFromRegime(); }, [mktRevision]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const jakarta = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-      const day = jakarta.getDay();
-      const hour = jakarta.getHours();
-      const marketOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 15;
-      setPriceFluctuations(prev => {
-        const next = { ...prev };
-        STOCKS_DATA.forEach(stock => {
-          if (!marketOpen) { next[stock.ticker] = 0; return; }
-          let base = stock.currentPrice;
-          if (dataFeed === "goapi" && goapiPrices[stock.ticker]) base = goapiPrices[stock.ticker].close;
-          else if (dataFeed === "yahoo" && yahooPrices[stock.ticker]) base = yahooPrices[stock.ticker].close;
-          const offset = next[stock.ticker] || 0;
-          // Small mean-reverting random walk so the price "breathes" inside the trading band.
-          // Damped toward 0 so it cannot drift unboundedly outside ±5% cap.
-          const meanReversion = -offset * 0.15;
-          const noise = (Math.random() - 0.5) * base * 0.002;
-          const newOffset = offset + meanReversion + noise;
-          const cap = base * 0.05;
-          next[stock.ticker] = Math.max(-cap, Math.min(cap, newOffset));
-        });
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [goapiPrices, yahooPrices, dataFeed]);
-
   const getDynamicStock = (ticker: string): StockData | undefined => {
     const rawStock = getStock(ticker);
     if (!rawStock) return undefined;
@@ -185,9 +155,8 @@ export function useDataFeed() {
       baseChange = yahooPrices[rawStock.ticker].pct;
     }
 
-    const offset = priceFluctuations[rawStock.ticker] || 0;
-    const activePrice = Math.max(10, Math.round(basePrice + offset));
-    const dynamicChange = parseFloat((((activePrice - basePrice) / basePrice) * 100 + baseChange).toFixed(2));
+    const activePrice = Math.max(10, Math.round(basePrice));
+    const dynamicChange = baseChange;
 
     const buildChart = (count: number, spread: number, labels: string[]) => {
       const openPrice = Math.round(activePrice * (1 - dynamicChange / 100 * spread));
@@ -224,7 +193,7 @@ export function useDataFeed() {
     dataFeed, setDataFeed,
     goapiPrices, yahooPrices,
     isGoapiConnected, isYahooConnected,
-    priceFluctuations, mktRevision,
+    mktRevision,
     getDynamicStock,
     syncStatus: dbSyncStatus,
     triggerSync,

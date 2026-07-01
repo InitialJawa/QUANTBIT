@@ -93,7 +93,7 @@ export function MarketTab({
   const isFilteredByStrategy =
     engineConfig.simulationMode === "custom" && engineConfig.customUniverse.length > 0;
 
-  const ihsgData = useMemo(() => getIhsgData(), []);
+  const ihsgData = getIhsgData();
   const ihsgCloses = useMemo(() => ihsgData.map(d => d.close), [ihsgData]);
   const rsiIHSG = useMemo(() => computeRSI(ihsgCloses, 14), [ihsgCloses]);
   const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);

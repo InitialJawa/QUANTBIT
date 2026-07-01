@@ -968,6 +968,7 @@ async function handleYahooPrices(env: Env): Promise<Response> {
     });
     if (!resp.ok) throw new Error(`Yahoo HTTP ${resp.status}`);
     const apiRes: any = await resp.json();
+    if (!apiRes) throw new Error("Yahoo returned empty response");
     const prices: Record<string, { close: number; change: number; pct: number }> = {};
     for (const [symRaw, item] of Object.entries(apiRes)) {
       let sym = (symRaw as string).split(".")[0];

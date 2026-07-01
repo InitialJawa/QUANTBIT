@@ -81,7 +81,7 @@ export function AppSidebar({
   const totalReturn = totalCurrentValue - totalInvestment;
   const totalReturnPct = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
-  const ihsgData = useMemo(() => getIhsgData(), []);
+  const ihsgData = getIhsgData();
   const ihsgCloses = useMemo(() => ihsgData.map(d => d.close), [ihsgData]);
   const rsiIHSG = useMemo(() => computeRSI(ihsgCloses, 14), [ihsgCloses]);
   const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);

@@ -77,7 +77,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     }
     return {
       ...d,
-      stockRanks: d[activeProfileKey as keyof BacktestDayData] as Record<string, number> || d.stockRanks,
+      stockRanks: d[activeProfileKey as keyof BacktestDayData] as Record<string, number> || d.stockRanks || {},
     };
   });
 
@@ -176,7 +176,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   logs.push({
     date: day0.date,
     type: "BUY",
-    message: `Inisialisasi portofolio ${topTickers.length} emiten dari ${Object.keys(day0.stockPrices).length} kandidat — alokasi ${(initialAlloc.cash / cap * 100).toFixed(0)}% kas, ${(100 - initialAlloc.cash / cap * 100).toFixed(0)}% saham`,
+    message: `Inisialisasi portofolio ${topTickers.length} emiten dari ${Object.keys(day0.stockPrices || {}).length} kandidat — alokasi ${(initialAlloc.cash / cap * 100).toFixed(0)}% kas, ${(100 - initialAlloc.cash / cap * 100).toFixed(0)}% saham`,
   });
 
   const getPointInTimeDate = (date: Date): Date => {
@@ -385,10 +385,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       const window60 = filtered.slice(lookback60, stepIndex + 1).map(d => d.ihsgPrice);
       const peak60 = window60.length > 0 ? Math.max(...window60) : day.ihsgPrice;
       const drawdown60 = peak60 > 0 ? ((day.ihsgPrice - peak60) / peak60) * 100 : 0;
-      const breadthAbove60 = Object.values(day.stockRanks).filter(r => r > 0 && r <= config.topNCount * 3).length;
-      const watchlistCount = Object.keys(day.stockRanks).length;
+      const breadthAbove60 = Object.values(day.stockRanks || {}).filter(r => r > 0 && r <= config.topNCount * 3).length;
+      const watchlistCount = Object.keys(day.stockRanks || {}).length;
       const riskScore = Math.min(100, Math.max(0, Math.abs(ihsgMonthly) * 4));
-      const avgValueScore = Object.keys(day.stockRanks).length > 0
+      const avgValueScore = Object.keys(day.stockRanks || {}).length > 0
         ? Object.entries(day.stockNormScores || {})
             .reduce((sum, [, ns]) => sum + (ns.value ?? 50), 0) / Math.max(1, Object.keys(day.stockNormScores || {}).length)
         : 50;

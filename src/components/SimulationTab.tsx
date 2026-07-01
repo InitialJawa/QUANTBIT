@@ -287,7 +287,7 @@ export function SimulationTab({
         date: item.date,
       };
       if (item.ranks) {
-        Object.entries(item.ranks).forEach(([ticker, r]) => {
+        Object.entries(item.ranks || {}).forEach(([ticker, r]) => {
           flatItem[ticker] = r;
         });
       }
@@ -1118,7 +1118,7 @@ export function SimulationTab({
                       ) : Object.keys(backtestResult.finalPositions || {}).length > 0 ? (
                         <>
                           <div className="text-sm font-black font-mono text-emerald-400 flex items-center gap-1.5">
-                            <Briefcase className="w-4 h-4" /> Di {Object.keys(backtestResult.finalPositions).length} Saham
+                            <Briefcase className="w-4 h-4" /> Di {Object.keys(backtestResult.finalPositions || {}).length} Saham
                           </div>
                           <span className="text-caption font-mono text-white/50 block">
                             {backtestResult.crashCount

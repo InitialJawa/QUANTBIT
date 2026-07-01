@@ -4,6 +4,8 @@ export function computeDayRankings(
   stockNormScores: Record<string, { quality: number; growth: number; value: number; momentum: number; dividend: number }>,
   profileWeights: ProfileWeights
 ): Record<string, number> {
+  if (!stockNormScores) return {};
+
   const scores: { ticker: string; score: number }[] = [];
 
   for (const [ticker, ns] of Object.entries(stockNormScores)) {
@@ -32,6 +34,8 @@ export function pickTopTickersByRank(
   allowedTickers: string[],
   count: number
 ): string[] {
+  if (!dayRanks) return [];
+
   return Object.entries(dayRanks)
     .filter(([ticker]) => {
       if (!allowedTickers.includes(ticker)) return false;
