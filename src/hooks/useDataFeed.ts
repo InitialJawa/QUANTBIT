@@ -88,7 +88,7 @@ export function useDataFeed() {
         })
         .catch(() => {});
 
-      api.get<{ success: boolean; data: any[] }>("/api/backtest-data")
+      api.get<{ success: boolean; data: any[] }>("/api/backtest-data?from=2025&to=2026")
         .then(apiRes => {
           if (apiRes.success && Array.isArray(apiRes.data)) {
             setIhsgHistory(apiRes.data.map((d: any) => ({ close: d.ihsgPrice, date: d.date, isCarriedForward: d.isCarriedForward || false })));
