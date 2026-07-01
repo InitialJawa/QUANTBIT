@@ -91,3 +91,10 @@ jobs:
             git commit -m "chore: daily data update [skip ci]"
             git push
           fi
+
+      - name: Trigger production force-sync (populate D1 idx_scan_data + stock_fundamentals)
+        run: |
+          curl -s -X POST "https://quantbit-terminal.pages.dev/api/engine/force-sync" \
+            -H "Content-Type: application/json" \
+            -d '{"secret":"${{ secrets.CRON_SECRET }}"}' \
+            --max-time 120 || echo "force-sync non-critical"

@@ -611,6 +611,13 @@ export async function onRequest(context: EventContext<Env, string, unknown>) {
   // ALL /api/engine/force-sync
   if (path === "/api/engine/force-sync") {
     try {
+      const cronSecret = env.CRON_SECRET;
+      if (cronSecret) {
+        const body: any = await request.clone().json().catch(() => ({}));
+        if (body.secret !== cronSecret) {
+          return error("Unauthorized", 401);
+        }
+      }
       const results = await runIdx80Scan(env);
       return json({ success: true, count: results.length, message: "Scan completed" });
     } catch (e: any) {
@@ -1154,6 +1161,18 @@ async function runIdx80Scan(env: Env): Promise<any[]> {
     await env.DB.prepare(
       "INSERT INTO idx_scan_data (data, last_updated) VALUES (?, datetime('now'))"
     ).bind(JSON.stringify(results)).run();
+
+    // Also upsert scores into stock_fundamentals so /api/engine/idx80
+    // can merge them (production D1 is now populated on force-sync).
+    const upsert = env.DB.prepare(
+      `INSERT OR REPLACE INTO stock_fundamentals (ticker, quality, growth, value, momentum, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`
+    );
+    for (const r of results) {
+      await upsert.bind(
+        r.ticker, r.quality, r.growth, r.value, r.momentum
+      ).run();
+    }
   }
 
   return results;
@@ -1213,4 +1232,5 @@ interface Env {
   EMAIL_FROM?: string;
   EMAIL_TO?: string;
   EMAIL_USER?: string;
+  CRON_SECRET?: string;
 }
