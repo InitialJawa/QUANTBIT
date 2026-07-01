@@ -1,7 +1,7 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { DataBadge } from "./DataBadge";
-import { getIhsgDrawdown60, isCrisisMode, getIhsgData } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrashActive, getIhsgData } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
 import { SearchableSelect } from "./SearchableSelect";
@@ -176,7 +176,7 @@ export function PortfolioTracker({
   };
 
   const ihsgDrawdown60 = getIhsgDrawdown60();
-  const isIHSGInCrisis = isCrisisMode();
+  const isIHSGInCrisis = isCrashActive();
 
   const dbIhsgPrices = getIhsgData().map(d => d.close);
   const strategyEval = useMemo(() => evaluateStrategy(

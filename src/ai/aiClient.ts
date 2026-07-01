@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 import { api } from "../services/api";
 import { MKT, RS } from "../marketData";
-import { getIhsgDrawdown60, isCrisisMode } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrashActive } from "../marketRegimeEngine";
 import { computeBuyPressureFromMarket } from "../engine/buyPressure";
 import { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS } from "./toolCallParser";
 import { generateMockResponse } from "./devMockAI";
@@ -91,7 +91,7 @@ export function buildLiveContext(inputs: BuildContextInputs = {}): AILiveContext
     }
 
     if (c.enableCrashProtection) {
-      const shouldExit = isCrisisMode();
+      const shouldExit = isCrashActive();
       ctx.strategyEvaluation = {
         shouldExit,
         reason: shouldExit

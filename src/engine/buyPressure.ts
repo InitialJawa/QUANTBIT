@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 import { useMemo } from "react";
 import { MKT, RS, getProcessedLeaders } from "../marketData";
-import { getIhsgDrawdown60, isCrisisMode } from "../marketRegimeEngine";
+import { getIhsgDrawdown60, isCrashActive } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 
@@ -146,7 +146,7 @@ export function computeBuyPressure(input: BuyPressureInput): BuyPressureResult {
  * The dashboard uses this to grey out and show CASH DEFENSE message.
  */
 export function withCrisisOverride(bps: BuyPressureResult): BuyPressureResult {
-  if (isCrisisMode()) {
+  if (isCrashActive()) {
     return {
       ...bps,
       valid: false,

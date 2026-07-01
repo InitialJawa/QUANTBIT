@@ -2,7 +2,7 @@
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem } from "../types";
-import { getAuditTrail, isCrisisMode, computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
+import { getAuditTrail, isCrashActive, computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
 import { ExplainButton } from "./ExplainButton";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -78,7 +78,7 @@ export function MarketTab({
   });
   const myReturnPercent = totalCost > 0 ? ((totalValueNow - totalCost) / totalCost) * 100 : 0;
 
-  const isIHSGInCrisis = isCrisisMode();
+  const isIHSGInCrisis = isCrashActive();
   const currentStatus = isIHSGInCrisis ? "RISK OFF" : RS.status;
   const currentAction = isIHSGInCrisis ? "LIQUIDATE / CASH OUT" : RS.action;
 

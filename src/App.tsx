@@ -1,7 +1,7 @@
 import { useEffect, lazy, Suspense } from "react";
 import { STOCKS_DATA } from "./stocksData";
 import { MKT } from "./marketData";
-import { isCrisisMode } from "./marketRegimeEngine";
+import { isCrashActive } from "./marketRegimeEngine";
 import type { StockData } from "./types";
 import { api } from "./services/api";
 import { StockDrawer } from "./components/StockDrawer";
@@ -137,7 +137,7 @@ function AppContent({ logout }: { logout: () => void }) {
   }, [ui.theme, df.dataFeed, engineConfig.activeProfileId, pm.cash, user, pm.isDbLoaded]);
 
   const activeStock = df.getDynamicStock(ui.selectedTicker) || STOCKS_DATA[0];
-  const isIHSGInCrisis = isCrisisMode();
+  const isIHSGInCrisis = isCrashActive();
   const activeUniverseStocks = STOCKS_DATA;
   const filteredStocks = activeUniverseStocks.filter((s) => {
     const q = ui.searchQuery.toLowerCase();

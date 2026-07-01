@@ -210,13 +210,20 @@ export function SimulationTab({
     return null;
   };
   const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
-  // Sesi 12: when backtestUseLiveStrategy=true, strategy fields used at run-time
-  // are sourced from engineConfig (not backtestConfig) so results are always
-  // coherent with Portfolio. Date range, capital, and singleTicker remain
-  // backtest-specific.
-  const effectiveConfig = backtestUseLiveStrategy
-    ? { ...backtestConfig, ...engineConfig }
-    : backtestConfig;
+  const STRATEGY_MERGE_KEYS: Array<keyof typeof engineConfig> = [
+    "activeProfileId", "universe", "topNCount", "simulationMode",
+    "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
+    "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
+    "singleSellTrigger", "singleBuyTrigger", "enableCrossover",
+  ];
+  const effectiveConfig = useMemo(() => {
+    if (!backtestUseLiveStrategy) return backtestConfig;
+    const merged = { ...backtestConfig };
+    for (const k of STRATEGY_MERGE_KEYS) {
+      (merged as any)[k] = (engineConfig as any)[k];
+    }
+    return merged;
+  }, [backtestConfig, engineConfig, backtestUseLiveStrategy]);
   const backtestActiveProfile = useMemo(() => engineConfig.profiles.find(p => p.id === effectiveConfig.activeProfileId) || engineConfig.profiles[0], [engineConfig.profiles, effectiveConfig.activeProfileId]);
 
   // A2 fix: re-fetch historical data when the active profile changes so the
@@ -265,17 +272,18 @@ export function SimulationTab({
   // D7 — track last-run config so we can show "Config changed" banner
   const lastRunConfigRef = useRef<string>("");
   const configFingerprint = useMemo(() => JSON.stringify({
-    profile: backtestConfig.activeProfileId,
-    mode: backtestConfig.simulationMode,
-    universe: backtestConfig.universe,
-    topN: backtestConfig.topNCount,
-    capital: backtestConfig.algoCapital,
-    start: backtestConfig.simStartDate,
-    end: backtestConfig.simEndDate,
-    crash: backtestConfig.crashSensitivity,
-    trigger: backtestConfig.singleSellTrigger,
-    buffer: backtestConfig.reserveBufferPct,
-  }), [backtestConfig]);
+    profile: effectiveConfig.activeProfileId,
+    mode: effectiveConfig.simulationMode,
+    universe: effectiveConfig.universe,
+    topN: effectiveConfig.topNCount,
+    capital: effectiveConfig.algoCapital,
+    start: effectiveConfig.simStartDate,
+    end: effectiveConfig.simEndDate,
+    crash: effectiveConfig.crashSensitivity,
+    trigger: effectiveConfig.singleSellTrigger,
+    buffer: effectiveConfig.reserveBufferPct,
+    custom: effectiveConfig.customUniverse,
+  }), [effectiveConfig]);
   const configChanged =
     lastRunConfigRef.current !== "" &&
     lastRunConfigRef.current !== configFingerprint;
@@ -448,6 +456,8 @@ export function SimulationTab({
 
       const cap = parseInt(effectiveConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
 
+      await new Promise(r => setTimeout(r, 0));
+
       const result = runStrategy({
         dayData: historicalData,
         config: {
@@ -537,6 +547,7 @@ export function SimulationTab({
       console.error("Backtest failed:", err);
       alert(err.message || "Backtest gagal. Periksa tanggal mulai.");
       setBacktesting(false);
+      setBacktestProgress(0);
     }
   };
 

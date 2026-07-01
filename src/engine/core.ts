@@ -610,8 +610,7 @@ export function evaluateStrategy(
     return { shouldExit: false, reason: "IHSG data tidak mencukupi", targetSafeHaven: null };
   }
 
-  // Sama persis dengan backtest state machine + isCrisisMode():
-  // crashDetector.detectCrashAlgo() + detectRecoveryAlgo() override.
+  // Sama persis dengan isCrashActive(): crashDetector.detectCrashAlgo() langsung, stateless.
   const crash = detectCrashAlgo(marketData.ihsgPrices, marketData.currentIhsgPrice, config.crashSensitivity);
   const recovery = detectRecoveryAlgo(marketData.ihsgPrices, marketData.currentIhsgPrice);
 

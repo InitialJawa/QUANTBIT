@@ -2,7 +2,7 @@
 import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { getIhsgData, computeRSI, computeMACD, isCrisisMode } from "../marketRegimeEngine";
+import { getIhsgData, computeRSI, computeMACD, isCrashActive } from "../marketRegimeEngine";
 import type { PortfolioItem, StockData } from "../types";
 import { useState, useMemo } from "react";
 import { ManageProfilesModal } from "./ManageProfilesModal";
@@ -69,7 +69,7 @@ export function AppSidebar({
   isWalletOpen,
   onToggleWallet,
 }: AppSidebarProps) {
-  const isIHSGInCrisis = isCrisisMode();
+  const isIHSGInCrisis = isCrashActive();
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -274,6 +274,19 @@ export function AppSidebar({
             disabled={isSettingsLocked}
             disabledTooltip="Settings terkunci. Klik tombol 'Terkunci' di header untuk membuka."
           />
+          {/* Custom Universe picker — visible only in custom mode */}
+          {engineConfig.simulationMode === "custom" && (
+            <div className="px-2 py-1.5">
+              <span className="text-label font-medium text-tertiary uppercase tracking-wider block mb-1">Saham Custom</span>
+              <MultiSearchableSelect
+                options={STOCKS_DATA.map(s => ({ value: s.ticker, label: `${s.ticker} — ${s.name}` }))}
+                value={engineConfig.customUniverse || []}
+                onChange={(v) => updateConfigValue("customUniverse", v)}
+                placeholder="Cari saham..."
+                theme="emerald"
+              />
+            </div>
+          )}
           {/* Portfolio-specific concerns: DCA + Locked toggle */}
           <div className="px-2 py-1.5 space-y-2 border-t border-white/[0.04] mt-2">
             <div className="flex items-center justify-between">

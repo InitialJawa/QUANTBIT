@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Layers, ShieldAlert, Settings2, ChevronDown, ChevronUp, Wallet } from "lucide-react";
-import { MultiSearchableSelect } from "./MultiSearchableSelect";
 
 export interface StrategyConfigShape {
   activeProfileId: "aman" | "agresif" | "dividen" | string;
@@ -150,22 +149,7 @@ export function StrategySettingsPanel({
             />
           </div>
 
-          {/* Custom Universe — visible only in custom mode */}
-          {config.simulationMode === "custom" && (
-            <div>
-              <span className="text-label text-tertiary block mb-1">Custom Universe (Eksklusif)</span>
-              <MultiSearchableSelect
-                options={[]} // populated by parent; we just need the visual
-                value={config.customUniverse || []}
-                onChange={(v) => onChange("customUniverse", v)}
-                placeholder="Cari saham..."
-                theme="emerald"
-              />
-              <p className="text-label text-tertiary mt-1 italic">
-                Catatan: MultiSearchableSelect perlu option list untuk filter — populated by parent AppSidebar.
-              </p>
-            </div>
-          )}
+          
         </div>
       </div>
 

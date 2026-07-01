@@ -93,7 +93,8 @@ function _initCrisisState(): void {
  *  Live current price (MKT.ihsg.value) di-update terpisah oleh data feed (Yahoo/GoAPI).
  *  Decision engines (evaluateStrategy, isCrisisMode, dll) pakai DB last close dari prices[],
  *  bukan MKT.ihsg.value — lihat AGENTS.md: DB = SOT untuk semua decision engine.
- *  Resets crisis state machine so next isCrisisMode() call re-initializes from scratch. */
+ *  Resets crisis state machine so next isCrisisMode() call re-initializes from scratch.
+ *  UI crash gate: isCrashActive() — stateless, no cooldown, single source of truth for all panels. */
 export function setIhsgHistory(data: { close: number; date: string; isCarriedForward?: boolean }[]) {
   MKT.ihsg.prices = data;
   // Only reset if data length changed — avoids unnecessary re-init when
@@ -171,6 +172,18 @@ export function isCrisisMode(): boolean {
   }
 
   return _crisisInCrisis;
+}
+
+/** Stateless crash detector — no state machine, no cooldown.
+ *  Directly calls detectCrashAlgo() with current IHSG data and configured sensitivity.
+ *  Used as single source of truth for all UI panels (BPS override, market regime, banners). */
+export function isCrashActive(): boolean {
+  const prices = MKT.ihsg.prices;
+  if (prices.length < 2) return false;
+  const closes = prices.map(d => d.close);
+  const current = closes[closes.length - 1];
+  const result = detectCrashAlgo(closes, current, _crashSensitivity);
+  return result.signaled;
 }
 
 export function getIhsgData(): { close: number; date: string; isCarriedForward?: boolean }[] {
@@ -321,8 +334,7 @@ export function computeMarketRegime(): RegimeOutput {
   const above60 = scores.filter(s => s >= 60).length;
   const above70 = scores.filter(s => s >= 70).length;
 
-  // Unified: pakai isCrisisMode() (detectCrashAlgo + detectRecoveryAlgo = same as backtest)
-  const crisisThreshold = isCrisisMode();
+  const crisisThreshold = isCrashActive();
   const dd60 = getIhsgDrawdown60();
   const bearishTrend = !aboveMa20 && !aboveMa50;
   const bullishTrend = aboveMa20 && aboveMa50;

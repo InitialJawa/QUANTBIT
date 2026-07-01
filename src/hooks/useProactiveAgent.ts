@@ -12,7 +12,7 @@ import { useBuyPressure } from "../engine/buyPressure";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useUIState } from "./useUIState";
 import { useNotifications } from "../contexts/NotificationContext";
-import { isCrisisMode } from "../marketRegimeEngine";
+import { isCrashActive } from "../marketRegimeEngine";
 
 export const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes per rule (legacy)
 
@@ -119,11 +119,11 @@ export function useProactiveAgent(): void {
     }
 
     // ── Rule 5: Crisis mode ON — defence override ──────────────────
-    const r5 = isCrisisMode() && engineConfig.enableCrashProtection;
+    const r5 = isCrashActive() && engineConfig.enableCrashProtection;
     if (transition("crisisOverride", r5)) {
       addNotification({
         title: "CASH DEFENSE — pasar dalam krisis",
-        message: "isCrisisMode() aktif. BPS di-override ke 'none'. Pertimbangkan alokasi ke safe haven.",
+        message: "Crash Protection aktif — BPS di-override ke 'none'. Alokasi ke safe haven.",
         type: "warning",
       });
     }

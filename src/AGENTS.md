@@ -58,7 +58,8 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 ## Crisis Detection (ADR-010 / FASE 1.1)
 
 - **Unified formula**: `getIhsgDrawdown60() <= -crashSensitivity` (60d-drawdown based).
-- `isCrisisMode()`, `computeMarketRegime()`, dan `useProactiveAgent.Rule6` semua pakai rumus yang sama.
+- `isCrashActive()` — stateless crash gate (SOT), dipakai semua panel Market/Portfolio/Banner.
+- `isCrisisMode()` — legacy state machine, hanya dipakai backtest engine.
 - `MKT.ihsg.monthly/weekly/daily` di-compute dari `_lastIhsgData` via `getIhsgMonthlyReturn()` (FASE 1.2).
   Hardcoded values di `marketData.ts` jadi fallback 0.
 - Lihat `marketRegimeEngine.ts` untuk detail.
@@ -107,7 +108,7 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/engine/core.ts` — `runStrategy()`, `shouldTriggerExit()`, `evaluateStrategy()`
 - `src/engine/dividendCache.ts` — `setDividendCache()`, `getDividendPerShare()` (extracted from core.ts)
   - **Rebalancing rules**: algo mode only (custom mode excluded from rank-based exit). `lastRebalanceMonth` init from day0 month (no day-1 false trigger). Swap candidates = `config.topNCount` (not hardcoded). Self-swap & duplicate positions prevented.
-- `src/marketRegimeEngine.ts` — `computeMarketRegime`, `refreshRSFromRegime`, `isCrisisMode`, `getIhsgDrawdown60`, `getIhsgMonthlyReturn/Weekly/Daily` (FASE 1.1-1.2)
+- `src/marketRegimeEngine.ts` — `computeMarketRegime`, `refreshRSFromRegime`, `isCrashActive`, `isCrisisMode` (legacy), `getIhsgDrawdown60`, `getIhsgMonthlyReturn/Weekly/Daily` (FASE 1.1-1.2)
 - `src/data/` — Data files (historical market data, IDX warehouse fundamental_idx_all.json)
 - `src/data/archive/` — Archived legacy data (FUNDAMENTAL_SNAPSHOTS, STOCK_FACTORS)
 - `src/services/` — API client
