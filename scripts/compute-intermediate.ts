@@ -19,7 +19,7 @@ function sqlPath(name: string): string {
 }
 
 function esc(v: any): string {
-  if (v == null || v === undefined) return "NULL";
+  if (v == null || v === undefined || (typeof v === "number" && !isFinite(v))) return "NULL";
   return String(v);
 }
 
