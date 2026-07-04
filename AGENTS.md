@@ -55,66 +55,29 @@ Update parent docs saat parent-level structure, ownership, workflow, atau child 
 ### Child DOX Index
 
 - `src/` — React UI components, hooks, contexts, engine, AI client, types, utils
-- `docs/` — AI Context Persistence System (project master, state, decisions, ADRs, audit/ archive/)
+- `scripts/` — Pipeline scripts: sync-fundamentals.ts (fetch Yahoo -> D1)
+- `docs/` — TASK.md (session SOT), research/ (V2 blueprint)
 - `handover/` — session snapshots
-- `scripts/` — data pipeline scripts (fetch, build, split, scrape)
-- `collectors/` — data collectors (IDX fundamental, market data)
-- `functions/` — Cloudflare Pages Functions (production API)
-- `data/` — raw datasets, historical market data, caches
-- `db/` — database schema and migrations
+- `research/` — V2 blueprint (33 docs)
+- `roadmap/` — fase roadmap (1-6)
 - `external/` — git submodules (idx-api)
 
 ---
 
-## Bagian 2 — InsForge Backend
-
-<!-- INSFORGE:START -->
-This project uses [InsForge](https://insforge.dev): an all-in-one, open-source Postgres-based backend (BaaS) that gives this app a database, authentication, file storage, edge functions, realtime, an AI model gateway, and payments through one platform.
-
-- **Project:** **My First Project** (API base `https://7k97rmp5.us-east.insforge.app`)
-- **Skills:** these InsForge skills are installed for supported coding agents. Reach for them before implementing any InsForge feature instead of guessing the API:
-  - `insforge`: app code with the `@insforge/sdk` client (database CRUD, auth, storage, edge functions, realtime, AI, email, and Stripe payments).
-  - `insforge-cli`: backend and infrastructure via the `insforge` CLI (projects, SQL, migrations, RLS policies, storage buckets, functions, secrets, payment setup, schedules, deploys).
-  - `insforge-debug`: diagnosing failures (SDK/HTTP errors, RLS denials, auth and OAuth issues) and running security or performance audits.
-  - `insforge-integrations`: wiring external auth providers (Clerk, Auth0, WorkOS, Better Auth, etc.) for JWT-based RLS, or the OKX x402 payment facilitator.
-  - `find-skills`: discovering additional skills on demand.
-- **Credentials:** app code reads keys from `.env.local`; the CLI reads `.insforge/project.json`. Never hardcode or commit keys.
-
-Key patterns:
-
-- Database inserts take an array: `insert([{ ... }])`.
-- Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
-- For storage uploads, persist both the returned `url` and `key`.
-<!-- INSFORGE:END -->
-
----
-
-## Bagian 3 — AI Context Persistence
-
-### Command Standar
-
-```
-/project-status
-→ baca: docs/PROJECT_MASTER.md + docs/CURRENT_STATE.md + docs/ACTIVE_TASK.md + docs/NEXT_ACTION.md
-```
+## Bagian 2 — Sesion Start
 
 Awal sesi baru:
 ```
-Read docs/AI_ONBOARDING.md and continue the project.
-```
-
-### Sesi Berikutnya
-```bash
-Read docs/AI_ONBOARDING.md and continue the project.
+Read docs/TASK.md and continue the project.
 ```
 
 ---
 
-## Bagian 4 — Project-Wide Rules
+## Bagian 3 — Project-Wide Rules
 
-- **No AI for financial math** — semua kalkulasi keuangan deterministic
+- **No AI for financial math** — semua kalkulasi deterministic
+- **DB = single source of truth** — semua engine baca dari D1, bukan file/in-memory
 - **Ask before adding dependencies**
 - **No refactor without DOX pass**
-- **Update docs after setiap sesi**
+- **Update docs setiap sesi**
 - **Buat handover setelah sesi berakhir**
-- **DB = single source of truth untuk market data** — WAJIB baca dari DB (`daily_overview` / `stock_daily`), JANGAN pakai live prices langsung (Yahoo/GoAPI) kecuali DB sudah sync. Live prices hanya boleh sebagai visual overlay dengan label DataStatus.STALE jika DB belum sync. Semua decision engine (backtest, strategy evaluation, portfolio valuation) HARUS pake data DB yang konsisten.
