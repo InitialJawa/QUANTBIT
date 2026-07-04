@@ -95,10 +95,43 @@ Production: CF Pages Functions + D1 (no server needed)
 - `functions/api/backtest-data.ts` (line 50): removed `.JK` suffix — now uses bare tickers throughout
 - `server.ts` (line 527): same fix applied to dev-mode Express server
 
-## Yang Loe Perlu Lakukan
-1. ✅ **Set GitHub Secrets** — done
-2. ✅ **Push** — done (trigger pipeline)
-3. **Test dari HP**: `https://quantbit-terminal.pages.dev` — cek Market, Analytics, Backtest
+## Sesi 23 — Backtest Production Fix (2026-07-04)
+
+### Bug 1: Migration 0004 wipes stock_daily data every pipeline run
+**Root cause**: `db/migrations/0004_v2_schema.sql` contains `DROP TABLE IF EXISTS stock_daily;` before `CREATE TABLE IF NOT EXISTS stock_daily`. Each pipeline "Apply D1 migrations" step drops and recreates the table, deleting all data.
+
+**Fixes**:
+- Removed `DROP TABLE IF EXISTS stock_daily;` from `db/migrations/0004_v2_schema.sql`
+
+### Bug 2: --full flag breaks pipeline-sync
+**Root cause**: `scripts/pipeline-sync.ts` reads `process.argv[2]` as mode (all/prices/fundamentals). `--full` was passed as first arg, making mode=`--full` instead of `all`, skipping both price and fundamental fetching.
+
+**Fixes**:
+- `scripts/pipeline-sync.ts`: parse `--full` as flag (not mode) using `process.argv.slice(2).find()`
+- `.github/workflows/pipeline.yml`: added `workflow_dispatch.inputs.full_sync` boolean for manual trigger
+
+### Bug 3: compute-intermediate NaN in SQL
+**Root cause**: `esc()` helper doesn't handle NaN. SMA/RSI/MACD return NaN for early days (not enough data), inserted as `NaN` in SQL → `SQLITE_ERROR: no such column: NaN`
+
+**Fixes**:
+- `scripts/compute-intermediate.ts`: `esc()` now uses `!isFinite(v)` to catch NaN/Infinity → returns `NULL`
+
+### Bug 4: backtest/run.ts missing topN rebalancing
+**Root cause**: `functions/api/backtest/run.ts` only had DCA buying logic (`if (dcaActive && dcaAmount > 0)`). The main rebalancing strategy (sell all → buy topN each period) was completely absent.
+
+**Fixes**:
+- Added monthly/weekly/quarterly rebalance date detection
+- Added sell-all → buy-topN logic on rebalance days
+- Added crash protection (skip buy when SMA50 < SMA200)
+- Sell uses full daily data (`allToday`, not topN-only `stocks`) for correct price
+- Unsold stocks carried forward when price data missing on rebalance day
+- Guard against `close <= 0` in buy calculations (prevents Infinity shares)
+
+### Status: ✅ ALL PRODUCTION BUGS FIXED
+- Gold chart: ✅ fixed earlier
+- Pipeline data fetching: ✅ fixed
+- Intermediate computation: ✅ fixed  
+- Backtest results: ✅ returns +16.64% with 319 trades
 
 ## Key Constraints
 - **NO AI for financial math**
@@ -111,4 +144,11 @@ Production: CF Pages Functions + D1 (no server needed)
 npx tsc --noEmit
 npx vite build
 npm run dev  # Express + Vite (dev mode with real data)
+```
+
+## Backtest CURL
+```bash
+curl -X POST "https://quantbit-terminal.pages.dev/api/backtest/run" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"2021-01-01","to":"2026-12-31","initialCash":100000000,"config":{"weights":{"quality":0.45,"growth":0.1,"value":0.05,"momentum":0.40,"dividend":0},"topN":5,"rebalanceFreq":"monthly","crashProtection":true,"dcaActive":false,"dcaAmount":0}}'
 ```
