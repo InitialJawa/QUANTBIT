@@ -63,7 +63,10 @@ async function fetchPrices(symbol: string, startDate: string): Promise<Record<st
         adjclose: q.adjclose ?? q.close,
       };
     }
-  } catch (e) { process.stdout.write(`⚠️`); }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    process.stdout.write(`⚠️ ${symbol} FAILED: ${msg.split("\n")[0].slice(0, 80)}`);
+  }
   return result;
 }
 
@@ -91,6 +94,7 @@ function writePriceSQL(
     const usdidr = macroData.usdidr?.[date];
 
     if (ihsg || gold || usdidr) {
+      // Always write the base market row (all macro fields, INSERT OR IGNORE preserves existing)
       lines.push(
         `INSERT OR IGNORE INTO market_daily(date,ihsg_close,ihsg_open,ihsg_high,ihsg_low,gold_close,gold_open,gold_high,gold_low,usdidr_rate) VALUES(` +
         `'${date}',` +
@@ -98,6 +102,14 @@ function writePriceSQL(
         `${esc(gold?.close)},${esc(gold?.open)},${esc(gold?.high)},${esc(gold?.low)},` +
         `${esc(usdidr?.close)}` +
         `);`
+      );
+    }
+    if (gold && gold.close > 0) {
+      // Separate UPDATE to fix existing rows that have NULL/0 gold from previous GC=F failures
+      lines.push(
+        `UPDATE market_daily SET ` +
+        `gold_close=${esc(gold.close)},gold_open=${esc(gold.open)},gold_high=${esc(gold.high)},gold_low=${esc(gold.low)} ` +
+        `WHERE date='${date}' AND (gold_close IS NULL OR gold_close = 0);`
       );
     }
 
@@ -240,7 +252,11 @@ async function main() {
     for (const m of MACRO) {
       process.stdout.write(`  ${m.symbol}...`);
       macroData[m.field] = await fetchPrices(m.symbol, startDate);
-      process.stdout.write(` ${Object.keys(macroData[m.field]).length} days\n`);
+      const dayCount = Object.keys(macroData[m.field]).length;
+      process.stdout.write(` ${dayCount} days\n`);
+      if (m.field === "gold" && dayCount === 0) {
+        console.error(`\n  ⚠️ WARNING: GC=F (gold) returned 0 days — gold_close will NOT be updated`);
+      }
       await sleep(300);
     }
 

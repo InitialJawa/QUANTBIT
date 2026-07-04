@@ -20,6 +20,7 @@ interface RawDay {
   date: string;
   ihsgPrice: number;
   goldPrice: number;
+  usdidrRate: number;
   stockAdjPrices?: Record<string, number>;
 }
 
@@ -91,6 +92,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
             date: d.date,
             ihsgPrice: d.ihsgPrice,
             goldPrice: d.goldPrice,
+            usdidrRate: d.usdidrRate ?? 16000,
             stockAdjPrices: d.stockAdjPrices,
           })));
         } else {
@@ -136,14 +138,20 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
       if (p.portfolioValue !== null) portMap.set(p.date, p.portfolioValue);
     }
 
-    const raw: ChartDay[] = slicedData.map(d => ({
-      date: d.date,
-      ihsg: d.ihsgPrice ?? null,
-      gold: d.goldPrice ?? null,
-      portfolio: portMap.get(d.date) ?? null,
-      ihsgSma20: null,
-      ihsgSma50: null,
-    }));
+    const GOLD_OZ_TO_GRAM = 31.1035;
+    const raw: ChartDay[] = slicedData.map(d => {
+      const goldIDRperGram = d.goldPrice && d.goldPrice > 0 && d.usdidrRate && d.usdidrRate > 0
+        ? (d.goldPrice * d.usdidrRate) / GOLD_OZ_TO_GRAM
+        : null;
+      return {
+        date: d.date,
+        ihsg: d.ihsgPrice ?? null,
+        gold: goldIDRperGram,
+        portfolio: portMap.get(d.date) ?? null,
+        ihsgSma20: null,
+        ihsgSma50: null,
+      };
+    });
 
     const ihsgValues = raw.map(d => d.ihsg).filter((v): v is number => v !== null);
     const sma20 = computeSMA(ihsgValues, 20);
@@ -300,7 +308,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
                 labelFormatter={(label) => `Tanggal: ${label}`}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = { ihsg: "IHSG", gold: "Gold", portfolio: "Portfolio", ihsgSma20: "SMA20", ihsgSma50: "SMA50" };
-                  if (name === "gold") return [value.toLocaleString("id-ID"), labels[name] || name];
+                  if (name === "gold") return ["Rp " + value.toLocaleString("id-ID"), labels[name] || name];
                   if (name === "portfolio") return [value.toLocaleString("id-ID"), labels[name] || name];
                   return [value.toFixed(0), labels[name] || name];
                 }}

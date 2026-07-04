@@ -47,7 +47,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       for (const [tkr, close] of Object.entries(stockAdj)) {
         const sc = scoreMap[tkr];
         if (sc) {
-          stockNormScores[tkr + ".JK"] = {
+          stockNormScores[tkr] = {
             quality: sc.quality ?? 50,
             growth: sc.growth ?? 50,
             value: sc.value ?? 50,

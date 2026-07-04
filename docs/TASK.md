@@ -9,9 +9,9 @@ Repo: `https://github.com/InitialJawa/QUANTBIT`
 Semua data flow dari D1 Cloudflare via CF Pages Functions. Gak ada Express, gak ada SQLite lokal, gak ada devMock. Pipeline otomatis tiap 6 jam via GitHub Actions.
 
 ## Session Context
-- **Sesi 21** — 2026-07-04
+- **Sesi 22** — 2026-07-04
 - Branch: `main`
-- Status: **FULL SERVERLESS** — Phase 7-12 selesai
+- Status: **FULL SERVERLESS** — Phase 7-12 selesai, Bugfix sesh
 - Data source: **Yahoo Finance** via pipeline → D1 Cloudflare
 
 ## Arsitektur Baru
@@ -65,19 +65,40 @@ Production: CF Pages Functions + D1 (no server needed)
 - [x] **11.2** — AGENTS.md di-update
 - [x] **11.3** — functions/tsconfig.json (workers-types)
 
-### ☐ Phase 12 — Deploy
+### ✅ Phase 12 — Deploy
 - [x] 12.1 — `npx tsc --noEmit` ✅
 - [x] 12.2 — `npx vite build` ✅
 - [x] 12.3 — Setup GitHub Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 - [x] 12.4 — Push ke GitHub → CF Pages auto-deploy
-- [ ] 12.5 — Buka dari HP, test Market/Analytics/Backtest
+- [ ] 12.5 — Buka dari HP, test Market/Analytics/Backtest (pending user test)
 
 ---
 
+## Sesi 22 — Bugfix: Gold Zeros + Backtest Broken
+
+### Bug 1: Gold chart zeros on Market tab
+**Root cause**: Silent GC=F fetch failure in pipeline + missing USD/oz → IDR/gram conversion in chart
+- `scripts/pipeline-sync.ts`: empty try-catch swallows Yahoo errors for GC=F; gold_close written as NULL/0
+- `src/components/MarketOverviewCharts.tsx`: renders raw gold_close (USD/oz ~$2,600) without converting to IDR/gram (~Rp 1,400,000)
+
+**Fixes applied**:
+- `scripts/pipeline-sync.ts` (lines 66-69): error logging now prints Yahoo fail message instead of silent `⚠️`
+- `scripts/pipeline-sync.ts` (lines 256-258): explicit warning when GC=F returns 0 days
+- `scripts/pipeline-sync.ts` (lines 107-114): separate `UPDATE` for gold fields `WHERE gold_close IS NULL OR gold_close = 0` — fixes existing rows that have NULL gold from previous failures
+- `src/components/MarketOverviewCharts.tsx` (line 141-154): gold converted from USD/oz → IDR/gram via `(goldPrice * usdidrRate) / 31.1035`
+- `src/components/MarketOverviewCharts.tsx` (lines 23, 95): `usdidrRate` added to `RawDay` interface and fetched from API
+
+### Bug 2: Backtest chart not showing, results = 0%
+**Root cause**: `.JK` suffix mismatch — `functions/api/backtest-data.ts` line 50 used `stockNormScores[tkr + ".JK"]` while stockPrices/stockAdjPrices use bare tickers. This caused `pickTopTickersByRank` (ranker.ts) to always return empty because `.JK`-suffixed tickers never matched bare `allowedTickers` or `dayPrices`.
+
+**Fixes applied**:
+- `functions/api/backtest-data.ts` (line 50): removed `.JK` suffix — now uses bare tickers throughout
+- `server.ts` (line 527): same fix applied to dev-mode Express server
+
 ## Yang Loe Perlu Lakukan
-1. **Set GitHub Secrets**: `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` di Settings → Secrets → Actions
-2. **Push**: `git push origin main` → pipeline auto-deploy ke CF Pages
-3. **Buka dari HP**: `https://quantbit-terminal.pages.dev`
+1. ✅ **Set GitHub Secrets** — done
+2. ✅ **Push** — done (trigger pipeline)
+3. **Test dari HP**: `https://quantbit-terminal.pages.dev` — cek Market, Analytics, Backtest
 
 ## Key Constraints
 - **NO AI for financial math**
