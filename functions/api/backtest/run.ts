@@ -45,7 +45,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
        ORDER BY i.date ASC, i.ticker ASC`
     ).bind(from, to).all<any>();
 
-    const { weights, topN, dcaActive, dcaAmount } = config;
+    const { weights, topN, rebalanceFreq, crashProtection, dcaActive, dcaAmount } = config;
 
     // Compute total score for each row
     const scored = rows.results.map((r: any) => {
@@ -66,18 +66,61 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const sortedDates = Object.keys(byDate).sort();
 
-    // Simulate DCA buying topN each rebalance day
+    // Determine rebalance dates
+    const rebalanceDay: Set<string> = new Set();
+    if (rebalanceFreq === "weekly") {
+      for (const d of sortedDates) rebalanceDay.add(d);
+    } else {
+      let lastRebalance = "";
+      for (const d of sortedDates) {
+        const dt = new Date(d);
+        const period = rebalanceFreq === "monthly" ? `${dt.getFullYear()}-${dt.getMonth()}` : `${Math.floor(dt.getMonth() / 3)}-${dt.getFullYear()}`;
+        if (period !== lastRebalance) { rebalanceDay.add(d); lastRebalance = period; }
+      }
+    }
+
     const trades: any[] = [];
     let cash = initialCash;
-    const holdings: Record<string, number> = {};
+    let holdings: Record<string, number> = {};
 
     for (let di = 0; di < sortedDates.length; di++) {
       const date = sortedDates[di];
-      const stocks = byDate[date].sort((a: any, b: any) => b.totalScore - a.totalScore).slice(0, topN);
+      const stocks = byDate[date].sort((a: any, b: any) => b.totalScore - a.totalScore);
 
-      // If DCA active, buy fixed amount
+      // Crash protection: if SMA50 < SMA200, skip buying (stay in cash)
+      const isCrashed = crashProtection && stocks[0]?.sma50 != null && stocks[0]?.sma200 != null && stocks[0].sma50 < stocks[0].sma200;
+
+      // Rebalance: sell all, buy topN
+      if (rebalanceDay.has(date)) {
+        // Sell all holdings
+        for (const tkr of Object.keys(holdings)) {
+          const price = stocks.find((s: any) => s.ticker === tkr)?.close || 0;
+          cash += holdings[tkr] * price;
+          trades.push({ date, ticker: tkr, action: "sell", shares: holdings[tkr], price, total: holdings[tkr] * price });
+        }
+        holdings = {};
+
+        // Buy topN if not crashed
+        if (!isCrashed) {
+          const buys = stocks.slice(0, topN);
+          if (buys.length > 0) {
+            const perStock = Math.floor(cash / buys.length);
+            for (const s of buys) {
+              const shares = Math.floor(perStock / s.close);
+              if (shares > 0) {
+                holdings[s.ticker] = (holdings[s.ticker] || 0) + shares;
+                cash -= shares * s.close;
+                trades.push({ date, ticker: s.ticker, action: "buy", shares, price: s.close, total: shares * s.close });
+              }
+            }
+          }
+        }
+      }
+
+      // DCA: buy topN regardless of rebalance schedule
       if (dcaActive && dcaAmount > 0) {
-        for (const s of stocks) {
+        const dcaBuys = stocks.slice(0, topN);
+        for (const s of dcaBuys) {
           if (cash >= dcaAmount) {
             const shares = Math.floor(dcaAmount / s.close);
             if (shares > 0) {
