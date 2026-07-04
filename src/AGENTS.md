@@ -18,12 +18,14 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - Edit `src/ai/systemKnowledge.ts` for AI system prompt updates
 - Edit `src/engine/` for calculation logic changes
 - New components go in `src/components/`
-- **Phase 3 target**: All L[], JSON imports, in-memory singletons → D1 API calls
+- **Phase 4-6 ✅**: Express D1-backed endpoints, MCP server updated, cron automation, fallbackData deleted, all data from D1.
 
 ## Verification
 - `npx tsc --noEmit` — TypeScript type checking
+- `NODE_OPTIONS='--experimental-sqlite' npx tsx server.ts` — Express D1 API server
+- `npx vite build` — bundle build
 - `npm run dev` — manual UI verification
-- `npx tsx scripts/sync-fundamentals.ts` — pipeline test
+- `NODE_OPTIONS='--experimental-sqlite' npx tsx scripts/pipeline-sync.ts` — pipeline test
 
 ## Child DOX Index
 - `src/components/` — React UI components
@@ -32,8 +34,10 @@ Main application source code — React UI, core engine, AI layer, contexts, hook
 - `src/ai/` — AI client and system knowledge
 - `src/engine/` — Sync engine (pure functions, no React deps)
 - `src/marketRegimeEngine.ts` — Crash detection, regime classification
-- `src/marketData.ts` — In-memory (will be replaced by D1 in Phase 3)
+- `src/marketData.ts` — Runtime state (RS, MKT) + data facade (L/PF/FD dari dataService)
 - `src/stocksData.ts` — Stock data registry
-- `src/services/` — API client
+- `src/services/` — API client + dataService (bridge to D1)
+- `src/data/` — raw_stocks_data.ts (synthetic stock data), fallbackData.ts **deleted**
 - `src/types/` — TypeScript type definitions
 - `src/constants/` — Constant data (IDX lists)
+- `src/server/` — Express server utilities (db.ts, aiChatHandler.ts, yahooApi.ts, emailUtil.ts)

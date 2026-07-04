@@ -1,45 +1,8 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 import { z } from "zod";
 import { RAW_STOCKS_DATA } from "../data/raw_stocks_data.ts";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "../..");
-
-function loadJSON<T>(relativePath: string): T | null {
-  const fullPath = join(ROOT, relativePath);
-  if (!existsSync(fullPath)) return null;
-  try { return JSON.parse(readFileSync(fullPath, "utf-8")) as T; }
-  catch { return null; }
-}
-
-interface LiveMarket {
-  last_update: string;
-  ihsg: { value: number; daily: number; weekly: number; monthly: number };
-  usdidr: { value: number; daily: number; weekly: number; monthly: number };
-  gold: { value: number; daily: number; weekly: number; monthly: number };
-  oil: { value: number; daily: number; weekly: number; monthly: number };
-  stock_prices: Record<string, number>;
-}
-
-interface ScanStock {
-  ticker: string; companyName: string; sector: string; industry: string;
-  currentPrice: number; changePercent: number; peRatio: number; pbRatio: number;
-  marketCap: number; volume: number; dividendYield: number;
-  fiftyTwoWeekHigh: number; fiftyTwoWeekLow: number;
-  [key: string]: unknown;
-}
-
-interface ScanData { lastUpdated: string; stocks: ScanStock[]; }
-
-interface DayData {
-  date: string; ihsgPrice: number; goldPrice: number; usdidrRate: number;
-  stockPrices: Record<string, number>; stockAdjPrices: Record<string, number>;
-}
+import { queryAll, queryOne, ensureSchema } from "../server/db.ts";
 
 function parseStockLine(line: string) {
   const [ticker, name, sector, industry, mcap, price, chgPct, pe, pb, roe, der, divYield] = line.split("|");
@@ -54,11 +17,24 @@ const server = new McpServer({
 });
 
 server.registerTool("get_market_overview", {
-  description: "Get current IDX market overview: IHSG, USD/IDR, Gold, Oil prices and daily changes",
+  description: "Get current IDX market overview: IHSG, USD/IDR, Gold prices and daily changes",
 }, async () => {
-  const market = loadJSON<LiveMarket>("data/live_market.json");
-  if (!market) return { content: [{ type: "text" as const, text: "Market data not available" }] };
-  return { content: [{ type: "text" as const, text: JSON.stringify(market, null, 2) }] };
+  try {
+    await ensureSchema();
+    const latest = await queryOne("SELECT date,ihsg_close,gold_close,usdidr_rate FROM market_daily ORDER BY date DESC LIMIT 1") as any;
+    if (!latest) return { content: [{ type: "text" as const, text: "Market data not available" }] };
+    const marketData = {
+      last_update: latest.date,
+      ihsg: { value: latest.ihsg_close, daily: 0, weekly: 0, monthly: 0 },
+      usdidr: { value: latest.usdidr_rate, daily: 0, weekly: 0, monthly: 0 },
+      gold: { value: latest.gold_close, daily: 0, weekly: 0, monthly: 0 },
+      oil: { value: 0, daily: 0, weekly: 0, monthly: 0 },
+      stock_prices: {},
+    };
+    return { content: [{ type: "text" as const, text: JSON.stringify(marketData, null, 2) }] };
+  } catch {
+    return { content: [{ type: "text" as const, text: "Market data not available" }] };
+  }
 });
 
 server.registerTool("get_stock_info", {
@@ -66,12 +42,18 @@ server.registerTool("get_stock_info", {
   inputSchema: { ticker: z.string().describe("Stock ticker (e.g. BBCA, BBRI)") },
 }, async (args) => {
   const ticker = args.ticker.toUpperCase();
+  // Try synthetic data first
   const raw = RAW_STOCKS_DATA.find(s => s.startsWith(ticker + "|"));
   if (raw) return { content: [{ type: "text" as const, text: JSON.stringify(parseStockLine(raw), null, 2) }] };
-  const scan = loadJSON<ScanData>("data/idx80_scan.json");
-  const s = scan?.stocks.find(st => st.ticker === ticker + ".JK");
-  if (s) return { content: [{ type: "text" as const, text: JSON.stringify(s, null, 2) }] };
-  return { content: [{ type: "text" as const, text: `Stock ${ticker} not found` }] };
+  // Fallback to D1
+  try {
+    await ensureSchema();
+    const profile = await queryOne("SELECT * FROM tickers WHERE ticker=?", [ticker]) as any;
+    const score = await queryOne("SELECT quality,growth,value,dividend,momentum FROM stock_scores WHERE ticker=? AND score_date=(SELECT MAX(score_date) FROM stock_scores)", [ticker]) as any;
+    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, ...profile, ...score }, null, 2) }] };
+  } catch {
+    return { content: [{ type: "text" as const, text: `Stock ${ticker} not found` }] };
+  }
 });
 
 server.registerTool("search_stocks", {
@@ -86,22 +68,33 @@ server.registerTool("search_stocks", {
   const results = RAW_STOCKS_DATA.map(parseStockLine)
     .filter(s => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.sector.toLowerCase().includes(q))
     .slice(0, limit);
-  return { content: [{ type: "text" as const, text: JSON.stringify(results, null, 2) }] };
+  if (results.length > 0) return { content: [{ type: "text" as const, text: JSON.stringify(results, null, 2) }] };
+  // Fallback to D1
+  try {
+    await ensureSchema();
+    const rows = await queryAll("SELECT ticker,name,sector,industry FROM tickers WHERE is_active=1 AND (ticker LIKE ? OR name LIKE ? OR sector LIKE ?) ORDER BY ticker LIMIT ?", [`%${q}%`, `%${q}%`, `%${q}%`, limit]);
+    return { content: [{ type: "text" as const, text: JSON.stringify(rows, null, 2) }] };
+  } catch {
+    return { content: [{ type: "text" as const, text: `No results for ${args.query}` }] };
+  }
 });
 
 server.registerTool("get_top_movers", {
-  description: "Get top gainers and losers from IDX today",
+  description: "Get top gainers and losers from IDX today (latest scores as proxy)",
 }, async () => {
-  const scan = loadJSON<ScanData>("data/idx80_scan.json");
-  if (!scan) return { content: [{ type: "text" as const, text: "Scan data not available" }] };
-  const sorted = [...scan.stocks].sort((a, b) => b.changePercent - a.changePercent);
-  const gainers = sorted.slice(0, 5).map(s => ({ ticker: s.ticker.replace(".JK", ""), name: s.companyName, change: s.changePercent.toFixed(2) + "%", price: s.currentPrice }));
-  const losers = sorted.slice(-5).reverse().map(s => ({ ticker: s.ticker.replace(".JK", ""), name: s.companyName, change: s.changePercent.toFixed(2) + "%", price: s.currentPrice }));
-  return { content: [{ type: "text" as const, text: JSON.stringify({ lastUpdated: scan.lastUpdated, gainers, losers }, null, 2) }] };
+  try {
+    await ensureSchema();
+    const rows = await queryAll("SELECT ticker,quality,growth,value,momentum,dividend FROM stock_scores WHERE score_date=(SELECT MAX(score_date) FROM stock_scores) ORDER BY quality DESC") as any[];
+    const gainers = rows.slice(0, 5).map((r: any) => ({ ticker: r.ticker, quality: r.quality, growth: r.growth }));
+    const losers = rows.slice(-5).reverse().map((r: any) => ({ ticker: r.ticker, quality: r.quality, growth: r.growth }));
+    return { content: [{ type: "text" as const, text: JSON.stringify({ gainers, losers }, null, 2) }] };
+  } catch {
+    return { content: [{ type: "text" as const, text: "Score data not available" }] };
+  }
 });
 
 server.registerTool("get_historical_data", {
-  description: "Get historical daily prices for a stock from backtest data (DB-backed, replaces file JSONs)",
+  description: "Get historical daily prices for a stock from D1 database",
   inputSchema: {
     ticker: z.string().describe("Stock ticker (e.g. BBCA)"),
     from: z.string().optional().describe("Start year (default 2021)"),
@@ -112,36 +105,26 @@ server.registerTool("get_historical_data", {
   const fromY = args.from || "2021";
   const toY = args.to || "2026";
   try {
-    const stdout = execSync(
-      `python3 "${join(ROOT, "scripts", "db-query.py")}" 'SELECT sd.date, sd.close, sd.adj_close FROM stock_daily sd JOIN daily_overview d ON sd.date = d.date WHERE sd.ticker = ? AND sd.date >= ? AND sd.date <= ? ORDER BY sd.date' '["${ticker}", "${fromY}-01-01", "${toY}-12-31"]'`,
-      { encoding: "utf-8", timeout: 10000 },
-    );
-    const rows = JSON.parse(stdout);
-    if (rows && typeof rows === "object" && "error" in rows) throw new Error(rows.error);
-    const result = (rows as any[]).map((r: any) => ({ date: r.date, price: r.close, adjPrice: r.adj_close }));
-    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result.slice(0, 100) }, null, 2) }] };
-  } catch {
-    // Fallback to file-based
-    const result: { date: string; price: number; adjPrice: number }[] = [];
-    for (let y = parseInt(fromY); y <= parseInt(toY); y++) {
-      const data = loadJSON<DayData[]>(`data/years/${y}.json`);
-      if (!data) continue;
-      for (const day of data) {
-        const price = day.stockPrices[ticker];
-        const adjPrice = day.stockAdjPrices[ticker];
-        if (price !== undefined) result.push({ date: day.date, price, adjPrice });
-      }
-    }
-    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result.slice(0, 100) }, null, 2) }] };
+    await ensureSchema();
+    const rows = await queryAll("SELECT date,close,adj_close FROM stock_daily WHERE ticker=? AND date>=? AND date<=? ORDER BY date LIMIT 100", [ticker, `${fromY}-01-01`, `${toY}-12-31`]) as any[];
+    if (rows.length === 0) return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: 0, message: "No data found" }) }] };
+    const result = rows.map((r: any) => ({ date: r.date, price: r.close, adjPrice: r.adj_close }));
+    return { content: [{ type: "text" as const, text: JSON.stringify({ ticker, count: result.length, from: result[0]?.date, to: result[result.length - 1]?.date, data: result }, null, 2) }] };
+  } catch (e: any) {
+    return { content: [{ type: "text" as const, text: `Error: ${e.message}` }] };
   }
 });
 
 server.registerResource("market_overview", "quantbit://market/overview", {
-  description: "Current IDX market overview",
+  description: "Current IDX market overview from D1",
   mimeType: "application/json",
 }, async (uri) => {
-  const market = loadJSON<LiveMarket>("data/live_market.json");
-  const text = market ? JSON.stringify(market, null, 2) : "Data not available";
+  let text = "Data not available";
+  try {
+    await ensureSchema();
+    const latest = await queryOne("SELECT date,ihsg_close,gold_close,usdidr_rate FROM market_daily ORDER BY date DESC LIMIT 1") as any;
+    if (latest) text = JSON.stringify({ last_update: latest.date, ihsg: latest.ihsg_close, gold: latest.gold_close, usdidr: latest.usdidr_rate }, null, 2);
+  } catch {}
   return { contents: [{ uri: uri.href, text, mimeType: "application/json" }] };
 });
 
@@ -149,39 +132,44 @@ server.registerResource("stocks_list", "quantbit://stocks", {
   description: "List of all IDX stocks with key metrics",
   mimeType: "application/json",
 }, async (uri) => {
-  const list = RAW_STOCKS_DATA.map(parseStockLine);
-  return { contents: [{ uri: uri.href, text: JSON.stringify(list, null, 2), mimeType: "application/json" }] };
+  let text = "[]";
+  try {
+    await ensureSchema();
+    const rows = await queryAll("SELECT ticker,name,sector,industry FROM tickers WHERE is_active=1 ORDER BY ticker");
+    text = JSON.stringify(rows, null, 2);
+  } catch {}
+  return { contents: [{ uri: uri.href, text, mimeType: "application/json" }] };
 });
 
 server.registerResource("stock_detail", new ResourceTemplate("quantbit://stocks/{ticker}", {
   list: async () => {
-    const stocks = RAW_STOCKS_DATA.map(parseStockLine);
-    return { resources: stocks.map(s => ({ uri: `quantbit://stocks/${s.ticker}`, name: `${s.ticker} - ${s.name}`, description: `${s.sector} / ${s.industry}` })) };
+    try {
+      await ensureSchema();
+      const stocks = await queryAll("SELECT ticker,name,sector,industry FROM tickers WHERE is_active=1 ORDER BY ticker");
+      return { resources: stocks.map((s: any) => ({ uri: `quantbit://stocks/${s.ticker}`, name: `${s.ticker} - ${s.name}`, description: `${s.sector} / ${s.industry}` })) };
+    } catch {
+      return { resources: [] };
+    }
   },
 }), {
   description: "Detailed stock information by ticker",
   mimeType: "application/json",
 }, async (uri, variables) => {
   const ticker = (variables.ticker as string).toUpperCase();
-  const raw = RAW_STOCKS_DATA.find(s => s.startsWith(ticker + "|"));
-  if (raw) return { contents: [{ uri: uri.href, text: JSON.stringify(parseStockLine(raw), null, 2), mimeType: "application/json" }] };
-  const scan = loadJSON<ScanData>("data/idx80_scan.json");
-  const s = scan?.stocks.find(st => st.ticker === ticker + ".JK");
-  if (s) return { contents: [{ uri: uri.href, text: JSON.stringify(s, null, 2), mimeType: "application/json" }] };
+  try {
+    await ensureSchema();
+    const row = await queryOne("SELECT ticker,name,sector,industry,is_active,is_idx80 FROM tickers WHERE ticker=?", [ticker]) as any;
+    if (row) return { contents: [{ uri: uri.href, text: JSON.stringify(row, null, 2), mimeType: "application/json" }] };
+  } catch {}
   return { contents: [{ uri: uri.href, text: `Stock ${ticker} not found` }] };
 });
 
 const transport = new StdioServerTransport();
 
-// C1 fix: only start the MCP server when this file is run directly (e.g.
-// `npx tsx src/mcp/index.ts`). Previously the connect call was top-level,
-// which meant importing this module from anywhere in the app would spin
-// up a Stdio transport as a side-effect — useless and noisy in tests.
 if (process.argv[1] && process.argv[1].endsWith("mcp/index.ts")) {
   await server.connect(transport);
   console.log("QuantBit MCP server connected via stdio");
 } else if (process.env.QUANTBIT_MCP_AUTOSTART === "1") {
-  // Opt-in auto-start for environments that explicitly want it
   await server.connect(transport);
   console.log("QuantBit MCP server connected via stdio (autostart)");
 }

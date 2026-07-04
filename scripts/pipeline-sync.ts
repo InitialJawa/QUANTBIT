@@ -1,16 +1,12 @@
-// Pipeline Sync — Dual Source
-// Yahoo:  harga (stock_daily, market_daily) + fundamental (stock_scores)
-// D1:     single source of truth
-
 import { execSync } from "child_process";
-import { writeFileSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const START_DATE = "2021-01-01";
-const SCORE_DATE = new Date().toISOString().split("T")[0];
+const __root = join(__dirname, "..");
+const TODAY = new Date().toISOString().split("T")[0];
+const SCORE_DATE = TODAY;
 
 const TICKERS = [
   "BBCA.JK","BBRI.JK","BMRI.JK","BBNI.JK","ASII.JK","TLKM.JK","UNVR.JK","ICBP.JK","INDF.JK","GOTO.JK",
@@ -31,59 +27,119 @@ const MACRO = [
   { symbol: "USDIDR=X", field: "usdidr" },
 ];
 
-// —— Helpers ——
+function run(cmd: string): string {
+  return execSync(cmd, { cwd: __root, encoding: "utf-8", timeout: 120000 });
+}
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
-function run(cmd: string): string {
-  return execSync(cmd, { cwd: join(__dirname, ".."), encoding: "utf-8", timeout: 60000 });
+function fmtDate(d: Date): string { return d.toISOString().split("T")[0]; }
+
+function esc(v: any): string {
+  if (v == null || v === undefined) return "NULL";
+  if (typeof v === "number") return isFinite(v) ? String(v) : "NULL";
+  return `'${String(v).replace(/'/g, "''")}'`;
 }
 
-function fmtDate(d: Date): string { return d.toISOString().split("T")[0]; }
-function safe(v: number | undefined | null, d: number): number { return v != null ? v : d; }
+function sqlPath(name: string): string {
+  const dir = join(__dirname, "..", "db", "seeds");
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  return join(dir, name);
+}
 
-// —— Fetch: Prices (chart) ——
-
-async function fetchPrices(symbol: string): Promise<Record<string, any>> {
+// ── Fetch: Prices (chart) ──
+async function fetchPrices(symbol: string, startDate: string): Promise<Record<string, any>> {
   const { default: YF } = await import("yahoo-finance2");
   const yf = new YF({ suppressNotices: ["ripHistorical", "yahooSurvey"] as any });
   const result: Record<string, any> = {};
   try {
-    const raw = await yf.chart(symbol, { period1: START_DATE, interval: "1d" });
+    const raw = await yf.chart(symbol, { period1: startDate, interval: "1d" });
     for (const q of raw.quotes || []) {
       if (!q.date || !q.close || q.close <= 0) continue;
       const d = new Date(q.date);
       if (d.getUTCDay() === 0 || d.getUTCDay() === 6) continue;
       result[fmtDate(d)] = {
         close: q.close, open: q.open, high: q.high, low: q.low, volume: q.volume ?? 0,
+        adjclose: q.adjclose ?? q.close,
       };
     }
   } catch (e) { process.stdout.write(`⚠️`); }
   return result;
 }
 
-// —— Fetch: Fundamentals (quoteSummary) ——
+// ── Write prices to SQL ──
+function writePriceSQL(
+  macroData: Record<string, Record<string, { close: number; open?: number; high?: number; low?: number }>>,
+  stockData: Record<string, Record<string, { close: number; open?: number; high?: number; low?: number; volume?: number; adjclose?: number }>>,
+): string[] {
+  const lines: string[] = [];
+  const allDates = new Set<string>();
 
+  for (const m of MACRO) {
+    for (const d of Object.keys(macroData[m.field] || {})) allDates.add(d);
+  }
+  for (const tkr of TICKERS) {
+    const clean = tkr.replace(".JK", "");
+    for (const d of Object.keys(stockData[clean] || {})) allDates.add(d);
+  }
+
+  const sortedDates = [...allDates].sort();
+
+  for (const date of sortedDates) {
+    const ihsg = macroData.ihsg?.[date];
+    const gold = macroData.gold?.[date];
+    const usdidr = macroData.usdidr?.[date];
+
+    if (ihsg || gold || usdidr) {
+      lines.push(
+        `INSERT OR IGNORE INTO market_daily(date,ihsg_close,ihsg_open,ihsg_high,ihsg_low,gold_close,gold_open,gold_high,gold_low,usdidr_rate) VALUES(` +
+        `'${date}',` +
+        `${esc(ihsg?.close)},${esc(ihsg?.open)},${esc(ihsg?.high)},${esc(ihsg?.low)},` +
+        `${esc(gold?.close)},${esc(gold?.open)},${esc(gold?.high)},${esc(gold?.low)},` +
+        `${esc(usdidr?.close)}` +
+        `);`
+      );
+    }
+
+    for (const tkr of TICKERS) {
+      const clean = tkr.replace(".JK", "");
+      const s = stockData[clean]?.[date];
+      if (s) {
+        lines.push(
+          `INSERT OR IGNORE INTO stock_daily(date,ticker,close,adj_close,open,high,low,volume) VALUES(` +
+          `'${date}','${clean}',` +
+          `${esc(s.close)},${esc(s.adjclose ?? s.close)},${esc(s.open)},${esc(s.high)},${esc(s.low)},${esc(s.volume)}` +
+          `);`
+        );
+      }
+    }
+  }
+
+  return lines;
+}
+
+// ── Fetch & Write: Fundamentals + Scores ──
 interface Funda {
   ticker: string;
-  perTrailing?: number;
-  perForward?: number;
-  eps?: number;
-  pbv?: number;
-  bookValue?: number;
-  dividendYield?: number;
-  dividendRate?: number;
-  payoutRatio?: number;
-  profitMargins?: number;
-  roe?: number;
-  revenue?: number;
-  revenueGrowth?: number;
-  earningsGrowth?: number;
-  operatingMargins?: number;
-  grossMargins?: number;
-  debtEquity?: number;
-  currentRatio?: number;
-  marketCap?: number;
+  per: number; pbv: number; payout: number; dy: number; dr: number;
+  roe: number; pm: number; om: number; gm: number;
+  rg: number; eg: number; mc: number;
+}
+
+function avg(vals: (number | undefined)[]): number {
+  const nums = vals.filter(v => v != null && isFinite(v)) as number[];
+  return nums.length > 0 ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+}
+
+function quantile(arr: number[], val: number): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = sorted.findIndex(x => x === val);
+  if (idx < 0) return 0.5;
+  return idx / (sorted.length - 1);
+}
+
+function invert(arr: number[], val: number): number {
+  return 1 - quantile(arr, val);
 }
 
 async function fetchFundamentals(symbol: string): Promise<Funda | null> {
@@ -93,147 +149,129 @@ async function fetchFundamentals(symbol: string): Promise<Funda | null> {
     const r = await yf.quoteSummary(symbol, {
       modules: ["price", "summaryDetail", "financialData", "defaultKeyStatistics"],
     });
-    const fd = r.financialData;
-    const ks = r.defaultKeyStatistics;
-    const sd = r.summaryDetail;
-    const p = r.price;
+    const p = r.price; const sd = r.summaryDetail; const fd = r.financialData; const ks = r.defaultKeyStatistics;
     if (!p?.regularMarketPrice) return null;
     return {
       ticker: symbol.replace(".JK", ""),
-      perTrailing: sd?.trailingPE ?? undefined,
-      perForward: sd?.forwardPE ?? undefined,
-      eps: ks?.trailingEps ?? undefined,
-      pbv: ks?.priceToBook ?? undefined,
-      bookValue: ks?.bookValue ?? undefined,
-      dividendYield: sd?.dividendYield ?? undefined,
-      dividendRate: sd?.dividendRate ?? undefined,
-      payoutRatio: sd?.payoutRatio ?? undefined,
-      profitMargins: fd?.profitMargins ?? undefined,
-      roe: fd?.returnOnEquity ?? undefined,
-      revenue: fd?.totalRevenue ?? undefined,
-      revenueGrowth: fd?.revenueGrowth ?? undefined,
-      earningsGrowth: fd?.earningsGrowth ?? undefined,
-      operatingMargins: fd?.operatingMargins ?? undefined,
-      grossMargins: fd?.grossMargins ?? undefined,
-      debtEquity: fd?.debtToEquity ?? undefined,
-      currentRatio: fd?.currentRatio ?? undefined,
-      marketCap: p?.marketCap ?? undefined,
+      per: sd?.trailingPE, pbv: ks?.priceToBook, payout: sd?.payoutRatio,
+      dy: sd?.dividendYield, dr: sd?.dividendRate,
+      roe: fd?.returnOnEquity, pm: fd?.profitMargins, om: fd?.operatingMargins, gm: fd?.grossMargins,
+      rg: fd?.revenueGrowth, eg: fd?.earningsGrowth, mc: p?.marketCap,
     };
   } catch (e) { return null; }
 }
 
-// —— Score computation ——
+function computeScoreSQL(data: Funda[], scoreDate: string): string[] {
+  const per = data.map(d => d.per).filter(v => v != null && v > 0);
+  const pbv = data.map(d => d.pbv).filter(v => v != null && v > 0);
+  const payout = data.map(d => d.payout).filter(v => v != null);
+  const dy = data.map(d => d.dy).filter(v => v != null);
+  const roe = data.map(d => d.roe).filter(v => v != null);
+  const pm = data.map(d => d.pm).filter(v => v != null);
+  const om = data.map(d => d.om).filter(v => v != null);
+  const rg = data.map(d => d.rg).filter(v => v != null);
+  const eg = data.map(d => d.eg).filter(v => v != null);
 
-function percentile(arr: number[], val: number): number {
-  const sorted = [...arr].sort((a, b) => a - b);
-  const idx = sorted.findIndex(x => x === val);
-  if (idx === -1) return 0.5;
-  return idx / (sorted.length - 1);
-}
+  const lines: string[] = [`DELETE FROM stock_scores WHERE score_date='${scoreDate}';`];
+  for (const d of data) {
+    if (!d.mc || d.mc <= 0) continue;
+    const quality = Math.round(avg([
+      d.roe != null ? quantile(roe, d.roe) : undefined,
+      d.pm != null ? quantile(pm, d.pm) : undefined,
+      d.om != null ? quantile(om, d.om) : undefined,
+    ]) * 1000) / 10;
 
-function invert(arr: number[], val: number): number {
-  return 1 - percentile(arr, val);
-}
+    const growth = Math.round(avg([
+      d.rg != null ? quantile(rg, d.rg) : undefined,
+      d.eg != null ? quantile(eg, d.eg) : undefined,
+    ]) * 1000) / 10;
 
-function computeScores(fundas: Funda[]) {
-  const valid = fundas.filter(f => f.marketCap != null && f.marketCap > 0);
+    const valueScore = Math.round(avg([
+      d.per != null && d.per > 0 && per.length > 1 ? invert(per, d.per) : undefined,
+      d.pbv != null && d.pbv > 0 && pbv.length > 1 ? invert(pbv, d.pbv) : undefined,
+    ]) * 1000) / 10;
 
-  const extract = (key: keyof Funda) => valid.map(f => f[key] as number).filter(v => v != null && isFinite(v));
+    const dividend = Math.round(avg([
+      d.dy != null && dy.length > 1 ? quantile(dy, d.dy) : undefined,
+      d.payout != null && payout.length > 1 ? quantile(payout, d.payout) : undefined,
+    ]) * 1000) / 10;
 
-  const per = extract("perTrailing");
-  const pbv = extract("pbv");
-  const payout = extract("payoutRatio");
-  const roe = extract("roe");
-  const pm = extract("profitMargins");
-  const om = extract("operatingMargins");
-  const rg = extract("revenueGrowth");
-  const eg = extract("earningsGrowth");
-  const dy = extract("dividendYield");
-
-  const results: { ticker: string; quality: number; growth: number; value: number; dividend: number; momentum: number }[] = [];
-
-  for (const f of valid) {
-    const quality = avg([
-      f.roe != null && isFinite(f.roe) ? percentile(roe, f.roe) : undefined,
-      f.profitMargins != null && isFinite(f.profitMargins) ? percentile(pm, f.profitMargins) : undefined,
-      f.operatingMargins != null && isFinite(f.operatingMargins) ? percentile(om, f.operatingMargins) : undefined,
-    ]);
-
-    const growth = avg([
-      f.revenueGrowth != null && isFinite(f.revenueGrowth) ? percentile(rg, f.revenueGrowth) : undefined,
-      f.earningsGrowth != null && isFinite(f.earningsGrowth) ? percentile(eg, f.earningsGrowth) : undefined,
-    ]);
-
-    const value = avg([
-      f.perTrailing != null && f.perTrailing > 0 ? invert(per, f.perTrailing) : undefined,
-      f.pbv != null && f.pbv > 0 ? invert(pbv, f.pbv) : undefined,
-    ]);
-
-    const dividend = avg([
-      f.dividendYield != null && isFinite(f.dividendYield) ? percentile(dy, f.dividendYield) : undefined,
-      f.payoutRatio != null && isFinite(f.payoutRatio) ? percentile(payout, f.payoutRatio) : undefined,
-    ]);
-
-    results.push({
-      ticker: f.ticker,
-      quality: Math.round(quality * 1000) / 10,
-      growth: Math.round(growth * 1000) / 10,
-      value: Math.round(value * 1000) / 10,
-      dividend: Math.round(dividend * 1000) / 10,
-      momentum: 0,
-    });
+    lines.push(
+      `INSERT INTO stock_scores(ticker,score_date,quality,growth,value,dividend) VALUES('${d.ticker}','${scoreDate}',${quality},${growth},${valueScore},${dividend});`
+    );
   }
-  return results;
+  return lines;
 }
 
-function avg(vals: (number | undefined)[]): number {
-  const nums = vals.filter(v => v != null) as number[];
-  return nums.length > 0 ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
-}
+function computeMomentumSQL(scoreDate: string): string[] {
+  // Ambil latest date from stock_daily
+  const raw = run(`npx wrangler d1 execute quantbit-db --remote --json --command="SELECT l.ticker,(l.close-COALESCE(p6.close,l.close))/COALESCE(NULLIF(p6.close,0),l.close) as mom6m,(l.close-COALESCE(p12.close,l.close))/COALESCE(NULLIF(p12.close,0),l.close) as mom12m FROM (SELECT ticker,close FROM stock_daily WHERE date=(SELECT MAX(date) FROM stock_daily)) l LEFT JOIN (SELECT ticker,close FROM stock_daily WHERE(ticker,date) IN(SELECT ticker,MAX(date) FROM stock_daily WHERE date<=DATE('now','-6 months') GROUP BY ticker)) p6 ON l.ticker=p6.ticker LEFT JOIN (SELECT ticker,close FROM stock_daily WHERE(ticker,date) IN(SELECT ticker,MAX(date) FROM stock_daily WHERE date<=DATE('now','-12 months') GROUP BY ticker)) p12 ON l.ticker=p12.ticker"`);
+  const momData = JSON.parse(raw);
+  const momRows = momData[0]?.results || [];
+  if (momRows.length === 0) return [];
 
-// —— Generate SQL ——
+  const mom6 = [...momRows].sort((a: any, b: any) => a.mom6m - b.mom6m);
+  const mom12 = [...momRows].sort((a: any, b: any) => a.mom12m - b.mom12m);
+  const n = momRows.length;
+  const r6 = new Map(mom6.map((r: any, i: number) => [r.ticker, i / (n - 1)]));
+  const r12 = new Map(mom12.map((r: any, i: number) => [r.ticker, i / (n - 1)]));
 
-function writeInserts(path: string, table: string, rows: { ticker: string; date: string; fields: Record<string, number> }[]) {
-  const lines: string[] = [];
-  for (const r of rows) {
-    const cols = Object.keys(r.fields).join(",");
-    const vals = Object.values(r.fields).map(v => v != null ? v : "NULL").join(",");
-    lines.push(`INSERT OR REPLACE INTO ${table}(ticker,score_date,${cols}) VALUES('${r.ticker}','${r.date}',${vals});`);
+  const lines: string[] = [`DELETE FROM stock_scores WHERE score_date='${scoreDate}' AND momentum IS NOT NULL;`];
+  for (const r of momRows) {
+    const score = Math.round(((r6.get(r.ticker)! + r12.get(r.ticker)!) / 2) * 1000) / 10;
+    lines.push(`UPDATE stock_scores SET momentum=${score} WHERE ticker='${r.ticker}' AND score_date='${scoreDate}';`);
   }
-  writeFileSync(path, lines.join("\n") + "\n", "utf-8");
+  return lines;
 }
 
-// —— Main ——
-
+// ── Main ──
 async function main() {
   const mode = process.argv[2] || "all";
-  console.log(`Pipeline Sync [${mode}]`);
+  console.log(`Pipeline Sync [${mode}] — ${TODAY}`);
+
+  const startDate = process.argv.includes("--full") ? "2021-01-01" : (
+    (() => { const d = new Date(); d.setDate(d.getDate() - 10); return d.toISOString().split("T")[0]; })()
+  );
 
   // ── 1. PRICES ──
   if (mode === "all" || mode === "prices") {
     console.log("\n=== Prices ===");
-
-    // Macro
+    const macroData: Record<string, Record<string, any>> = {};
     for (const m of MACRO) {
       process.stdout.write(`  ${m.symbol}...`);
-      const data = await fetchPrices(m.symbol);
-      process.stdout.write(` ${Object.keys(data).length} days\n`);
+      macroData[m.field] = await fetchPrices(m.symbol, startDate);
+      process.stdout.write(` ${Object.keys(macroData[m.field]).length} days\n`);
       await sleep(300);
     }
 
-    // Stocks
+    const stockData: Record<string, Record<string, any>> = {};
     let count = 0;
     for (const tkr of TICKERS) {
       count++;
       process.stdout.write(`  [${count}/${TICKERS.length}] ${tkr}...`);
-      const data = await fetchPrices(tkr);
-      process.stdout.write(` ${Object.keys(data).length} days\n`);
+      const clean = tkr.replace(".JK", "");
+      stockData[clean] = await fetchPrices(tkr, startDate);
+      process.stdout.write(` ${Object.keys(stockData[clean]).length} days\n`);
       await sleep(200);
     }
-    console.log("  Prices done");
+
+    // Generate SQL
+    const priceLines = writePriceSQL(macroData, stockData);
+    if (priceLines.length > 0) {
+      const priceSql = sqlPath("_prices.sql");
+      writeFileSync(priceSql, priceLines.join("\n") + "\n", "utf-8");
+      console.log(`  ${priceLines.length} SQL lines written to _prices.sql`);
+
+      // Seed to D1
+      console.log("  Seeding prices to D1...");
+      run(`npx wrangler d1 execute quantbit-db --remote --file="${priceSql}"`);
+      console.log("  Prices seeded OK");
+    } else {
+      console.log("  No new price data");
+    }
   }
 
-  // ── 2. FUNDAMENTALS ──
+  // ── 2. FUNDAMENTALS + SCORES ──
   if (mode === "all" || mode === "fundamentals") {
     console.log("\n=== Fundamentals ===");
     const fundas: Funda[] = [];
@@ -244,7 +282,7 @@ async function main() {
       const f = await fetchFundamentals(tkr);
       if (f) {
         fundas.push(f);
-        process.stdout.write(` PER:${f.perTrailing?.toFixed(1) ?? "-"} PBV:${f.pbv?.toFixed(2) ?? "-"} ROE:${(f.roe != null ? (f.roe * 100).toFixed(1) : "-") + "%"}\n`);
+        process.stdout.write(` PER:${f.per?.toFixed(1) ?? "-"} PBV:${f.pbv?.toFixed(2) ?? "-"} ROE:${(f.roe != null ? (f.roe * 100).toFixed(1) : "-") + "%"}\n`);
       } else {
         process.stdout.write(" FAILED\n");
       }
@@ -253,23 +291,27 @@ async function main() {
 
     console.log(`\n  ${fundas.length} tickers with fundamental data`);
 
-    // Compute scores
-    const scores = computeScores(fundas);
-    const sqlPath = join(__dirname, "..", "db", "seeds", "seed_scores.sql");
-    const rows = scores.map(s => ({
-      ticker: s.ticker,
-      date: SCORE_DATE,
-      fields: { quality: s.quality, growth: s.growth, value: s.value, dividend: s.dividend, momentum: s.momentum } as Record<string, number>,
-    }));
-    writeInserts(sqlPath, "stock_scores", rows);
-    console.log(`  Scores written to seed_scores.sql`);
+    // Compute & write scores
+    const scoreLines = computeScoreSQL(fundas, SCORE_DATE);
+    const scoreSql = sqlPath("seed_scores.sql");
+    writeFileSync(scoreSql, scoreLines.join("\n") + "\n", "utf-8");
+    console.log(`  ${scoreLines.length - 1} tickers scored`);
 
-    // Seed to D1
-    run(`npx wrangler d1 execute quantbit-db --remote --command="DELETE FROM stock_scores WHERE score_date='${SCORE_DATE}'"`);
-    run(`npx wrangler d1 execute quantbit-db --remote --file="${sqlPath}"`);
+    console.log("  Seeding scores to D1...");
+    run(`npx wrangler d1 execute quantbit-db --remote --file="${scoreSql}"`);
+
+    // Compute momentum
+    console.log("\n  Computing momentum...");
+    const momLines = computeMomentumSQL(SCORE_DATE);
+    if (momLines.length > 0) {
+      const momSql = sqlPath("_momentum.sql");
+      writeFileSync(momSql, momLines.join("\n") + "\n", "utf-8");
+      run(`npx wrangler d1 execute quantbit-db --remote --file="${momSql}"`);
+      console.log(`  ${momLines.length - 1} momentum scores updated`);
+    }
 
     // Verify
-    const v = run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT COUNT(*) as total FROM stock_scores WHERE score_date='${SCORE_DATE}'"`);
+    const v = run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT COUNT(*) as total, ROUND(AVG(quality),1) as avg_q, ROUND(AVG(growth),1) as avg_g, ROUND(AVG(value),1) as avg_v, ROUND(AVG(dividend),1) as avg_d, ROUND(AVG(momentum),1) as avg_m FROM stock_scores WHERE score_date='${SCORE_DATE}'"`);
     console.log(v);
   }
 

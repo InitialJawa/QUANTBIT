@@ -55,7 +55,7 @@ Update parent docs saat parent-level structure, ownership, workflow, atau child 
 ### Child DOX Index
 
 - `src/` — React UI components, hooks, contexts, engine, AI client, types, utils
-- `scripts/` — Pipeline scripts: sync-fundamentals.ts (fetch Yahoo -> D1)
+- `scripts/` — Pipeline scripts: pipeline-sync.ts (Yahoo → D1 prices+scores+momentum), seed-local-db.ts (local SQLite dev DB)
 - `docs/` — TASK.md (session SOT), research/ (V2 blueprint)
 - `handover/` — session snapshots
 - `research/` — V2 blueprint (33 docs)

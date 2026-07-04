@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:serve-api\" \"vite\"",
     "dev:full": "concurrently -k -n api,web -c blue,green \"npm:serve-api\" \"vite\"",
+    "serve-api": "NODE_OPTIONS='--experimental-sqlite' tsx server.ts",
     "build:db": "tsx scripts/build-db.ts",
     "db:status": "tsx scripts/migrate.ts status",
     "db:status:local": "tsx scripts/migrate.ts status --local",
@@ -28,8 +29,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium",
-    "serve-api": "tsx server.ts",
-    "serve-mcp": "tsx src/mcp/index.ts",
+    "serve-mcp": "NODE_OPTIONS='--experimental-sqlite' tsx src/mcp/index.ts",
     "sync-daily": "tsx scripts/sync-daily-data.ts"
   },
   "dependencies": {

@@ -124,6 +124,8 @@ export default defineConfig(() => {
       port: 5173,
       host: true,
       proxy: {
+        '/api/stocks': 'http://localhost:3001',
+        '/api/engine': 'http://localhost:3001',
         '/api/backtest-data': 'http://localhost:3001',
         '/api/db-sync-status': 'http://localhost:3001',
         '/api/market/sync': 'http://localhost:3001',

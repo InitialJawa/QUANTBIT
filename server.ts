@@ -7,6 +7,8 @@ import { createTransport } from "nodemailer";
 import { execSync } from "child_process";
 import { handleYahooRequest } from "./src/server/yahooApi";
 import { runAiChat, getAiStatus, getAiStatusWithQuota, isAiError, type ChatMessage } from "./src/server/aiChatHandler";
+import { ensureSchema, queryAll, queryOne } from "./src/server/db";
+import cron from "node-cron";
 
 // Node 18 compat: load .env.local manually (--env-file requires Node >=20.12)
 const __filename = fileURLToPath(import.meta.url);
@@ -337,151 +339,252 @@ function getAiStatusFromEnv() {
   );
 }
 
-// ── DB sync status ──────────────────────────────────────────
+// ── D1-backed endpoints ─────────────────────────────────────
 
+// Init D1 schema on first request
+let _d1Initialized = false;
+async function ensureD1() {
+  if (_d1Initialized) return;
+  try {
+    await ensureSchema();
+    _d1Initialized = true;
+    console.log("[D1] Schema ready");
+  } catch (e: any) {
+    console.warn("[D1] Schema init failed:", e.message);
+  }
+}
+
+// ── Stock scores ──
+app.get("/api/stocks/scores", async (_req, res) => {
+  try {
+    await ensureD1();
+    const rows = await queryAll(
+      "SELECT ticker,quality,growth,value,dividend,momentum,score_date FROM stock_scores WHERE score_date=(SELECT MAX(score_date) FROM stock_scores) ORDER BY ticker"
+    );
+    const stocks = rows.map((r: any, i: number) => ({
+      rank: String(i + 1),
+      ticker: r.ticker + ".JK",
+      quality: String(r.quality ?? 50),
+      growth: String(r.growth ?? 50),
+      value: String(r.value ?? 50),
+      momentum: String(r.momentum ?? 50),
+      dividend: String(r.dividend ?? 50),
+      final_score: String(Math.round(
+        (r.quality ?? 50) * 0.25 + (r.growth ?? 50) * 0.25 + (r.value ?? 50) * 0.25 + (r.momentum ?? 50) * 0.25
+      )),
+    }));
+    res.json({ success: true, count: stocks.length, stocks, lastUpdated: rows[0]?.score_date || null });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ── Ticker profiles ──
+app.get("/api/stocks/profiles", async (_req, res) => {
+  try {
+    await ensureD1();
+    const rows = await queryAll("SELECT ticker,name,sector,industry,is_idx80 FROM tickers WHERE is_active=1 ORDER BY ticker");
+    const profiles: Record<string, any> = {};
+    for (const r of rows) {
+      profiles[r.ticker] = { name: r.name, sector: r.sector, industry: r.industry };
+    }
+    res.json({ success: true, data: profiles, count: Object.keys(profiles).length });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ── Fundamentals ──
+app.get("/api/stocks/fundamentals", async (_req, res) => {
+  try {
+    await ensureD1();
+    const rows = await queryAll(
+      "SELECT s.ticker,s.quality,s.growth,s.value,s.dividend,s.momentum,t.sector,t.industry FROM stock_scores s LEFT JOIN tickers t ON s.ticker=t.ticker WHERE s.score_date=(SELECT MAX(score_date) FROM stock_scores) ORDER BY s.ticker"
+    );
+    const data: Record<string, any> = {};
+    for (const r of rows) {
+      data[r.ticker + ".JK"] = {
+        roe: null, net_margin: null, operating_margin: null,
+        debt_to_equity: null, free_cash_flow: null,
+        pe_ratio: null, pb_ratio: null, dividend_yield: null,
+        roa: null, market_cap: null, revenue_growth: null, earnings_growth: null,
+        quality_score: r.quality, growth_score: r.growth,
+        value_score: r.value, momentum_score: r.momentum, dividend_score: r.dividend,
+        sector: r.sector, industry: r.industry,
+      };
+    }
+    res.json({ success: true, data, count: Object.keys(data).length });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ── Engine/idx80 (scan data for dashboard) ──
+app.get("/api/engine/idx80", async (_req, res) => {
+  try {
+    await ensureD1();
+    const rows = await queryAll(
+      "SELECT s.ticker,s.quality,s.growth,s.value,s.dividend,s.momentum,t.sector,t.industry,t.name FROM stock_scores s LEFT JOIN tickers t ON s.ticker=t.ticker WHERE s.score_date=(SELECT MAX(score_date) FROM stock_scores) ORDER BY s.ticker"
+    );
+    const stocks = rows.map((r: any) => ({
+      ticker: r.ticker + ".JK",
+      quality: r.quality ?? 50,
+      growth: r.growth ?? 50,
+      value: r.value ?? 50,
+      momentum: r.momentum ?? 50,
+      dividend: r.dividend ?? 50,
+      currentPrice: 0,
+      changePercent: 0,
+      companyName: r.name || r.ticker,
+      sector: r.sector,
+      industry: r.industry,
+    }));
+    res.json({ success: true, stocks, lastUpdated: new Date().toISOString() });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ── DB sync status ──
 app.get("/api/db-sync-status", async (_req, res) => {
   try {
-    const pythonCmd = process.platform === "win32" ? "python" : "python3";
-    const queryScript = join(process.cwd(), "scripts", "db-query.py");
-    const stdout = execSync(
-      `${pythonCmd} "${queryScript}" "SELECT MAX(date) as latest FROM daily_overview" "[]"`,
-      { encoding: "utf-8", timeout: 10000, env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
-    );
-    const result = JSON.parse(stdout);
-    const latestDate = result?.[0]?.latest || null;
+    await ensureD1();
+    const row = await queryOne("SELECT MAX(date) as latest FROM market_daily") as any;
+    const latestDate = row?.latest || null;
     const stale = latestDate
       ? (Date.now() - new Date(latestDate + "T23:59:59+07:00").getTime()) > 86400000 * 2
       : true;
-    res.json({ success: true, latestDate, stale });
+    res.json({ success: true, latestDate, stale, source: "D1" });
   } catch {
-    res.json({ success: true, latestDate: null, stale: true });
+    res.json({ success: true, latestDate: null, stale: true, source: "D1" });
   }
 });
 
 app.post("/api/market/sync", async (_req, res) => {
   try {
-    const pythonCmd = process.platform === "win32" ? "python" : "python3";
-    const syncScript = join(process.cwd(), "scripts", "sync-daily-data.ts");
-    execSync(
-      `npx tsx "${syncScript}" --force`,
-      { encoding: "utf-8", timeout: 120000, cwd: process.cwd(), env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
-    );
+    const syncScript = join(process.cwd(), "scripts", "pipeline-sync.ts");
+    execSync(`npx tsx "${syncScript}"`, { encoding: "utf-8", timeout: 300000, cwd: process.cwd() });
     res.json({ success: true, message: "Sync selesai" });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ── DB-backed backtest data (replaces file-based JSON) ────
-
-const DB_SCRIPT = join(process.cwd(), "scripts", "export-backtest-json.py");
-
-/** Load all historical data from SQLite DB (via Python bridge). */
-function loadBacktestDataFromDb(startDate: string, endDate: string): any[] {
+// ── D1-backed backtest data ──
+app.get("/api/backtest-data", async (req, res) => {
   try {
-    // Try python3 first (Linux/Mac), then fallback to python (Windows)
-    const pythonCmd = process.platform === "win32" ? "python" : "python3";
-    const stdout = execSync(
-      `${pythonCmd} "${DB_SCRIPT}" "${startDate}" "${endDate}"`,
-      { encoding: "utf-8", timeout: 30000, env: { ...process.env, PYTHONIOENCODING: "utf-8" } },
-    );
-    const result = JSON.parse(stdout);
-    if (result && typeof result === "object" && "error" in result) {
-      throw new Error(result.error);
-    }
-    console.log(`✓ Loaded ${result.length} days from DB (${startDate} to ${endDate})`);
-    return result as any[];
-  } catch (err: any) {
-    console.error("DB load failed, falling back to file-based:", err.message);
-    // Fallback: read from year files (legacy path)
-    const allData: any[] = [];
-    const yStart = parseInt(startDate.slice(0, 4));
-    const yEnd = parseInt(endDate.slice(0, 4));
-    for (let y = yStart; y <= yEnd; y++) {
-      const yearPath = join(process.cwd(), "data", "years", `${y}.json`);
-      if (existsSync(yearPath)) {
-        try {
-          const chunk = JSON.parse(readFileSync(yearPath, "utf-8"));
-          allData.push(...chunk);
-          console.log(`✓ Loaded ${chunk.length} days from ${yearPath}`);
-        } catch (e) {
-          console.warn(`Failed to parse ${yearPath}:`, (e as any).message);
-        }
-      }
-    }
-    if (allData.length === 0) {
-      throw new Error(`No historical data found for ${startDate} to ${endDate}`);
-    }
-    return allData;
-  }
-}
-
-app.get("/api/backtest-data", (req, res) => {
-  try {
+    await ensureD1();
     const configType = (req.query.configType as string) === "res" ? "res" : "prod";
-    const yearStart = parseInt(req.query.from as string) || 2000;
+    const yearStart = parseInt(req.query.from as string) || 2021;
     const yearEnd = parseInt(req.query.to as string) || 2026;
-    const startDate = `${yearStart}-01-01`;
-    const endDate = `${yearEnd}-12-31`;
 
-    console.log(`[API] /api/backtest-data requested: ${startDate} to ${endDate}, configType=${configType}`);
+    // Load market daily
+    const marketRows = await queryAll(
+      "SELECT date,ihsg_close,gold_close,usdidr_rate FROM market_daily WHERE date >= ? AND date <= ? ORDER BY date",
+      [`${yearStart}-01-01`, `${yearEnd}-12-31`]
+    ) as any[];
 
-    const allData = loadBacktestDataFromDb(startDate, endDate);
-    if (allData.length === 0) {
-      console.error(`[API] No historical data available for ${startDate} to ${endDate}`);
+    if (marketRows.length === 0) {
       res.status(503).json({ success: false, error: "No historical data available" });
       return;
     }
-    const bridged = bridgeHistoricalData(allData);
-    const data = bridged.map((day: any) => ({
-      date: day.date,
-      ihsgPrice: day.ihsgPrice,
-      goldPrice: day.goldPrice,
-      stockPrices: day.stockAdjPrices || day.stockPrices,
-      stockAdjPrices: day.stockAdjPrices || day.stockPrices,
-      stockRanks: configType === "prod" ? day.stockRanksProd : day.stockRanksRes,
-      stockRanksProd: day.stockRanksProd,
-      stockRanksRes: day.stockRanksRes,
-      stockRawMetrics: day.stockRawMetrics ?? null,
-      stockNormScores: day.stockNormScores ?? null,
-      isCarriedForward: day.isCarriedForward || false,
-    }));
+
+    // Load stock daily (all tickers, all dates)
+    const stockRows = await queryAll(
+      "SELECT date,ticker,close,adj_close FROM stock_daily WHERE date >= (SELECT MIN(date) FROM market_daily) ORDER BY date,ticker"
+    ) as any[];
+
+    // Group stock prices by date
+    const stockByDate: Record<string, Record<string, number>> = {};
+    for (const sr of stockRows) {
+      if (!stockByDate[sr.date]) stockByDate[sr.date] = {};
+      stockByDate[sr.date][sr.ticker] = sr.close;
+    }
+    const stockAdjByDate: Record<string, Record<string, number>> = {};
+    for (const sr of stockRows) {
+      if (!stockAdjByDate[sr.date]) stockAdjByDate[sr.date] = {};
+      stockAdjByDate[sr.date][sr.ticker] = sr.adj_close ?? sr.close;
+    }
+
+    // Load scores
+    const scoreDate = await queryOne("SELECT MAX(score_date) as sd FROM stock_scores") as any;
+    const scoreRows = scoreDate?.sd
+      ? await queryAll("SELECT ticker,quality,growth,value,dividend,momentum FROM stock_scores WHERE score_date=?", [scoreDate.sd]) as any[]
+      : [];
+    const scoreMap: Record<string, any> = {};
+    for (const sr of scoreRows) {
+      scoreMap[sr.ticker] = sr;
+    }
+
+    // Build backtest data
+    const data = marketRows.map((m: any) => {
+      const stockPrices = stockByDate[m.date] || {};
+      const stockAdj = stockAdjByDate[m.date] || {};
+      const stockNormScores: Record<string, any> = {};
+      for (const [tkr, close] of Object.entries(stockAdj)) {
+        const sc = scoreMap[tkr];
+        if (sc) {
+          stockNormScores[tkr + ".JK"] = {
+            quality: sc.quality ?? 50,
+            growth: sc.growth ?? 50,
+            value: sc.value ?? 50,
+            momentum: sc.momentum ?? 50,
+            dividend: sc.dividend ?? 50,
+          };
+        }
+      }
+
+      return {
+        date: m.date,
+        ihsgPrice: m.ihsg_close,
+        goldPrice: m.gold_close,
+        usdidrRate: m.usdidr_rate,
+        stockAdjPrices: stockAdj,
+        stockPrices,
+        stockNormScores: Object.keys(stockNormScores).length > 0 ? stockNormScores : undefined,
+      };
+    });
+
+    // Bridge to today
+    const last = data[data.length - 1];
+    const lastDate = new Date(last.date);
+    const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const todayStr = now.toISOString().slice(0, 10);
+    if (last.date < todayStr) {
+      const curr = new Date(lastDate.getTime() + 86400000);
+      while (curr <= now) {
+        const dow = curr.getDay();
+        if (dow !== 0 && dow !== 6) {
+          const ds = curr.toISOString().slice(0, 10);
+          if (ds <= todayStr) data.push({ ...last, date: ds, isCarriedForward: true } as any);
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+    }
+
     const defaultWeights = {
       prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
       res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
     };
-    console.log(`[API] Returning ${data.length} days (bridged from ${allData.length})`);
-    res.json({
-      success: true, count: data.length, configType,
-      weights: defaultWeights,
-      data,
-    });
+    res.json({ success: true, count: data.length, configType, weights: defaultWeights, data });
   } catch (err: any) {
     console.error(`[API] /api/backtest-data error:`, err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-function bridgeHistoricalData(rawData: any[]): any[] {
-  if (rawData.length === 0) return rawData;
-  const last = rawData[rawData.length - 1];
-  const lastDate = new Date(last.date);
-  const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
-  const todayStr = now.toISOString().slice(0, 10);
-  if (last.date >= todayStr) return rawData;
-
-  const bridged = [...rawData];
-  const curr = new Date(lastDate.getTime() + 86400000);
-  while (curr <= now) {
-    const dow = curr.getDay();
-    if (dow !== 0 && dow !== 6) {
-      const ds = curr.toISOString().slice(0, 10);
-      if (ds <= todayStr) bridged.push({ ...last, date: ds, isCarriedForward: true });
-    }
-    curr.setDate(curr.getDate() + 1);
+// ── Cron: pipeline harian ──
+// Jadwal: setiap hari kerja jam 16:30 WIB (09:30 UTC)
+cron.schedule("30 9 * * 1-5", async () => {
+  const pipelineScript = join(process.cwd(), "scripts", "pipeline-sync.ts");
+  try {
+    console.log("[cron] Starting pipeline...");
+    execSync(`npx tsx "${pipelineScript}"`, { encoding: "utf-8", timeout: 300000, cwd: process.cwd() });
+    console.log("[cron] Pipeline OK");
+  } catch (e: any) {
+    console.warn("[cron] Pipeline skipped (dev mode):", e.message);
   }
-  return bridged;
-}
+});
 
 app.listen(PORT, () => {
   console.log(`Dev API server listening on http://localhost:${PORT}`);

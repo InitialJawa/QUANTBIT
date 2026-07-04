@@ -3,33 +3,7 @@ import { DataStatus } from "./types/DataStatus";
 import { PF, FD, L, getScanData, setScanData } from "./marketData";
 import { COMBINED_TICKERS } from "./constants/idx80";
 import { getFundamentals, buildMetricsFromFundamentals, getLatestFundamentals } from "./fundamentalsCache";
-import scanDataRaw from "../data/idx80_scan.json";
 import { RAW_STOCKS_DATA } from "./data/raw_stocks_data";
-
-// Enrich RAW_STOCKS_DATA with scan data for stocks not already covered
-const _scanEntries = (scanDataRaw as any)?.stocks || [];
-if (_scanEntries.length > 0) {
-  const existingTickers = new Set(RAW_STOCKS_DATA.map(row => row.split("|")[0]));
-  for (const s of _scanEntries) {
-    const cleanTicker = (s.ticker || "").replace(".JK", "");
-    if (!existingTickers.has(cleanTicker)) {
-      const quality = s.quality || 50;
-      const roe = quality > 70 ? "25" : quality > 55 ? "15" : "8";
-      const der = (0.5 + (100 - quality) / 200).toFixed(2);
-      const peRatio = s.peRatio ? s.peRatio.toFixed(1) : "14.5";
-      const pbRatio = s.pbRatio ? s.pbRatio.toFixed(1) : "1.6";
-      const divYield = s.dividendYield ? s.dividendYield.toFixed(1) : "2.0";
-      const price = s.currentPrice || 1000;
-      const mcap = (price * 1000000 / 1e12).toFixed(1);
-      const change = s.changePercent?.toFixed(2) || "0";
-      const sector = s.sector || "Unknown";
-      const industry = s.industry || "Unknown";
-      const name = s.companyName || `${cleanTicker} Tbk`;
-      RAW_STOCKS_DATA.push(`${cleanTicker}|${name}|${sector}|${industry}|${mcap}|${price}|${change}|${roe}|${der}|${peRatio}|${pbRatio}|${divYield}`);
-      existingTickers.add(cleanTicker);
-    }
-  }
-}
 
 const LOGO_COLORS = [
   "bg-blue-600",
@@ -69,8 +43,8 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
 
   const logoColor = getLogoColor(ticker);
 
-  const scanEntries = (scanDataRaw as any)?.stocks || [];
-  const scanStock = scanEntries.find((s: any) => s.ticker?.replace(".JK", "") === ticker);
+  const scanCache = getScanData();
+  const scanStock = scanCache?.stocks.find((s: any) => s.ticker?.replace(".JK", "") === ticker);
 
   const description = PF[ticker]?.summary || scanStock?.longBusinessSummary || `PT ${name} adalah salah satu perusahaan publik terkemuka di Indonesia yang bergerak di sektor ${sector}, khususnya bidang ${subSector}. Perusahaan ini terdaftar secara resmi di Bursa Efek Indonesia (BEI) dengan ticker ${ticker} dan merupakan bagian penting dari analisis indeks ekosistem finansial nasional.`;
 
@@ -415,9 +389,6 @@ export function getStock(ticker: string): StockData {
 
   return applyRealFundamentals(stock, cleanTicker);
 }
-
-// Populate scan data cache BEFORE building STOCKS_DATA
-setScanData(scanDataRaw as any);
 
 // Generate the final Universe List
 export const STOCKS_DATA: StockData[] = COMBINED_TICKERS.map(t => getStock(t.split("|")[0]));

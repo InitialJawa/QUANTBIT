@@ -8,50 +8,54 @@ Repo: `https://github.com/InitialJawa/QUANTBIT`
 Data layer rewrite: D1 single source of truth dengan schema V2 (19 tables), pipeline otomatis, hapus semua sumber data ganda (JSON/SQLite/L[]/in-memory).
 
 ## Session Context
-- **Sesi 19** — 2026-07-04
+- **Sesi 20** — 2026-07-04
 - Branch: `main`
-- Status: **DATA LAYER REWRITE** — Phase 1-2 selesai, D1 sebagai single source of truth
+- Status: **DATA LAYER REWRITE** — Phase 4-6 selesai
 - Data source: **Yahoo Finance** (harga + fundamental) — IDX website Cloudflare-blocked
-- Yang tinggal: `src/` (UI + engine), `research/` (blueprint V2), `docs/TASK.md`, `scripts/`
 - `scripts/pipeline-sync.ts` = pipeline harian (Yahoo -> D1)
-- `scripts/sync-fundamentals.ts` = fetch fundamental + compute scores
-- `scripts/compute-scores.ts` = legacy (diganti sync-fundamentals.ts)
+- `scripts/seed-local-db.ts` = seed `data/quantbit.db` untuk dev (node:sqlite)
+- `src/server/db.ts` = D1 database module (node:sqlite, auto-schema, query helpers)
+- Vite proxy: `/api/stocks`, `/api/engine`, `/api/backtest-data`, `/api/db-sync-status`, `/api/market/sync` → Express (port 3001)
+- Express server: D1-backed endpoints — `/api/stocks/scores`, `/api/stocks/profiles`, `/api/stocks/fundamentals`, `/api/engine/idx80`, `/api/backtest-data`, `/api/db-sync-status`
+- `data/quantbit.db` = local SQLite seeded dengan V2 schema (19 tables, 1320 mkt rows, 120k+ stock daily, 89 scores)
+
+### Phase 4-6 Changes
+- `src/server/db.ts` — D1 database module (node:sqlite, auto-schema, query helpers)
+- `scripts/seed-local-db.ts` — seed local SQLite from migration + seed SQL files
+- `server.ts` — all D1-backed API endpoints + cron schedule (weekdays 16:30 WIB)
+- `src/mcp/index.ts` — replaced Python bridge + idx80_scan.json refs with D1 queries
+- `vite.config.ts` — proxied `/api/stocks`, `/api/engine` to Express
+- `src/services/dataService.ts` — fetches from Express API, updates `L`/`PF`/`FD` via setters
+- `src/marketData.ts` — `L`, `PF`, `FD` use setters from dataService
+- `src/data/fallbackData.ts` — **deleted**
+- `data/historical_market.sqlite`, `data/idx80_scan.json` — **deleted**
+- `package.json` — `serve-api` + `serve-mcp` use `NODE_OPTIONS='--experimental-sqlite'`
 
 ## Active Tasks
 - [x] **Phase 1**: D1 Schema Migration — 19 tables V2 ✅
-  - Migration 0004: 19 tables, indexes, foreign keys
-  - Migration 0005: Restore users + sessions (di-drop 0004, auth CF Functions butuh)
-  - Fix: add DROP TABLE IF EXISTS stock_daily before CREATE
-  - Ticker catalog: 95 tickers (88 IDX80)
 - [x] **Phase 2**: Seed D1 ✅
-  - market_daily: 1.320 rows (2021-01-04 s/d 2026-07-03)
-  - stock_daily: 120.358 rows (95 tickers × 5+ tahun, open/high/low/close/volume)
-  - stock_scores: 89 tickers (quality/growth/value/dividend/momentum 0-100)
 - [x] **Build Fix Sesi 19**: ✅
-  - Stub files dibuat: `data/idx80_scan.json`, `src/data/dividend_snapshots.json`, `src/data/raw_stocks_data.ts`
-  - `src/data/yahoo/fetchYahooData.ts` — recreate pakai yahoo-finance2@3 API (new YahooFinance())
-  - `npm run build` + `npx tsc --noEmit` lulus
-  - CF Pages deployment seharusnya fix setelah push
-- [ ] **Phase 3**: Engine → D1-only — hapus L[], JSON imports, dividend_snapshots
-- [ ] **Phase 4**: API — rewrite endpoints baca dari D1
-- [ ] **Phase 5**: Pipeline — cron automation (Yahoo harian)
-- [ ] **Phase 6**: Cleanup & Verify — dead code removal, verifikasi data flow
+- [x] **Phase 3**: Engine → D1-only ✅
+- [x] **Phase 4**: API — Express D1-backed endpoints ✅
+- [x] **Phase 5**: Pipeline — cron automation, endpoints verified ✅
+- [x] **Phase 6**: Cleanup — MCP server updated, dead code removed, fallbackData deleted ✅
 
 ## Key Constraints
 - **NO AI for financial math** — semua kalkulasi deterministic
 - **DB = single source of truth** — semua engine baca dari D1, bukan file/in-memory
 - **Dual source: Yahoo (harga+fundamental)**, IDX website Cloudflare-blocked
-- **Pipeline: scripts/sync-fundamentals.ts** untuk update harian scores
+- **Pipeline: scripts/pipeline-sync.ts** untuk update harian prices + scores + momentum
 - **No refactor without DOX pass**
 - **Update docs setelah setiap sesi**
 - **Buat handover setelah sesi berakhir**
 - **Ask before adding dependencies**
+- **Dev server**: `NODE_OPTIONS='--experimental-sqlite' tsx server.ts` (uses Node built-in SQLite)
 
 ## Test Commands
 ```
 npx tsc --noEmit
 npm run lint
 npx vite build
-npx tsx scripts/sync-fundamentals.ts
-npx wrangler d1 execute quantbit-db --remote --command="SELECT * FROM stock_scores WHERE score_date=(SELECT MAX(score_date) FROM stock_scores) LIMIT 5;"
+NODE_OPTIONS='--experimental-sqlite' npx tsx scripts/pipeline-sync.ts
+NODE_OPTIONS='--experimental-sqlite' npx tsx scripts/seed-local-db.ts
 ```

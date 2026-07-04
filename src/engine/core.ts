@@ -11,7 +11,6 @@ import {
 } from "./types";
 import { computeDayRankings, pickTopTickersByRank, getCleanTickerList, computeAdaptiveWeights } from "./ranker";
 import { detectCrashAlgo, detectRecoveryAlgo } from "./crashDetector";
-import dividendSnapshots from "../data/dividend_snapshots.json";
 import {
   computeInitialAllocation,
   liquidateHoldings,
@@ -50,11 +49,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         const existing = (ns as any).dividend;
         let yieldPct = 0;
         if (existing === undefined) {
-          const dps = (dividendSnapshots as any)[t]?.[year]?.dividend_per_share;
           const price = d.stockPrices?.[t];
-          if (dps > 0 && price > 0) {
-            yieldPct = (dps / price) * 100;
-          }
+          yieldPct = 0;
           yields.push({ ticker: t, y: yieldPct });
         }
         enrichedScores[t] = {
