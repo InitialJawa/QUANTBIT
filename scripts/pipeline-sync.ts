@@ -334,4 +334,4 @@ async function main() {
   console.log("\nPipeline complete!");
 }
 
-main().catch(console.error);
+main().catch(e => { console.error(e); process.exit(1); });
