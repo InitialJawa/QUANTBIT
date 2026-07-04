@@ -16,7 +16,7 @@
     "db:migrate:dry-run": "tsx scripts/migrate.ts dry-run",
     "db:seed": "tsx scripts/seed-db.ts",
     "split-data": "tsx scripts/split-data.ts",
-    "build": "npm run build:db && npm run split-data && vite build && tsx scripts/build-cf.ts",
+    "build": "vite build",
     "start": "npx wrangler pages dev dist",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true });\"",
     "lint": "tsc --noEmit",
