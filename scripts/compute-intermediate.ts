@@ -127,10 +127,16 @@ interface DailyRow {
 async function main() {
   console.log("[intermediate] Computing backtest intermediate data...");
 
+  function unwrapD1(jsonStr: string): any[] {
+    const parsed = JSON.parse(jsonStr);
+    // wrangler 4+ returns [{ results: [...], success: true }]
+    if (Array.isArray(parsed) && parsed[0]?.results) return parsed[0].results;
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
   // Fetch all tickers from D1
-  const raw = run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT DISTINCT ticker FROM stock_daily ORDER BY ticker" --json`);
-  const tickerRows: { ticker: string }[] = JSON.parse(raw);
-  const tickers = tickerRows.map(r => r.ticker).filter(Boolean);
+  const tickerRows = unwrapD1(run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT DISTINCT ticker FROM stock_daily ORDER BY ticker" --json`));
+  const tickers = tickerRows.map((r: any) => r.ticker).filter(Boolean);
 
   console.log(`[intermediate] ${tickers.length} tickers found`);
 
@@ -144,11 +150,9 @@ async function main() {
     process.stdout.write(`  [${ti + 1}/${tickers.length}] ${tkr}...`);
 
     try {
-      const rawData = run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT date,ticker,close,adj_close,open,high,low,volume FROM stock_daily WHERE ticker='${tkr}' AND close>0 ORDER BY date" --json`);
-      const rows: DailyRow[] = JSON.parse(rawData);
+      const rows = unwrapD1(run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT date,ticker,close,adj_close,open,high,low,volume FROM stock_daily WHERE ticker='${tkr}' AND close>0 ORDER BY date" --json`));
 
-      // Handle case where wrangler returns an array with a single "error" result
-      const dailyRows = Array.isArray(rows) && rows.length > 0 && !("error" in rows[0])
+      const dailyRows = Array.isArray(rows) && rows.length > 0
         ? rows
         : [];
 
