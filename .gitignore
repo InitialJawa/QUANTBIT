@@ -25,6 +25,8 @@ firebase-config.json
 
 # SQLite database (auto-generated from JSON via build:db)
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 
 # Large auto-generated data

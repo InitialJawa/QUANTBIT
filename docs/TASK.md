@@ -68,8 +68,8 @@ Production: CF Pages Functions + D1 (no server needed)
 ### ☐ Phase 12 — Deploy
 - [x] 12.1 — `npx tsc --noEmit` ✅
 - [x] 12.2 — `npx vite build` ✅
-- [ ] 12.3 — Setup GitHub Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
-- [ ] 12.4 — Push ke GitHub → CF Pages auto-deploy
+- [x] 12.3 — Setup GitHub Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- [x] 12.4 — Push ke GitHub → CF Pages auto-deploy
 - [ ] 12.5 — Buka dari HP, test Market/Analytics/Backtest
 
 ---
