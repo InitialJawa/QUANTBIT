@@ -92,14 +92,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
       // Rebalance: sell all, buy topN
       if (rebalanceDay.has(date)) {
-        // Sell all holdings (look up price from full daily list)
-        const allToday = byDate[date];
-        for (const tkr of Object.keys(holdings)) {
-          const price = allToday.find((s: any) => s.ticker === tkr)?.close || 0;
-          cash += holdings[tkr] * price;
-          trades.push({ date, ticker: tkr, action: "sell", shares: holdings[tkr], price, total: holdings[tkr] * price });
+        // Sell holdings that have price data today; keep others for next rebalance
+        const allToday = byDate[date] || [];
+        const unsold: Record<string, number> = {};
+        for (const [tkr, shares] of Object.entries(holdings)) {
+          const row = allToday.find((s: any) => s.ticker === tkr);
+          if (row && row.close > 0) {
+            cash += shares * row.close;
+            trades.push({ date, ticker: tkr, action: "sell", shares, price: row.close, total: shares * row.close });
+          } else {
+            unsold[tkr] = shares;
+          }
         }
-        holdings = {};
+        holdings = unsold; // only unsold stocks carried forward
 
         // Buy topN if not crashed
         if (!isCrashed) {
