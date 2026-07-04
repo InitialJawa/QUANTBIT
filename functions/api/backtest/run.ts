@@ -92,9 +92,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
       // Rebalance: sell all, buy topN
       if (rebalanceDay.has(date)) {
-        // Sell all holdings
+        // Sell all holdings (look up price from full daily list)
+        const allToday = byDate[date];
         for (const tkr of Object.keys(holdings)) {
-          const price = stocks.find((s: any) => s.ticker === tkr)?.close || 0;
+          const price = allToday.find((s: any) => s.ticker === tkr)?.close || 0;
           cash += holdings[tkr] * price;
           trades.push({ date, ticker: tkr, action: "sell", shares: holdings[tkr], price, total: holdings[tkr] * price });
         }
@@ -102,10 +103,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
         // Buy topN if not crashed
         if (!isCrashed) {
-          const buys = stocks.slice(0, topN);
+          const buys = stocks.slice(0, topN).filter(s => s.close > 0);
           if (buys.length > 0) {
             const perStock = Math.floor(cash / buys.length);
             for (const s of buys) {
+              if (s.close <= 0) continue;
               const shares = Math.floor(perStock / s.close);
               if (shares > 0) {
                 holdings[s.ticker] = (holdings[s.ticker] || 0) + shares;
@@ -119,9 +121,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
       // DCA: buy topN regardless of rebalance schedule
       if (dcaActive && dcaAmount > 0) {
-        const dcaBuys = stocks.slice(0, topN);
+        const dcaBuys = stocks.slice(0, topN).filter(s => s.close > 0);
         for (const s of dcaBuys) {
-          if (cash >= dcaAmount) {
+          if (cash >= dcaAmount && s.close > 0) {
             const shares = Math.floor(dcaAmount / s.close);
             if (shares > 0) {
               holdings[s.ticker] = (holdings[s.ticker] || 0) + shares;
