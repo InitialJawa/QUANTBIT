@@ -39,6 +39,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         scoreMap[sr.ticker] = sr;
       }
     }
+    // Fallback: jika stock_scores kosong (pipeline belum jalan), generate default scores
+    if (Object.keys(scoreMap).length === 0) {
+      const allTickers = await env.DB.prepare("SELECT DISTINCT ticker FROM stock_daily").all<{ ticker: string }>();
+      for (const { ticker } of allTickers.results) {
+        scoreMap[ticker] = { ticker, quality: 50, growth: 50, value: 50, dividend: 50, momentum: 50 };
+      }
+    }
 
     const data = marketRows.results.map((m: any) => {
       const stockPrices = stockByDate[m.date] || {};
