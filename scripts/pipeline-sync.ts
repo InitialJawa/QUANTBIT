@@ -238,8 +238,8 @@ function computeMomentumSQL(scoreDate: string): string[] {
 
 // ── Main ──
 async function main() {
-  const full = process.argv.includes("--full");
-  const mode = process.argv.find(a => !a.startsWith("-")) || "all";
+  const full = process.argv.slice(2).includes("--full");
+  const mode = process.argv.slice(2).find(a => !a.startsWith("-")) || "all";
   console.log(`Pipeline Sync [${mode}]${full ? ' --full' : ''} — ${TODAY}`);
 
   const startDate = full ? "2021-01-01" : (
