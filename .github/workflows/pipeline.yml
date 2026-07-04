@@ -5,7 +5,12 @@ on:
     # Every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC (07:00, 13:00, 19:00, 01:00 WIB)
     - cron: '0 */6 * * *'
   workflow_dispatch:
-    # Manual trigger from GitHub Actions UI
+    inputs:
+      full_sync:
+        description: 'Full historical fetch (from 2021)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   pipeline:
@@ -23,7 +28,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx tsx scripts/pipeline-sync.ts
+        run: npx tsx scripts/pipeline-sync.ts ${{ inputs.full_sync && '--full' || '' }}
 
       - name: Apply D1 migrations
         env:

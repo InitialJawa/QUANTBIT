@@ -67,7 +67,6 @@ CREATE TABLE IF NOT EXISTS market_daily (
 CREATE INDEX IF NOT EXISTS idx_market_daily_date ON market_daily(date);
 
 -- 5. Per-stock daily data (replaces stock_daily)
-DROP TABLE IF EXISTS stock_daily;
 CREATE TABLE IF NOT EXISTS stock_daily (
   date              TEXT NOT NULL,
   ticker            TEXT NOT NULL,
