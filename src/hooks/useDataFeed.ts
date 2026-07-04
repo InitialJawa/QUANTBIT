@@ -80,7 +80,7 @@ export function useDataFeed() {
         })
         .catch(() => {});
 
-      api.get<{ success: boolean; data: any[]; count: number }>("/api/fundamentals")
+      api.get<{ success: boolean; data: any[]; count: number }>("/api/stocks/fundamentals")
         .then(apiRes => {
           if (apiRes.success && apiRes.data?.length > 0) {
             setFundamentalsData(apiRes.data);
@@ -90,8 +90,23 @@ export function useDataFeed() {
 
       api.get<{ success: boolean; data: any[] }>("/api/backtest-data?from=2025&to=2026")
         .then(apiRes => {
-          if (apiRes.success && Array.isArray(apiRes.data)) {
-            setIhsgHistory(apiRes.data.map((d: any) => ({ close: d.ihsgPrice, date: d.date, isCarriedForward: d.isCarriedForward || false })));
+          if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
+            const d = apiRes.data;
+            setIhsgHistory(d.map((x: any) => ({ close: x.ihsgPrice, date: x.date, isCarriedForward: x.isCarriedForward || false })));
+            // Seed MKT fallback values from D1 data (used when Yahoo is offline)
+            const last = d[d.length - 1];
+            if (last && last.ihsgPrice && !yahooPrices["IHSG"]) {
+              MKT.ihsg.value = last.ihsgPrice;
+            }
+            if (last && last.usdidrRate && !yahooPrices["USDIDR"]) {
+              MKT.usdidr.value = last.usdidrRate;
+            }
+            if (last && last.goldPrice && last.usdidrRate && !yahooPrices["GOLD"]) {
+              const goldIdr = Math.round((last.goldPrice * last.usdidrRate) / 31.1035);
+              if (goldIdr > 0 && MKT.gold.value !== goldIdr) {
+                MKT.gold.value = goldIdr;
+              }
+            }
           }
           refreshRSFromRegime();
         })

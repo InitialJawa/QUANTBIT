@@ -55,7 +55,10 @@ Update parent docs saat parent-level structure, ownership, workflow, atau child 
 ### Child DOX Index
 
 - `src/` — React UI components, hooks, contexts, engine, AI client, types, utils
-- `scripts/` — Pipeline scripts: pipeline-sync.ts (Yahoo → D1 prices+scores+momentum), seed-local-db.ts (local SQLite dev DB)
+- `scripts/` — Pipeline scripts: pipeline-sync.ts (Yahoo → D1 prices+scores+momentum), compute-intermediate.ts (SMA/RSI/MACD/ATR → D1)
+- `functions/` — CF Pages Functions (API endpoints: stocks, engine, backtest, yahoo, auth, market)
+- `db/` — D1 migrations (0001-0006) + seed SQL
+- `.github/workflows/` — GitHub Actions pipeline (cron tiap 6 jam)
 - `docs/` — TASK.md (session SOT), research/ (V2 blueprint)
 - `handover/` — session snapshots
 - `research/` — V2 blueprint (33 docs)
@@ -76,7 +79,9 @@ Read docs/TASK.md and continue the project.
 ## Bagian 3 — Project-Wide Rules
 
 - **No AI for financial math** — semua kalkulasi deterministic
-- **DB = single source of truth** — semua engine baca dari D1, bukan file/in-memory
+- **DB = single source of truth** — semua engine baca dari D1
+- **Full Serverless** — CF Pages Functions + D1 + GH Actions Pipeline. No Express, no SQLite lokal, no VPS.
+- **Dev mode**: `npm run dev` (Express untuk proxy API ke SQLite lokal). Production: CF Functions + D1.
 - **Ask before adding dependencies**
 - **No refactor without DOX pass**
 - **Update docs setiap sesi**

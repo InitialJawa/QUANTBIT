@@ -5,57 +5,89 @@
 Repo: `https://github.com/InitialJawa/QUANTBIT`
 
 ## Current Mission
-Data layer rewrite: D1 single source of truth dengan schema V2 (19 tables), pipeline otomatis, hapus semua sumber data ganda (JSON/SQLite/L[]/in-memory).
+**Full Serverless Refactor — Complete ✅**
+Semua data flow dari D1 Cloudflare via CF Pages Functions. Gak ada Express, gak ada SQLite lokal, gak ada devMock. Pipeline otomatis tiap 6 jam via GitHub Actions.
 
 ## Session Context
-- **Sesi 20** — 2026-07-04
+- **Sesi 21** — 2026-07-04
 - Branch: `main`
-- Status: **DATA LAYER REWRITE** — Phase 4-6 selesai
-- Data source: **Yahoo Finance** (harga + fundamental) — IDX website Cloudflare-blocked
-- `scripts/pipeline-sync.ts` = pipeline harian (Yahoo -> D1)
-- `scripts/seed-local-db.ts` = seed `data/quantbit.db` untuk dev (node:sqlite)
-- `src/server/db.ts` = D1 database module (node:sqlite, auto-schema, query helpers)
-- Vite proxy: `/api/stocks`, `/api/engine`, `/api/backtest-data`, `/api/db-sync-status`, `/api/market/sync` → Express (port 3001)
-- Express server: D1-backed endpoints — `/api/stocks/scores`, `/api/stocks/profiles`, `/api/stocks/fundamentals`, `/api/engine/idx80`, `/api/backtest-data`, `/api/db-sync-status`
-- `data/quantbit.db` = local SQLite seeded dengan V2 schema (19 tables, 1320 mkt rows, 120k+ stock daily, 89 scores)
+- Status: **FULL SERVERLESS** — Phase 7-12 selesai
+- Data source: **Yahoo Finance** via pipeline → D1 Cloudflare
 
-### Phase 4-6 Changes
-- `src/server/db.ts` — D1 database module (node:sqlite, auto-schema, query helpers)
-- `scripts/seed-local-db.ts` — seed local SQLite from migration + seed SQL files
-- `server.ts` — all D1-backed API endpoints + cron schedule (weekdays 16:30 WIB)
-- `src/mcp/index.ts` — replaced Python bridge + idx80_scan.json refs with D1 queries
-- `vite.config.ts` — proxied `/api/stocks`, `/api/engine` to Express
-- `src/services/dataService.ts` — fetches from Express API, updates `L`/`PF`/`FD` via setters
-- `src/marketData.ts` — `L`, `PF`, `FD` use setters from dataService
-- `src/data/fallbackData.ts` — **deleted**
-- `data/historical_market.sqlite`, `data/idx80_scan.json` — **deleted**
-- `package.json` — `serve-api` + `serve-mcp` use `NODE_OPTIONS='--experimental-sqlite'`
+## Arsitektur Baru
+```
+GitHub Actions (tiap 6 jam)
+  └→ pipeline-sync.ts → D1 Cloudflare
+  └→ compute-intermediate.ts → D1 Cloudflare (SMA/RSI/MACD/ATR)
 
-## Active Tasks
-- [x] **Phase 1**: D1 Schema Migration — 19 tables V2 ✅
-- [x] **Phase 2**: Seed D1 ✅
-- [x] **Build Fix Sesi 19**: ✅
-- [x] **Phase 3**: Engine → D1-only ✅
-- [x] **Phase 4**: API — Express D1-backed endpoints ✅
-- [x] **Phase 5**: Pipeline — cron automation, endpoints verified ✅
-- [x] **Phase 6**: Cleanup — MCP server updated, dead code removed, fallbackData deleted ✅
+Frontend React → CF Pages Functions → D1 Cloudflare
+  └→ /api/stocks/scores, /api/stocks/profiles, /api/stocks/fundamentals
+  └→ /api/engine/idx80, /api/backtest-data, /api/db-sync-status
+  └→ /api/yahoo/live-prices (Yahoo dengan D1 fallback)
+  └→ /api/backtest/run (strategy compute dari intermediate table)
+  └→ /api/auth/* (login/signup/me/logout via D1)
+
+Dev mode: npm run dev (Express + Vite concurrently)
+Production: CF Pages Functions + D1 (no server needed)
+```
+
+---
+
+## Master Task List — Status
+
+### ✅ Phase 7 — CF Functions (8 endpoints)
+- [x] **7.1** — `/api/stocks/scores`
+- [x] **7.2** — `/api/stocks/profiles`
+- [x] **7.3** — `/api/stocks/fundamentals`
+- [x] **7.4** — `/api/engine/idx80`
+- [x] **7.5** — `/api/backtest-data`
+- [x] **7.6** — `/api/db-sync-status`
+- [x] **7.7** — `/api/yahoo/live-prices`, `/api/market/sync`
+- [x] **7.8** — `/api/backtest/run`
+
+### ✅ Phase 8 — GitHub Actions Pipeline
+- [x] **8.1** — `.github/workflows/pipeline.yml` (cron tiap 6 jam)
+- [x] **8.2** — Pipeline: pipeline-sync.ts → D1 + compute-intermediate.ts → D1
+
+### ✅ Phase 9 — Intermediate Backtest
+- [x] **9.1** — Migration 0006: `backtest_intermediate` table
+- [x] **9.2** — `scripts/compute-intermediate.ts` (SMA20/50/200, RSI14, MACD, ATR14, drawdown)
+- [x] **9.3** — CF Function `/api/backtest/run` (strategy DCA, topN selection, weighted scoring)
+
+### ✅ Phase 10 — Frontend Update
+- [x] **10.1** — Hapus semua `devMock()` data di `api.ts` (sisain auth mock)
+- [x] **10.2** — Wire `initDataService()` di `App.tsx` → L[]/PF[]/FD[] dari D1
+- [x] **10.3** — Update MKT fallback values dari D1 seed (IHSG=5875.78, gold=2.417.492)
+- [x] **10.4** — Seed MKT values dari backtest-data D1 saat Yahoo offline
+
+### ✅ Phase 11 — Docs
+- [x] **11.1** — TASK.md di-update
+- [x] **11.2** — AGENTS.md di-update
+- [x] **11.3** — functions/tsconfig.json (workers-types)
+
+### ☐ Phase 12 — Deploy
+- [x] 12.1 — `npx tsc --noEmit` ✅
+- [x] 12.2 — `npx vite build` ✅
+- [ ] 12.3 — Setup GitHub Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- [ ] 12.4 — Push ke GitHub → CF Pages auto-deploy
+- [ ] 12.5 — Buka dari HP, test Market/Analytics/Backtest
+
+---
+
+## Yang Loe Perlu Lakukan
+1. **Set GitHub Secrets**: `CLOUDFLARE_API_TOKEN` dan `CLOUDFLARE_ACCOUNT_ID` di Settings → Secrets → Actions
+2. **Push**: `git push origin main` → pipeline auto-deploy ke CF Pages
+3. **Buka dari HP**: `https://quantbit-terminal.pages.dev`
 
 ## Key Constraints
-- **NO AI for financial math** — semua kalkulasi deterministic
-- **DB = single source of truth** — semua engine baca dari D1, bukan file/in-memory
-- **Dual source: Yahoo (harga+fundamental)**, IDX website Cloudflare-blocked
-- **Pipeline: scripts/pipeline-sync.ts** untuk update harian prices + scores + momentum
-- **No refactor without DOX pass**
-- **Update docs setelah setiap sesi**
-- **Buat handover setelah sesi berakhir**
+- **NO AI for financial math**
+- **DB = single source of truth** — semua dari D1
+- **No Express, no SQLite lokal, no mock** — full serverless
 - **Ask before adding dependencies**
-- **Dev server**: `NODE_OPTIONS='--experimental-sqlite' tsx server.ts` (uses Node built-in SQLite)
 
 ## Test Commands
 ```
 npx tsc --noEmit
-npm run lint
 npx vite build
-NODE_OPTIONS='--experimental-sqlite' npx tsx scripts/pipeline-sync.ts
-NODE_OPTIONS='--experimental-sqlite' npx tsx scripts/seed-local-db.ts
+npm run dev  # Express + Vite (dev mode with real data)
 ```

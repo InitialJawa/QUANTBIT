@@ -1,0 +1,24 @@
+# 9Router — VPS Setup & Run
+
+## Install
+```
+npm install -g 9router
+```
+
+## Run (background, exposed)
+```bash
+9router -t -n --log &
+```
+
+Server starts at `http://localhost:20128`, accessible via `http://187.77.146.83:20128/dashboard`.
+
+## Stop
+```bash
+kill $(lsof -t -i:20128)
+```
+
+## Notes
+- Runs on port 20128, bound to `0.0.0.0` (public).
+- Dashboard: `/dashboard`
+- OpenAI-compatible endpoint: `/v1`
+- To run local-only: add `--host 127.0.0.1`

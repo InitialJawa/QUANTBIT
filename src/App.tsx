@@ -14,6 +14,7 @@ import { AITestHarness } from "./components/AITestHarness";
 import { BackToTop } from "./components/BackToTop";
 import { useNotifications } from "./contexts/NotificationContext";
 import { useShortcuts } from "./hooks/useShortcuts";
+import { initDataService } from "./services/dataService";
 
 const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ default: m.MarketTab })));
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
@@ -109,6 +110,7 @@ function AppContent({ logout }: { logout: () => void }) {
 
   useEffect(() => {
     if (!user) return;
+    initDataService();
     api
       .get<{ user: any }>("/api/auth/me")
       .then((d) => {

@@ -80,6 +80,20 @@
         "cohere/north-mini-code:free": {},
         "meta-llama/llama-3.3-70b-instruct:free": {}
       }
+    },
+    "nara": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NaraRouter",
+      "options": {
+        "baseURL": "https://router.bynara.id/v1",
+        "apiKey": "sk-nry-Q5c717Cd-LBl8_JQpuENNDRzK02j9r3J2wmrza3y0PY"
+      },
+      "models": {
+        "mistral-large": { "name": "Mistral Large (w1)" },
+        "mistral-medium-3-5": { "name": "Mistral Medium 3.5 (w1)" },
+        "claude-haiku-4.5": { "name": "Claude Haiku 4.5 (w2)" },
+        "claude-sonnet-4.5": { "name": "Claude Sonnet 4.5 (w3)" }
+      }
     }
   },
   "model": "9router/kr/auto"
