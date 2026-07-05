@@ -32,30 +32,24 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const scoreDateRow = await env.DB.prepare("SELECT MAX(score_date) as sd FROM stock_scores").first<any>();
-    let scoreMap: Record<string, any> = {};
+    let stockNormScores: Record<string, any> = {};
     if (scoreDateRow?.sd) {
       const scoreRows = await env.DB.prepare("SELECT ticker,quality,growth,value,dividend,momentum FROM stock_scores WHERE score_date=?").bind(scoreDateRow.sd).all<any>();
       for (const sr of scoreRows.results) {
-        scoreMap[sr.ticker] = sr;
+        stockNormScores[sr.ticker] = {
+          quality: sr.quality ?? 50,
+          growth: sr.growth ?? 50,
+          value: sr.value ?? 50,
+          momentum: sr.momentum ?? 50,
+          dividend: sr.dividend ?? 50,
+        };
       }
     }
+    const hasScores = Object.keys(stockNormScores).length > 0;
 
     const data = marketRows.results.map((m: any) => {
       const stockPrices = stockByDate[m.date] || {};
       const stockAdj = stockAdjByDate[m.date] || {};
-      const stockNormScores: Record<string, any> = {};
-      for (const [tkr, close] of Object.entries(stockAdj)) {
-        const sc = scoreMap[tkr];
-        if (sc) {
-          stockNormScores[tkr] = {
-            quality: sc.quality ?? 50,
-            growth: sc.growth ?? 50,
-            value: sc.value ?? 50,
-            momentum: sc.momentum ?? 50,
-            dividend: sc.dividend ?? 50,
-          };
-        }
-      }
 
       return {
         date: m.date,
@@ -64,7 +58,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         usdidrRate: m.usdidr_rate,
         stockAdjPrices: stockAdj,
         stockPrices,
-        stockNormScores: Object.keys(stockNormScores).length > 0 ? stockNormScores : undefined,
+        stockNormScores: hasScores ? stockNormScores : undefined,
       };
     });
 
