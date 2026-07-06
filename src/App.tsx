@@ -111,13 +111,8 @@ function AppContent({ logout }: { logout: () => void }) {
   useEffect(() => {
     if (!user) return;
     initDataService();
-    api
-      .get<{ user: any }>("/api/auth/me")
-      .then((d) => {
-        if (d.user.data_feed) df.setDataFeed(d.user.data_feed);
-        if (d.user.active_config) setActiveProfile(d.user.active_config);
-      })
-      .catch(() => {});
+    if (user?.data_feed) df.setDataFeed(user.data_feed);
+    if (user?.active_config) setActiveProfile(user.active_config);
   }, [user]);
 
   // Debounced profile sync — without debounce, pm.cash changes trigger a PATCH

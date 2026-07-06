@@ -477,6 +477,7 @@ app.get("/api/backtest-data", async (req, res) => {
     const configType = (req.query.configType as string) === "res" ? "res" : "prod";
     const yearStart = parseInt(req.query.from as string) || 2021;
     const yearEnd = parseInt(req.query.to as string) || 2026;
+    const isLight = req.query.light !== undefined;
 
     // Load market daily
     const marketRows = await queryAll(
@@ -486,6 +487,14 @@ app.get("/api/backtest-data", async (req, res) => {
 
     if (marketRows.length === 0) {
       res.status(503).json({ success: false, error: "No historical data available" });
+      return;
+    }
+
+    if (isLight) {
+      const data = marketRows.map((m: any) => ({
+        date: m.date, ihsgPrice: m.ihsg_close, goldPrice: m.gold_close, usdidrRate: m.usdidr_rate,
+      }));
+      res.json({ success: true, count: data.length, configType, data });
       return;
     }
 

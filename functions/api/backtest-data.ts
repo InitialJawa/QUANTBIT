@@ -9,6 +9,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const configType = url.searchParams.get("configType") === "res" ? "res" : "prod";
     const yearStart = parseInt(url.searchParams.get("from") as string) || 2021;
     const yearEnd = parseInt(url.searchParams.get("to") as string) || 2026;
+    const isLight = url.searchParams.has("light");
 
     const marketRows = await env.DB.prepare(
       "SELECT date,ihsg_close,gold_close,usdidr_rate FROM market_daily WHERE date >= ? AND date <= ? ORDER BY date"
@@ -16,6 +17,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (marketRows.results.length === 0) {
       return Response.json({ success: false, error: "No historical data available" }, { status: 503 });
+    }
+
+    if (isLight) {
+      const data = marketRows.results.map((m: any) => ({
+        date: m.date, ihsgPrice: m.ihsg_close, goldPrice: m.gold_close, usdidrRate: m.usdidr_rate,
+      }));
+      return Response.json({ success: true, count: data.length, configType, data });
     }
 
     const stockRows = await env.DB.prepare(

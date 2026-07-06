@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { getStock } from "../stocksData";
-import { setFundamentalsData } from "../fundamentalsCache";
 import { DataStatus } from "../types/DataStatus";
 import { MKT, setScanData } from "../marketData";
 import { refreshRSFromRegime, setIhsgHistory } from "../marketRegimeEngine";
@@ -15,10 +14,8 @@ interface SyncStatus {
 }
 
 export function useDataFeed() {
-  const [goapiPrices, setGoapiPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
   const [yahooPrices, setYahooPrices] = useState<Record<string, { close: number; change: number; pct: number }>>({});
   const [dataFeed, setDataFeed] = useState<"yahoo" | "goapi" | "simulated">("yahoo");
-  const [isGoapiConnected, setIsGoapiConnected] = useState(false);
   const [isYahooConnected, setIsYahooConnected] = useState(false);
   const [mktRevision, setMktRevision] = useState(0);
   const [dbSyncStatus, setDbSyncStatus] = useState<SyncStatus>({
@@ -62,15 +59,6 @@ export function useDataFeed() {
 
   useEffect(() => {
     const fetchPrices = () => {
-      api.get<{ success: boolean; prices: any }>("/api/goapi/live-prices")
-        .then(apiRes => {
-          if (apiRes.success && apiRes.prices) {
-            setGoapiPrices(apiRes.prices);
-            setIsGoapiConnected(true);
-          }
-        })
-        .catch(() => {});
-
       api.get<{ success: boolean; prices: any }>("/api/yahoo/live-prices")
         .then(apiRes => {
           if (apiRes.success && apiRes.prices) {
@@ -80,15 +68,7 @@ export function useDataFeed() {
         })
         .catch(() => {});
 
-      api.get<{ success: boolean; data: any[]; count: number }>("/api/stocks/fundamentals")
-        .then(apiRes => {
-          if (apiRes.success && apiRes.data?.length > 0) {
-            setFundamentalsData(apiRes.data);
-          }
-        })
-        .catch(() => {});
-
-      api.get<{ success: boolean; data: any[] }>("/api/backtest-data?from=2025&to=2026")
+      api.get<{ success: boolean; data: any[] }>("/api/backtest-data?from=2025&to=2026&light=true")
         .then(apiRes => {
           if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
             const d = apiRes.data;
@@ -162,10 +142,7 @@ export function useDataFeed() {
     let basePrice = rawStock.currentPrice;
     let baseChange = rawStock.change;
 
-    if (dataFeed === "goapi" && goapiPrices[rawStock.ticker]) {
-      basePrice = goapiPrices[rawStock.ticker].close;
-      baseChange = goapiPrices[rawStock.ticker].pct;
-    } else if (dataFeed === "yahoo" && yahooPrices[rawStock.ticker]) {
+    if (yahooPrices[rawStock.ticker]) {
       basePrice = yahooPrices[rawStock.ticker].close;
       baseChange = yahooPrices[rawStock.ticker].pct;
     }
@@ -186,7 +163,7 @@ export function useDataFeed() {
       });
     };
 
-    const hasLivePrice = (dataFeed === "goapi" && goapiPrices[rawStock.ticker]) || (dataFeed === "yahoo" && yahooPrices[rawStock.ticker]);
+    const hasLivePrice = !!yahooPrices[rawStock.ticker];
 
     return {
       ...rawStock,
@@ -206,8 +183,8 @@ export function useDataFeed() {
 
   return {
     dataFeed, setDataFeed,
-    goapiPrices, yahooPrices,
-    isGoapiConnected, isYahooConnected,
+    yahooPrices,
+    isYahooConnected,
     mktRevision,
     getDynamicStock,
     syncStatus: dbSyncStatus,
