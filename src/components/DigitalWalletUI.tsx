@@ -7,7 +7,7 @@ import {
   X,
   CreditCard,
   Coins,
-} from "lucide-react";
+} from "../utils/icons";
 import { motion, AnimatePresence } from "motion/react";
 import { MKT } from "../marketData";
 
@@ -149,8 +149,7 @@ export function DigitalWalletUI({
                       >+{val.toLocaleString("id-ID")}</button>
                     ))}
                     <button onClick={() => setNominalStr(cash.toString())}
-                      className="px-2 py-1 rounded text-label font-mono ml-auto transition-colors"
-                      style={{ backgroundColor: 'rgba(0,201,165,0.15)', color: '#00c9a5' }}>MAX</button>
+                      className="px-2 py-1 rounded text-label font-mono ml-auto transition-colors bg-emerald-500/10 text-emerald-400">MAX</button>
                   </>
                 ) : (
                   <>
@@ -161,8 +160,7 @@ export function DigitalWalletUI({
                       >+{val}</button>
                     ))}
                     <button onClick={() => setNominalStr((cash / MKT.gold.value).toFixed(4))}
-                      className="px-2 py-1 rounded text-label font-mono transition-colors"
-                      style={{ backgroundColor: 'rgba(0,201,165,0.15)', color: '#00c9a5' }}>MAX BELI</button>
+                      className="px-2 py-1 rounded text-label font-mono transition-colors bg-emerald-500/10 text-emerald-400">MAX BELI</button>
                     <button onClick={() => setNominalStr(goldShares.toString())}
                       className="px-2 py-1 rounded text-label font-mono transition-colors text-white/40 hover:text-white/70"
                       style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>MAX JUAL</button>
@@ -174,8 +172,7 @@ export function DigitalWalletUI({
                 {activeTab === "rupiah" ? (
                   <>
                     <button onClick={() => handleAction("deposit")}
-                      className="py-1.5 rounded text-label font-medium transition-opacity"
-                      style={{ backgroundColor: '#00c9a5', color: '#fff' }}>Deposit</button>
+                      className="py-1.5 rounded text-label font-medium bg-emerald-500 text-[#0a0f0c] transition-opacity hover:opacity-90">Deposit</button>
                     <button onClick={() => handleAction("withdraw")}
                       className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Tarik</button>
@@ -183,8 +180,7 @@ export function DigitalWalletUI({
                 ) : (
                   <>
                     <button onClick={() => handleAction("buyGold")}
-                      className="py-1.5 rounded text-label font-medium transition-opacity"
-                      style={{ backgroundColor: '#00c9a5', color: '#fff' }}>Beli</button>
+                      className="py-1.5 rounded text-label font-medium bg-emerald-500 text-[#0a0f0c] transition-opacity hover:opacity-90">Beli</button>
                     <button onClick={() => handleAction("sellGold")}
                       className="py-1.5 rounded text-label font-medium transition-colors"
                       style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#787b86' }}>Jual</button>
@@ -193,8 +189,7 @@ export function DigitalWalletUI({
               </div>
 
               {notification && (
-                <div className={`px-2 py-1.5 rounded text-label font-medium ${notification.type === "success" ? "text-[#00c9a5]" : "text-[#f23645]"}`}
-                  style={{ backgroundColor: notification.type === "success" ? 'rgba(0,201,165,0.1)' : 'rgba(242,54,69,0.1)' }}>
+                <div className={`px-2 py-1.5 rounded text-label font-medium ${notification.type === "success" ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10"}`}>
                   {notification.message}
                 </div>
               )}

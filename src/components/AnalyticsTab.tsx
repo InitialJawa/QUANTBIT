@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "../utils/icons";
 import { LeadersTab } from "./LeadersTab";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { useEngineConfig } from "../contexts/EngineConfigContext";

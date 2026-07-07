@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { api } from "../services/api";
-import { Activity, RefreshCw } from "lucide-react";
+import { Activity, RefreshCw } from "../utils/icons";
 import { portfolioIndexedHistory } from "../utils/reconstructPortfolioHistory";
 import type { PortfolioItem } from "../types";
 
@@ -261,8 +261,8 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="colorPortfolio" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00c9a5" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#00c9a5" stopOpacity={0.01} />
+                  <stop offset="5%" stopColor="#9FD8BD" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#9FD8BD" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
@@ -316,7 +316,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
               <Area yAxisId="left" type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
               <Area yAxisId="right" type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
               {portfolio && portfolio.length > 0 && (
-                <Area yAxisId="left" type="monotone" dataKey="portfolio" stroke="#00c9a5" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
+                <Area yAxisId="left" type="monotone" dataKey="portfolio" stroke="#9FD8BD" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
               )}
               <Line yAxisId="left" type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
               <Line yAxisId="left" type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />

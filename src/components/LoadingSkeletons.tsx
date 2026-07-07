@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Activity, BarChart3, TrendingUp } from "lucide-react";
+import { Activity, BarChart3, TrendingUp } from "../utils/icons";
 
 export function ChartSkeleton({ height = "320px" }: { height?: string }) {
   return (

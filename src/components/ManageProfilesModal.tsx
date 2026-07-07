@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2 } from "../utils/icons";
 import { useEngineConfig, type WeightProfile } from "../contexts/EngineConfigContext";
 
 export function ManageProfilesModal({ onClose }: { onClose: () => void }) {

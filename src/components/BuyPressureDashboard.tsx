@@ -9,7 +9,7 @@ import { motion } from "motion/react";
 import {
   Sparkles, ChevronDown, ChevronUp, TrendingUp, AlertTriangle,
   Activity, BarChart3, Layers, TrendingDown, ShieldAlert,
-} from "lucide-react";
+} from "../utils/icons";
 import { useBuyPressure, type BuyPressureAction, type BuyPressureFactors } from "../engine/buyPressure";
 
 const ACTION_META: Record<BuyPressureAction, { label: string; color: string; bg: string; border: string; ring: string }> = {

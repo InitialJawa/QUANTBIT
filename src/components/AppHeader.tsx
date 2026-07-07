@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Settings, LogOut, Moon, Sun, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, BellRing, Sparkles, Wallet, AlertTriangle } from "lucide-react";
+import { Settings, LogOut, Moon, Sun, Menu, X, Activity, Briefcase, BarChart3, History, Search, Bell, BellOff, BellRing, Sparkles, Wallet, AlertTriangle } from "../utils/icons";
 import { totalWealth, formatRupiahShort } from "../utils/portfolioValue";
 import type { PortfolioItem, StockData } from "../types";
 
@@ -81,9 +81,9 @@ export function AppHeader({
           <svg viewBox="0 0 115 100" className="w-6 h-6 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
             <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-            <circle cx="98" cy="70" r="10" fill="#00c9a5" />
+            <circle cx="98" cy="70" r="10" fill="#9FD8BD" />
           </svg>
-          <span className="text-xs font-bold tracking-wide text-white/80 uppercase hidden sm:inline">Quantbit</span>
+          <span className="text-xs font-bold tracking-wide text-white/80 uppercase hidden sm:inline font-display">Quantbit</span>
         </span>
 
         <div className="flex items-center gap-0.5 border-l border-white/[0.06] pl-3 ml-1">
@@ -94,7 +94,7 @@ export function AppHeader({
               title={`${label} (tekan ${shortcut})`}
               className={`flex items-center gap-2 px-3.5 h-9 rounded-md text-label font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === id
-                  ? "text-[#00c9a5] bg-[#00c9a5]/10"
+                  ? "text-emerald-400 bg-emerald-500/10"
                   : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
               }`}
             >

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layers, ShieldAlert, Settings2, ChevronDown, ChevronUp, Wallet } from "lucide-react";
+import { Layers, ShieldAlert, Settings2, ChevronDown, ChevronUp, Wallet } from "../utils/icons";
 
 export interface StrategyConfigShape {
   activeProfileId: "aman" | "agresif" | "dividen" | string;
@@ -84,12 +84,7 @@ export function StrategySettingsPanel({
           onClick={() => onPick(k)}
           disabled={disabled}
           title={disabled ? disabledTooltip : undefined}
-          className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: value === k ? "rgba(0,201,165,0.15)" : "rgba(255,255,255,0.04)",
-            color: value === k ? "#00c9a5" : "#7a7a7a",
-            border: "1px solid " + (value === k ? "rgba(0,201,165,0.3)" : "rgba(255,255,255,0.06)"),
-          }}
+          className={`flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${value === k ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-white/40 border-white/5"}`}
         >
           {label}
         </button>
@@ -210,12 +205,8 @@ export function StrategySettingsPanel({
                   onClick={() => onChange("enableCrashProtection", !config.enableCrashProtection)}
                   disabled={disabled}
                   title={disabled ? disabledTooltip : undefined}
-                  className="px-2 py-0.5 text-caption font-bold rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: config.enableCrashProtection ? "rgba(0,201,165,0.15)" : "rgba(255,255,255,0.04)",
-                    color: config.enableCrashProtection ? "#00c9a5" : "#7a7a7a",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}
+                  className={`px-2 py-0.5 text-caption font-bold rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${config.enableCrashProtection ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-white/40"}`}
+                  style={{ border: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   {config.enableCrashProtection ? "ON" : "OFF"}
                 </button>
@@ -256,12 +247,8 @@ export function StrategySettingsPanel({
                   type="button"
                   onClick={() => onChange("safeHavenAsset", "kas")}
                   disabled={disabled || !config.enableCrashProtection}
-                  className="flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: config.safeHavenAsset === "kas" ? "rgba(0,201,165,0.15)" : "rgba(255,255,255,0.04)",
-                    color: config.safeHavenAsset === "kas" ? "#00c9a5" : "#7a7a7a",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}
+                  className={`flex-1 py-1 text-caption font-medium rounded-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${config.safeHavenAsset === "kas" ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-white/40"}`}
+                  style={{ border: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   Kas
                 </button>

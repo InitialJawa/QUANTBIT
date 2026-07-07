@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown } from "../utils/icons";
 import { STOCKS_DATA } from "../stocksData";
 import { TickerLogo } from "./TickerLogo";
 

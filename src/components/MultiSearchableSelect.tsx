@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Check } from "lucide-react";
+import { Search, X, Check } from "../utils/icons";
 import { TickerLogo } from "./TickerLogo";
 
 interface Option {

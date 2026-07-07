@@ -4,7 +4,7 @@
 // before the deterministic handler is invoked. Never auto-executes.
 // ─────────────────────────────────────────────────────────────
 import { useState, type FC } from "react";
-import { Check, X, Loader2, Sparkles } from "lucide-react";
+import { Check, X, Loader2, Sparkles } from "../utils/icons";
 import type { PendingAction } from "../types/ai";
 
 export interface AIActionApprovalCardProps {

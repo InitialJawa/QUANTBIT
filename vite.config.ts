@@ -157,7 +157,7 @@ export default defineConfig(() => {
           manualChunks: {
             'charts-vendor': ['recharts'],
             'motion-vendor': ['motion'],
-            'icons-vendor': ['lucide-react'],
+            'icons-vendor': ['@iconify/react'],
           },
         },
       },

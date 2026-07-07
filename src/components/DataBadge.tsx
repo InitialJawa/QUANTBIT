@@ -1,7 +1,7 @@
 // src/components/DataBadge.tsx
 import React from "react";
 import { DataStatus } from "../types/DataStatus";
-import { CheckCircle, Clock, AlertCircle, HelpCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, HelpCircle } from "../utils/icons";
 
 /**
  * Simple badge displaying the provenance/status of market data.

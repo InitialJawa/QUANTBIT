@@ -3,7 +3,7 @@ import { L, CW_MAP, CW_AMAN, getProcessedLeaders } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter, Download } from "lucide-react";
+import { Search, Sliders, Play, TrendingUp, TrendingDown, LayoutGrid, Table, RefreshCw, BookmarkCheck, Bookmark, Filter, Download } from "../utils/icons";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";

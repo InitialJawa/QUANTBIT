@@ -1,4 +1,4 @@
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X } from "../utils/icons";
 import { motion, AnimatePresence } from "motion/react";
 import type { ReactNode } from "react";
 

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, Bug } from 'lucide-react';
+import { Mail, Lock, Bug } from '../utils/icons';
 
 export function LoginScreen() {
   const { login, signup } = useAuth();
@@ -40,49 +40,48 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ backgroundColor: '#0d0d0d', color: '#ffffff' }}>
-      <div className="max-w-md w-full border border-white/[0.06] rounded-lg p-8 sm:p-10" style={{ backgroundColor: '#1e222d' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 font-body" style={{ backgroundColor: '#0a0f0c' }}>
+      <div className="max-w-md w-full glass-elevated rounded-lg p-8 sm:p-10">
         <div className="mb-8 flex flex-col items-center text-center w-full">
           <svg viewBox="0 0 115 100" className="w-16 h-16 mb-4" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="48" cy="45" r="28" stroke="#d1d4dc" strokeWidth="16" />
-            <path d="M 61 58 L 81 78" stroke="#d1d4dc" strokeWidth="16" strokeLinecap="square" />
-            <circle cx="98" cy="70" r="10" fill="#00c9a5" />
+            <circle cx="48" cy="45" r="28" stroke="var(--text-primary)" strokeWidth="16" />
+            <path d="M 61 58 L 81 78" stroke="var(--text-primary)" strokeWidth="16" strokeLinecap="square" />
+            <circle cx="98" cy="70" r="10" fill="#9FD8BD" />
           </svg>
-          <h1 className="text-xl font-bold tracking-wider text-[#d1d4dc]">
-            QUANT<span className="text-[#00c9a5]">BIT</span>
+          <h1 className="text-xl font-bold tracking-wider text-[var(--text-primary)] font-display">
+            QUANT<span className="text-emerald-400">BIT</span>
           </h1>
-          <p className="text-xs text-[#787b86] mt-2">{isLogin ? 'Sign in to continue' : 'Create an account'}</p>
+          <p className="text-xs text-[var(--text-tertiary)] mt-2">{isLogin ? 'Sign in to continue' : 'Create an account'}</p>
         </div>
 
         {error && (
-          <div className="mb-5 p-3 rounded text-sm" style={{ backgroundColor: 'rgba(242,54,69,0.1)', border: '1px solid rgba(242,54,69,0.2)', color: '#f23645' }}>
+          <div className="mb-5 p-3 rounded text-sm bg-rose-500/10 text-rose-400 border border-rose-500/20">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[#787b86] text-xs font-medium mb-1.5">Email</label>
+            <label className="block text-[var(--text-tertiary)] text-xs font-medium mb-1.5">Email</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="w-4 h-4" style={{ color: '#7a7a7a' }} />
+                <Mail className="w-4 h-4 text-[var(--text-muted)]" />
               </div>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
-                style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
+                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[var(--text-muted)] glass-elevated"
                 placeholder="name@email.com"
               />
             </div>
           </div>
           <div>
-            <label className="block text-[#787b86] text-xs font-medium mb-1.5">Password</label>
+            <label className="block text-[var(--text-tertiary)] text-xs font-medium mb-1.5">Password</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="w-4 h-4" style={{ color: '#7a7a7a' }} />
+                <Lock className="w-4 h-4 text-[var(--text-muted)]" />
               </div>
               <input
                 type="password"
@@ -90,8 +89,7 @@ export function LoginScreen() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[#5d6080]"
-                style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', color: '#ffffff' }}
+                className="w-full rounded py-2.5 pl-9 pr-3 text-xs outline-none transition-colors placeholder:text-[var(--text-muted)] glass-elevated"
                 placeholder="••••••••"
               />
             </div>
@@ -100,8 +98,7 @@ export function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded py-2.5 text-xs font-medium transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: '#00c9a5', color: '#fff' }}
+            className="w-full rounded py-2.5 text-xs font-medium bg-emerald-500 text-[#0a0f0c] transition-opacity disabled:opacity-50 hover:opacity-90"
           >
             {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
           </button>
@@ -110,21 +107,19 @@ export function LoginScreen() {
             type="button"
             onClick={handleDemoMode}
             disabled={loading}
-            className="w-full rounded py-2.5 text-xs transition-colors disabled:opacity-50"
-            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#b0b0b0', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="w-full rounded py-2.5 text-xs transition-colors disabled:opacity-50 glass-surface text-[var(--text-secondary)]"
           >
             <Bug className="w-3.5 h-3.5 inline mr-1.5" />Demo Mode (Offline)
           </button>
         </form>
 
         <div className="mt-5 text-center">
-          <p className="text-xs text-[#787b86]">
+          <p className="text-xs text-[var(--text-tertiary)]">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
             <button
               type="button"
               onClick={() => { setIsLogin(!isLogin); setError(null); }}
-              className="font-medium transition-colors hover:underline"
-              style={{ color: '#00c9a5' }}
+              className="text-emerald-400 font-medium transition-colors hover:underline"
             >
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
