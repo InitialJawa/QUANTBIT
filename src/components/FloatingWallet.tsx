@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { Wallet, X } from "../utils/icons";
+import { Wallet, X } from "lucide-react";
 import { DigitalWalletUI } from "./DigitalWalletUI";
 
 interface FloatingWalletProps {

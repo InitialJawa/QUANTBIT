@@ -21,7 +21,7 @@ import {
   Download,
   ShieldAlert,
   Wallet
-} from "../utils/icons";
+} from "lucide-react";
 import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
@@ -78,7 +78,7 @@ interface BacktestDayData {
 
 const TICKER_COLORS: Record<string, string> = {
   BBCA: "#3b82f6", // Royal Blue
-  BBRI: "#9FD8BD",
+  BBRI: "#00c9a5",
   BMRI: "#6366f1", // Indigo
   TLKM: "#f43f5e", // Rose Red
   ASII: "#94a3b8", // Slate Gray

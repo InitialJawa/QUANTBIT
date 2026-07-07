@@ -30,8 +30,7 @@ import { useUIState } from "./hooks/useUIState";
 import { FloatingAIChat } from "./components/FloatingAIChat";
 import { FloatingWallet } from "./components/FloatingWallet";
 import { AICockpitProvider } from "./contexts/AICockpitContext";
-import { WebGLBackground } from "./components/WebGLBackground";
-import { X } from "./utils/icons";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
 
@@ -59,15 +58,11 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-secondary)]">
-        <div className="flex flex-col items-center gap-3">
-          <svg viewBox="0 0 115 100" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="48" cy="45" r="28" stroke="currentColor" strokeWidth="16" />
-            <path d="M 61 58 L 81 78" stroke="currentColor" strokeWidth="16" strokeLinecap="square" />
-            <circle cx="98" cy="70" r="10" fill="#9FD8BD" />
-          </svg>
-          <span className="text-body font-mono text-[var(--text-muted)]">Loading...</span>
-        </div>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0d0d0d", color: "#e0e0e0" }}
+      >
+        Loading...
       </div>
     );
   }
@@ -180,9 +175,8 @@ function AppContent({ logout }: { logout: () => void }) {
     <div
       id="applet-main-canvas"
       data-theme={ui.theme}
-      className="min-h-screen font-body antialiased flex flex-col relative"
+      className="min-h-screen font-sans antialiased flex flex-col"
     >
-      <WebGLBackground />
       <AnimatePresence>
         {ui.appNotification && (
           <motion.div

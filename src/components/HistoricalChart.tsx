@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { StockData } from "../types";
-import { TrendingUp, TrendingDown, Clock, Calendar, BarChart3 } from "../utils/icons";
+import { TrendingUp, TrendingDown, Clock, Calendar, BarChart3 } from "lucide-react";
 
 interface HistoricalChartProps {
   stock: StockData;

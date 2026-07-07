@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MKT } from "../marketData";
-import { ShieldAlert, X, ExternalLink } from "../utils/icons";
+import { ShieldAlert, X, ExternalLink } from "lucide-react";
 
 const DISMISS_MS = 8000;
 

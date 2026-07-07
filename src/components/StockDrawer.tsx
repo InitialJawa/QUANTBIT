@@ -2,7 +2,7 @@
 import {
   X, Plus, Minus, Trash2, Bookmark, BookmarkCheck,
   LineChart, BookOpen, Sparkles, Coins, Info
-} from "../utils/icons";
+} from "lucide-react";
 import { TickerLogo } from "./TickerLogo";
 import { HistoricalChart } from "./HistoricalChart";
 import { ExplainButton } from "./ExplainButton";

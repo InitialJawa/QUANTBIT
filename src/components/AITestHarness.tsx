@@ -11,7 +11,7 @@
 // NEVER include this in production builds (guarded by import.meta.env).
 // ─────────────────────────────────────────────────────────────
 import { useState, useEffect } from "react";
-import { Beaker, Wrench, Zap, Database, Trash2, Copy, Check } from "../utils/icons";
+import { Beaker, Wrench, Zap, Database, Trash2, Copy, Check } from "lucide-react";
 import { extractToolCalls, READ_ONLY_TOOLS, ACTION_TOOLS } from "../ai/toolCallParser";
 import { shouldFireRule, markRuleFired, COOLDOWN_MS } from "../hooks/useProactiveAgent";
 import { ACTION_REGISTRY, buildPendingActionFromContext } from "../hooks/useAITools";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowUp } from "../utils/icons";
+import { ArrowUp } from "lucide-react";
 
 interface BackToTopProps {
   /** Scroll threshold (px) before button appears */

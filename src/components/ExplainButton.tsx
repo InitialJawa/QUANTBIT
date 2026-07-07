@@ -2,7 +2,7 @@
 // ExplainButton (❓) — taruh di pojok panel mana pun. Saat diklik,
 // AICockpit otomatis menjelaskan panel itu (apa & dari mana hitungnya).
 // ─────────────────────────────────────────────────────────────
-import { HelpCircle } from "../utils/icons";
+import { HelpCircle } from "lucide-react";
 import { useAICockpit } from "../contexts/AICockpitContext";
 
 interface ExplainButtonProps {

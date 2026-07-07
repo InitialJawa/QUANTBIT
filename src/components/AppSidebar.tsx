@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "../utils/icons";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrashActive } from "../marketRegimeEngine";
@@ -293,8 +293,12 @@ export function AppSidebar({
               <span className="text-label text-tertiary">DCA Rekomendasi</span>
               <button onClick={() => updateConfigValue("dcaActive", !engineConfig.dcaActive)}
                 disabled={isSettingsLocked}
-                className={`text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer disabled:opacity-40 ${engineConfig.dcaActive !== false ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}
-                style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer disabled:opacity-40"
+                style={{
+                  backgroundColor: engineConfig.dcaActive !== false ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: engineConfig.dcaActive !== false ? '#00c9a5' : '#7a7a7a',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
                 {engineConfig.dcaActive !== false ? "AKTIF" : "NONAKTIF"}
               </button>
             </div>
@@ -417,8 +421,12 @@ export function AppSidebar({
                   setBacktestUseLiveStrategy(true);
                 }
               }}
-                className={`text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer ${backtestUseLiveStrategy ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}
-                style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                className="text-label font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: backtestUseLiveStrategy ? 'rgba(0,201,165,0.15)' : 'rgba(255,255,255,0.04)',
+                  color: backtestUseLiveStrategy ? '#00c9a5' : '#7a7a7a',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
                 {backtestUseLiveStrategy ? "ON" : "OFF"}
               </button>
             </div>
@@ -437,7 +445,8 @@ export function AppSidebar({
                 setBacktestUseLiveStrategy(true);
                 window.dispatchEvent(new CustomEvent("backtest:draft-promoted"));
               }}
-                className="w-full py-1 text-caption font-bold rounded bg-emerald-500 text-[#0a0f0c] transition-colors cursor-pointer">
+                className="w-full py-1 text-caption font-bold rounded transition-colors cursor-pointer"
+                style={{ backgroundColor: '#00c9a5', color: '#000' }}>
                 ↑ PROMOTE TO PORTFOLIO
               </button>
             )}

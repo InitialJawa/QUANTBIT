@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-} from "../utils/icons";
+} from "lucide-react";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";

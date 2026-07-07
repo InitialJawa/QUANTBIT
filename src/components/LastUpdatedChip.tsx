@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock } from "../utils/icons";
+import { Clock } from "lucide-react";
 
 interface LastUpdatedChipProps {
   /** ISO string or any parseable date */

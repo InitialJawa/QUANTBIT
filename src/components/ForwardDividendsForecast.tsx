@@ -12,7 +12,7 @@ import {
   Dribbble, 
   Sparkles,
   Info
-} from "../utils/icons";
+} from "lucide-react";
 import { 
   ResponsiveContainer, 
   AreaChart, 

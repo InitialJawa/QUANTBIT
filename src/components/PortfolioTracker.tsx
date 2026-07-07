@@ -43,7 +43,7 @@ import {
   CheckCircle2,
   HelpCircle,
   Download,
-} from "../utils/icons";
+} from "lucide-react";
 import { motion } from "motion/react";
 
 type SortKey = "ticker" | "rank" | "shares" | "buyPrice" | "currentPrice" | "valueNow" | "profitOrLoss" | "percentChange" | "annualDividend" | "dividendYield";
@@ -778,7 +778,8 @@ export function PortfolioTracker({
             form?.scrollIntoView({ behavior: "smooth", block: "center" });
             (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
           }}
-          className="shrink-0 px-3 py-2 text-caption font-bold rounded-lg bg-emerald-500 text-[#0a0f0c] transition-colors cursor-pointer flex items-center gap-1.5"
+          className="shrink-0 px-3 py-2 text-caption font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+          style={{ backgroundColor: '#00c9a5', color: '#000' }}
         >
           <Plus className="w-3.5 h-3.5" /> Buka Form
         </button>
@@ -1085,7 +1086,8 @@ export function PortfolioTracker({
                     form?.scrollIntoView({ behavior: "smooth", block: "center" });
                     (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
                   }}
-                  className="mt-2 px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg bg-emerald-500 text-[#0a0f0c] transition-colors cursor-pointer"
+                  className="mt-2 px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
+                  style={{ backgroundColor: '#00c9a5', color: '#000' }}
                 >
                   <Plus className="w-3.5 h-3.5 inline-block mr-1" /> Beli Pertama
                 </button>
