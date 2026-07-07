@@ -233,7 +233,7 @@ export function SimulationTab({
   // Sesi 13 fix: tambah dependency simStartDate/simEndDate agar data re-fetch
   // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
-    const configType = backtestConfig.activeProfileId === "agresif" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
+    const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
     console.log(`[Backtest] Fetching data: ${backtestConfig.simStartDate} to ${backtestConfig.simEndDate}, configType=${configType}`);
     api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { 
@@ -992,7 +992,7 @@ export function SimulationTab({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-label font-bold text-white block">
-                  {backtestActiveProfile?.name ?? (backtestConfig.activeProfileId === "agresif" ? "Agresif" : backtestConfig.activeProfileId === "dividen" ? "Dividen" : "Aman")}
+                  {backtestActiveProfile?.name ?? (backtestConfig.activeProfileId === "agresif" ? "Agresif" : backtestConfig.activeProfileId === "dividen" ? "Dividen" : backtestConfig.activeProfileId === "growth-heavy" ? "Growth-heavy" : "Aman")}
                 </span>
                 <span className="text-caption text-white/40 font-mono block mt-0.5">
                   Q: {(backtestActiveProfile?.qualityWeight ?? 0.30).toFixed(2)} | G: {(backtestActiveProfile?.growthWeight ?? 0.45).toFixed(2)} | V: {(backtestActiveProfile?.valueWeight ?? 0.10).toFixed(2)} | M: {(backtestActiveProfile?.momentumWeight ?? 0).toFixed(2)} | D: {(backtestActiveProfile?.dividendWeight ?? 0.15).toFixed(2)}

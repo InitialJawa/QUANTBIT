@@ -72,7 +72,7 @@ function matchAction(message: string): AIToolCall | null {
   // Profile change — accept "profile qm", "ganti profile ke BG", "set profile prod"
   const profileMatch = m.match(/\b(profile|profil)\s+(?:ke\s+)?(qm|bg|prod|res|custom)/);
   if (profileMatch) {
-    const map: Record<string, string> = { qm: "aman", bg: "agresif", prod: "aman", res: "agresif", aman: "aman", agresif: "agresif", dividen: "dividen" };
+    const map: Record<string, string> = { qm: "aman", bg: "agresif", prod: "aman", res: "agresif", aman: "aman", agresif: "agresif", dividen: "dividen", "growth-heavy": "growth-heavy" };
     return {
       id: nextId(),
       name: "set_active_profile",

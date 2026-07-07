@@ -38,6 +38,7 @@ export const DEFAULT_PROFILES: WeightProfile[] = [
   { id: "aman", name: "Aman", qualityWeight: 0.30, growthWeight: 0.45, valueWeight: 0.10, momentumWeight: 0.00, dividendWeight: 0.15 },
   { id: "agresif", name: "Agresif", qualityWeight: 0.20, growthWeight: 0.60, valueWeight: 0.10, momentumWeight: 0.10, dividendWeight: 0.00 },
   { id: "dividen", name: "Dividen", qualityWeight: 0.15, growthWeight: 0.20, valueWeight: 0.05, momentumWeight: 0.00, dividendWeight: 0.60 },
+  { id: "growth-heavy", name: "Growth-heavy", qualityWeight: 0.10, growthWeight: 0.70, valueWeight: 0.05, momentumWeight: 0.10, dividendWeight: 0.05 },
 ];
 
 const getTodayWIB = () => {
@@ -47,13 +48,13 @@ const getTodayWIB = () => {
 
 export function createDefaultConfig(): EngineConfig {
   return {
-    activeProfileId: "aman",
+    activeProfileId: "growth-heavy",
     profiles: DEFAULT_PROFILES,
-    safeHavenAsset: "emas",
-    topNCount: 5,
+    safeHavenAsset: "kas",
+    topNCount: 4,
     enableCrashProtection: true,
     crashSensitivity: 10,
-    enableCrossover: true,
+    enableCrossover: false,
     reserveBufferPct: 10,
     simulationMode: "algo",
     singleTicker: "BBCA",
@@ -310,7 +311,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     return id;
   };
 
-  const isDefault = (id: string) => id === "aman" || id === "agresif" || id === "dividen";
+  const isDefault = (id: string) => id === "aman" || id === "agresif" || id === "dividen" || id === "growth-heavy";
 
   const deleteProfile = (profileId: string) => {
     if (isDefault(profileId)) return;

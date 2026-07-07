@@ -33,7 +33,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   // Custom profiles (activeProfileId starts with "custom_") and "dividen" fall
   // back to "aman" rank key as a defensive default (data only has Prod/Res).
   const activeProfileKey: "stockRanksProd" | "stockRanksRes" =
-    config.activeProfileId === "agresif" ? "stockRanksRes" : "stockRanksProd";
+    config.activeProfileId === "agresif" || config.activeProfileId === "growth-heavy" ? "stockRanksRes" : "stockRanksProd";
 
   const dayData: BacktestDayData[] = rawInput.map(d => {
     if (d.stockNormScores && typeof d.stockNormScores === "object") {
@@ -165,6 +165,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     ? "Adaptive DCA (BPS-driven)"
     : config.activeProfileId === "agresif"
     ? "Agresif (Growth-heavy)"
+    : config.activeProfileId === "growth-heavy"
+    ? "Growth-heavy (Growth 70%)"
     : config.activeProfileId === "dividen"
     ? "Dividen (Yield-focused)"
     : "Aman (Quality + Growth)";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Layers, ShieldAlert, Settings2, ChevronDown, ChevronUp, Wallet } from "lucide-react";
 
 export interface StrategyConfigShape {
-  activeProfileId: "aman" | "agresif" | "dividen" | string;
+  activeProfileId: "aman" | "agresif" | "dividen" | "growth-heavy" | string;
   simulationMode: "algo" | "custom";
   universe: "all" | "idx80" | "idx30" | "lq45" | string;
   topNCount: number;
@@ -40,6 +40,7 @@ const DEFAULT_PROFILE: ReadonlyArray<readonly [string, string]> = [
   ["aman", "Aman"],
   ["agresif", "Agresif"],
   ["dividen", "Dividen"],
+  ["growth-heavy", "Growth-heavy"],
 ];
 
 /**

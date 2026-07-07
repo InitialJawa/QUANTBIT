@@ -5,13 +5,13 @@
 Repo: `https://github.com/InitialJawa/QUANTBIT`
 
 ## Current Mission
-**Full Serverless Refactor — Complete ✅**
-Semua data flow dari D1 Cloudflare via CF Pages Functions. Gak ada Express, gak ada SQLite lokal, gak ada devMock. Pipeline otomatis tiap 6 jam via GitHub Actions.
+**Default Config Optimization via Grid Search — Complete ✅**
+Grid search (7,008 simulasi) menemukan konfigurasi optimal. Defaults di-update ke Growth-heavy (Q10 G70 V5 M10 D5) + N4 + quarterly + kas + crashSens=10.
 
 ## Session Context
-- **Sesi 22** — 2026-07-04
+- **Sesi 24** — 2026-07-07
 - Branch: `main`
-- Status: **FULL SERVERLESS** — Phase 7-12 selesai, Bugfix sesh
+- Status: **Default Config Optimization** — Grid search selesai, default profile diubah
 - Data source: **Yahoo Finance** via pipeline → D1 Cloudflare
 
 ## Arsitektur Baru
@@ -138,6 +138,49 @@ Production: CF Pages Functions + D1 (no server needed)
 - **DB = single source of truth** — semua dari D1
 - **No Express, no SQLite lokal, no mock** — full serverless
 - **Ask before adding dependencies**
+
+## Sesi 24 — Grid Search + Default Config Update (2026-07-07)
+
+### Problem
+Backtest default config (Aman N5 crossover=true crashSens=10 emas) hanya menghasilkan ~50% return, jauh dari potensi optimal.
+
+### Method
+Grid search `scripts/find-best-config.ts` — 7,008 simulasi × 1,323 hari × 79 ticker:
+- **PASS 1**: 5,280 core configs (16 profiles × 11 topN × 5 thresholds × 2 emergency × 3 freqs)
+- **PASS 2**: 1,728 refined (3 best profiles × 4 topN × 2 thresholds × 2 crashSens × 2 safeHaven × 2 freqs × 3 smooth × 3 TS)
+
+### Results
+| Rank | Profile | TopN | Rebal | Sens | Return | CAGR | Sharpe | DD | Trades |
+|------|---------|------|-------|------|--------|------|--------|-----|--------|
+| 1 | Agresif (Q20 G60 V10 M10) | 15 | quarterly | 15 | +345% | 31.17% | 1.802 | -23.69% | 437 |
+| 2 | Growth-heavy (Q10 G70 V5 M10) | 4 | quarterly | 10 | +330% | 30.35% | 1.146 | -32.88% | **36** |
+
+**New features tested — all failed:**
+- Smooth EMA (0, 10, 20d): beda 0.00%
+- Trailing Stop (0, 15, 20%): OFF avg 173.78%, 15% → 131.04%, 20% → 133.35%
+- Safe Haven: Kas (345%) ≈ Emas (340%), tapi Emas rusak Sharpe di beberapa sim
+- Threshold & Emergency: tidak berpengaruh
+- Dual Momentum & Vol Weight: belum dites (matrix terlalu besar)
+
+### Changes
+User pilih **Option B (Growth-heavy)**. Files updated:
+1. `EngineConfigContext.tsx` — added Growth-heavy profile, updated defaults:
+   - `activeProfileId`: `"growth-heavy"`
+   - `topNCount`: `4`
+   - `safeHavenAsset`: `"kas"`
+   - `enableCrossover`: `false` (quarterly-style rebalancing)
+   - `crashSensitivity`: `10`
+2. `StrategySettingsPanel.tsx` — added Growth-heavy to profile listing + type
+3. `ManageProfilesModal.tsx` — added Growth-heavy to isDefault
+4. `engine/core.ts` — maps Growth-heavy to stockRanksRes + configName
+5. `SimulationTab.tsx` — configType mapping + display name
+6. `PortfolioTracker.tsx` — display name fallback
+7. `devMockAI.ts` — AI mapping
+
+### Pending
+- Grid search belum tes Dual Momentum + Vol Weight (matrix terlalu besar)
+- Revert Lucid design (commit efa14fb) — only YAxis fix active
+- `npm run dev` confirmed working
 
 ## Test Commands
 ```
