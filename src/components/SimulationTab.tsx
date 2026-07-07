@@ -1055,7 +1055,7 @@ export function SimulationTab({
                             </linearGradient>
                           </defs>
                           <XAxis dataKey="date" stroke="#333" tickLine={false} dy={8} tick={{ fill: "#666" }} />
-                          <YAxis scale="log" stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={["auto", "auto"]} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
+                          <YAxis stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={[0, 'auto']} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
                           <Tooltip
                             formatter={(value: any) => [formatRupiah(Number(value)), ""]}
                             contentStyle={{
