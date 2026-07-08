@@ -193,7 +193,7 @@ export function StrategySettingsPanel({
               <span className="text-label text-tertiary block mb-1">Rotasi Saham (Crossover)</span>
               <ButtonGroup
                 options={[
-                  ["true", "Rank &lt; 7"],
+                  ["true", "Rank < 7"],
                   ["false", "Tanpa"],
                 ] as const}
                 value={String(config.enableCrossover) as any}

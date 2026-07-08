@@ -460,18 +460,20 @@ export function AppSidebar({
             <span className="text-caption font-medium text-primary uppercase tracking-wider">Strategy Settings</span>
           </div>
           <StrategySettingsPanel
-            config={{
-              activeProfileId: backtestConfig.activeProfileId,
-              simulationMode: backtestConfig.simulationMode === "adaptive_dca" ? "algo" : backtestConfig.simulationMode as "algo" | "custom",
-              universe: backtestConfig.universe,
-              topNCount: backtestConfig.topNCount,
-              enableCrossover: backtestConfig.enableCrossover !== false,
-              enableCrashProtection: backtestConfig.enableCrashProtection !== false,
-              crashSensitivity: backtestConfig.crashSensitivity ?? 10,
-              safeHavenAsset: backtestConfig.safeHavenAsset,
-              reserveBufferPct: backtestConfig.reserveBufferPct ?? 10,
-              customUniverse: backtestConfig.customUniverse || [],
-            }}
+            config={(() => {
+              const src = backtestUseLiveStrategy ? engineConfig : backtestConfig;
+              return {
+              activeProfileId: src.activeProfileId,
+              simulationMode: src.simulationMode === "adaptive_dca" ? "algo" : src.simulationMode as "algo" | "custom",
+              universe: src.universe,
+              topNCount: src.topNCount,
+              enableCrossover: src.enableCrossover !== false,
+              enableCrashProtection: src.enableCrashProtection !== false,
+              crashSensitivity: src.crashSensitivity ?? 10,
+              safeHavenAsset: src.safeHavenAsset,
+              reserveBufferPct: src.reserveBufferPct ?? 10,
+              customUniverse: src.customUniverse || [],
+            }})()}
             onChange={(key, value) => {
               if (key === "activeProfileId") {
                 updateBacktestValue("activeProfileId", value);
