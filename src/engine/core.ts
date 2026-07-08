@@ -541,7 +541,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     {
       date: lastDayObj.date,
       type: "REBALANCE",
-      message: `Portfolio akhir: Rp ${currentPortfolioVal.toLocaleString("id-ID")} (${metrics.totalReturnPct >= 0 ? "+" : ""}${metrics.totalReturnPct.toFixed(2)}%) — CAGR ${metrics.cagr.toFixed(2)}% | Sharpe ${metrics.sharpe.toFixed(3)} | Max DD ${maxDrawdownValue.toFixed(2)}%`,
+      message: `Portfolio akhir: Rp ${currentPortfolioVal.toLocaleString("id-ID")} (${metrics.totalReturnPct >= 0 ? "+" : ""}${metrics.totalReturnPct.toFixed(2)}%) — CAGR ${metrics.cagr.toFixed(2)}% | Sharpe ${metrics.sharpe !== null ? metrics.sharpe.toFixed(3) : "—"} | Max DD ${maxDrawdownValue.toFixed(2)}%`,
     },
   ];
 

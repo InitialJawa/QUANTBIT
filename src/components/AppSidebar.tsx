@@ -157,14 +157,14 @@ export function AppSidebar({
               <TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
               <span className="text-caption font-medium text-emerald-400">Gainers</span>
             </div>
-            <div className="space-y-0.5">
+                <div className="space-y-0.5">
               {gainersWithRSI.slice(0, 3).map(({ stock, rsi }) => {
                 const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
                 return (
-                  <div key={stock.ticker} className="flex items-center gap-1.5">
-                    <span className="text-caption font-medium text-primary truncate flex-1">{stock.ticker.replace(".JK","")}</span>
-                    <MiniSparkline data={sparkData} color="#34d399" />
-                    <span className="text-caption font-mono font-bold text-emerald-400">+{stock.change.toFixed(1)}%</span>
+                  <div key={stock.ticker} className="flex items-center gap-1 min-w-0">
+                    <span className="text-caption font-medium text-primary shrink-0" title={stock.ticker.replace(".JK","")}>{stock.ticker.replace(".JK","")}</span>
+                    <MiniSparkline data={sparkData} width={28} height={14} color="#34d399" />
+                    <span className="text-caption font-mono font-bold text-emerald-400 shrink-0">+{stock.change.toFixed(1)}%</span>
                   </div>
                 );
               })}
@@ -179,10 +179,10 @@ export function AppSidebar({
               {losersWithRSI.slice(0, 3).map(({ stock, rsi }) => {
                 const sparkData = stock.chartDataDaily?.slice(-20).map(d => d.price) || [];
                 return (
-                  <div key={stock.ticker} className="flex items-center gap-1.5">
-                    <span className="text-caption font-medium text-primary truncate flex-1">{stock.ticker.replace(".JK","")}</span>
-                    <MiniSparkline data={sparkData} color="#fb7185" />
-                    <span className="text-caption font-mono font-bold text-rose-400">{stock.change.toFixed(1)}%</span>
+                  <div key={stock.ticker} className="flex items-center gap-1 min-w-0">
+                    <span className="text-caption font-medium text-primary shrink-0" title={stock.ticker.replace(".JK","")}>{stock.ticker.replace(".JK","")}</span>
+                    <MiniSparkline data={sparkData} width={28} height={14} color="#fb7185" />
+                    <span className="text-caption font-mono font-bold text-rose-400 shrink-0">{stock.change.toFixed(1)}%</span>
                   </div>
                 );
               })}

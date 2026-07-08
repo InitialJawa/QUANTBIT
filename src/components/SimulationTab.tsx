@@ -940,7 +940,13 @@ export function SimulationTab({
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke={theme === "light" ? "#cbd5e1" : "#333"} tickLine={false} dy={8} tick={{ fill: theme === "light" ? "#475569" : "#666" }} />
-                  <YAxis stroke={theme === "light" ? "#cbd5e1" : "#333"} tickLine={false} dx={-8} tick={{ fill: theme === "light" ? "#475569" : "#666" }} domain={["auto", "auto"]} />
+                  <YAxis stroke={theme === "light" ? "#cbd5e1" : "#333"} tickLine={false} dx={-8} tick={{ fill: theme === "light" ? "#475569" : "#666" }} domain={["auto", "auto"]} tickFormatter={(val) => {
+                    const n = Number(val);
+                    if (n >= 1e9) return `Rp ${(n / 1e9).toFixed(1)}M`;
+                    if (n >= 1e6) return `Rp ${(n / 1e6).toFixed(1)}jt`;
+                    if (n >= 1e3) return `Rp ${(n / 1e3).toFixed(0)}rb`;
+                    return n > 0 ? `Rp ${n.toFixed(0)}` : "Rp 0";
+                  }} />
                   <Tooltip
                     formatter={(value: any) => [formatRupiah(Number(value)), ""]}
                     contentStyle={{
@@ -1055,7 +1061,13 @@ export function SimulationTab({
                             </linearGradient>
                           </defs>
                           <XAxis dataKey="date" stroke="#333" tickLine={false} dy={8} tick={{ fill: "#666" }} />
-                          <YAxis stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={[0, 'auto']} formatter={(val) => `Rp ${(Number(val)/1e6).toFixed(0)}Jt`} />
+                          <YAxis stroke="#333" tickLine={false} dx={-8} tick={{ fill: "#666" }} domain={[0, 'auto']} tickFormatter={(val) => {
+                            const n = Number(val);
+                            if (n >= 1e9) return `Rp ${(n / 1e9).toFixed(1)}M`;
+                            if (n >= 1e6) return `Rp ${(n / 1e6).toFixed(1)}jt`;
+                            if (n >= 1e3) return `Rp ${(n / 1e3).toFixed(0)}rb`;
+                            return n > 0 ? `Rp ${n.toFixed(0)}` : "Rp 0";
+                          }} />
                           <Tooltip
                             formatter={(value: any) => [formatRupiah(Number(value)), ""]}
                             contentStyle={{
@@ -1208,15 +1220,15 @@ export function SimulationTab({
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
                       <span className="text-sm font-bold font-mono text-emerald-400 block">
-                        S: {backtestResult.sharpe.toFixed(2)} / So: {backtestResult.sortino.toFixed(2)}
+                        S: {backtestResult.sharpe !== null ? backtestResult.sharpe.toFixed(2) : "—"} / So: {backtestResult.sortino !== null ? backtestResult.sortino.toFixed(2) : "—"}
                       </span>
-                      <span className="text-label text-white/40 block">Risko Terkoreksi (Rf=5%)</span>
+                      <span className="text-label text-white/40 block">Risiko Terkoreksi (Rf=5%)</span>
                     </div>
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
                       <span className="text-sm font-bold font-mono text-rose-400 block">
-                        V: {backtestResult.volatility.toFixed(1)}% / C: {backtestResult.calmar.toFixed(2)}
+                        V: {backtestResult.volatility !== null ? backtestResult.volatility.toFixed(1) : "—"}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
 
                     </div>

@@ -85,7 +85,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
     const requestYear = (from: string, to: string) =>
       api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?from=${from}&to=${to}`);
 
-    requestYear("2024", "2026")
+    requestYear("2021", "2026")
       .then(res => {
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
           setRawData(res.data.map(d => ({

@@ -25,9 +25,9 @@ export interface MetricsResult {
   ihsgReturnPct: number;
   goldReturnPct: number;
   cagr: number;
-  volatility: number;
-  sharpe: number;
-  sortino: number;
+  volatility: number | null;
+  sharpe: number | null;
+  sortino: number | null;
   calmar: number;
   turnoverPct: number;
   winRatePct: number;
@@ -60,16 +60,21 @@ export function computeMetrics(input: MetricsInput): MetricsResult {
   const yearsElapsed = daysDiff / 365.25;
   const cagr = Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1;
 
-  const annVolatility = calcStdDev(dailyReturns) * Math.sqrt(252) / 100;
+  const validReturns = dailyReturns.filter(r => Number.isFinite(r));
+  const insufficientData = validReturns.length < 2;
 
-  const negativeReturns = dailyReturns.filter(r => r < 0);
-  const downsideVol = negativeReturns.length > 1
+  const annVolatility = insufficientData
+    ? null
+    : calcStdDev(validReturns) * Math.sqrt(252) / 100;
+
+  const negativeReturns = validReturns.filter(r => r < 0);
+  const downsideVol = !insufficientData && negativeReturns.length > 1
     ? calcStdDev(negativeReturns) * Math.sqrt(252) / 100
     : annVolatility;
 
   const rf = 0.050;
-  const sharpe = annVolatility > 0 ? (cagr - rf) / annVolatility : 0;
-  const sortino = downsideVol > 0 ? (cagr - rf) / downsideVol : 0;
+  const sharpe = annVolatility !== null && annVolatility > 0 ? (cagr - rf) / annVolatility : null;
+  const sortino = downsideVol !== null && downsideVol > 0 ? (cagr - rf) / downsideVol : null;
   const calmar = maxDrawdownValue > 0 ? cagr / (maxDrawdownValue / 100) : 0;
 
   const avgPortfolioVal = (cap + currentPortfolioVal) / 2;
@@ -88,7 +93,7 @@ export function computeMetrics(input: MetricsInput): MetricsResult {
     ihsgReturnPct,
     goldReturnPct,
     cagr: cagr * 100,
-    volatility: annVolatility * 100,
+    volatility: annVolatility !== null ? annVolatility * 100 : null,
     sharpe,
     sortino,
     calmar,

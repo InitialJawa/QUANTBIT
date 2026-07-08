@@ -92,9 +92,9 @@ export interface BacktestResult {
   /** Per-ticker dividend accumulation (IDR) — for UI breakdown top contributors. */
   dividendByTicker: Record<string, number>;
   cagr: number;
-  volatility: number;
-  sharpe: number;
-  sortino: number;
+  volatility: number | null;
+  sharpe: number | null;
+  sortino: number | null;
   calmar: number;
   winRatePct: number;
   turnoverPct: number;
