@@ -71,7 +71,7 @@ export function getRotationData(ticker: string, dynamicChange?: number) {
 export function getRotationColor(label: string, trend: string) {
   const lbl = label.toLowerCase();
   if (lbl.includes("akumulasi") || lbl.includes("peak") || lbl.includes("breakout") || lbl.includes("momentum") || lbl.includes("rebound") || lbl.includes("pemulihan")) {
-    return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    return "bg-green-500/10 text-green-400 border-green-500/20";
   }
   if (lbl.includes("jenuh") || lbl.includes("downtrend") || lbl.includes("lesu") || lbl.includes("tertekan") || lbl.includes("distribusi") || lbl.includes("lemah")) {
     return "bg-rose-500/10 text-rose-400 border-rose-500/20";
@@ -80,7 +80,7 @@ export function getRotationColor(label: string, trend: string) {
     return "bg-amber-500/10 text-amber-400 border-amber-500/20";
   }
   if (lbl.includes("konsolidasi") || lbl.includes("support") || lbl.includes("defensif") || lbl.includes("jangkar") || lbl.includes("bluechip") || lbl.includes("ayunan")) {
-    return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    return "bg-green-500/10 text-green-400 border-green-500/20";
   }
   if (trend === "up") return "bg-white/[0.05] text-white border-white/10";
   if (trend === "down") return "bg-rose-500/5 text-rose-400 border-rose-500/10";
@@ -328,8 +328,8 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                                  {isInPorto ? <BookmarkCheck className="w-3 h-3 text-emerald-400" /> : isInWatchlist ? <Bookmark className="w-3 h-3 text-white/30" /> : null}
                                </div>
                                <div className="flex items-center gap-1.5 mt-1">
-                                 {item.rankChange > 0 && (
-                                   <span className="text-label font-bold text-emerald-400 border border-emerald-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                                  {item.rankChange > 0 && (
+                                    <span className="text-label font-bold text-green-400 border border-green-500/20 px-1 py-0.5 rounded flex items-center gap-0.5 font-mono">
                                      <TrendingUp className="w-2 h-2" /> +{item.rankChange}
                                    </span>
                                  )}
@@ -416,7 +416,7 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
                     
                     <div className="flex flex-wrap gap-1.5 mb-4">
                         {item.rankChange !== 0 && (
-                          <span className={`text-label px-1.5 py-0.5 rounded border border-transparent font-bold font-mono ${item.rankChange > 0 ? "text-emerald-400 border-emerald-500/20" : "text-rose-400 border-rose-500/20"}`}>
+                          <span className={`text-label px-1.5 py-0.5 rounded border border-transparent font-bold font-mono ${item.rankChange > 0 ? "text-green-400 border-green-500/20" : "text-rose-400 border-rose-500/20"}`}>
                             {item.rankChange > 0 ? "+" : ""}{item.rankChange} Rnk
                           </span>
                         )}

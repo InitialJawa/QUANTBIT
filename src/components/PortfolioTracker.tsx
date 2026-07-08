@@ -668,7 +668,7 @@ export function PortfolioTracker({
         <div className={`flex items-center justify-between px-4 py-2 rounded-2xl border text-caption font-mono ${
           syncStatus.stale
             ? "bg-amber-500/5 border-amber-500/20 text-amber-300"
-            : "bg-emerald-500/5 border-emerald-500/20 text-emerald-300"
+            : "bg-green-500/5 border-green-500/20 text-green-300"
         }`}>
           <div className="flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full ${
@@ -967,10 +967,10 @@ export function PortfolioTracker({
             </div>
             <div className="text-right shrink-0">
               <div className="text-caption uppercase font-bold text-white/30 tracking-widest">P&amp;L</div>
-              <div className={`text-2xl font-black font-mono ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <div className={`text-2xl font-black font-mono ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
                 {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
               </div>
-              <div className={`text-caption font-mono font-bold mt-0.5 ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <div className={`text-caption font-mono font-bold mt-0.5 ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
                 {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
               </div>
             </div>
@@ -1009,10 +1009,10 @@ export function PortfolioTracker({
               {totalReturn >= 0 ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : <TrendingDown className="w-3 h-3 text-rose-400" />}
               <span className="text-label font-mono text-white/40 uppercase tracking-widest">P&amp;L</span>
             </div>
-            <div id="portfolio-total-return" className={`text-data font-mono font-bold ${totalReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <div id="portfolio-total-return" className={`text-data font-mono font-bold ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
               {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
             </div>
-            <div className={`text-label font-mono mt-0.5 ${totalReturn >= 0 ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+            <div className={`text-label font-mono mt-0.5 ${totalReturn >= 0 ? "text-green-400/70" : "text-rose-400/70"}`}>
               {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
             </div>
           </div>
@@ -1023,10 +1023,10 @@ export function PortfolioTracker({
               <Sparkles className="w-3 h-3 text-emerald-400" />
               <span className="text-label font-mono text-emerald-400/70 uppercase tracking-widest">Dividen/thn</span>
             </div>
-            <div id="portfolio-annual-dividend" className="text-data font-mono font-bold text-emerald-400">
+            <div id="portfolio-annual-dividend" className="text-data font-mono font-bold text-green-400">
               +{totalAnnualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
             </div>
-            <div className="text-label font-mono text-emerald-400/60 mt-0.5">
+            <div className="text-label font-mono text-green-400/60 mt-0.5">
               {totalCurrentValue > 0 ? `${(totalAnnualDividend / totalCurrentValue * 100).toFixed(2)}% yield` : "—"}
             </div>
           </div>
@@ -1170,7 +1170,7 @@ export function PortfolioTracker({
                           <td className="py-3.5 pl-3 text-right">
                             <div className="font-bold text-white text-xs font-mono">{item.valueNow.toLocaleString()}</div>
                             <div className={`text-caption font-bold mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${
-                              isPos ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                              isPos ? "bg-green-500/10 text-green-400" : "bg-rose-500/10 text-rose-400"
                             }`}>
                               {isPos ? "+" : ""}{item.profitOrLoss.toLocaleString()} ({isPos ? "+" : ""}{item.percentChange.toFixed(1)}%)
                             </div>
@@ -1178,10 +1178,10 @@ export function PortfolioTracker({
                           <td className="py-3.5 pl-3 text-right">
                             {item.dividendYield > 0 ? (
                               <div className="inline-flex flex-col items-end gap-0.5">
-                                <span className="text-emerald-400 font-bold text-xs font-mono">
+                                <span className="text-green-400 font-bold text-xs font-mono">
                                   +Rp {item.annualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
                                 </span>
-                                <span className="text-label text-emerald-400/60 font-mono">
+                                <span className="text-label text-green-400/60 font-mono">
                                   {item.dividendYield.toFixed(2)}% yield
                                 </span>
                               </div>
@@ -1745,7 +1745,7 @@ export function PortfolioTracker({
                         Rp {liveStock.currentPrice.toLocaleString()}
                       </span>
                       <span
-                        className={`text-caption font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}
+                        className={`text-caption font-bold ${isPos ? "text-green-400" : "text-rose-400"}`}
                       >
                         {isPos ? "+" : ""}
                         {liveStock.change}%

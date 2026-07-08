@@ -48,7 +48,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
             <span
               id="price-change-pct"
               className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-455"
+                isPositive ? "bg-green-500/10 text-green-400" : "bg-rose-500/10 text-rose-455"
               }`}
             >
               {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -67,7 +67,7 @@ export function HistoricalChart({ stock, theme }: HistoricalChartProps) {
               onClick={() => setTimeframe(tf)}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
                 timeframe === tf
-                  ? "bg-emerald-500 text-black shadow-sm font-bold"
+                  ? "bg-green-500 text-black shadow-sm font-bold"
                   : "text-white/50 hover:text-white"
               }`}
             >

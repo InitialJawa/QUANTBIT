@@ -112,14 +112,14 @@ export function AppSidebar({
   function rsiColorClass(rsi: number | null): string {
     if (rsi === null) return "text-tertiary";
     if (rsi >= 70) return "text-rose-400";
-    if (rsi <= 30) return "text-emerald-400";
+    if (rsi <= 30) return "text-green-400";
     return "text-tertiary";
   }
 
   function rsiBgBar(rsi: number | null): string {
     if (rsi === null) return "bg-white/[0.06]";
     if (rsi >= 70) return "bg-rose-400/30";
-    if (rsi <= 30) return "bg-emerald-400/30";
+    if (rsi <= 30) return "bg-green-400/30";
     return "bg-white/[0.10]";
   }
 
@@ -155,7 +155,7 @@ export function AppSidebar({
           <div>
             <div className="flex items-center gap-1 mb-1">
               <TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
-              <span className="text-caption font-medium text-emerald-400">Gainers</span>
+              <span className="text-caption font-medium text-green-400">Gainers</span>
             </div>
                 <div className="space-y-0.5">
               {gainersWithRSI.slice(0, 3).map(({ stock, rsi }) => {
@@ -164,7 +164,7 @@ export function AppSidebar({
                   <div key={stock.ticker} className="flex items-center gap-1 min-w-0">
                     <span className="text-caption font-medium text-primary shrink-0" title={stock.ticker.replace(".JK","")}>{stock.ticker.replace(".JK","")}</span>
                     <MiniSparkline data={sparkData} width={28} height={14} color="#34d399" />
-                    <span className="text-caption font-mono font-bold text-emerald-400 shrink-0">+{stock.change.toFixed(1)}%</span>
+                    <span className="text-caption font-mono font-bold text-green-400 shrink-0">+{stock.change.toFixed(1)}%</span>
                   </div>
                 );
               })}
@@ -330,7 +330,7 @@ export function AppSidebar({
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">Profit</span>
-              <span className="text-caption text-emerald-400">{winners} saham</span>
+              <span className="text-caption text-green-400">{winners} saham</span>
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">Loss</span>
@@ -366,13 +366,13 @@ export function AppSidebar({
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">MoM</span>
-              <span className={`text-caption font-mono ${MKT.ihsg.monthly >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <span className={`text-caption font-mono ${MKT.ihsg.monthly >= 0 ? "text-green-400" : "text-rose-400"}`}>
                 {MKT.ihsg.monthly >= 0 ? "+" : ""}{MKT.ihsg.monthly.toFixed(1)}%
               </span>
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-label text-tertiary">RS Status</span>
-              <span className={`text-caption font-medium ${RS.status === "SAFE" ? "text-emerald-400" : RS.status === "WARNING" ? "text-amber-400" : "text-rose-400"}`}>
+              <span className={`text-caption font-medium ${RS.status === "SAFE" ? "text-green-400" : RS.status === "WARNING" ? "text-amber-400" : "text-rose-400"}`}>
                 {RS.status}
               </span>
             </div>

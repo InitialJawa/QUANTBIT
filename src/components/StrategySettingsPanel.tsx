@@ -273,7 +273,7 @@ export function StrategySettingsPanel({
             <div>
               <div className="flex justify-between text-label mb-1">
                 <span className="text-tertiary">Buffer Kas (reserve)</span>
-                <span className="text-emerald-400 font-mono">{config.reserveBufferPct}%</span>
+                <span className="text-green-400 font-mono">{config.reserveBufferPct}%</span>
               </div>
               <input
                 type="range"

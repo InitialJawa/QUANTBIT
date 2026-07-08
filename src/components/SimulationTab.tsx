@@ -879,7 +879,7 @@ export function SimulationTab({
               <span className="text-sm font-bold font-mono text-white block">
                 {simReturnDetails.realSharesPurchased.toLocaleString("id-ID")} Lmbr
               </span>
-              <span className="text-label text-emerald-400 font-semibold block">
+              <span className="text-label text-green-400 font-semibold block">
                 💡 {simReturnDetails.totalLots} Lot (Sisa Kas: {formatRupiah(simReturnDetails.cashResidual)})
               </span>
             </div>
@@ -907,11 +907,11 @@ export function SimulationTab({
             <div className="space-y-1">
               <span className="text-caption uppercase font-bold text-white/30 block">Pemberitahuan Hasil Simulasi:</span>
               <div className="flex items-center gap-2">
-                <span className={`text-base font-black font-mono ${simReturnDetails.absoluteProfitLoss >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                <span className={`text-base font-black font-mono ${simReturnDetails.absoluteProfitLoss >= 0 ? "text-green-400" : "text-rose-400"}`}>
                   {simReturnDetails.absoluteProfitLoss >= 0 ? "+" : ""}{formatRupiah(simReturnDetails.absoluteProfitLoss)}
                 </span>
                 <span className={`text-xs font-black font-mono px-2 py-0.5 rounded ${
-                  simReturnDetails.absoluteProfitLoss >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                  simReturnDetails.absoluteProfitLoss >= 0 ? "bg-green-500/10 text-green-400" : "bg-rose-500/10 text-rose-400"
                 }`}>
                   {simReturnDetails.absoluteProfitLoss >= 0 ? "CUAN" : "RUGI"} {simReturnDetails.percentageReturn.toFixed(2)}%
                 </span>
@@ -1030,7 +1030,7 @@ export function SimulationTab({
                       transition={{ duration: 0.1 }}
                     />
                   </div>
-                  <span className="text-caption font-mono text-emerald-400 font-bold">{backtestProgress}% Complete</span>
+                  <span className="text-caption font-mono text-green-400 font-bold">{backtestProgress}% Complete</span>
                 </div>
               ) : backtestResult ? (
                 <motion.div 
@@ -1092,10 +1092,10 @@ export function SimulationTab({
                     
                     <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Hasil Akhir Strategi</span>
-                      <span className="text-base font-black font-mono text-emerald-400 block">
+                      <span className="text-base font-black font-mono text-green-400 block">
                         {formatRupiah(backtestResult.finalValue)}
                       </span>
-                      <span className="text-caption font-bold text-emerald-300 font-mono bg-emerald-500/15 px-1.5 py-0.5 rounded inline-block">
+                      <span className="text-caption font-bold text-green-300 font-mono bg-green-500/15 px-1.5 py-0.5 rounded inline-block">
                         +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
                     </div>
@@ -1105,7 +1105,7 @@ export function SimulationTab({
                       <span className="text-sm font-semibold font-mono text-white/70 block">
                         {formatRupiah(backtestResult.ihsgFinalValue)}
                       </span>
-                      <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
                         {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </div>
@@ -1168,8 +1168,8 @@ export function SimulationTab({
                   <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                       <div className="shrink-0">
-                        <span className="text-label uppercase font-bold tracking-widest text-emerald-400/70 block">Dividen Kumulatif (Nett 90%)</span>
-                        <span className="text-base font-black font-mono text-emerald-400 block mt-1">
+                        <span className="text-label uppercase font-bold tracking-widest text-green-400/70 block">Dividen Kumulatif (Nett 90%)</span>
+                        <span className="text-base font-black font-mono text-green-400 block mt-1">
                           +{formatRupiah(backtestResult.totalDividends)}
                         </span>
                       </div>
@@ -1180,7 +1180,7 @@ export function SimulationTab({
                         </div>
                         <div className="p-2 bg-white/[0.02] rounded-lg">
                           <span className="text-label font-mono text-white/40 block">Avg yield/thn</span>
-                          <span className="text-caption font-bold text-emerald-400/80 font-mono">
+                          <span className="text-caption font-bold text-green-400/80 font-mono">
                             {(() => {
                               const years = Math.max(1, (new Date(backtestConfig.simEndDate).getTime() - new Date(backtestConfig.simStartDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
                               return backtestResult.finalValue > 0
@@ -1197,7 +1197,7 @@ export function SimulationTab({
                               .map(([ticker, amt]) => (
                                 <div key={ticker} className="p-2 bg-white/[0.02] rounded-lg">
                                   <span className="text-label font-mono text-white/40 block">Top: {ticker}</span>
-                                  <span className="text-caption font-bold text-emerald-400/70 font-mono">+{((amt as number) / 1e6).toFixed(1)}M</span>
+                                  <span className="text-caption font-bold text-green-400/70 font-mono">+{((amt as number) / 1e6).toFixed(1)}M</span>
                                 </div>
                               ))}
                           </>
@@ -1219,7 +1219,7 @@ export function SimulationTab({
 
                     <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
-                      <span className="text-sm font-bold font-mono text-emerald-400 block">
+                      <span className="text-sm font-bold font-mono text-green-400 block">
                         S: {backtestResult.sharpe !== null ? backtestResult.sharpe.toFixed(2) : "—"} / So: {backtestResult.sortino !== null ? backtestResult.sortino.toFixed(2) : "—"}
                       </span>
                       <span className="text-label text-white/40 block">Risiko Terkoreksi (Rf=5%)</span>
@@ -1249,9 +1249,9 @@ export function SimulationTab({
                       <span className="text-lg">📈</span>
                       <div className="text-xs text-white/60">
                         {backtestConfig.simulationMode === "algo" ? (
-                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
+                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-green-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
                         ) : (
-                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{backtestConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-emerald-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
+                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{backtestConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-green-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
                         )}
                       </div>
                     </div>
@@ -1259,7 +1259,7 @@ export function SimulationTab({
                     <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
                       <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> (+{backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
                       <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
-                      <div>⚖️ 60/40 Campuran: <span className="text-emerald-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
+                      <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
                     </div>
                   </div>
 
@@ -1281,14 +1281,14 @@ export function SimulationTab({
                         <div className="p-3 bg-emerald-500/[0.05] border-2 border-emerald-500/40 rounded-xl space-y-1.5">
                           <span className="text-caption uppercase tracking-widest font-black text-emerald-400 font-mono block">⚡ Adaptive DCA</span>
                           <span className="text-base font-black font-mono text-white block">{formatRupiah(backtestResult.finalValue)}</span>
-                          <span className={`text-caption font-bold font-mono ${backtestResult.totalReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          <span className={`text-caption font-bold font-mono ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
                             {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(1)}%
                           </span>
                           <div className="pt-1 mt-1 border-t border-white/[0.05] space-y-0.5 text-label font-mono text-white/50">
                             <div>CAGR: {backtestResult.cagr.toFixed(1)}%</div>
                             <div>Max DD: -{backtestResult.maxDrawdown.toFixed(1)}%</div>
-                            <div className="text-emerald-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
-                            <div className="text-emerald-400/80">+Dividen: {formatRupiah(backtestResult.totalDividends)}</div>
+                            <div className="text-green-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
+                            <div className="text-green-400/80">+Dividen: {formatRupiah(backtestResult.totalDividends)}</div>
                           </div>
                         </div>
 
@@ -1299,7 +1299,7 @@ export function SimulationTab({
                               {bl.baseline === "lump_sum" ? "💰" : bl.baseline === "monthly_dca" ? "📅" : "🗓️"} {bl.label}
                             </span>
                             <span className="text-base font-black font-mono text-white/80 block">{formatRupiah(bl.finalValue)}</span>
-                            <span className={`text-caption font-bold font-mono ${bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "text-emerald-400" : "text-rose-400"}`}>
+                            <span className={`text-caption font-bold font-mono ${bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "text-green-400" : "text-rose-400"}`}>
                               {bl.finalValue >= (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000) ? "+" : ""}
                               {(((bl.finalValue / (parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)) - 1) * 100).toFixed(1)}%
                             </span>
@@ -1308,7 +1308,7 @@ export function SimulationTab({
                               <div>Max DD: -{bl.maxDrawdown.toFixed(1)}%</div>
                               <div>Avg Price: {formatRupiah(bl.avgBuyPrice)}</div>
                               <div>Cash Used: {bl.cashUtilization.toFixed(0)}%</div>
-                              <div className="text-emerald-400/70">+Dividen: {formatRupiah(bl.totalDividends)}</div>
+                              <div className="text-green-400/70">+Dividen: {formatRupiah(bl.totalDividends)}</div>
                             </div>
                           </div>
                         ))}
@@ -1324,7 +1324,7 @@ export function SimulationTab({
                         }, { name: "", r: -Infinity });
                         const beatsBest = adaptiveReturn > bestBaseline.r;
                         return (
-                          <div className={`p-3 rounded-lg border ${beatsBest ? "bg-emerald-500/10 border-emerald-500/30" : "bg-amber-500/10 border-amber-500/30"}`}>
+                          <div className={`p-3 rounded-lg border ${beatsBest ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}>
                             <p className="text-xs text-white/80 font-sans leading-relaxed">
                               {beatsBest ? "✅" : "⚠️"} <strong>Adaptive DCA</strong> return <span className="font-mono font-bold text-white">{adaptiveReturn.toFixed(2)}%</span> vs
                               <strong> {bestBaseline.name}</strong> return <span className="font-mono font-bold text-white">{bestBaseline.r.toFixed(2)}%</span>.
@@ -1468,9 +1468,9 @@ export function SimulationTab({
                       {backtestResult.logs.map((log: any, idx: number) => {
                         const dateStr = log.date && log.date.length >= 10 ? log.date.slice(0, 10) : log.date;
                         const [, typeColor] = {
-                          BUY: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
+                          BUY: ["bg-green-500/20 text-green-400 border-green-500/20", "text-green-300"],
                           SELL: ["bg-rose-500/20 text-rose-400 border-rose-500/20", "text-rose-300"],
-                          REBALANCE: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
+                          REBALANCE: ["bg-green-500/20 text-green-400 border-green-500/20", "text-green-300"],
                           CRASH_TRIGGER: ["bg-rose-500/25 text-rose-400 border-rose-500/30", "text-rose-300"],
                           CRASH_RECOVERY: ["bg-amber-500/20 text-amber-400 border-amber-500/20", "text-amber-300"],
                         }[log.type] || ["bg-white/5 text-white/60 border-white/10", "text-white/60"];

@@ -231,7 +231,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
                 type="number"
                 value={initialCapital}
                 onChange={(e) => setInitialCapital(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full text-xs pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold font-mono text-white outline-none focus:border-emerald-500 transition-colors"
+                className="w-full text-xs pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl font-bold font-mono text-white outline-none focus:border-green-500 transition-colors"
                 placeholder="Jumlah Investasi..."
               />
             </div>
@@ -242,7 +242,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
                   key={amt}
                   onClick={() => handlePresetCapital(amt)}
                   className={`text-label px-2.5 py-1 rounded bg-white/5 border hover:bg-white/10 text-white/70 cursor-pointer font-mono font-bold transition-all ${
-                    initialCapital === amt ? "border-emerald-400 text-emerald-400 bg-emerald-500/5" : "border-white/5"
+                    initialCapital === amt ? "border-green-400 text-green-400 bg-green-500/5" : "border-white/5"
                   }`}
                 >
                   Rp {(amt / 1000000).toLocaleString()} Jt
@@ -277,7 +277,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
           <div className="space-y-1.5 pt-2">
             <div className="flex justify-between items-center text-caption font-bold font-mono">
               <span className="text-white/50">DIVIDEND PAYOUT RATIO (DPR)</span>
-              <span className="text-emerald-400 font-bold">{payoutRatio}%</span>
+              <span className="text-green-400 font-bold">{payoutRatio}%</span>
             </div>
             <input
               type="range"
@@ -301,12 +301,12 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
               onClick={() => setIsDripActive(!isDripActive)}
               className={`w-full p-3 rounded-xl border flex items-center justify-between text-left transition-all ${
                 isDripActive
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                  ? "bg-green-500/10 border-green-500/30 text-green-300"
                   : "bg-white/5 border-white/5 text-[#E0E0E0]/50"
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <div className={`w-2.5 h-2.5 rounded-full ${isDripActive ? "bg-emerald-400 animate-pulse" : "bg-white/25"}`} />
+                <div className={`w-2.5 h-2.5 rounded-full ${isDripActive ? "bg-green-400 animate-pulse" : "bg-white/25"}`} />
                 <div>
                   <span className="text-body font-bold block">Reinvestasikan Dividen (DRIP)</span>
                   <span className="text-label text-white/30 block mt-0.5">Beli saham baru otomatis dengan dividen nett (Pajak 10% dihitung)</span>
@@ -334,7 +334,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
                 <span className="text-[15px] font-black tracking-tight text-white block mt-1.5">
                   {finalShares.toLocaleString("id-ID")} Lbr
                 </span>
-                <span className="text-label text-emerald-400 block mt-0.5">
+                <span className="text-label text-green-400 block mt-0.5">
                   +{Math.round(finalShares - (initialCapital / currentPrice)).toLocaleString("id-ID")} dari DRIP
                 </span>
               </div>
@@ -351,7 +351,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
 
               <div className="p-3 bg-white/5 border border-white/5 rounded-xl font-mono">
                 <span className="text-label text-white/40 block font-sans">Total Dana Dividen</span>
-                <span className="text-[15px] font-black tracking-tight text-emerald-400 block mt-1.5">
+                <span className="text-[15px] font-black tracking-tight text-green-400 block mt-1.5">
                   Rp{totalDivReceived >= 1000000 ? `${(totalDivReceived / 1000000).toFixed(1)} Jt` : totalDivReceived.toLocaleString("id-ID")}
                 </span>
                 <span className="text-label text-white/30 block mt-0.5">
@@ -364,7 +364,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
                 <span className="text-[15px] font-black tracking-tight text-white block mt-1.5">
                   Rp{(finalValue / 1000000).toFixed(1)} Jt
                 </span>
-                <span className="text-label text-emerald-400 font-bold block mt-0.5">
+                <span className="text-label text-green-400 font-bold block mt-0.5">
                   +{returnOnCapital.toFixed(1)}% CAGR
                 </span>
               </div>
@@ -374,7 +374,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
             <div className="p-3.5 bg-yellow-950/10 border border-yellow-500/10 rounded-xl flex items-start gap-2.5">
               <Info className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
               <p className="text-caption text-white/50 leading-relaxed">
-                <strong className="text-yellow-400">Yield on Cost (YoC)</strong> mengukur hasil dividen tahunan berdasarkan harga beli awal Anda, bukan harga pasar sekarang. Di Tahun ke-5, dengan pertumbuhan laba <span className="text-white font-mono">{growthRate}%</span>, YoC Anda tumbuh dari <span className="text-emerald-400 font-bold font-mono">{currentYield}%</span> menjadi <span className="text-emerald-400 font-bold font-mono">{finalYoC}%</span>.
+                <strong className="text-yellow-400">Yield on Cost (YoC)</strong> mengukur hasil dividen tahunan berdasarkan harga beli awal Anda, bukan harga pasar sekarang. Di Tahun ke-5, dengan pertumbuhan laba <span className="text-white font-mono">{growthRate}%</span>, YoC Anda tumbuh dari <span className="text-green-400 font-bold font-mono">{currentYield}%</span> menjadi <span className="text-green-400 font-bold font-mono">{finalYoC}%</span>.
               </p>
             </div>
           </div>
@@ -437,9 +437,9 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
                     <td className="py-2.5 font-sans font-bold text-white/70">{item.year} <span className="text-label font-light text-white/30">({item.lbl})</span></td>
                     <td className="py-2.5 text-center">{item["Shares Owned"].toLocaleString("id-ID")} lembar</td>
                     <td className="py-2.5 text-right text-white/50">Rp {item["EPS Projected"].toLocaleString("id-ID")}</td>
-                    <td className="py-2.5 text-right text-white/50">Rp {item["DPS Projected"].toLocaleString("id-ID")} <span className="text-label text-emerald-400">({payoutRatio}%)</span></td>
+                    <td className="py-2.5 text-right text-white/50">Rp {item["DPS Projected"].toLocaleString("id-ID")} <span className="text-label text-green-400">({payoutRatio}%)</span></td>
                     <td className="py-2.5 text-right font-bold text-yellow-400">{item["Yield-on-Cost (YoC)"]}%</td>
-                    <td className="py-2.5 text-right font-medium text-emerald-300">
+                    <td className="py-2.5 text-right font-medium text-green-300">
                       {isStart ? "-" : `Rp ${item["Dividen Diterima"].toLocaleString("id-ID")}`}
                     </td>
                     <td className="py-2.5 text-right font-bold text-white">Rp {item["Nilai Portofolio (IDR)"].toLocaleString("id-ID")}</td>

@@ -228,9 +228,9 @@ export function StockDrawer({
                               ["Fin. CF", activeStock.metrics.map(m => m.cashFlowFinancing), false],
                             ].map(([label, values, isGreen]) => (
                               <tr key={label as string} className="hover:bg-white/[0.02]">
-                                <td className={`py-2 text-white/70 ${isGreen ? "text-emerald-500" : ""}`}>{label}</td>
+                                <td className={`py-2 text-white/70 ${isGreen ? "text-green-500" : ""}`}>{label}</td>
                                 {(values as number[]).map((v, i) => (
-                                  <td key={i} className={`py-2 text-right ${isGreen ? "text-emerald-500 font-medium" : "text-white"}`}>
+                                  <td key={i} className={`py-2 text-right ${isGreen ? "text-green-500 font-medium" : "text-white"}`}>
                                     Rp{v.toLocaleString()} B
                                   </td>
                                 ))}

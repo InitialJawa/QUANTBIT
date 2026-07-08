@@ -14,7 +14,7 @@ import { CheckCircle, Clock, AlertCircle, HelpCircle } from "lucide-react";
 export const DataBadge: React.FC<{ status: DataStatus }> = ({ status }) => {
   const config = {
     [DataStatus.LIVE]: {
-      color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      color: "bg-green-500/10 text-green-400 border-green-500/20",
       Icon: CheckCircle,
       label: "Live",
     },
