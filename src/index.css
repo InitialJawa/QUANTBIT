@@ -25,10 +25,12 @@
   --text-muted: #7a7a7a;
   --border-default: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.10);
-  --accent: #00c9a5;
-  --accent-hover: #00e6b8;
-  --accent-red: #f23645;
-  --accent-green: #089981;
+  --accent-primary: #008a6e;
+  --accent-primary-hover: #00a37a;
+  --accent-glow: rgba(0, 138, 110, 0.12);
+  --data-positive: #00c9a5;
+  --data-negative: #f23645;
+  --data-warning: #f59e0b;
   --color-scheme: dark;
   color-scheme: dark;
 }
@@ -45,10 +47,12 @@
   --text-muted: #94A3B8;
   --border-default: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.12);
-  --accent: #00a37a;
-  --accent-hover: #008c66;
-  --accent-red: #d32f2f;
-  --accent-green: #008a6e;
+  --accent-primary: #008a6e;
+  --accent-primary-hover: #00755c;
+  --accent-glow: rgba(0, 138, 110, 0.06);
+  --data-positive: #00a37a;
+  --data-negative: #d32f2f;
+  --data-warning: #b45309;
   --color-scheme: light;
   color-scheme: light;
 }
@@ -167,25 +171,25 @@
 
 [data-theme="dark"] .bg-card-gradient {
   background:
-    radial-gradient(ellipse at 100% 100%, rgba(0, 201, 165, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%),
     var(--bg-surface) !important;
 }
 
 [data-theme="dark"] .bg-card-gradient-alt {
   background:
-    radial-gradient(ellipse at 0% 0%, rgba(0, 201, 165, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse at 0% 0%, var(--accent-glow) 0%, transparent 55%),
     var(--bg-surface) !important;
 }
 
 [data-theme="light"] .bg-card-gradient {
   background:
-    radial-gradient(ellipse at 100% 100%, rgba(0, 163, 122, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%),
     var(--bg-surface) !important;
 }
 
 [data-theme="light"] .bg-card-gradient-alt {
   background:
-    radial-gradient(ellipse at 0% 0%, rgba(0, 163, 122, 0.02) 0%, transparent 55%),
+    radial-gradient(ellipse at 0% 0%, var(--accent-glow) 0%, transparent 55%),
     var(--bg-surface) !important;
 }
 
@@ -245,51 +249,59 @@
   color: var(--text-muted) !important;
 }
 
+/* --- INTERACTIVE elements (tabs, toggles, buttons) → accent-primary --- */
 [data-theme] .text-emerald-400,
 [data-theme] .text-emerald-300,
 [data-theme] [class*="text-emerald-4"],
 [data-theme] .text-cyan-400,
 [data-theme] .text-cyan-300,
 [data-theme] [class*="text-cyan-4"] {
-  color: var(--accent) !important;
+  color: var(--accent-primary) !important;
 }
-
-[data-theme] .text-rose-400,
-[data-theme] .text-rose-455,
-[data-theme] [class*="text-rose-4"] {
-  color: var(--accent-red) !important;
-}
-
-/* Blue text → accent (green) for consistency */
-[data-theme] .text-blue-400,
-[data-theme] .text-blue-300,
-[data-theme] [class*="text-blue-4"] {
-  color: var(--accent) !important;
-}
-[data-theme="light"] .text-blue-400,
-[data-theme="light"] .text-blue-300,
-[data-theme="light"] [class*="text-blue-4"] {
-  color: var(--accent) !important;
-}
-
 [data-theme="light"] .text-emerald-400,
 [data-theme="light"] .text-emerald-300,
 [data-theme="light"] [class*="text-emerald-4"],
 [data-theme="light"] .text-cyan-400,
 [data-theme="light"] .text-cyan-300,
 [data-theme="light"] [class*="text-cyan-4"] {
-  color: var(--accent) !important;
+  color: var(--accent-primary) !important;
 }
 
+/* Blue text → accent-primary for consistency */
+[data-theme] .text-blue-400,
+[data-theme] .text-blue-300,
+[data-theme] [class*="text-blue-4"] {
+  color: var(--accent-primary) !important;
+}
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-blue-300,
+[data-theme="light"] [class*="text-blue-4"] {
+  color: var(--accent-primary) !important;
+}
+
+/* --- DATA positive (P&L, returns, gains) → data-positive --- */
+[data-theme] .text-green-400,
+[data-theme] .text-green-300,
+[data-theme] [class*="text-green-4"] {
+  color: var(--data-positive) !important;
+}
+
+/* --- DATA negative (losses, declines) → data-negative --- */
+[data-theme] .text-rose-400,
+[data-theme] .text-rose-455,
+[data-theme] [class*="text-rose-4"] {
+  color: var(--data-negative) !important;
+}
 [data-theme="light"] .text-rose-400,
 [data-theme="light"] .text-rose-455,
 [data-theme="light"] [class*="text-rose-4"] {
-  color: var(--accent-red) !important;
+  color: var(--data-negative) !important;
 }
 
-[data-theme="light"] .text-amber-400,
-[data-theme="light"] [class*="text-amber-4"] {
-  color: #b45309 !important;
+/* --- WARNING → data-warning --- */
+[data-theme] .text-amber-400,
+[data-theme] [class*="text-amber-4"] {
+  color: var(--data-warning) !important;
 }
 
 /* ==========================================================================
@@ -305,12 +317,14 @@
   border-color: var(--border-default) !important;
 }
 
-/* Emerald → Cyan border mapping */
+/* Emerald border → accent-primary (interactive) */
 [data-theme] [class*="border-emerald-"] {
-  border-color: rgba(0, 201, 165, 0.3) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent) !important;
 }
-[data-theme="light"] [class*="border-emerald-"] {
-  border-color: rgba(0, 163, 122, 0.3) !important;
+
+/* Green border → data-positive */
+[data-theme] [class*="border-green-"] {
+  border-color: color-mix(in srgb, var(--data-positive) 30%, transparent) !important;
 }
 
 [data-theme] .divide-white\/5 > *,
@@ -391,99 +405,98 @@
   color: var(--text-primary) !important;
 }
 
-/* Solid emerald backgrounds → cyan */
+/* Solid emerald backgrounds → accent-primary */
 [data-theme] .bg-emerald-500,
 [data-theme] .bg-emerald-600 {
-  background: var(--accent) !important;
+  background: var(--accent-primary) !important;
 }
 [data-theme] .hover\:bg-emerald-600:hover,
 [data-theme] .hover\:bg-emerald-500:hover {
-  background: var(--accent-hover) !important;
+  background: var(--accent-primary-hover) !important;
 }
 
-/* Catch-all: any emerald-XXX (bg/text/border) → cyan */
-[data-theme] [class*="bg-emerald-500/"] {
-  background: rgba(0, 201, 165, 0.12) !important;
-}
+/* Emerald backgrounds (interactive) → accent-primary with opacity */
 [data-theme] [class*="bg-emerald-950/"] {
-  background: rgba(0, 201, 165, 0.08) !important;
-  border-color: rgba(0, 201, 165, 0.2) !important;
+  background: color-mix(in srgb, var(--accent-primary) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 20%, transparent) !important;
 }
-[data-theme] [class*="hover:bg-emerald-950/"]:hover {
-  background: rgba(0, 201, 165, 0.15) !important;
-}
-[data-theme="light"] [class*="bg-emerald-500/"] {
-  background: rgba(0, 163, 122, 0.1) !important;
-}
-[data-theme="light"] [class*="bg-emerald-950/"] {
-  background: rgba(0, 163, 122, 0.08) !important;
-}
-[data-theme="light"] [class*="hover:bg-emerald-950/"]:hover {
-  background: rgba(0, 163, 122, 0.15) !important;
+[data-theme] [class*="hover:bg-emerald-950/"]:hover,
+[data-theme] [class*="hover:bg-emerald-500/"]:hover {
+  background: color-mix(in srgb, var(--accent-primary) 18%, transparent) !important;
 }
 
 /* Emerald foreground (for spinner text overrides) */
 [data-theme] .text-emerald-450,
 [data-theme] .text-emerald-455 {
-  color: var(--accent) !important;
+  color: var(--accent-primary) !important;
 }
 [data-theme="light"] .text-emerald-450,
 [data-theme="light"] .text-emerald-455 {
-  color: var(--accent) !important;
+  color: var(--accent-primary) !important;
 }
 
-/* Emerald → Cyan hover mappings */
+/* Emerald hover mappings → accent-primary */
 [data-theme] [class*="hover:bg-emerald-"]:hover {
-  background: rgba(0, 201, 165, 0.15) !important;
+  background: color-mix(in srgb, var(--accent-primary) 15%, transparent) !important;
 }
 [data-theme] [class*="hover:border-emerald-"]:hover {
-  border-color: rgba(0, 201, 165, 0.4) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 40%, transparent) !important;
 }
 [data-theme] [class*="hover:text-emerald-"]:hover {
-  color: var(--accent) !important;
+  color: var(--accent-primary) !important;
 }
 
 /* Focus ring mapping */
 [data-theme] [class*="focus:ring-emerald-"],
 [data-theme] [class*="focus-visible:ring-emerald-"] {
-  --tw-ring-color: var(--accent) !important;
+  --tw-ring-color: var(--accent-primary) !important;
 }
 
 /* Range input accent */
 [data-theme] [class*="accent-emerald-"] {
-  accent-color: var(--accent) !important;
+  accent-color: var(--accent-primary) !important;
 }
 
 /* Spinner border-top */
 [data-theme] [class*="border-t-emerald-"] {
-  border-top-color: var(--accent) !important;
+  border-top-color: var(--accent-primary) !important;
 }
 
 /* ==========================================================================
-   BADGE / STATUS PILLS — Cyan Theme
+   BADGE / STATUS PILLS
    ========================================================================== */
 
+/* Interactive badges (emerald/cyan/blue) → accent-primary */
 [data-theme] [class*="bg-emerald-500/"],
 [data-theme] .bg-emerald-500\/,
 [data-theme] [class*="bg-cyan-500/"],
 [data-theme] .bg-cyan-500\/,
 [data-theme] [class*="bg-blue-500/"],
 [data-theme] .bg-blue-500\/ {
-  background: rgba(0, 201, 165, 0.12) !important;
-  border-color: rgba(0, 201, 165, 0.25) !important;
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 25%, transparent) !important;
 }
 
+/* Data positive badges → data-positive */
+[data-theme] [class*="bg-green-500/"],
+[data-theme] .bg-green-500\/ {
+  background: color-mix(in srgb, var(--data-positive) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--data-positive) 25%, transparent) !important;
+}
+
+/* Warning badges → data-warning */
 [data-theme] [class*="bg-amber-500/10"],
 [data-theme] [class*="bg-amber-500/15"] {
-  background: rgba(240, 165, 0, 0.12) !important;
-  border-color: rgba(240, 165, 0, 0.25) !important;
+  background: color-mix(in srgb, var(--data-warning) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--data-warning) 25%, transparent) !important;
 }
 
+/* Negative badges → data-negative */
 [data-theme] [class*="bg-rose-500/10"],
 [data-theme] [class*="bg-rose-500/15"],
 [data-theme] [class*="bg-rose-500/20"] {
-  background: rgba(242, 54, 69, 0.15) !important;
-  border-color: rgba(242, 54, 69, 0.3) !important;
+  background: color-mix(in srgb, var(--data-negative) 15%, transparent) !important;
+  border-color: color-mix(in srgb, var(--data-negative) 30%, transparent) !important;
 }
 
 /* Light badge overrides */
@@ -493,16 +506,23 @@
 [data-theme="light"] .bg-cyan-500\/,
 [data-theme="light"] [class*="bg-blue-500/"],
 [data-theme="light"] .bg-blue-500\/ {
+  background-color: #c8e6c9 !important;
+  color: #1b5e20 !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent) !important;
+}
+
+[data-theme="light"] [class*="bg-green-500/"],
+[data-theme="light"] .bg-green-500\/ {
   background-color: #d1fae5 !important;
   color: #065f46 !important;
-  border-color: rgba(0, 163, 122, 0.3) !important;
+  border-color: color-mix(in srgb, var(--data-positive) 30%, transparent) !important;
 }
 
 [data-theme="light"] [class*="bg-amber-500/10"],
 [data-theme="light"] [class*="bg-amber-500/15"] {
   background-color: #fef3c7 !important;
   color: #92400e !important;
-  border-color: rgba(245, 158, 11, 0.3) !important;
+  border-color: color-mix(in srgb, var(--data-warning) 30%, transparent) !important;
 }
 
 [data-theme="light"] [class*="bg-rose-500/10"],
@@ -510,15 +530,15 @@
 [data-theme="light"] [class*="bg-rose-500/20"] {
   background-color: #ffe4e6 !important;
   color: #c62828 !important;
-  border-color: rgba(242, 54, 69, 0.3) !important;
+  border-color: color-mix(in srgb, var(--data-negative) 30%, transparent) !important;
 }
 
-/* Emulated cyan-950 / blue-950 for ai chat bubbles & decorative surfaces */
+/* AI chat bubbles & decorative surfaces */
 [data-theme="dark"] [class*="bg-cyan-950/"],
 [data-theme="dark"] [class*="bg-emerald-950/"],
 [data-theme="dark"] [class*="bg-blue-950/"] {
-  background: rgba(0, 201, 165, 0.08) !important;
-  border-color: rgba(0, 201, 165, 0.2) !important;
+  background: color-mix(in srgb, var(--accent-primary) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 20%, transparent) !important;
 }
 
 /* ==========================================================================

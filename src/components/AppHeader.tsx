@@ -117,7 +117,7 @@ export function AppHeader({
           className="flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-emerald-500/[0.08] border border-emerald-500/15 hover:bg-emerald-500/[0.14] transition-colors cursor-pointer"
         >
           <Wallet className="w-3 h-3 text-emerald-400" />
-          <span className="text-caption font-mono font-bold text-emerald-300 whitespace-nowrap">
+          <span className="text-caption font-mono font-bold text-green-300 whitespace-nowrap">
             {formatRupiahShort(totalWealth(portfolio, cash, getDynamicStock))}
           </span>
         </button>

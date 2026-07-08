@@ -213,14 +213,14 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 rounded-full bg-white/80" />
             <span className="text-white/50">IHSG</span>
-            <span className={`font-mono font-medium ${ihsgChange >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <span className={`font-mono font-medium ${ihsgChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
               {ihsgChange >= 0 ? "+" : ""}{ihsgChange.toFixed(1)}%
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 rounded-full bg-amber-400" />
             <span className="text-white/50">Gold</span>
-            <span className={`font-mono font-medium ${goldChange >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <span className={`font-mono font-medium ${goldChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
               {goldChange >= 0 ? "+" : ""}{goldChange.toFixed(1)}%
             </span>
           </div>
@@ -228,7 +228,7 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 rounded-full bg-emerald-400" />
               <span className="text-white/50">Portfolio</span>
-              <span className={`font-mono font-medium ${portChange >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <span className={`font-mono font-medium ${portChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
                 {portChange >= 0 ? "+" : ""}{portChange.toFixed(1)}%
               </span>
             </div>
