@@ -139,13 +139,13 @@ export function MarketTab({
           <div>
             <span className="text-white/30 text-label uppercase tracking-wider block">SMA20</span>
             <span className="font-mono font-bold text-white/80">
-              {ihsgCloses.length > 20 ? ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20 : "--"}
+              {ihsgCloses.length > 20 ? (ihsgCloses.slice(-20).reduce((s, v) => s + v, 0) / 20).toFixed(1) : "--"}
             </span>
           </div>
           <div>
             <span className="text-white/30 text-label uppercase tracking-wider block">SMA50</span>
             <span className="font-mono font-bold text-white/80">
-              {ihsgCloses.length > 50 ? ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50 : "--"}
+              {ihsgCloses.length > 50 ? (ihsgCloses.slice(-50).reduce((s, v) => s + v, 0) / 50).toFixed(1) : "--"}
             </span>
           </div>
           <div>
