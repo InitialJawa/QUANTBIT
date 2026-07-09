@@ -367,7 +367,6 @@ function AppContent({ logout }: { logout: () => void }) {
                       >
                         <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat analitik...</div>}>
                         <AnalyticsTab
-                          activeConfig={engineConfig.activeProfileId}
                           onSelectTicker={ui.handleSelectTicker}
                           portfolio={pm.portfolio}
                           watchlist={pm.watchlist}

@@ -103,6 +103,13 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
   const [sortBy, setSortBy] = useState<"score" | "quality" | "growth" | "value" | "momentum">("score");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
+  const PROFILE_NAMES: Record<string, string> = {
+    aman: "Aman",
+    agresif: "Agresif",
+    dividen: "Dividen",
+    "growth-heavy": "Growth-heavy",
+  };
+
   const activeStocksList = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const processedLeaders = getProcessedLeaders(activeStocksList, activeProfile ?? activeConfig);
   const weights = activeProfile ?? CW_MAP[activeConfig] ?? CW_AMAN;
@@ -148,11 +155,11 @@ export function LeadersTab({ activeConfig, activeProfile, onSelectTicker, portfo
           <div>
             <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
               <Sliders className="w-4 h-4 text-white/40" />
-              {activeProfile ? "Skor Dinamis" : "Skor Standar"}
+              {activeProfile ? (PROFILE_NAMES[activeConfig] || "Skor") : "Skor Standar"}
               <ExplainButton label="Skor & Ranking Saham (final_score = quality·Wq + growth·Wg + value·Wv + momentum·Wm)" />
             </h2>
             <p className="text-label text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-              Kualitas: <span className="text-white/80">{(weights.quality * 100)}%</span> • Growth: <span className="text-white/80">{(weights.growth * 100)}%</span> • Value: <span className="text-white/80">{(weights.value * 100)}%</span> • Momentum: <span className="text-white/80">{(weights.momentum * 100)}%</span>
+              Kualitas: <span className="text-white/80">{(weights.quality * 100)}%</span> • Growth: <span className="text-white/80">{(weights.growth * 100)}%</span> • Value: <span className="text-white/80">{(weights.value * 100)}%</span> • Momentum: <span className="text-white/80">{(weights.momentum * 100)}%</span> • Dividen: <span className="text-white/80">{(weights.dividend * 100)}%</span>
             </p>
           </div>
           <div className="text-left sm:text-right shrink-0 mt-2 sm:mt-0">
