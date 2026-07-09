@@ -1,5 +1,6 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
+import { Router } from 'wouter';
 import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
@@ -34,9 +35,11 @@ window.addEventListener("error", (e) => {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <Router>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </Router>
     </ErrorBoundary>
   </StrictMode>,
 );

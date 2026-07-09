@@ -1,10 +1,10 @@
 import { useEffect, lazy, Suspense } from "react";
+import { useRoute, useLocation } from "wouter";
 import { STOCKS_DATA } from "./stocksData";
 import { MKT } from "./marketData";
 import { isCrashActive } from "./marketRegimeEngine";
 import type { StockData } from "./types";
 import { api } from "./services/api";
-import { StockDrawer } from "./components/StockDrawer";
 import { AppSidebar } from "./components/AppSidebar";
 import { AlertBanner } from "./components/AlertBanner";
 import { AppHeader } from "./components/AppHeader";
@@ -20,6 +20,7 @@ const MarketTab = lazy(() => import("./components/MarketTab").then(m => ({ defau
 const PortfolioTracker = lazy(() => import("./components/PortfolioTracker").then(m => ({ default: m.PortfolioTracker })));
 const AnalyticsTab = lazy(() => import("./components/AnalyticsTab").then(m => ({ default: m.AnalyticsTab })));
 const SimulationTab = lazy(() => import("./components/SimulationTab").then(m => ({ default: m.SimulationTab })));
+const TickerPage = lazy(() => import("./pages/TickerPage").then(m => ({ default: m.TickerPage })));
 import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./contexts/AuthContext";
 import { EngineConfigProvider, useEngineConfig } from "./contexts/EngineConfigContext";
@@ -100,6 +101,10 @@ function AppContent({ logout }: { logout: () => void }) {
   // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
   const { engineConfig, setActiveProfile } = useEngineConfig();
 
+  // Route: /ticker/:code — full-page ticker detail
+  const [isTickerRoute, tickerRouteParams] = useRoute<{ code: string }>("/ticker/:code");
+  const [, navigate] = useLocation();
+
   // A2 — Keyboard shortcuts: 1/2/3/4 switch tabs, / focus search, Esc close drawers/modals
   useShortcuts({
     "1": () => ui.setActiveTab("market"),
@@ -134,6 +139,10 @@ function AppContent({ logout }: { logout: () => void }) {
   }, [ui.theme, df.dataFeed, engineConfig.activeProfileId, pm.cash, user, pm.isDbLoaded]);
 
   const activeStock = df.getDynamicStock(ui.selectedTicker) || STOCKS_DATA[0];
+  const handleOpenTicker = (code: string) => {
+    ui.handleSelectTicker(code);
+    navigate(`/ticker/${code}`);
+  };
   const isIHSGInCrisis = isCrashActive();
   const activeUniverseStocks = STOCKS_DATA;
   const filteredStocks = activeUniverseStocks.filter((s) => {
@@ -166,7 +175,7 @@ function AppContent({ logout }: { logout: () => void }) {
     });
     if (stock) {
       ui.handleSelectTicker(stock.ticker);
-      ui.setIsDrawerOpen(true);
+      navigate(`/ticker/${stock.ticker}`);
       ui.setSearchQuery("");
     }
   };
@@ -216,37 +225,55 @@ function AppContent({ logout }: { logout: () => void }) {
         )}
       </AnimatePresence>
 
-      <AppHeader
-          activeTab={ui.activeTab}
-          onTabChange={ui.setActiveTab}
-          dataFeed={df.dataFeed}
-          userEmail={user?.email}
-          settingsRef={ui.settingsDropdownRef}
-          isSettingsOpen={ui.isSettingsOpen}
-          setSettingsOpen={ui.setIsSettingsOpen}
-          theme={ui.theme}
-          setTheme={ui.setTheme}
-          activeConfig={engineConfig.activeProfileId}
-          isMobileMenuOpen={ui.isMobileMenuOpen}
-          setMobileMenuOpen={ui.setIsMobileMenuOpen}
-          setDataFeed={df.setDataFeed}
-          logout={logout}
-          searchQuery={ui.searchQuery}
-          onSearchChange={ui.setSearchQuery}
-          onSearchSubmit={handleSearchSubmit}
-          proactiveAIEnabled={ui.proactiveAIEnabled}
-          setProactiveAIEnabled={ui.setProactiveAIEnabled}
-          useDevMockAI={ui.useDevMockAI}
-          setUseDevMockAI={ui.setUseDevMockAI}
-          showToasts={ui.showToasts}
-          setShowToasts={ui.setShowToasts}
-          showCrisisSignals={ui.showCrisisSignals}
-          setShowCrisisSignals={ui.setShowCrisisSignals}
-          portfolio={pm.portfolio}
-          cash={pm.cash}
-          getDynamicStock={df.getDynamicStock}
-        />
-        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
+      {isTickerRoute && tickerRouteParams ? (
+        <Suspense fallback={<div className="p-8 text-center text-white">Loading...</div>}>
+          <TickerPage
+            code={tickerRouteParams.code}
+            getDynamicStock={df.getDynamicStock}
+            portfolio={pm.portfolio}
+            watchlist={pm.watchlist}
+            cash={pm.cash}
+            onAddTransaction={pm.handleAddTransaction}
+            onSellTransaction={pm.handleSellTransaction}
+            onRemoveTransaction={pm.handleRemoveTransaction}
+            onToggleWatchlist={pm.handleToggleWatchlist}
+            tradeLogs={pm.tradeLogs}
+            theme={ui.theme}
+          />
+        </Suspense>
+      ) : (
+        <>
+          <AppHeader
+              activeTab={ui.activeTab}
+              onTabChange={ui.setActiveTab}
+              dataFeed={df.dataFeed}
+              userEmail={user?.email}
+              settingsRef={ui.settingsDropdownRef}
+              isSettingsOpen={ui.isSettingsOpen}
+              setSettingsOpen={ui.setIsSettingsOpen}
+              theme={ui.theme}
+              setTheme={ui.setTheme}
+              activeConfig={engineConfig.activeProfileId}
+              isMobileMenuOpen={ui.isMobileMenuOpen}
+              setMobileMenuOpen={ui.setIsMobileMenuOpen}
+              setDataFeed={df.setDataFeed}
+              logout={logout}
+              searchQuery={ui.searchQuery}
+              onSearchChange={ui.setSearchQuery}
+              onSearchSubmit={handleSearchSubmit}
+              proactiveAIEnabled={ui.proactiveAIEnabled}
+              setProactiveAIEnabled={ui.setProactiveAIEnabled}
+              useDevMockAI={ui.useDevMockAI}
+              setUseDevMockAI={ui.setUseDevMockAI}
+              showToasts={ui.showToasts}
+              setShowToasts={ui.setShowToasts}
+              showCrisisSignals={ui.showCrisisSignals}
+              setShowCrisisSignals={ui.setShowCrisisSignals}
+              portfolio={pm.portfolio}
+              cash={pm.cash}
+              getDynamicStock={df.getDynamicStock}
+            />
+            <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden md:min-h-0 relative">
               <AppSidebar
                 activeTab={ui.activeTab}
                 isMobileMenuOpen={ui.isMobileMenuOpen}
@@ -288,7 +315,7 @@ function AppContent({ logout }: { logout: () => void }) {
                       >
                         <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat market...</div>}>
                         <MarketTab
-                          onSelectTicker={ui.handleSelectTicker}
+                          onSelectTicker={handleOpenTicker}
                           onChangeActiveTicker={ui.handleChangeActiveTicker}
                           activeStock={activeStock}
                           portfolio={pm.portfolio}
@@ -319,7 +346,7 @@ function AppContent({ logout }: { logout: () => void }) {
                           onAddTransaction={pm.handleAddTransaction}
                           onRemoveTransaction={pm.handleRemoveTransaction}
                           onSellTransaction={pm.handleSellTransaction}
-                          onSelectStock={ui.handleSelectTicker}
+                          onSelectStock={handleOpenTicker}
                           onToggleWatchlist={pm.handleToggleWatchlist}
                           getDynamicStock={df.getDynamicStock}
                           cash={pm.cash}
@@ -349,7 +376,7 @@ function AppContent({ logout }: { logout: () => void }) {
                           onAddTransaction={pm.handleAddTransaction}
                           onRemoveTransaction={pm.handleRemoveTransaction}
                           onSellTransaction={pm.handleSellTransaction}
-                          onSelectTicker={ui.handleSelectTicker}
+                          onSelectTicker={handleOpenTicker}
                           getDynamicStock={df.getDynamicStock}
                         />
                         </Suspense>
@@ -367,7 +394,7 @@ function AppContent({ logout }: { logout: () => void }) {
                       >
                         <Suspense fallback={<div className="flex items-center justify-center h-32 text-label text-white/40">Memuat analitik...</div>}>
                         <AnalyticsTab
-                          onSelectTicker={ui.handleSelectTicker}
+                          onSelectTicker={handleOpenTicker}
                           portfolio={pm.portfolio}
                           watchlist={pm.watchlist}
                           getDynamicStock={df.getDynamicStock}
@@ -381,45 +408,29 @@ function AppContent({ logout }: { logout: () => void }) {
               </main>
             </div>
           
-<FloatingWallet
-        hideFab
-        isOpen={ui.isWalletOpen}
-        onToggle={() => ui.setIsWalletOpen(!ui.isWalletOpen)}
-        cash={pm.cash}
-        goldShares={pm.getEmasShares()}
-        tradeLogs={pm.tradeLogs}
-        onDeposit={pm.handleDepositCash}
-        onWithdraw={pm.handleWithdrawCash}
-        onMoveToGold={pm.handleMoveToGold}
-        onSellGold={pm.handleSellGoldToCashInput}
-      />
-<Toaster position="top-right" theme="dark" richColors closeButton />
-<FloatingAIChat
-  selectedStock={activeStock}
-  portfolio={pm.portfolio}
-  cash={pm.cash}
-  pm={pm}
-  getDynamicStock={df.getDynamicStock}
-  activeTab={ui.activeTab}
-      />
-      <StockDrawer
-        isOpen={ui.isDrawerOpen}
-        onClose={() => ui.setIsDrawerOpen(false)}
-        activeStock={activeStock}
-        portfolio={pm.portfolio}
-        watchlist={pm.watchlist}
-        drawerTab={ui.drawerTab}
-        onTabChange={ui.setDrawerTab}
-        drawerLots={ui.drawerLots}
-        onLotsChange={ui.setDrawerLots}
-        onBuy={(ticker, shares, price) =>
-          pm.handleAddTransaction(ticker, shares, price)
-        }
-        onSell={(ticker, shares) => pm.handleSellTransaction(ticker, shares)}
-        onRemove={(ticker) => pm.handleRemoveTransaction(ticker)}
-        onToggleWatchlist={pm.handleToggleWatchlist}
-        chartTheme={ui.getChartTheme()}
-      />
+          <FloatingWallet
+            hideFab
+            isOpen={ui.isWalletOpen}
+            onToggle={() => ui.setIsWalletOpen(!ui.isWalletOpen)}
+            cash={pm.cash}
+            goldShares={pm.getEmasShares()}
+            tradeLogs={pm.tradeLogs}
+            onDeposit={pm.handleDepositCash}
+            onWithdraw={pm.handleWithdrawCash}
+            onMoveToGold={pm.handleMoveToGold}
+            onSellGold={pm.handleSellGoldToCashInput}
+          />
+          <FloatingAIChat
+            selectedStock={activeStock}
+            portfolio={pm.portfolio}
+            cash={pm.cash}
+            pm={pm}
+            getDynamicStock={df.getDynamicStock}
+            activeTab={ui.activeTab}
+          />
+        </>
+      )}
+      <Toaster position="top-right" theme="dark" richColors closeButton />
       <BackToTop />
   {import.meta.env?.DEV && (() => {
     const params = new URLSearchParams(window.location.search);

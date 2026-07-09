@@ -40,9 +40,6 @@ export function useUIState() {
   }, [useDevMockAI]);
 
   const [selectedTicker, setSelectedTicker] = useState("BBCA");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState<"chart" | "sheets" | "forecast" | "gemini-ai" | "profile">("chart");
-  const [drawerLots, setDrawerLots] = useState<number | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
@@ -76,7 +73,6 @@ export function useUIState() {
 
   const handleSelectTicker = (ticker: string) => {
     setSelectedTicker(ticker);
-    setIsDrawerOpen(true);
   };
 
   const handleChangeActiveTicker = (ticker: string) => {
@@ -114,9 +110,6 @@ export function useUIState() {
     activeTab, setActiveTab,
     hideAlertBanner, setHideAlertBanner,
     selectedTicker, setSelectedTicker,
-    isDrawerOpen, setIsDrawerOpen,
-    drawerTab, setDrawerTab,
-    drawerLots, setDrawerLots,
     searchQuery, setSearchQuery,
     isMobileMenuOpen, setIsMobileMenuOpen,
     isWalletOpen, setIsWalletOpen,

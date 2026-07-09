@@ -15,6 +15,7 @@ import {
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
+import Card from "./Card";
 
 interface SyncStatus {
   lastSynced: string | null;
@@ -118,7 +119,7 @@ export function MarketTab({
       <MarketOverviewCharts portfolio={portfolio} />
 
       {/* Teknikal strip — RSI, MACD, SMA, Breadth, Score Gap */}
-      <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3">
+      <Card variant="default" padding="sm">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
           <div>
             <span className="text-white/30 text-label uppercase tracking-wider block">RSI(14)</span>
@@ -160,10 +161,10 @@ export function MarketTab({
             <span className="font-mono font-bold text-white/80">{RS.radar_context?.score_gap?.toFixed(1) || "--"}</span>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Status bar — compact 1 row */}
-      <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+      <Card variant="default" padding="md">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-caption">
             <div className="flex items-center gap-2">
               <span className="text-white/30 text-label uppercase tracking-wider">Status</span>
@@ -205,9 +206,7 @@ export function MarketTab({
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Big 4 metrik — compact */}
+        </Card>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Kesehatan Pasar", value: RS.market_health, color: "bg-white/40" },
@@ -215,18 +214,18 @@ export function MarketTab({
             { label: "Risiko Pasar", value: RS.risk, color: "bg-rose-500/50", textColor: "text-rose-400/80" },
             { label: "Keyakinan", value: RS.confidence, color: "bg-white/40" },
           ].map((m) => (
-            <div key={m.label} className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1.5">
+            <Card key={m.label} variant="inset" padding="sm" className="space-y-1.5">
               <span className="text-label uppercase tracking-wider text-white/30">{m.label}</span>
               <span className={`text-xl font-bold font-mono ${m.textColor || "text-white"} block`}>{m.value}</span>
               <div className="w-full bg-white/[0.05] h-1 rounded-full overflow-hidden">
                 <div className={`${m.color} h-full rounded-full`} style={{ width: `${m.value}%` }} />
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* AI Brief — collapsible */}
-        <div className="bg-[#050505] border border-white/[0.03] rounded-2xl p-4">
+        <Card variant="default" padding="md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-white/40" />
@@ -254,22 +253,22 @@ export function MarketTab({
               >
                 <div className="mt-3 pt-3 border-t border-white/[0.05] space-y-3 text-caption leading-relaxed text-zinc-400">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
+                    <Card variant="inset" padding="sm" className="space-y-1.5">
                       <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Pendukung Pasar</h4>
                       <ul className="list-disc pl-4 space-y-1 text-zinc-400">
                         <li>Likuiditas domestik terjaga dengan aliran modal asing</li>
                         <li>Valuasi atraktif di beberapa emiten unggulan</li>
                       </ul>
-                    </div>
-                    <div className="p-3 bg-white/[0.02] rounded-xl border border-white/[0.03] space-y-1.5">
+                    </Card>
+                    <Card variant="inset" padding="sm" className="space-y-1.5">
                       <h4 className="font-bold text-white/60 text-label uppercase tracking-wider">Risiko Pantauan</h4>
                       <ul className="list-disc pl-4 space-y-1 text-zinc-400">
                         <li>Volatilitas nilai tukar rupiah</li>
                         <li>Profit taking jangka pendek</li>
                       </ul>
-                    </div>
+                    </Card>
                   </div>
-                  <div className="p-3 bg-[#0a0a0a] border border-white/[0.05] rounded-xl flex items-start gap-3">
+                  <Card variant="inset" padding="sm" className="flex items-start gap-3">
                     <Sparkles className="w-4 h-4 text-white/30 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold text-white/60 block text-label uppercase tracking-wider">Formulasi</span>
@@ -277,9 +276,7 @@ export function MarketTab({
                         {`Skenario: ${currentAction === "WAIT" ? "WAIT" : currentAction}, alokasi ${RS.capital_deployment}%`}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Audit trail toggle */}
+                    </Card>
                   <button
                     onClick={() => setShowAuditTrail(!showAuditTrail)}
                     className="flex items-center gap-2 text-label uppercase tracking-wider font-bold text-white/40 hover:text-white/70 transition-colors cursor-pointer"
@@ -337,7 +334,7 @@ export function MarketTab({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </Card>
 
         {/* Parameter strip — compact */}
         <div className="flex items-center justify-between px-1">
@@ -371,7 +368,7 @@ export function MarketTab({
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+          <Card variant="default" padding="sm" className="space-y-1">
             <span className="text-label uppercase tracking-wider text-white/30 block">IHSG</span>
             <div className="flex items-baseline gap-2">
               <span className="text-body font-mono font-bold text-white/90">{MKT.ihsg.value.toLocaleString("id-ID")}</span>
@@ -380,8 +377,8 @@ export function MarketTab({
               </span>
             </div>
             <span className="text-label text-white/30">Bulanan: {MKT.ihsg.monthly}%</span>
-          </div>
-          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+          </Card>
+          <Card variant="default" padding="sm" className="space-y-1">
             <span className="text-label uppercase tracking-wider text-white/30 block">USD/IDR</span>
             <div className="flex items-baseline gap-2">
               <span className="text-body font-mono font-bold text-white/90">Rp {MKT.usdidr.value.toLocaleString("id-ID")}</span>
@@ -393,17 +390,17 @@ export function MarketTab({
             <span className={`text-label font-bold ${MKT.usdidr.daily <= 0 ? "text-green-400/60" : "text-rose-400/60"}`}>
               {MKT.usdidr.daily <= 0 ? "IDR MENGUAT" : "IDR MELEMAH"}
             </span>
-          </div>
-          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+          </Card>
+          <Card variant="default" padding="sm" className="space-y-1">
             <span className="text-label uppercase tracking-wider text-white/30 block">Score Gap</span>
             <span className="text-body font-mono font-bold text-white/90">{RS.radar_context?.score_gap || "40.6"}</span>
             <span className="text-label text-white/30">Spread Top 5 vs Bottom 5</span>
-          </div>
-          <div className="bg-[#050505] border border-white/[0.03] rounded-xl p-3 space-y-1">
+          </Card>
+          <Card variant="default" padding="sm" className="space-y-1">
             <span className="text-label uppercase tracking-wider text-white/30 block">Breadth ≥60</span>
             <span className="text-body font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.idx_universe_size || 80}</span>
             <span className="text-label text-emerald-400/60 font-bold">Broad Support</span>
-          </div>
+          </Card>
         </div>
 
     </div>

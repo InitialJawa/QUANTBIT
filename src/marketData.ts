@@ -103,11 +103,12 @@ export const CW_AMAN = { quality: 0.30, growth: 0.45, value: 0.10, momentum: 0.0
 export const CW_AGRESIF = { quality: 0.20, growth: 0.60, value: 0.10, momentum: 0.10, dividend: 0.00 };
 export const CW_DIVIDEN = { quality: 0.15, growth: 0.20, value: 0.05, momentum: 0.00, dividend: 0.60 };
 
-/** Legacy map — used by callers that still reference "prod"/"res" strings. */
+/** Legacy map — used by callers that still reference "prod"/"res"/profile-id strings. */
 export const CW_MAP: Record<string, typeof CW_AMAN> = {
   aman: CW_AMAN,
   agresif: CW_AGRESIF,
   dividen: CW_DIVIDEN,
+  "growth-heavy": { quality: 0.10, growth: 0.70, value: 0.05, momentum: 0.10, dividend: 0.05 },
 };
 
 // Scan data cache from idx80_scan.json (loaded from /api/engine/idx80)

@@ -33,6 +33,7 @@ import { api } from "../services/api";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
 import { ConfirmModal } from "./ConfirmModal";
+import Card from "./Card";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -693,7 +694,7 @@ export function SimulationTab({
       )}
 
       {/* 1. Header Information Panel */}
-      <div className="p-5 md:p-6 bg-[#050505] border border-white/[0.03] rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
+      <Card variant="elevated" padding="lg" className="relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         <div>
           <h2 className="text-body font-bold text-white uppercase tracking-widest flex items-center gap-2 font-mono">
@@ -744,11 +745,11 @@ export function SimulationTab({
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* RENDER ACTIVE SUBTAB CONTENT */}
       {activeSubTab === "past" && (
-        <section className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 space-y-6">
+        <Card variant="default" padding="lg" className="space-y-6">
           
           {/* Module Title */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/5">
@@ -868,13 +869,13 @@ export function SimulationTab({
           {/* Dynamic calculation results ledger grids */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
             
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+            <Card variant="inset" padding="sm" className="space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Harga Jual Masa Lalu</span>
               <span className="text-sm font-bold font-mono text-white block">{formatRupiah(startPrice)}</span>
               <span className="text-label text-[#A0A0A0] block">Per lembar pada {backtestConfig.simStartDate}</span>
-            </div>
+            </Card>
 
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+            <Card variant="inset" padding="sm" className="space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Jumlah Kepemilikan</span>
               <span className="text-sm font-bold font-mono text-white block">
                 {simReturnDetails.realSharesPurchased.toLocaleString("id-ID")} Lmbr
@@ -882,28 +883,28 @@ export function SimulationTab({
               <span className="text-label text-green-400 font-semibold block">
                 💡 {simReturnDetails.totalLots} Lot (Sisa Kas: {formatRupiah(simReturnDetails.cashResidual)})
               </span>
-            </div>
+            </Card>
 
-            <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+            <Card variant="inset" padding="sm" className="space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Dividen Akumulatif</span>
               <span className="text-sm font-bold font-mono text-[#EAB308] block">
                 +{formatRupiah(simReturnDetails.totalDividends)}
               </span>
               <span className="text-label text-white/40 block">Hasil Dividen yield {activeStock.dividendYield}% (Nett)</span>
-            </div>
+            </Card>
 
-            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
+            <Card variant="signal" signal="warning" padding="sm" className="space-y-1">
               <span className="text-label uppercase font-bold tracking-widest text-amber-400 block">Total Nilai Sekarang</span>
               <span className="text-sm font-black font-mono text-amber-300 block">
                 {formatRupiah(simReturnDetails.finalValue)}
               </span>
               <span className="text-label text-white/40 block">Terdiri dari Saham + Dividen + Sisa Kas</span>
-            </div>
+            </Card>
 
           </div>
 
           {/* Profit ratio highlights banner */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4.5 bg-[#050505] border border-white/5 rounded-xl gap-4">
+          <Card variant="default" padding="md" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-1">
               <span className="text-caption uppercase font-bold text-white/30 block">Pemberitahuan Hasil Simulasi:</span>
               <div className="flex items-center gap-2">
@@ -921,7 +922,7 @@ export function SimulationTab({
             <div className="text-body text-white/50 leading-relaxed font-sans max-w-md sm:text-right">
               Pembelian modal awal <span className="text-white font-semibold">{formatRupiah(simCapital)}</span> pada emiten <span className="text-emerald-400 font-bold">#{backtestConfig.singleTicker}</span> dari <span className="text-white">{backtestConfig.simStartDate}</span> bernilai <span className="text-white font-semibold">{formatRupiah(simReturnDetails.finalValue)}</span> pada <span className="text-white">{backtestConfig.simEndDate}</span>.
             </div>
-          </div>
+          </Card>
 
           {/* Simulator Recharts Trajectory Line plot */}
           <div className="space-y-4">
@@ -965,12 +966,12 @@ export function SimulationTab({
             </div>
           </div>
 
-        </section>
+        </Card>
       )}
 
       {/* BLOCK EXTRA: DYNAMIC ALGORITHMIC MULTI-ASSET REBALANCING BACKTESTER */}
       {activeSubTab === "algo" && (
-        <section className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 space-y-6">
+        <Card variant="default" padding="lg" className="space-y-6">
           
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/5">
             <div className="flex items-center gap-2.5">
@@ -990,7 +991,7 @@ export function SimulationTab({
 
 
           {/* Strategy Profile Card */}
-          <div className="bg-[#080808] border border-white/5 rounded-xl p-4 space-y-3">
+          <Card variant="inset" padding="md" className="space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Award className="w-4 h-4 text-emerald-400" />
               <span className="text-caption font-bold uppercase tracking-wider text-emerald-400">Strategy Profile</span>
@@ -1006,12 +1007,12 @@ export function SimulationTab({
               </div>
               
             </div>
-          </div>
+          </Card>
 
           <div className="space-y-5">
               
               {isBacktesting ? (
-                <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-24 space-y-4 shadow-inner">
+                <Card variant="default" className="flex flex-col items-center justify-center py-24 space-y-4">
                   <div className="relative w-16 h-16 flex items-center justify-center">
                     <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin absolute" />
                     <Award className="w-6 h-6 text-emerald-400 animate-pulse" />
@@ -1031,7 +1032,7 @@ export function SimulationTab({
                     />
                   </div>
                   <span className="text-caption font-mono text-green-400 font-bold">{backtestProgress}% Complete</span>
-                </div>
+                </Card>
               ) : backtestResult ? (
                 <motion.div 
                   className="space-y-6"
@@ -1090,7 +1091,7 @@ export function SimulationTab({
                   {/* Stats Bento Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     
-                    <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Hasil Akhir Strategi</span>
                       <span className="text-base font-black font-mono text-green-400 block">
                         {formatRupiah(backtestResult.finalValue)}
@@ -1098,9 +1099,9 @@ export function SimulationTab({
                       <span className="text-caption font-bold text-green-300 font-mono bg-green-500/15 px-1.5 py-0.5 rounded inline-block">
                         +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
-                    </div>
+                    </Card>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Benchmark IHSG</span>
                       <span className="text-sm font-semibold font-mono text-white/70 block">
                         {formatRupiah(backtestResult.ihsgFinalValue)}
@@ -1108,9 +1109,9 @@ export function SimulationTab({
                       <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
                         {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
-                    </div>
+                    </Card>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
                         {formatRupiah(backtestResult.goldFinalValue)}
@@ -1118,7 +1119,7 @@ export function SimulationTab({
                       <span className="text-caption font-mono text-[#A0A0A0] block">
                         Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
-                    </div>
+                    </Card>
 
                     {/* Final state indicator — what is the algo actually holding at the END? */}
                     <div className={`p-4 rounded-xl space-y-1.5 border ${
@@ -1209,42 +1210,42 @@ export function SimulationTab({
                   {/* Advanced Professional Risk/Metrics Scorecard Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
                       <span className="text-sm font-bold font-mono text-white block">
                         {backtestResult.cagr.toFixed(2)}%
                       </span>
                       <span className="text-label text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
-                    </div>
+                    </Card>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
                       <span className="text-sm font-bold font-mono text-green-400 block">
                         S: {backtestResult.sharpe !== null ? backtestResult.sharpe.toFixed(2) : "—"} / So: {backtestResult.sortino !== null ? backtestResult.sortino.toFixed(2) : "—"}
                       </span>
                       <span className="text-label text-white/40 block">Risiko Terkoreksi (Rf=5%)</span>
-                    </div>
+                    </Card>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
                       <span className="text-sm font-bold font-mono text-rose-400 block">
                         V: {backtestResult.volatility !== null ? backtestResult.volatility.toFixed(1) : "—"}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
 
-                    </div>
+                    </Card>
 
-                    <div className="p-4 bg-white/[0.01] border border-white/5 rounded-xl space-y-1">
+                    <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
                       <span className="text-sm font-bold font-mono text-amber-400 block">
                         W: {backtestResult.winRatePct.toFixed(1)}% / T: {backtestResult.turnoverPct.toFixed(1)}%
                       </span>
                       <span className="text-label text-white/40 block">Aktivitas Rotasi Portfolio</span>
-                    </div>
+                    </Card>
 
                   </div>
 
                   {/* Profit comparison notice card */}
-                  <div className="p-4 bg-[#080808] border border-white/5 rounded-xl leading-relaxed space-y-2">
+                  <Card variant="inset" padding="md" className="leading-relaxed space-y-2">
                     <div className="flex items-start gap-3">
                       <span className="text-lg">📈</span>
                       <div className="text-xs text-white/60">
@@ -1261,11 +1262,11 @@ export function SimulationTab({
                       <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
                       <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
                     </div>
-                  </div>
+                  </Card>
 
                   {/* 4-way DCA comparison — only for adaptive_dca mode */}
                   {backtestConfig.simulationMode === "adaptive_dca" && baselineResults.length > 0 && (
-                    <div className="p-5 bg-[#080808] border border-emerald-500/20 rounded-xl space-y-4">
+                    <Card variant="signal" signal="positive" padding="lg" className="space-y-4">
                       <div className="flex items-center gap-2 pb-2 border-b border-white/[0.05]">
                         <span className="text-lg">⚡</span>
                         <h4 className="text-sm font-black uppercase tracking-widest text-emerald-400 font-mono">
@@ -1278,7 +1279,7 @@ export function SimulationTab({
 
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* Adaptive DCA (this run) */}
-                        <div className="p-3 bg-emerald-500/[0.05] border-2 border-emerald-500/40 rounded-xl space-y-1.5">
+                        <Card variant="signal" signal="positive" padding="sm" className="border-2 space-y-1.5">
                           <span className="text-caption uppercase tracking-widest font-black text-emerald-400 font-mono block">⚡ Adaptive DCA</span>
                           <span className="text-base font-black font-mono text-white block">{formatRupiah(backtestResult.finalValue)}</span>
                           <span className={`text-caption font-bold font-mono ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
@@ -1290,11 +1291,11 @@ export function SimulationTab({
                             <div className="text-green-400/70">Deployed: {formatRupiah(backtestResult.totalDeployed || 0)}</div>
                             <div className="text-green-400/80">+Dividen: {formatRupiah(backtestResult.totalDividends)}</div>
                           </div>
-                        </div>
+                        </Card>
 
                         {/* 3 baselines */}
                         {baselineResults.map((bl) => (
-                          <div key={bl.baseline} className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl space-y-1.5">
+                          <Card key={bl.baseline} variant="inset" padding="sm" className="space-y-1.5">
                             <span className="text-caption uppercase tracking-widest font-black text-white/50 font-mono block">
                               {bl.baseline === "lump_sum" ? "💰" : bl.baseline === "monthly_dca" ? "📅" : "🗓️"} {bl.label}
                             </span>
@@ -1310,7 +1311,7 @@ export function SimulationTab({
                               <div>Cash Used: {bl.cashUtilization.toFixed(0)}%</div>
                               <div className="text-green-400/70">+Dividen: {formatRupiah(bl.totalDividends)}</div>
                             </div>
-                          </div>
+                          </Card>
                         ))}
                       </div>
 
@@ -1335,7 +1336,7 @@ export function SimulationTab({
                           </div>
                         );
                       })()}
-                    </div>
+                    </Card>
                   )}
 
                   {/* Historical Factor Rank Component */}
@@ -1353,7 +1354,7 @@ export function SimulationTab({
                       </div>
 
                       {/* Stock Multi-Toggle Pill Buttons */}
-                      <div className="flex flex-wrap gap-1.5 p-3 bg-[#080808] border border-white/5 rounded-xl">
+                      <Card variant="inset" padding="sm" className="flex flex-wrap gap-1.5">
                         <span className="text-label uppercase font-bold tracking-wider text-white/30 self-center mr-2">Filter Emiten:</span>
                         {visibleStocks.slice(0, 15).map((stk) => {
                           const ticker = stk.ticker;
@@ -1384,7 +1385,7 @@ export function SimulationTab({
                             </button>
                           );
                         })}
-                      </div>
+                      </Card>
 
                       {/* Recharts LineChart for Ranks */}
                       <div className="h-64 sm:h-72 w-full font-mono text-xs">
@@ -1463,7 +1464,7 @@ export function SimulationTab({
                         <Download className="w-3 h-3" /> Unduh Buku Jurnal (CSV)
                       </button>
                     </div>
-                    <div className="h-64 overflow-y-auto bg-[#050505] text-[#A0A0A0] font-mono text-caption border border-white/5 rounded-xl p-4 space-y-3 leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
+                    <Card variant="default" padding="md" className="h-64 overflow-y-auto font-mono text-caption space-y-3 leading-relaxed">
                       
                       {backtestResult.logs.map((log: any, idx: number) => {
                         const dateStr = log.date && log.date.length >= 10 ? log.date.slice(0, 10) : log.date;
@@ -1492,23 +1493,23 @@ export function SimulationTab({
                         );
                       })}
 
-                    </div>
+                    </Card>
                   </div>
 
                 </motion.div>
               ) : (
-                <div className="bg-[#050505] border border-white/5 rounded-xl flex flex-col items-center justify-center py-20 text-center space-y-3">
+                <Card variant="default" className="flex flex-col items-center justify-center py-20 text-center space-y-3">
                   <span className="text-2xl">⚡</span>
                   <p className="text-xs text-white/50 font-sans">Belum ada hasil backtest.</p>
                   <p className="text-caption text-white/35 max-w-xs leading-relaxed font-sans">Gunakan tombol "Jalankan Backtest" di header untuk menghitung trajectory rotasi portofolio Anda.</p>
-                </div>
+                </Card>
               )}
-
             </div>
 
 
 
-        </section>
+
+        </Card>
       )}
 
     </div>
