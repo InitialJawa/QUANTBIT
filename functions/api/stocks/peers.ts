@@ -5,17 +5,17 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
   const url = new URL(request.url);
-  const ticker = url.searchParams.get("ticker")?.toUpperCase();
-
-  if (!ticker) {
+  const rawTicker = url.searchParams.get("ticker")?.toUpperCase();
+  if (!rawTicker) {
     return Response.json({ success: false, error: "Missing ticker param" }, { status: 400 });
   }
+  const dbTicker = rawTicker.replace(".JK", "");
 
   try {
     // Get sector of requested ticker
     const sectorRow = await env.DB.prepare(
       "SELECT sector FROM tickers WHERE ticker = ?"
-    ).bind(ticker).first<any>();
+    ).bind(dbTicker).first<any>();
 
     if (!sectorRow?.sector) {
       return Response.json({ success: false, error: "Ticker not found" });
@@ -43,7 +43,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const peers = rows.results.map((r: any, i: number) => ({
       rank: i + 1,
-      ticker: r.ticker,
+      ticker: r.ticker + ".JK",
       name: r.name,
       sector: r.sector,
       industry: r.industry,
@@ -61,7 +61,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }));
 
     // Current ticker position
-    const currentIndex = peers.findIndex((p) => p.ticker === ticker);
+    const currentIndex = peers.findIndex((p) => p.ticker === rawTicker);
     const currentPeer = currentIndex >= 0 ? peers[currentIndex] : null;
 
     // Sector averages
@@ -80,7 +80,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       sector,
       scoreDate,
       peerCount: peers.length,
-      currentTicker: ticker,
+      currentTicker: rawTicker,
       currentRank: currentIndex >= 0 ? currentIndex + 1 : null,
       currentPeer,
       sectorAverages,

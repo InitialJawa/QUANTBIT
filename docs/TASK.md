@@ -224,3 +224,4 @@ curl -X POST "https://quantbit-terminal.pages.dev/api/backtest/run" \
   -H "Content-Type: application/json" \
   -d '{"from":"2021-01-01","to":"2026-12-31","initialCash":100000000,"config":{"weights":{"quality":0.45,"growth":0.1,"value":0.05,"momentum":0.40,"dividend":0},"topN":5,"rebalanceFreq":"monthly","crashProtection":true,"dcaActive":false,"dcaAmount":0}}'
 ```
+/mo

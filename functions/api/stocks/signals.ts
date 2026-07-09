@@ -5,18 +5,21 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
   const url = new URL(request.url);
-  const ticker = url.searchParams.get("ticker")?.toUpperCase();
+  const rawTicker = url.searchParams.get("ticker")?.toUpperCase();
 
   try {
-    if (ticker) {
+    if (rawTicker) {
+      const dbTicker = rawTicker.replace(".JK", "");
       const rows = await env.DB.prepare(
         "SELECT ticker, date, signal_tier, signal_label, signal_reason FROM signal_history WHERE ticker = ? ORDER BY date DESC LIMIT 30"
-      ).bind(ticker).all<any>();
+      ).bind(dbTicker).all<any>();
+
+      const signals = rows.results.map((r: any) => ({ ...r, ticker: r.ticker + ".JK" }));
 
       return Response.json({
         success: true,
-        ticker,
-        signals: rows.results,
+        ticker: rawTicker,
+        signals,
         latestDate: rows.results[0]?.date || null,
       });
     }
@@ -35,9 +38,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       "SELECT ticker, date, signal_tier, signal_label, signal_reason FROM signal_history WHERE date = ? ORDER BY signal_tier DESC"
     ).bind(latestDate).all<any>();
 
+    const signals = rows.results.map((r: any) => ({ ...r, ticker: r.ticker + ".JK" }));
+
     return Response.json({
       success: true,
-      signals: rows.results,
+      signals,
       latestDate,
     });
   } catch (e: any) {
