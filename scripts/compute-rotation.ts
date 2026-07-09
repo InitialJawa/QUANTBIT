@@ -52,7 +52,7 @@ async function main() {
   }
 
   const sqlLines: string[] = [
-    `DELETE FROM rotation_history WHERE \`date\`=${esc(scoreDate)};`,
+    `DELETE FROM rotation_history WHERE "date"=${esc(scoreDate)};`,
   ];
 
   for (const r of rows) {
@@ -63,7 +63,7 @@ async function main() {
     const { label, status } = getRotation(q, g, v, m);
 
     sqlLines.push(
-      `INSERT INTO rotation_history(\`ticker\`,\`date\`,\`sector\`,\`industry\`,\`rotation_label\`,\`rotation_status\`,\`quality_score\`,\`growth_score\`,\`momentum_score\`) VALUES(${esc(r.ticker)},${esc(scoreDate)},${esc(r.sector)},${esc(r.industry)},${esc(label)},${esc(status)},${q},${g},${m});`
+      `INSERT INTO rotation_history("ticker","date","sector","industry","rotation_label","rotation_status","quality_score","growth_score","momentum_score") VALUES(${esc(r.ticker)},${esc(scoreDate)},${esc(r.sector)},${esc(r.industry)},${esc(label)},${esc(status)},${q},${g},${m});`
     );
   }
 

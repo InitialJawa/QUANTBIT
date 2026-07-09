@@ -67,11 +67,11 @@ async function main() {
 
   // Generate SQL (replace current date)
   const sqlLines: string[] = [
-    `DELETE FROM signal_history WHERE \`date\`=${esc(scoreDate)};`,
+    `DELETE FROM signal_history WHERE "date"=${esc(scoreDate)};`,
   ];
   for (const s of signals) {
     sqlLines.push(
-      `INSERT INTO signal_history(\`ticker\`,\`date\`,\`signal_tier\`,\`signal_label\`,\`signal_reason\`) VALUES(${esc(s.ticker)},${esc(scoreDate)},${s.tier},${esc(s.label)},${esc(s.reason)});`
+      `INSERT INTO signal_history("ticker","date","signal_tier","signal_label","signal_reason") VALUES(${esc(s.ticker)},${esc(scoreDate)},${s.tier},${esc(s.label)},${esc(s.reason)});`
     );
   }
 
