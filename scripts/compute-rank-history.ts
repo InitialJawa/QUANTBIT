@@ -85,11 +85,11 @@ async function main() {
 
     // Generate SQL
     const sqlLines: string[] = [
-      `DELETE FROM rank_history WHERE "date"=${esc(date)};`,
+      `DELETE FROM rank_history WHERE date=${esc(date)};`,
     ];
     for (const s of scored) {
       sqlLines.push(
-        `INSERT INTO rank_history("ticker","date","total_score","total_rank","quality_score","quality_rank","growth_score","growth_rank","value_score","value_rank","momentum_score","momentum_rank","dividend_score","dividend_rank") VALUES(${esc(s.ticker)},${esc(date)},${s.total},${totalRank.get(s.ticker)},${s.quality},${qualityRank.get(s.ticker)},${s.growth},${growthRank.get(s.ticker)},${s.value},${valueRank.get(s.ticker)},${s.momentum},${momentumRank.get(s.ticker)},${s.dividend},${dividendRank.get(s.ticker)});`
+        `INSERT INTO rank_history(ticker,date,total_score,total_rank,quality_score,quality_rank,growth_score,growth_rank,value_score,value_rank,momentum_score,momentum_rank,dividend_score,dividend_rank) VALUES(${esc(s.ticker)},${esc(date)},${s.total},${totalRank.get(s.ticker)},${s.quality},${qualityRank.get(s.ticker)},${s.growth},${growthRank.get(s.ticker)},${s.value},${valueRank.get(s.ticker)},${s.momentum},${momentumRank.get(s.ticker)},${s.dividend},${dividendRank.get(s.ticker)});`
       );
     }
 
