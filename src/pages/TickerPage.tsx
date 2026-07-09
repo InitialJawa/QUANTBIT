@@ -1,15 +1,14 @@
 import { useState, lazy, Suspense, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
-  ArrowLeft, LineChart, BookOpen, Coins, Info,
-  LayoutDashboard, GitCompare, RotateCcw, Activity, Bot,
+  ArrowLeft, Coins, Info,
+  LayoutDashboard, GitCompare, RotateCcw, Activity,
   Plus, Minus, Trash2, Bookmark, BookmarkCheck,
   ChevronDown, ChevronUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { STOCKS_DATA } from "../stocksData";
 import { TickerLogo } from "../components/TickerLogo";
-import { HistoricalChart } from "../components/HistoricalChart";
 import { ForwardDividendsForecast } from "../components/ForwardDividendsForecast";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
 
@@ -34,14 +33,10 @@ interface TickerPageProps {
 
 const TICKER_TABS = [
   { id: "overview", icon: LayoutDashboard, label: "Overview" },
-  { id: "chart", icon: LineChart, label: "Chart" },
-  { id: "sheets", icon: BookOpen, label: "Financials" },
   { id: "forecast", icon: Coins, label: "Dividend" },
-  { id: "profile", icon: Info, label: "Profile" },
   { id: "peers", icon: GitCompare, label: "Peer" },
   { id: "rotation", icon: RotateCcw, label: "Rotation" },
   { id: "signals", icon: Activity, label: "Signals" },
-  { id: "ai", icon: Bot, label: "AI" },
 ];
 
 export function TickerPage({
@@ -233,103 +228,13 @@ export function TickerPage({
           {tab === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat overview...</div>}>
-                <OverviewTab stock={safeStock} getDynamicStock={getDynamicStock} portfolio={portfolio} />
+                <OverviewTab stock={safeStock} getDynamicStock={getDynamicStock} portfolio={portfolio} theme={theme} />
               </Suspense>
-            </motion.div>
-          )}
-          {tab === "chart" && (
-            <motion.div key="chart" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <HistoricalChart stock={safeStock} theme={theme} />
-            </motion.div>
-          )}
-          {tab === "sheets" && (
-            <motion.div key="sheets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="border border-white/[0.06] rounded-lg p-4">
-                <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
-                {safeStock.metrics.length === 0 || safeStock.metrics[0]?.revenue === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.04] flex items-center justify-center">
-                      <span className="text-white/20 text-lg font-mono">$</span>
-                    </div>
-                    <p className="text-white/40 text-sm">
-                      Data keuangan untuk <span className="font-mono text-white/60">{code}</span> belum tersedia.
-                    </p>
-                    <p className="text-white/20 text-xs mt-2">
-                      Pipeline data keuangan akan mengisi data ini setelah tersedia.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left mt-3 text-body">
-                      <thead>
-                        <tr className="border-b border-white/[0.04] text-white/25 text-label tracking-wide uppercase">
-                          <th className="pb-2 font-medium">Metric</th>
-                          {safeStock.metrics.map(m => (
-                            <th key={m.year} className="pb-2 text-right font-medium">FY {m.year}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/[0.03]">
-                        {([
-                          ["Revenue", safeStock.metrics.map(m => m.revenue), false],
-                          ["Net Income", safeStock.metrics.map(m => m.netIncome), true],
-                          ["Total Assets", safeStock.metrics.map(m => m.totalAssets), false],
-                          ["Liabilities", safeStock.metrics.map(m => m.totalLiabilities), false],
-                          ["Equity", safeStock.metrics.map(m => m.totalEquity), false],
-                          ["Op. CF", safeStock.metrics.map(m => m.cashFlowOperating), true],
-                          ["Inv. CF", safeStock.metrics.map(m => m.cashFlowInvesting), false],
-                          ["Fin. CF", safeStock.metrics.map(m => m.cashFlowFinancing), false],
-                        ] as const).map(([label, values, isGreen]) => (
-                          <tr key={label} className="hover:bg-white/[0.02]">
-                            <td className={`py-2 text-white/70 ${isGreen ? "text-green-500" : ""}`}>{label}</td>
-                            {values.map((v, i) => (
-                              <td key={i} className={`py-2 text-right ${isGreen ? "text-green-500 font-medium" : "text-white"}`}>
-                                Rp{v.toLocaleString()} B
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
             </motion.div>
           )}
           {tab === "forecast" && (
             <motion.div key="forecast" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <ForwardDividendsForecast stock={safeStock} theme={theme} />
-            </motion.div>
-          )}
-          {tab === "profile" && (
-            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="border border-white/[0.06] rounded-lg p-4">
-                <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Company Profile</span>
-                <div className="mt-3 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-label text-white/30 block">Sector</span>
-                      <span className="text-body text-white/70">{safeStock.sector !== "-" && safeStock.sector !== "Unknown" ? safeStock.sector : "\u2014"}</span>
-                    </div>
-                    <div>
-                      <span className="text-label text-white/30 block">Sub Sector</span>
-                      <span className="text-body text-white/70">{safeStock.subSector !== "-" && safeStock.subSector !== "Unknown" ? safeStock.subSector : "\u2014"}</span>
-                    </div>
-                    <div>
-                      <span className="text-label text-white/30 block">Market Cap</span>
-                      <span className="text-body text-white/70">{safeStock.marketCap > 0 ? `Rp${safeStock.marketCap.toLocaleString('id-ID')} T` : "\u2014"}</span>
-                    </div>
-                    <div>
-                      <span className="text-label text-white/30 block">Ticker</span>
-                      <span className="text-body text-white/70">{safeStock.ticker}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-label text-white/30 block">Description</span>
-                    <p className="text-body text-white/60 mt-1 leading-relaxed">{safeStock.description !== "-" && safeStock.description !== "Data tidak tersedia" ? safeStock.description : "\u2014"}</p>
-                  </div>
-                </div>
-              </div>
             </motion.div>
           )}
           {tab === "peers" && (
@@ -351,61 +256,6 @@ export function TickerPage({
               <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat signal history...</div>}>
                 <SignalHistoryTab stock={safeStock} />
               </Suspense>
-            </motion.div>
-          )}
-          {tab === "ai" && (
-            <motion.div key="ai" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="border border-white/[0.06] rounded-lg p-4">
-                <span className="text-caption text-white/35 uppercase tracking-wider font-medium">AI Analysis — {code}</span>
-                <div className="mt-4 space-y-4">
-                  <div className="border border-emerald-600/20 bg-emerald-600/5 rounded-lg p-3">
-                    <p className="text-sm text-white/70 leading-relaxed">
-                      AI siap membantu analisis <span className="font-mono text-emerald-400 font-semibold">{code}</span>.
-                      Buka <span className="text-emerald-400 font-semibold">Floating AI Chat</span> di pojok kanan bawah
-                      untuk mengajukan pertanyaan spesifik tentang saham ini.
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="text-label text-white/30 block mb-2">Pertanyaan Cepat</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        `Apa analisis fundamental ${code}?`,
-                        `Bandingkan ${code} dengan peer di sektor ${safeStock.sector}`,
-                        `Apa risiko utama ${code} saat ini?`,
-                        `Apa rekomendasi untuk ${code}?`,
-                        `Analisis teknikal ${code} dalam 3 bulan terakhir`,
-                        `Apakah ${code} cocok untuk strategi value investing?`,
-                      ].map((q) => (
-                        <button
-                          key={q}
-                          onClick={() => {
-                            const input = document.querySelector<HTMLInputElement>('[data-ai-input]');
-                            if (input) {
-                              input.value = q;
-                              input.dispatchEvent(new Event("input", { bubbles: true }));
-                              input.focus();
-                            }
-                          }}
-                          className="text-left px-3 py-2 rounded-lg border border-white/[0.06] hover:border-emerald-600/30 hover:bg-emerald-600/5 text-xs text-white/50 hover:text-white/80 transition-colors"
-                        >
-                          {q}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-white/20 mt-2">
-                      Klik pertanyaan di atas untuk mengisi chat. Kirim manual setelah muncul di input.
-                    </p>
-                  </div>
-
-                  {safeStock.description && safeStock.description !== "-" && safeStock.description !== "Data tidak tersedia" && (
-                    <div className="border-t border-white/[0.04] pt-4">
-                      <span className="text-label text-white/30 block mb-1">Tentang {code}</span>
-                      <p className="text-xs text-white/40 leading-relaxed">{safeStock.description}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

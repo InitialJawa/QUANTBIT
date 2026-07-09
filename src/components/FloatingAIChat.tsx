@@ -88,6 +88,21 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     return -1;
   }, [messages]);
 
+  // Ticker-specific starter chips (from former AI tab)
+  const tickerChips = useMemo(() => {
+    const t = selectedStock?.ticker;
+    const s = selectedStock?.sector;
+    if (!t) return [];
+    return [
+      { label: `Analisa fundamental ${t}`, query: `Apa analisis fundamental ${t}?` },
+      { label: `Peer ${t}`, query: `Bandingkan ${t} dengan peer di sektor ${s || "sama"}` },
+      { label: `Risiko ${t}`, query: `Apa risiko utama ${t} saat ini?` },
+      { label: `Rekomendasi ${t}`, query: `Apa rekomendasi untuk ${t}?` },
+      { label: `Teknikal ${t}`, query: `Analisis teknikal ${t} dalam 3 bulan terakhir` },
+      { label: `${t} value investing`, query: `Apakah ${t} cocok untuk strategi value investing?` },
+    ];
+  }, [selectedStock]);
+
   // Context-aware suggestions per tab (no duplicates between follow-up & quick prompts)
   const tabSuggestions = useMemo(() => {
     const t = selectedStock?.ticker;
@@ -104,6 +119,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
             { label: "Kas darurat", query: "Berapa kas yang harus saya sisakan? Cek reserve buffer." },
             { label: "Strategi aktif", query: "Strategi apa yang sedang aktif? Profil, universe, top N." },
+            ...tickerChips,
           ],
         };
       case "backtest":
@@ -116,6 +132,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           quick: [
             { label: "Settings backtest", query: "Apa setting backtest saya sekarang? Profile, mode, universe." },
             { label: "BPS skrg", query: "Berapa BPS sekarang? Cocok buat backtest?" },
+            ...tickerChips,
           ],
         };
       case "analytics":
@@ -128,6 +145,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           quick: [
             { label: "Top N saat ini", query: "Saham top N rekomendasi sistem berdasarkan profil aktif." },
             { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
+            ...tickerChips,
           ],
         };
       default: // market
@@ -140,10 +158,11 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           quick: [
             { label: "Top movers", query: "Siapa top movers hari ini dan kenapa?" },
             { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+            ...tickerChips,
           ],
         };
     }
-  }, [activeTab, selectedStock]);
+  }, [activeTab, selectedStock, tickerChips]);
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
