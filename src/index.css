@@ -678,6 +678,76 @@
 }
 
 /* ==========================================================================
+   CARD HIERARCHY
+   ========================================================================== */
+
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-default {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+}
+
+.card-elevated {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+}
+
+.card-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.card-inset {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+}
+
+.card-signal {
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border-default);
+}
+
+.card-signal-positive {
+  border-color: color-mix(in srgb, var(--data-positive) 30%, transparent) !important;
+}
+
+.card-signal-warning {
+  border-color: color-mix(in srgb, var(--data-warning) 30%, transparent) !important;
+}
+
+.card-signal-negative {
+  border-color: color-mix(in srgb, var(--data-negative) 30%, transparent) !important;
+}
+
+.card-hover {
+  transition: all 0.15s ease;
+}
+
+.card-hover:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent) !important;
+}
+
+[data-theme="dark"] .card-elevated {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .card-elevated {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
    UTILITIES
    ========================================================================== */
 
