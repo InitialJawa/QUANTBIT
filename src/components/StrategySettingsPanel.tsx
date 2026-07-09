@@ -63,7 +63,8 @@ export function StrategySettingsPanel({
   profileOptions = DEFAULT_PROFILE,
   showTitle = true,
 }: StrategySettingsPanelProps) {
-  const [risikoOpen, setRisikoOpen] = useState(true);
+  const [profilOpen, setProfilOpen] = useState(true);
+  const [risikoOpen, setRisikoOpen] = useState(false);
 
   // Reusable button group renderer (used for Mode / Profile / Universe / Safe Haven)
   const ButtonGroup = <K extends string>({
@@ -100,15 +101,24 @@ export function StrategySettingsPanel({
 
   return (
     <div className="space-y-3">
-      {/* === Section 1: Profil & Mode === */}
+      {/* === Section 1: Profil & Mode (collapsible) === */}
       <div className="mx-2">
         {showTitle && (
-          <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
+          <button
+            type="button"
+            onClick={() => setProfilOpen(!profilOpen)}
+            className="w-full px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04] cursor-pointer"
+          >
             <Settings2 className="w-3 h-3 text-tertiary" />
             <span className="text-caption font-medium text-tertiary uppercase tracking-wider">Profil & Mode</span>
-          </div>
+            {profilOpen ? (
+              <ChevronUp className="w-3 h-3 text-tertiary ml-auto" />
+            ) : (
+              <ChevronDown className="w-3 h-3 text-tertiary ml-auto" />
+            )}
+          </button>
         )}
-        <div className="px-2 py-2 space-y-2.5">
+        {profilOpen && <div className="px-2 py-2 space-y-2.5">
           {/* Profile */}
           <div>
             <span className="text-label text-tertiary block mb-1">Profil</span>
@@ -149,9 +159,7 @@ export function StrategySettingsPanel({
               ariaLabel="Universe"
             />
           </div>
-
-          
-        </div>
+        </div>}
       </div>
 
       {/* === Section 2: Rotasi & Risiko (collapsible) === */}

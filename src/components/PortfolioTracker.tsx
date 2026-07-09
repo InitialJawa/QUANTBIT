@@ -1,6 +1,5 @@
 import React, { useState, FormEvent, useEffect, useRef, useMemo } from "react";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
-import { DataBadge } from "./DataBadge";
 import { getIhsgDrawdown60, isCrashActive, getIhsgData } from "../marketRegimeEngine";
 import { STOCKS_DATA } from "../stocksData";
 import { api } from "../services/api";
@@ -33,12 +32,12 @@ import {
   TrendingUp,
   TrendingDown,
   Briefcase,
-  Eye,
   Wallet,
   FileSpreadsheet,
   ArrowRightLeft,
   Sparkles,
-  ShoppingBag,
+  ChevronDown,
+  ChevronUp,
   AlertTriangle,
   CheckCircle2,
   HelpCircle,
@@ -108,6 +107,8 @@ export function PortfolioTracker({
     type: "success" | "error" | "info";
   } | null>(null);
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+  const [manualBuyOpen, setManualBuyOpen] = useState(false);
+  const [bpsExpanded, setBpsExpanded] = useState(false);
 
   useEffect(() => {
     if (notification) {
@@ -765,182 +766,7 @@ export function PortfolioTracker({
         </div>
       </div>
 
-      {/* FASE 2.8 — Sticky buy CTA di top Portfolio (sebelum BPS) */}
-      <div className="sticky top-9 z-20 bg-[#0A0A0A]/95 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-lg">
-        <div className="flex-1 min-w-0">
-          <div className="text-caption font-bold text-emerald-400 uppercase tracking-widest">Beli Cepat</div>
-          <div className="text-label text-white/50 truncate">Pilih saham → set jumlah → eksekusi</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            const form = document.getElementById("manual-buy-form");
-            form?.scrollIntoView({ behavior: "smooth", block: "center" });
-            (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
-          }}
-          className="shrink-0 px-3 py-2 text-caption font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-          style={{ backgroundColor: '#00c9a5', color: '#000' }}
-        >
-          <Plus className="w-3.5 h-3.5" /> Buka Form
-        </button>
-      </div>
-
-      {/* Adaptive DCA Recommendation — BPS-driven deploy/cash guidance */}
-      {engineConfig.dcaActive ? (
-        <BuyPressureDashboard />
-      ) : (
-        <div className="bg-[#050505] border border-white/[0.05] rounded-2xl p-5 flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-white/20 shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-caption font-bold uppercase tracking-widest text-white/40 font-mono">
-              Adaptive DCA Recommendation
-            </h3>
-            <p className="text-caption text-white/50 font-sans mt-0.5">
-              <span className="text-rose-400 font-bold">DISABLED</span> — aktifkan di
-              Active Strategy banner (<span className="text-emerald-400">DCA Rekomendasi</span>)
-              untuk melihat Buy Pressure Score & deploy recommendation.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {showCrisisSignals && strategyEval.shouldExit && (
-        <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
-          <div className="flex items-center gap-2 text-rose-400">
-            <AlertTriangle className="w-5 h-5 animate-pulse" />
-            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
-              Strategy Says: Exit ke {strategyEval.targetSafeHaven?.toUpperCase()}
-              <ExplainButton label="evaluateStrategy() — detectCrashAlgo + detectRecoveryAlgo (SMA20, 5d momentum)" />
-            </h3>
-          </div>
-          <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
-            {strategyEval.reason}
-          </p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
-              IHSG live: {MKT.ihsg.value.toLocaleString("id-ID")} ({ihsgDrawdown60 !== null ? `${ihsgDrawdown60 >= 0 ? "+" : ""}${ihsgDrawdown60.toFixed(1)}%` : "—"})
-            </span>
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20">
-              TARGET: {strategyEval.targetSafeHaven?.toUpperCase()}
-            </div>
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
-              MODE: {engineConfig.simulationMode.toUpperCase()}
-            </div>
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">
-              PROFIL: {activeProfile?.name?.toUpperCase() || engineConfig.activeProfileId.toUpperCase()}
-            </div>
-            {portfolio.some((p) => p.ticker === strategyEval.targetSafeHaven) && (
-              <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Safe Haven Aktif — Pertahankan
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Safe Haven Exit Signal — IHSG recovered, time to leave EMAS back to stocks */}
-      {showCrisisSignals && strategyEval.shouldExitSafeHaven && !strategyEval.shouldExit && (() => {
-        const hasSafeHaven = portfolio.some(
-          (p) => p.ticker === "EMAS" || p.ticker === "GOLD",
-        );
-        if (!hasSafeHaven) return null;
-        return (
-          <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-            <div className="flex items-center gap-2 text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
-              <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
-                Strategy Says: Exit Safe Haven → Stock
-                <ExplainButton label="IHSG recovered above 60d-peak by recoveryBuffer (default 5%). Waktunya jual EMAS dan rotasi kembali ke Top N saham." />
-              </h3>
-            </div>
-            <p className="text-xs text-emerald-200/70 font-sans max-w-3xl">
-              {strategyEval.reason}. Jual posisi EMAS/GOLD dan redeploy ke
-              Top {engineConfig.topNCount} saham sesuai profil aktif.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                RECOVERY: {strategyEval.recoveryBuffer ?? 5}%
-              </div>
-              <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
-                MODE: {engineConfig.simulationMode.toUpperCase()}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {visibleWarnings.length > 0 && (
-        <div className="bg-[#0A0A0A] border border-amber-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-amber-400">
-              <AlertTriangle className="w-5 h-5 animate-pulse" />
-              <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans flex items-center gap-1.5">
-                Peringatan Portofolio: Sinyal Keluar / Turun Peringkat
-                <ExplainButton label="Rebalancing & Exit Alerts (singleSellTrigger, reserveBufferPct, Exit Ops EXIT/EXIT RISK)" />
-              </h3>
-            </div>
-            {visibleWarnings.length > 1 && (
-              <button
-                onClick={() => setDismissedWarnings(new Set(visibleWarnings.map((w) => w.ticker)))}
-                className="text-caption text-amber-300/60 hover:text-amber-300 font-bold uppercase tracking-widest shrink-0"
-                title="Tandai semua sebagai sudah dibaca"
-              >
-                Tandai Dibaca
-              </button>
-            )}
-          </div>
-          <p className="text-xs text-amber-200/70 font-sans max-w-3xl">
-            Sistem mendeteksi satu atau lebih saham dalam portofolio Anda telah
-            memicu sinyal jual atau tidak lagi berada dalam posisi unggulan (Top
-            5). Pertimbangkan untuk mengamankan keuntungan atau membatasi
-            kerugian.
-          </p>
-          <div className="space-y-2 mt-2">
-            {portfolioWarnings.map((item) => {
-              const liveStock = visibleStocks.find(
-                (s) => s.ticker === item.ticker,
-              );
-              const drop = liveStock ? liveStock.change : 0;
-              let reason = "";
-              if (drop <= -2.2)
-                reason =
-                  "Masuk zona EXIT secara LIVE (Penurunan Harian > -2.2%)";
-              else if (drop <= -0.5)
-                reason =
-                  "Dalam zona EXIT RISK secara LIVE (Penurunan Harian > -0.5%)";
-              else if (item.rank > 5)
-                reason = `Terlempar dari Top 5 (Peringkat Saat Ini: ${item.rank})`;
-
-              return (
-                <div
-                  key={item.ticker}
-                  className="flex items-center gap-2.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/10"
-                >
-                  <div className="px-2.5 py-1 bg-black/60 text-white font-mono font-bold text-caption rounded border border-amber-500/20">
-                    {item.ticker}
-                  </div>
-                  <span className="text-xs text-amber-300 font-semibold flex-1">
-                    {reason}
-                  </span>
-                  <button
-                    onClick={() => setDismissedWarnings((prev) => new Set(prev).add(item.ticker))}
-                    className="text-amber-300/40 hover:text-amber-300 text-caption font-bold px-1.5 py-0.5 rounded transition-colors shrink-0"
-                    title="Tandai sudah dibaca"
-                    aria-label={`Dismiss warning for ${item.ticker}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Sesi 12 — Net Wealth hero card + 5 mini-metrics (replaces 5 separate cards) */}
+      {/* Sesi 12 — Net Wealth hero card + 3 summary cards */}
       <div className="space-y-2">
         {/* Hero: Total Net Wealth */}
         <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-emerald-500/15 p-5 relative overflow-hidden">
@@ -977,30 +803,28 @@ export function PortfolioTracker({
           </div>
         </div>
 
-        {/* 5 mini-metrics in 1 row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          {/* Modal */}
+        {/* 3 merged summary cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {/* Modal + Nilai (merged) */}
           <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-2">
               <FileSpreadsheet className="w-3 h-3 text-white/40" />
-              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Modal</span>
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Modal / Nilai</span>
             </div>
-            <div id="portfolio-total-cost" className="text-data font-mono font-bold text-white">
-              {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}
+            <div className="flex items-baseline justify-between gap-2">
+              <div>
+                <div className="text-label font-mono text-white/30">Cost</div>
+                <div id="portfolio-total-cost" className="text-data font-mono font-bold text-white">
+                  {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-label font-mono text-white/30">Market</div>
+                <div id="portfolio-current-value" className="text-data font-mono font-bold text-white">
+                  {totalCurrentValue.toLocaleString("id-ID", { notation: "compact" })}
+                </div>
+              </div>
             </div>
-            <div className="text-label font-mono text-white/30 mt-0.5">cost basis</div>
-          </div>
-
-          {/* Nilai */}
-          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Briefcase className="w-3 h-3 text-white/40" />
-              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Nilai</span>
-            </div>
-            <div id="portfolio-current-value" className="text-data font-mono font-bold text-white">
-              {totalCurrentValue.toLocaleString("id-ID", { notation: "compact" })}
-            </div>
-            <div className="text-label font-mono text-white/30 mt-0.5">market live</div>
           </div>
 
           {/* P&L */}
@@ -1030,20 +854,27 @@ export function PortfolioTracker({
               {totalCurrentValue > 0 ? `${(totalAnnualDividend / totalCurrentValue * 100).toFixed(2)}% yield` : "—"}
             </div>
           </div>
-
-          {/* Kas */}
-          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Wallet className="w-3 h-3 text-white/40" />
-              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Kas (RDI)</span>
-            </div>
-            <div className="text-data font-mono font-bold text-white">
-              {cash.toLocaleString("id-ID", { notation: "compact" })}
-            </div>
-            <div className="text-label font-mono text-emerald-400/60 mt-0.5">secure</div>
-          </div>
         </div>
       </div>
+
+      {/* Adaptive DCA Recommendation — BPS-driven deploy/cash guidance */}
+      {engineConfig.dcaActive ? (
+        <BuyPressureDashboard compact />
+      ) : (
+        <div className="bg-[#050505] border border-white/[0.05] rounded-2xl p-5 flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-white/20 shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-caption font-bold uppercase tracking-widest text-white/40 font-mono">
+              Adaptive DCA Recommendation
+            </h3>
+            <p className="text-caption text-white/50 font-sans mt-0.5">
+              <span className="text-rose-400 font-bold">DISABLED</span> — aktifkan di
+              Active Strategy banner (<span className="text-emerald-400">DCA Rekomendasi</span>)
+              untuk melihat Buy Pressure Score & deploy recommendation.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* MERGED PORTFOLIO + INSTRUCTION CARD */}
       <div className="bg-[#050505] rounded-2xl border border-white/[0.03]">
@@ -1309,150 +1140,159 @@ export function PortfolioTracker({
         </div>
       </div>
 
-{/* Form and Chart Container */}
-          <div className="space-y-3">
-            {/* TRANSAKSI MANDIRI (PILIHAN SAHAM INDIVIDUAL) */}
-            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-3">
-              <div className="flex justify-between items-center pb-3 border-b border-white/[0.05]">
-                <h4 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4 text-white/50" />
-                  Tambah Manual
-                </h4>
-                <span className="text-label font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
-                  Beli Manual
-                </span>
-              </div>
+      {/* Moved Sector Allocation Card */}
+      <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
+        <div className="flex items-center gap-2 pb-3 border-b border-white/[0.05]">
+          <PieChart className="w-4 h-4 text-white/50" />
+          <h4 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
+            Alokasi Sektor (Exposure)
+          </h4>
+        </div>
+        <div className="flex-1 w-full relative min-h-[160px] flex items-center justify-center mt-4">
+          {pieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <PieChart>
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: "#121212",
+                    borderColor: "rgba(255,255,255,0.1)",
+                    borderRadius: "8px",
+                    fontSize: "10px",
+                    color: "#fff",
+                  }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value: number) =>
+                    `Rp ${value.toLocaleString("id-ID")}`
+                  }
+                />
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={75}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <span className="text-white/20 text-xs uppercase tracking-widest">
+              Kosong
+            </span>
+          )}
+        </div>
+      </div>
 
-              <form
-                id="manual-buy-form"
-                onSubmit={handleAdd}
-                className="flex flex-col gap-4 pt-2"
-              >
-                {/* Dropdown Saham Individual */}
-                <div className="space-y-2">
-                    <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
-                      Pilih Saham
-                    </label>
-                  <SearchableSelect
-                    value={selectedTicker}
-                    options={visibleStocks.map((s) => ({
-                      value: s.ticker,
-                      label: `${s.ticker} (${s.name})`,
-                      logoColor: s.logoColor,
-                    }))}
-                    onChange={(val) => setSelectedTicker(val)}
+      {/* TRANSAKSI MANDIRI — collapsed by default */}
+      <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-3">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <ArrowRightLeft className="w-4 h-4 text-white/50" />
+            <h4 className="text-xs font-bold text-white uppercase tracking-widest">
+              Tambah Manual
+            </h4>
+            <span className="text-label font-mono px-2 py-1 bg-white/[0.05] border border-white/[0.05] text-white/50 rounded uppercase font-bold tracking-widest">
+              Beli Manual
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setManualBuyOpen(!manualBuyOpen)}
+            className="flex items-center gap-1 text-caption font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer"
+          >
+            {manualBuyOpen ? "Tutup" : "Buka"}
+            {manualBuyOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+        </div>
+
+        {manualBuyOpen && (
+          <form
+            id="manual-buy-form"
+            onSubmit={handleAdd}
+            className="flex flex-col gap-4 pt-2 border-t border-white/[0.05]"
+          >
+            {/* Dropdown Saham Individual */}
+            <div className="space-y-2">
+              <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                Pilih Saham
+              </label>
+              <SearchableSelect
+                value={selectedTicker}
+                options={visibleStocks.map((s) => ({
+                  value: s.ticker,
+                  label: `${s.ticker} (${s.name})`,
+                  logoColor: s.logoColor,
+                }))}
+                onChange={(val) => setSelectedTicker(val)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Volume Lembar (Shares) */}
+              <div className="space-y-2">
+                <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                  Jumlah (Lbr)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="100"
+                    step="100"
+                    value={sharesStr}
+                    onChange={(e) => setSharesStr(e.target.value)}
+                    className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
                   />
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Volume Lembar (Shares) */}
-                  <div className="space-y-2">
-                    <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
-                      Jumlah (Lbr)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="100"
-                        step="100"
-                        value={sharesStr}
-                        onChange={(e) => setSharesStr(e.target.value)}
-                        className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Execution Price or Live Price */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
-                        Harga Beli
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setCustomPriceStr("")}
-                        className="text-label text-white/60 hover:text-white uppercase font-bold tracking-wider cursor-pointer font-sans"
-                      >
-                        Set Live
-                      </button>
-                    </div>
-                    <input
-                      type="number"
-                      placeholder={`Live: Rp ${currentSelectedStock.currentPrice.toLocaleString()}`}
-                      value={customPriceStr}
-                      onChange={(e) => setCustomPriceStr(e.target.value)}
-                      className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="flex justify-end pt-3 border-t border-white/[0.05]">
+              {/* Execution Price or Live Price */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-caption uppercase font-bold text-white/40 tracking-widest block font-sans">
+                    Harga Beli
+                  </label>
                   <button
-                    type="submit"
-                    className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
+                    type="button"
+                    onClick={() => setCustomPriceStr("")}
+                    className="text-label text-white/60 hover:text-white uppercase font-bold tracking-wider cursor-pointer font-sans"
                   >
-                    <Plus className="w-4 h-4 shrink-0" /> Beli Sekarang
+                    Set Live
                   </button>
                 </div>
-              </form>
-              <p className="text-label text-white/30 leading-normal text-right mt-2 italic">
-                * Fee broker 0.15% & spread bid/offer 0.05%.
-              </p>
+                <input
+                  type="number"
+                  placeholder={`Live: Rp ${currentSelectedStock.currentPrice.toLocaleString()}`}
+                  value={customPriceStr}
+                  onChange={(e) => setCustomPriceStr(e.target.value)}
+                  className="w-full text-xs font-mono px-3 py-2 rounded-xl border border-white/[0.05] outline-none focus:border-white/20 bg-white/[0.02] text-white transition-colors"
+                />
+              </div>
             </div>
 
-            {/* Moved Sector Allocation Card */}
-            <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
-              <div className="flex items-center gap-2 pb-3 border-b border-white/[0.05]">
-                <PieChart className="w-4 h-4 text-white/50" />
-                <h4 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
-                  Alokasi Sektor (Exposure)
-                </h4>
-              </div>
-              <div className="flex-1 w-full relative min-h-[160px] flex items-center justify-center mt-4">
-                {pieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={160}>
-                    <PieChart>
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "#121212",
-                          borderColor: "rgba(255,255,255,0.1)",
-                          borderRadius: "8px",
-                          fontSize: "10px",
-                          color: "#fff",
-                        }}
-                        itemStyle={{ color: "#fff" }}
-                        formatter={(value: number) =>
-                          `Rp ${value.toLocaleString("id-ID")}`
-                        }
-                      />
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={2}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <span className="text-white/20 text-xs uppercase tracking-widest">
-                    Kosong
-                  </span>
-                )}
-              </div>
+            {/* Submit Button */}
+            <div className="flex justify-end pt-3 border-t border-white/[0.05]">
+              <button
+                type="submit"
+                className="w-full bg-white/10 hover:bg-white/15 text-white font-bold text-caption px-6 py-2.5 rounded-xl uppercase tracking-widest cursor-pointer transition-all duration-150 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4 shrink-0" /> Beli Sekarang
+              </button>
             </div>
-          </div>
+          </form>
+        )}
+        <p className="text-label text-white/30 leading-normal text-right mt-2 italic">
+          * Fee broker 0.15% & spread bid/offer 0.05%.
+        </p>
+      </div>
 
           {/* HISTORICAL TRADE LOG DATABASE */}
           <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-4 flex flex-col max-h-[420px]">
@@ -1671,100 +1511,6 @@ export function PortfolioTracker({
               )}
             </div>
           </div>
-
-      {/* Watchlist Strip */}
-      <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">
-            <Eye className="w-4 h-4 text-emerald-400" />
-            Daftar Pantau
-          </h3>
-          <div className="flex items-center gap-2 max-w-sm w-full sm:w-auto">
-            <SearchableSelect
-              value={watchlistTicker}
-              options={visibleStocks.map((s) => ({
-                value: s.ticker,
-                label: `${s.ticker} - ${s.name}`,
-                logoColor: s.logoColor,
-              }))}
-              onChange={(val) => setWatchlistTicker(val)}
-            />
-            <button
-              onClick={() => onToggleWatchlist(watchlistTicker)}
-              className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0"
-              disabled={watchlist.some((w) => w.ticker === watchlistTicker)}
-            >
-              Tambah
-            </button>
-          </div>
-        </div>
-
-        {watchlist.length === 0 ? (
-          <div className="p-8 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10">
-            <p className="text-white/40 text-xs">
-              Belum ada perusahaan dalam Daftar Pantau. Klik ikon mata pada
-              saham untuk menambahkannya.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {watchlist.map((item) => {
-              const liveStock = visibleStocks.find(
-                (s) => s.ticker === item.ticker,
-              );
-              if (!liveStock) return null;
-              const isPos = liveStock.change >= 0;
-              return (
-                <div
-                  key={item.ticker}
-                  className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/20 hover:shadow-xs transition-all flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <TickerLogo
-                      ticker={liveStock.ticker}
-                      size="md"
-                      fallbackColor={liveStock.logoColor}
-                    />
-                    <div>
-                      <button
-                        onClick={() => onSelectStock(liveStock.ticker)}
-                        className="font-bold text-white hover:text-emerald-400 cursor-pointer block text-left"
-                      >
-                        {liveStock.ticker}
-                      </button>
-                      <DataBadge status={liveStock.dataSources.price} />
-                      <span className="text-caption text-white/40 block truncate max-w-32 mt-0.5">
-                        {liveStock.name}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right flex items-center gap-3">
-                    <div>
-                      <span className="text-xs font-bold text-white block font-mono">
-                        Rp {liveStock.currentPrice.toLocaleString()}
-                      </span>
-                      <span
-                        className={`text-caption font-bold ${isPos ? "text-green-400" : "text-rose-400"}`}
-                      >
-                        {isPos ? "+" : ""}
-                        {liveStock.change}%
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => onToggleWatchlist(liveStock.ticker)}
-                      className="p-1 text-white/30 hover:text-rose-400 rounded cursor-pointer transition-colors"
-                      title="Hapus Dari Daftar Pantau"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       {/* Floating Custom Notification Toast */}
       {notification && (

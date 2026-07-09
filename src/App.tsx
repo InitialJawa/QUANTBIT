@@ -326,6 +326,8 @@ function AppContent({ logout }: { logout: () => void }) {
                           filteredStocks={filteredStocks}
                           syncStatus={dbSyncStatus}
                           triggerSync={triggerSync}
+                          watchlist={pm.watchlist}
+                          onToggleWatchlist={pm.handleToggleWatchlist}
                         />
                         </Suspense>
                       </motion.div>

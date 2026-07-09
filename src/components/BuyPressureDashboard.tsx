@@ -103,7 +103,7 @@ const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon,
   );
 };
 
-export function BuyPressureDashboard() {
+export function BuyPressureDashboard({ compact }: { compact?: boolean }) {
   const bps = useBuyPressure();
   const [isWhyOpen, setIsWhyOpen] = useState(false);
   const meta = ACTION_META[bps.action];
@@ -121,33 +121,50 @@ export function BuyPressureDashboard() {
         </div>
       )}
 
-      <div className="p-5 sm:p-6 flex flex-col md:flex-row gap-6">
-        {/* Left: Gauge + Status */}
-        <div className="flex flex-col items-center gap-3 md:border-r md:border-white/[0.05] md:pr-6 shrink-0">
-          <CircularGauge score={bps.score} valid={bps.valid} ringColor={meta.ring} />
-          <div className="text-center space-y-1.5">
-            <span className="text-caption uppercase tracking-widest text-white/30 font-bold font-mono block">
-              Buy Pressure Score
-            </span>
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${meta.bg} ${meta.border} border`}>
+      <div className={`${compact ? "p-4" : "p-5 sm:p-6"} flex flex-col md:flex-row gap-6`}>
+        {!compact && (
+          /* Left: Gauge + Status */
+          <div className="flex flex-col items-center gap-3 md:border-r md:border-white/[0.05] md:pr-6 shrink-0">
+            <CircularGauge score={bps.score} valid={bps.valid} ringColor={meta.ring} />
+            <div className="text-center space-y-1.5">
+              <span className="text-caption uppercase tracking-widest text-white/30 font-bold font-mono block">
+                Buy Pressure Score
+              </span>
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${meta.bg} ${meta.border} border`}>
+                <Sparkles className={`w-3 h-3 ${meta.color}`} />
+                <span className={`text-caption font-black uppercase tracking-widest font-mono ${meta.color}`}>
+                  {meta.label}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Compact mode: show badge inline */}
+        {compact && (
+          <div className="flex items-center gap-2 mb-1 shrink-0">
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${meta.bg} ${meta.border} border`}>
               <Sparkles className={`w-3 h-3 ${meta.color}`} />
               <span className={`text-caption font-black uppercase tracking-widest font-mono ${meta.color}`}>
                 {meta.label}
               </span>
             </div>
+            <span className="text-caption font-mono text-white/60">BPS {bps.valid ? bps.score : "—"}/100</span>
           </div>
-        </div>
+        )}
 
         {/* Middle: Factor bars + reason */}
-        <div className="flex-1 space-y-4 min-w-0">
+        <div className="flex-1 min-w-0 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-base font-black text-white uppercase tracking-widest font-sans">
-                Adaptive DCA Recommendation
+              <h3 className={`${compact ? "text-caption" : "text-base"} font-black text-white uppercase tracking-widest font-sans`}>
+                {compact ? "AI Rekomendasi" : "Adaptive DCA Recommendation"}
               </h3>
-              <p className="text-caption text-white/40 font-sans mt-0.5">
-                Data-driven position sizing. Membeli berdasarkan peluang, bukan kalender.
-              </p>
+              {!compact && (
+                <p className="text-caption text-white/40 font-sans mt-0.5">
+                  Data-driven position sizing. Membeli berdasarkan peluang, bukan kalender.
+                </p>
+              )}
             </div>
             <button
               onClick={() => setIsWhyOpen(!isWhyOpen)}

@@ -1,7 +1,7 @@
 ﻿import { useState, useMemo } from "react";
 import { RS, MKT } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
-import { StockData, PortfolioItem } from "../types";
+import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { getAuditTrail, isCrashActive, computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
 import { ExplainButton } from "./ExplainButton";
 import { motion, AnimatePresence } from "motion/react";
@@ -11,11 +11,16 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Eye,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import Card from "./Card";
+import { SearchableSelect } from "./SearchableSelect";
+import { TickerLogo } from "./TickerLogo";
 
 interface SyncStatus {
   lastSynced: string | null;
@@ -36,6 +41,8 @@ interface MarketTabProps {
   filteredStocks?: (StockData | undefined)[];
   syncStatus?: SyncStatus;
   triggerSync?: () => void;
+  watchlist?: WatchlistItem[];
+  onToggleWatchlist?: (ticker: string) => void;
 }
 
 export function MarketTab({ 
@@ -50,6 +57,8 @@ export function MarketTab({
   filteredStocks,
   syncStatus,
   triggerSync,
+  watchlist = [],
+  onToggleWatchlist,
 }: MarketTabProps) {
   const { engineConfig } = useEngineConfig();
 
@@ -68,6 +77,7 @@ export function MarketTab({
   const [isBriefExpanded, setIsBriefExpanded] = useState(false);
   const trail = getAuditTrail();
   const [showAuditTrail, setShowAuditTrail] = useState(false);
+  const [watchlistTicker, setWatchlistTicker] = useState(visibleStocks[0]?.ticker || "");
 
   let totalCost = 0;
   let totalValueNow = 0;
@@ -115,6 +125,33 @@ export function MarketTab({
           <span className="text-white/80 truncate">Custom Universe ({engineConfig.customUniverse.length})</span>
         </div>
       )}
+      {/* Crisis Warning Banner */}
+      {isIHSGInCrisis && (
+        <div className="bg-[#0A0A0A] border border-rose-500/20 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+          <div className="flex items-center gap-2 text-rose-400">
+            <TrendingDown className="w-5 h-5 animate-pulse" />
+            <h3 className="text-sm uppercase font-extrabold tracking-widest font-sans">
+              RISK OFF — Pasar Jatuh Sistemik
+            </h3>
+          </div>
+          <p className="text-xs text-rose-200/70 font-sans max-w-3xl">
+            IHSG telah memicu ambang batas crash protection. Sistem
+            merekomendasikan likuidasi posisi saham dan rotasi ke safe haven
+            (EMAS/GOLD) atau cash defense. Deploy capital diatur ke 0% hingga
+            pasar pulih.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className="text-label font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20">
+              STATUS: RISK OFF
+            </span>
+            <span className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+              IHSG: {MKT.ihsg.value.toLocaleString("id-ID")} ({MKT.ihsg.daily >= 0 ? "+" : ""}{MKT.ihsg.daily}%)
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Chart utama — IHSG vs Gold vs Portfolio */}
       <MarketOverviewCharts portfolio={portfolio} />
 
@@ -401,6 +438,98 @@ export function MarketTab({
             <span className="text-body font-mono font-bold text-white/90">{RS.radar_context?.breadth_above_60}/{RS.radar_context?.idx_universe_size || 80}</span>
             <span className="text-label text-emerald-400/60 font-bold">Broad Support</span>
           </Card>
+        </div>
+
+        {/* Watchlist Strip */}
+        <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              Daftar Pantau
+            </h3>
+            <div className="flex items-center gap-2 max-w-sm w-full sm:w-auto">
+              <SearchableSelect
+                value={watchlistTicker}
+                options={visibleStocks.map((s) => ({
+                  value: s.ticker,
+                  label: `${s.ticker} - ${s.name}`,
+                  logoColor: s.logoColor,
+                }))}
+                onChange={(val) => setWatchlistTicker(val)}
+              />
+              <button
+                onClick={() => onToggleWatchlist?.(watchlistTicker)}
+                className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0"
+                disabled={watchlist.some((w) => w.ticker === watchlistTicker)}
+              >
+                <Plus className="w-3 h-3 inline mr-1" />Tambah
+              </button>
+            </div>
+          </div>
+
+          {watchlist.length === 0 ? (
+            <div className="p-8 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+              <p className="text-white/40 text-xs">
+                Belum ada perusahaan dalam Daftar Pantau. Gunakan tombol Tambah untuk menambahkan saham ke daftar pantau.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {watchlist.map((item) => {
+                const liveStock = visibleStocks.find(
+                  (s) => s.ticker === item.ticker,
+                );
+                if (!liveStock) return null;
+                const isPos = liveStock.change >= 0;
+                return (
+                  <div
+                    key={item.ticker}
+                    className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/20 hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <TickerLogo
+                        ticker={liveStock.ticker}
+                        size="md"
+                        fallbackColor={liveStock.logoColor}
+                      />
+                      <div>
+                        <button
+                          onClick={() => onSelectTicker(liveStock.ticker)}
+                          className="font-bold text-white hover:text-emerald-400 cursor-pointer block text-left"
+                        >
+                          {liveStock.ticker}
+                        </button>
+                        <span className="text-caption text-white/40 block truncate max-w-32 mt-0.5">
+                          {liveStock.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex items-center gap-3">
+                      <div>
+                        <span className="text-xs font-bold text-white block font-mono">
+                          Rp {liveStock.currentPrice.toLocaleString()}
+                        </span>
+                        <span
+                          className={`text-caption font-bold ${isPos ? "text-green-400" : "text-rose-400"}`}
+                        >
+                          {isPos ? "+" : ""}
+                          {liveStock.change}%
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => onToggleWatchlist?.(liveStock.ticker)}
+                        className="p-1 text-white/30 hover:text-rose-400 rounded cursor-pointer transition-colors"
+                        title="Hapus Dari Daftar Pantau"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
     </div>
