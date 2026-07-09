@@ -5,13 +5,13 @@
 Repo: `https://github.com/InitialJawa/QUANTBIT`
 
 ## Current Mission
-**Default Config Optimization via Grid Search — Complete ✅**
-Grid search (7,008 simulasi) menemukan konfigurasi optimal. Defaults di-update ke Growth-heavy (Q10 G70 V5 M10 D5) + N4 + quarterly + kas + crashSens=10.
+**Bugfix Sesi 25 — AI Chat auto-open + docs restoration ✅**
+AI Chat tidak lagi auto-trigger saat klik ticker. `docs/AI_ONBOARDING.md` direcreate dengan instruksi dev yang jelas.
 
 ## Session Context
-- **Sesi 24** — 2026-07-07
+- **Sesi 25** — 2026-07-09
 - Branch: `main`
-- Status: **Default Config Optimization** — Grid search selesai, default profile diubah
+- Status: **Bugfix** — AI Chat auto-open on ticker click fixed; AI_ONBOARDING.md recreated
 - Data source: **Yahoo Finance** via pipeline → D1 Cloudflare
 
 ## Arsitektur Baru
@@ -139,48 +139,29 @@ Production: CF Pages Functions + D1 (no server needed)
 - **No Express, no SQLite lokal, no mock** — full serverless
 - **Ask before adding dependencies**
 
-## Sesi 24 — Grid Search + Default Config Update (2026-07-07)
+## Sesi 25 — Bugfix: AI Chat Auto-Open + AI_ONBOARDING.md (2026-07-09)
 
-### Problem
-Backtest default config (Aman N5 crossover=true crashSens=10 emas) hanya menghasilkan ~50% return, jauh dari potensi optimal.
+### Bug 1: AI Chat auto-opens saat klik ticker ranking
+**Root cause**: `src/components/FloatingAIChat.tsx` lines 192-204 — useEffect yang auto-open AI Chat + auto-send analisa setiap kali StockDrawer terbuka.
 
-### Method
-Grid search `scripts/find-best-config.ts` — 7,008 simulasi × 1,323 hari × 79 ticker:
-- **PASS 1**: 5,280 core configs (16 profiles × 11 topN × 5 thresholds × 2 emergency × 3 freqs)
-- **PASS 2**: 1,728 refined (3 best profiles × 4 topN × 2 thresholds × 2 crashSens × 2 safeHaven × 2 freqs × 3 smooth × 3 TS)
+**Fix**:
+- Hapus `isDrawerOpen` prop dari `FloatingAIChatProps` interface
+- Hapus seluruh `useEffect` block yang auto-trigger `setIsOpen(true)` dan `send("Analisa ringkas...")`
+- Hapus `isDrawerOpen={ui.isDrawerOpen}` dari `<FloatingAIChat>` di `App.tsx`
 
-### Results
-| Rank | Profile | TopN | Rebal | Sens | Return | CAGR | Sharpe | DD | Trades |
-|------|---------|------|-------|------|--------|------|--------|-----|--------|
-| 1 | Agresif (Q20 G60 V10 M10) | 15 | quarterly | 15 | +345% | 31.17% | 1.802 | -23.69% | 437 |
-| 2 | Growth-heavy (Q10 G70 V5 M10) | 4 | quarterly | 10 | +330% | 30.35% | 1.146 | -32.88% | **36** |
+**Verifikasi**: `npx tsc --noEmit` — no new errors (pre-existing errors di `PortfolioTracker.tsx` tidak terkait).
 
-**New features tested — all failed:**
-- Smooth EMA (0, 10, 20d): beda 0.00%
-- Trailing Stop (0, 15, 20%): OFF avg 173.78%, 15% → 131.04%, 20% → 133.35%
-- Safe Haven: Kas (345%) ≈ Emas (340%), tapi Emas rusak Sharpe di beberapa sim
-- Threshold & Emergency: tidak berpengaruh
-- Dual Momentum & Vol Weight: belum dites (matrix terlalu besar)
+### Bug 2: "Backend AI tidak reachable" + missing docs
+**Root cause**: `docs/AI_ONBOARDING.md` terhapus di Sesi 18 cleanup; user mungkin cuma jalan `npx vite` tanpa Express.
 
-### Changes
-User pilih **Option B (Growth-heavy)**. Files updated:
-1. `EngineConfigContext.tsx` — added Growth-heavy profile, updated defaults:
-   - `activeProfileId`: `"growth-heavy"`
-   - `topNCount`: `4`
-   - `safeHavenAsset`: `"kas"`
-   - `enableCrossover`: `false` (quarterly-style rebalancing)
-   - `crashSensitivity`: `10`
-2. `StrategySettingsPanel.tsx` — added Growth-heavy to profile listing + type
-3. `ManageProfilesModal.tsx` — added Growth-heavy to isDefault
-4. `engine/core.ts` — maps Growth-heavy to stockRanksRes + configName
-5. `SimulationTab.tsx` — configType mapping + display name
-6. `PortfolioTracker.tsx` — display name fallback
-7. `devMockAI.ts` — AI mapping
+**Fix**:
+- Recreate `docs/AI_ONBOARDING.md` dengan instruksi dev yang jelas
+- Command `npm run dev` (via `concurrently`) sudah benar run both Express + Vite — tidak perlu tambahan dependency
 
 ### Pending
-- Grid search belum tes Dual Momentum + Vol Weight (matrix terlalu besar)
-- Revert Lucid design (commit efa14fb) — only YAxis fix active
-- `npm run dev` confirmed working
+- `PortfolioTracker.tsx` — pre-existing TS errors tidak dibahas di sesi ini
+- Grid search belum tes Dual Momentum + Vol Weight
+- Revert Lucid design (commit efa14fb)
 
 ## Test Commands
 ```

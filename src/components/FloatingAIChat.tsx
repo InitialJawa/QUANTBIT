@@ -20,7 +20,6 @@ interface FloatingAIChatProps {
   pm: PortfolioAPI;
   getDynamicStock?: (ticker: string) => StockData | undefined;
   activeTab?: string;
-  isDrawerOpen?: boolean;
 }
 
 const WELCOME: AIChatMessage = {
@@ -56,7 +55,7 @@ async function persistMessage(
   }
 }
 
-export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock, activeTab = "market", isDrawerOpen }: FloatingAIChatProps) {
+export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock, activeTab = "market" }: FloatingAIChatProps) {
   const { pendingExplain, clearExplain, pendingActions, approveAction, rejectAction, addPendingAction, proactiveAlerts, openChatWithPrompt, setOpenChatWithPrompt } = useAICockpit();
   const { engineConfig, backtestConfig, isConfigSynced, setActiveProfile, syncFromBacktest, updateConfigValue } = useEngineConfig();
   const { notifications } = useNotifications();
@@ -189,19 +188,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
     }
   }, [openChatWithPrompt, setOpenChatWithPrompt]);
 
-  // Auto-analyze stock when StockDrawer opens
-  const lastDrawerStockRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (isDrawerOpen && selectedStock?.ticker && selectedStock.ticker !== lastDrawerStockRef.current) {
-      lastDrawerStockRef.current = selectedStock.ticker;
-      if (!isOpen) setIsOpen(true);
-      send(`Analisa ringkas ${selectedStock.ticker} — ${selectedStock.name}. Pake data live.`, `StockDrawer: ${selectedStock.ticker}`);
-    }
-    if (!isDrawerOpen) {
-      lastDrawerStockRef.current = null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDrawerOpen, selectedStock?.ticker]);
+  // Auto-analyze stock when StockDrawer opens — REMOVED: this caused AI Chat to auto-open on ticker click
 
   // Surface proactive alerts as unread chip on the chat button.
   useEffect(() => {
