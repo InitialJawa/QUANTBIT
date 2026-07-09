@@ -445,6 +445,84 @@ app.get("/api/engine/idx80", async (_req, res) => {
   }
 });
 
+// ── Peers (sector peers with scores) ──
+app.get("/api/stocks/peers", async (req, res) => {
+  try {
+    await ensureD1();
+    const ticker = (req.query.ticker as string)?.toUpperCase();
+    if (!ticker) return res.status(400).json({ success: false, error: "Missing ticker param" });
+
+    const sectorRow = await queryOne("SELECT sector FROM tickers WHERE ticker=?", [ticker]) as any;
+    if (!sectorRow?.sector) return res.status(404).json({ success: false, error: "Ticker not found" });
+    const sector = sectorRow.sector;
+
+    const latestScore = await queryOne("SELECT MAX(score_date) as max_date FROM stock_scores") as any;
+    const scoreDate = latestScore?.max_date;
+    if (!scoreDate) return res.json({ success: false, error: "No scores available" });
+
+    const rows = await queryAll(
+      `SELECT s.ticker,s.quality,s.growth,s.value,s.momentum,s.dividend,t.name,t.sector,t.industry
+       FROM stock_scores s JOIN tickers t ON s.ticker=t.ticker
+       WHERE t.sector=? AND s.score_date=?
+       ORDER BY (s.quality*0.25 + s.growth*0.30 + s.value*0.10 + s.momentum*0.35) DESC`,
+      [sector, scoreDate]
+    );
+
+    const peers = rows.map((r: any, i: number) => ({
+      rank: i + 1, ticker: r.ticker, name: r.name, sector: r.sector, industry: r.industry,
+      quality: Math.round(r.quality ?? 50), growth: Math.round(r.growth ?? 50),
+      value: Math.round(r.value ?? 50), momentum: Math.round(r.momentum ?? 50),
+      dividend: Math.round(r.dividend ?? 50),
+      totalScore: Math.round((r.quality ?? 50) * 0.25 + (r.growth ?? 50) * 0.30 + (r.value ?? 50) * 0.10 + (r.momentum ?? 50) * 0.35),
+    }));
+
+    const currentIndex = peers.findIndex((p: any) => p.ticker === ticker);
+    const currentPeer = currentIndex >= 0 ? peers[currentIndex] : null;
+    const n = peers.length;
+    const sectorAverages = n > 0 ? {
+      quality: Math.round(peers.reduce((s: number, p: any) => s + p.quality, 0) / n),
+      growth: Math.round(peers.reduce((s: number, p: any) => s + p.growth, 0) / n),
+      value: Math.round(peers.reduce((s: number, p: any) => s + p.value, 0) / n),
+      momentum: Math.round(peers.reduce((s: number, p: any) => s + p.momentum, 0) / n),
+      dividend: Math.round(peers.reduce((s: number, p: any) => s + p.dividend, 0) / n),
+      totalScore: Math.round(peers.reduce((s: number, p: any) => s + p.totalScore, 0) / n),
+    } : null;
+
+    res.json({ success: true, sector, scoreDate, peerCount: peers.length, currentTicker: ticker, currentRank: currentIndex >= 0 ? currentIndex + 1 : null, currentPeer, sectorAverages, peers });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── Signals (signal history for a ticker) ──
+app.get("/api/stocks/signals", async (req, res) => {
+  try {
+    await ensureD1();
+    const ticker = (req.query.ticker as string)?.toUpperCase();
+    if (ticker) {
+      const rows = await queryAll("SELECT ticker,date,signal_tier,signal_label,signal_reason FROM signal_history WHERE ticker=? ORDER BY date DESC LIMIT 30", [ticker]);
+      return res.json({ success: true, ticker, signals: rows, latestDate: rows[0]?.date || null });
+    }
+    const latestDateRow = await queryOne("SELECT MAX(date) as max_date FROM signal_history") as any;
+    const latestDate = latestDateRow?.max_date;
+    if (!latestDate) return res.json({ success: true, signals: [], latestDate: null });
+    const rows = await queryAll("SELECT ticker,date,signal_tier,signal_label,signal_reason FROM signal_history WHERE date=? ORDER BY signal_tier DESC", [latestDate]);
+    res.json({ success: true, signals: rows, latestDate });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── Rotation (rotation history for a ticker) ──
+app.get("/api/stocks/rotation", async (req, res) => {
+  try {
+    await ensureD1();
+    const ticker = (req.query.ticker as string)?.toUpperCase();
+    if (!ticker) return res.status(400).json({ success: false, error: "Missing ticker param" });
+    const rows = await queryAll(
+      `SELECT ticker,date,sector,industry,rotation_label,rotation_status,quality_score,growth_score,momentum_score
+       FROM rotation_history WHERE ticker=? ORDER BY date DESC LIMIT 30`, [ticker]
+    );
+    res.json({ success: true, ticker, current: rows[0] || null, history: rows, latestDate: rows[0]?.date || null });
+  } catch (e: any) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // ── DB sync status ──
 app.get("/api/db-sync-status", async (_req, res) => {
   try {

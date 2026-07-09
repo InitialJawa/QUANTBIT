@@ -163,6 +163,54 @@ Production: CF Pages Functions + D1 (no server needed)
 - Grid search belum tes Dual Momentum + Vol Weight
 - Revert Lucid design (commit efa14fb)
 
+## Sesi 26 — Ticker Detail Full-Page + Konten Tab (2026-07-09)
+
+### Phase 1: Pipeline & Routing (completed)
+- [x] **Migration 0007**: 5 tabel baru (rank_history, rotation_history, signal_history, company_profile, financial_statements)
+- [x] **3 compute scripts**: compute-rank-history.ts, compute-signals.ts, compute-rotation.ts
+- [x] **Pipeline update**: populate company_profile saat fetch fundamentals di pipeline-sync.ts
+- [x] **GitHub Actions**: 3 step compute baru di pipeline.yml
+- [x] **wouter routing**: main.tsx Router wrapper, App.tsx route `/ticker/:code`
+- [x] **TickerPage.tsx**: full-page dengan 9 tab navigasi (Overview, Chart, Financials, Dividend, Profile, Peer, Rotation, Signals, AI)
+- [x] **4 tab komponen baru**: OverviewTab, PeerComparisonTab, RotationHistoryTab, SignalHistoryTab
+- [x] **Phase 4 cleanup**: search redirect ke /ticker/:code, hapus StockDrawer + file, bersihkan useUIState
+
+### Phase 2: Konten Tab (Sesi 26 — BARU)
+- [x] **3 CF Functions baru**:
+  - `/api/stocks/peers?ticker=X` — sector peers dengan score columns + sector averages
+  - `/api/stocks/signals?ticker=X` — signal tier history per ticker
+  - `/api/stocks/rotation?ticker=X` — rotation status history per ticker
+- [x] **3 Express routes padanan** di server.ts
+- [x] **Reusable badge components**: SignalBadge (tier 1-5 color-coded), RotationBadge (up/stable/down), ScoreBreakdown (Q/G/V/M bar chart)
+- [x] **PeerComparisonTab rewrite**: fetch dari `/api/stocks/peers`, tambah kolom Quality/Growth/Value/Momentum/Score, baris "Rata-rata Sektor", urut by total score desc
+- [x] **SignalHistoryTab rewrite**: signal tier badge + score breakdown bar + strongest/weakest factor + history timeline
+- [x] **RotationHistoryTab rewrite**: rotation badge + status card + score display + history timeline
+- [x] **Financials tab**: condition render — jika metrics kosong/0, tampilkan "Data keuangan belum tersedia" (HAPUS dummy)
+- [x] **Profile tab**: fallback "-" untuk sector/subSector/marketCap/description yang kosong atau "Unknown"
+- [x] **AI tab**: context display + starter prompt buttons + auto-focus ke FloatingAIChat input
+- [x] **Fix: CardProps key error** — tambah `key?: string | number` di Card.tsx (tsc exit 0)
+- [x] **Fix: FloatingAIChat hilang** — dikembalikan ke App.tsx (jangan dihapus)
+- [x] **Deploy**: build + deploy sukses ke https://1d5aef19.quantbit-terminal.pages.dev
+- [x] **Push ke fase-1-card-layout** (0469a5f)
+
+### Tab Status Setelah Sesi 26
+| Tab | Status | Sumber Data |
+|-----|--------|-------------|
+| Overview | ✅ Live | StockData client-side + 52W range dari chartDataMonthly |
+| Chart | ✅ Live | HistoricalChart component |
+| Financials | ⚠️ Safe fallback | Pipeline financial_statements belum jalan → render "belum tersedia" |
+| Dividend | ✅ Live | ForwardDividendsForecast component |
+| Profile | ✅ Safe fallback | stock.sector/subSector/description — "-" jika tidak ada data |
+| Peer | ✅ Baru | D1 via `/api/stocks/peers` + score columns + sector avg |
+| Rotation | ✅ Baru | D1 via `/api/stocks/rotation` |
+| Signals | ✅ Baru | D1 via `/api/stocks/signals` + score breakdown |
+| AI | ✅ Starter prompts | FloatingAIChat + context injection |
+
+### Data Gap (perlu task terpisah)
+- `company_profile` table: 0 baris → perlu script populate dari yfinance
+- `financial_statements` table: 0 baris → perlu script populate dari yfinance
+- Ke 2 tabel di atas akan mengisi Financials tab (table financial) dan Profile tab (company detail)
+
 ## Test Commands
 ```
 npx tsc --noEmit
