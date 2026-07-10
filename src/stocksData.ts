@@ -46,7 +46,8 @@ const PARSED_KNOWN_STOCKS: StockData[] = RAW_STOCKS_DATA.map((row) => {
   const scanCache = getScanData();
   const scanStock = scanCache?.stocks.find((s: any) => s.ticker?.replace(".JK", "") === ticker);
 
-  const description = PF[ticker]?.summary || scanStock?.longBusinessSummary || `PT ${name} adalah salah satu perusahaan publik terkemuka di Indonesia yang bergerak di sektor ${sector}, khususnya bidang ${subSector}. Perusahaan ini terdaftar secara resmi di Bursa Efek Indonesia (BEI) dengan ticker ${ticker} dan merupakan bagian penting dari analisis indeks ekosistem finansial nasional.`;
+  const displayName = name.startsWith("PT ") ? name : `PT ${name}`;
+  const description = PF[ticker]?.summary || scanStock?.longBusinessSummary || `${displayName} adalah salah satu perusahaan publik terkemuka di Indonesia yang bergerak di sektor ${sector}, khususnya bidang ${subSector}. Perusahaan ini terdaftar secara resmi di Bursa Efek Indonesia (BEI) dengan ticker ${ticker} dan merupakan bagian penting dari analisis indeks ekosistem finansial nasional.`;
 
   const baseRevenue = Math.round(marketCap * 10);
   const baseNetIncome = Math.round(baseRevenue * (roe / 100) * 0.45);
@@ -232,7 +233,8 @@ export function getStock(ticker: string): StockData {
   const name = scanStock?.companyName || profile?.name || `${cleanTicker} Tbk`;
   const sector = scanStock?.sector || profile?.sector || "General Sector";
   const subSector = scanStock?.industry || profile?.industry || "General Industry";
-  const description = profile?.summary || scanStock?.longBusinessSummary || `PT ${name} is a major publicly traded company in Indonesia, listed on the Bursa Efek Indonesia (IDX).`;
+  const displayName = name.startsWith("PT ") ? name : `PT ${name}`;
+  const description = profile?.summary || scanStock?.longBusinessSummary || `${displayName} adalah salah satu perusahaan publik terkemuka di Indonesia yang terdaftar di Bursa Efek Indonesia (IDX).`;
 
   const logoColor = getLogoColor(cleanTicker);
 
