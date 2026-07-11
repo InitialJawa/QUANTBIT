@@ -170,7 +170,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (parsed.dcaActive === undefined) parsed.dcaActive = true;
         // Migrate enableCrossover (boolean) → crossoverMode (string)
         if (parsed.enableCrossover !== undefined && parsed.crossoverMode === undefined) {
-          parsed.crossoverMode = parsed.enableCrossover ? "instant" : "off";
+          parsed.crossoverMode = parsed.enableCrossover ? "instant" : "monthly";
           delete parsed.enableCrossover;
         }
         // Migrate legacy "single" mode → "custom"
@@ -203,7 +203,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (merged.dcaActive === undefined) merged.dcaActive = true;
         // Migrate enableCrossover (boolean) → crossoverMode (string)
         if (merged.enableCrossover !== undefined && merged.crossoverMode === undefined) {
-          merged.crossoverMode = merged.enableCrossover ? "instant" : "off";
+          merged.crossoverMode = merged.enableCrossover ? "instant" : "monthly";
           delete merged.enableCrossover;
         }
         // Same legacy migration for the backtest draft
