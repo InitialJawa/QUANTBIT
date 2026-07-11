@@ -439,17 +439,20 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     // Adaptive DCA: no monthly rebalancing — positions are held until
     // crash triggers full liquidation. Skip the rebalancing block.
-    if (!inCrashState && config.enableCrossover && config.simulationMode === "algo") {
+    if (!inCrashState && config.crossoverMode !== "off" && config.simulationMode === "algo") {
       const ownedTickers = Object.entries(positions)
         .filter(([_, shares]) => shares > 0)
         .map(([ticker]) => ticker);
 
       const isMonthChange = currentMonth !== lastRebalanceMonth;
+      const rankThreshold = config.topNCount + 1;
 
       for (const ticker of ownedTickers) {
         const currentRank = day.stockRanks[ticker] || 5;
-        const isEmergencyExit = currentRank >= 15;
-        const isRoutineExit = isMonthChange && currentRank >= 10;
+        const isEmergencyExit = currentRank > config.topNCount * 3;
+        const isRoutineExit = config.crossoverMode === "instant"
+          ? currentRank > rankThreshold
+          : isMonthChange && currentRank > rankThreshold;
 
         if (isEmergencyExit || isRoutineExit) {
           const sellResult = computeSellProceeds(positions[ticker], day.stockPrices[ticker] || 100, fees);

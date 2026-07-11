@@ -279,7 +279,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           enableCrashProtection: backtestConfig.enableCrashProtection,
           crashSensitivity: backtestConfig.crashSensitivity,
           safeHavenAsset: backtestConfig.safeHavenAsset,
-          enableCrossover: backtestConfig.enableCrossover,
+          crossoverMode: backtestConfig.crossoverMode,
           reserveBufferPct: backtestConfig.reserveBufferPct,
           enableAdaptiveWeights: backtestConfig.enableAdaptiveWeights,
         });

@@ -451,7 +451,7 @@ export function PortfolioTracker({
     const outOfTop5 = !isSafeHaven && item.rank > engineConfig.topNCount;
     return (
       isExitLive ||
-      (engineConfig.enableCrossover !== false && outOfTop5)
+      (engineConfig.crossoverMode !== "off" && outOfTop5)
     );
   });
 
@@ -585,7 +585,7 @@ export function PortfolioTracker({
         const shares = typeof item.shares === "number" ? item.shares : 0;
         if (price <= 0 || shares <= 0) return;
 
-        if (!inTargets && engineConfig.enableCrossover !== false) {
+        if (!inTargets && engineConfig.crossoverMode !== "off") {
           const rankInfo = getStockRankAndScore(item.ticker);
           list.push({
             id: `sell-rank-${item.ticker}`,
@@ -649,7 +649,7 @@ export function PortfolioTracker({
     isIHSGInCrisis,
     engineConfig.simulationMode,
     engineConfig.customUniverse,
-    engineConfig.enableCrossover,
+    engineConfig.crossoverMode,
     engineConfig.safeHavenAsset,
     engineConfig.reserveBufferPct,
     engineConfig.topNCount,

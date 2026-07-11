@@ -6,7 +6,7 @@ export interface StrategyConfigShape {
   simulationMode: "algo" | "custom";
   universe: "all" | "idx80" | "idx30" | "lq45" | string;
   topNCount: number;
-  enableCrossover: boolean;
+  crossoverMode: "off" | "monthly" | "instant";
   enableCrashProtection: boolean;
   crashSensitivity: number;
   safeHavenAsset: "emas" | "kas" | string;
@@ -201,13 +201,21 @@ export function StrategySettingsPanel({
               <span className="text-label text-tertiary block mb-1">Rotasi Saham (Crossover)</span>
               <ButtonGroup
                 options={[
-                  ["true", "Rank < 7"],
-                  ["false", "Tanpa"],
+                  ["off", "Tanpa"],
+                  ["monthly", "Bulanan"],
+                  ["instant", "Langsung"],
                 ] as const}
-                value={String(config.enableCrossover) as any}
-                onPick={(k) => onChange("enableCrossover", k === "true")}
+                value={config.crossoverMode}
+                onPick={(k) => onChange("crossoverMode", k)}
                 ariaLabel="Crossover"
               />
+              <p className="text-label text-tertiary mt-1.5 leading-relaxed">
+                {config.crossoverMode === "instant"
+                  ? "Keluar Top N → jual langsung, beli pengganti."
+                  : config.crossoverMode === "monthly"
+                  ? "Keluar Top N → jual tiap akhir bulan."
+                  : "Tidak ada rotasi otomatis."}
+              </p>
             </div>
 
             {/* Crash Protection */}

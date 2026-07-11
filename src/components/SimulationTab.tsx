@@ -215,7 +215,7 @@ export function SimulationTab({
     "activeProfileId", "universe", "topNCount", "simulationMode",
     "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
     "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
-    "singleSellTrigger", "singleBuyTrigger", "enableCrossover",
+    "singleSellTrigger", "singleBuyTrigger", "crossoverMode",
   ];
   const effectiveConfig = useMemo(() => {
     if (!backtestUseLiveStrategy) return backtestConfig;
@@ -473,7 +473,7 @@ export function SimulationTab({
           singleSellTrigger: effectiveConfig.singleSellTrigger,
           singleBuyTrigger: effectiveConfig.singleBuyTrigger,
           safeHavenAsset: effectiveConfig.safeHavenAsset,
-          enableCrossover: effectiveConfig.enableCrossover,
+          crossoverMode: effectiveConfig.crossoverMode,
           simStartDate: effectiveConfig.simStartDate,
           simEndDate: effectiveConfig.simEndDate,
           customUniverse: effectiveConfig.customUniverse || [],

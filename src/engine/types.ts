@@ -36,7 +36,7 @@ export interface BacktestConfig {
   singleSellTrigger: number;
   singleBuyTrigger: number;
   safeHavenAsset: "emas" | "kas";
-  enableCrossover: boolean;
+  crossoverMode: "off" | "monthly" | "instant";
   simStartDate: string;
   simEndDate: string;
   customUniverse: string[];

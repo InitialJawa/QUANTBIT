@@ -17,7 +17,7 @@ export interface EngineConfig {
   topNCount: number;
   enableCrashProtection: boolean;
   crashSensitivity: number;
-  enableCrossover: boolean;
+  crossoverMode: "off" | "monthly" | "instant";
   reserveBufferPct: number;
   simulationMode: "algo" | "custom" | "adaptive_dca";
   singleTicker: string;
@@ -54,7 +54,7 @@ export function createDefaultConfig(): EngineConfig {
     topNCount: 4,
     enableCrashProtection: true,
     crashSensitivity: 10,
-    enableCrossover: false,
+    crossoverMode: "monthly",
     reserveBufferPct: 10,
     simulationMode: "algo",
     singleTicker: "BBCA",
@@ -83,7 +83,7 @@ export interface StrategySnapshot {
   enableCrashProtection: boolean;
   crashSensitivity: number;
   safeHavenAsset: "emas" | "kas";
-  enableCrossover: boolean;
+  crossoverMode: "off" | "monthly" | "instant";
   reserveBufferPct: number;
   enableAdaptiveWeights: boolean;
   syncedAt: number;
@@ -168,6 +168,11 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         if (!parsed.customUniverse) parsed.customUniverse = [];
         if (parsed.enableAdaptiveWeights === undefined) parsed.enableAdaptiveWeights = false;
         if (parsed.dcaActive === undefined) parsed.dcaActive = true;
+        // Migrate enableCrossover (boolean) → crossoverMode (string)
+        if (parsed.enableCrossover !== undefined && parsed.crossoverMode === undefined) {
+          parsed.crossoverMode = parsed.enableCrossover ? "instant" : "off";
+          delete parsed.enableCrossover;
+        }
         // Migrate legacy "single" mode → "custom"
         if (parsed.simulationMode === "single") {
           parsed.simulationMode = "custom";
@@ -196,6 +201,11 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(saved);
         const merged = { ...createDefaultConfig(), ...parsed };
         if (merged.dcaActive === undefined) merged.dcaActive = true;
+        // Migrate enableCrossover (boolean) → crossoverMode (string)
+        if (merged.enableCrossover !== undefined && merged.crossoverMode === undefined) {
+          merged.crossoverMode = merged.enableCrossover ? "instant" : "off";
+          delete merged.enableCrossover;
+        }
         // Same legacy migration for the backtest draft
         if (merged.activeProfileId === "prod") merged.activeProfileId = "aman";
         else if (merged.activeProfileId === "res") merged.activeProfileId = "agresif";
@@ -222,7 +232,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
     "activeProfileId", "universe", "topNCount", "simulationMode",
     "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
     "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
-    "singleSellTrigger", "singleBuyTrigger", "enableCrossover",
+    "singleSellTrigger", "singleBuyTrigger", "crossoverMode",
   ];
   const isDraftEqualToEngine = () => {
     return STRATEGY_KEYS.every(k =>
@@ -349,7 +359,7 @@ export function EngineConfigProvider({ children }: { children: ReactNode }) {
         enableCrashProtection: snapshot.enableCrashProtection,
         crashSensitivity: snapshot.crashSensitivity,
         safeHavenAsset: snapshot.safeHavenAsset,
-        enableCrossover: snapshot.enableCrossover,
+        crossoverMode: snapshot.crossoverMode,
         reserveBufferPct: snapshot.reserveBufferPct,
         lastBacktestProfile: snapshot.profile,
       };

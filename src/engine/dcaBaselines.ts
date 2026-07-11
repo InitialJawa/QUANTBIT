@@ -28,7 +28,7 @@ export type DcaBaseline = "lump_sum" | "monthly_dca" | "quarterly_dca";
 
 export interface BaselineInput {
   dayData: BacktestDayData[];
-  config: Omit<BacktestConfig, "simulationMode" | "singleTicker" | "enableCrossover" | "singleSellTrigger" | "singleBuyTrigger" | "activeProfileId" | "enableAdaptiveWeights">;
+  config: Omit<BacktestConfig, "simulationMode" | "singleTicker" | "crossoverMode" | "singleSellTrigger" | "singleBuyTrigger" | "activeProfileId" | "enableAdaptiveWeights">;
   profileWeights: ProfileWeights;
   universeTickers: { idx80: string[]; idx30: string[]; lq45: string[] };
   baseline: DcaBaseline;
