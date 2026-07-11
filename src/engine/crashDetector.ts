@@ -60,10 +60,7 @@ export function detectRecoveryAlgo(
   const ihsgPrev = ihsgPrices[Math.max(0, ihsgPrices.length - 5)];
   const ihsg5dReturn = ((currentIhsgPrice - ihsgPrev) / ihsgPrev) * 100;
 
-  const trendRecovery = currentIhsgPrice > sma20;
-  const momentumRecovery = ihsg5dReturn >= 2.5 && currentIhsgPrice > sma20;
-
-  if (trendRecovery || momentumRecovery) {
+  if (currentIhsgPrice > sma20 && ihsg5dReturn >= 2.5) {
     return { signaled: true, reason: "Pasar pulih — IHSG kembali di atas rata-rata pergerakan" };
   }
 

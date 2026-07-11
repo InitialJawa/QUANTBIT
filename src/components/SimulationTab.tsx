@@ -358,7 +358,7 @@ export function SimulationTab({
     const cashResidual = simCapital - actualCost;
 
     // Simulated dividends accumulated (proportional to years held)
-    const annualDividendRate = activeStock.dividendYield || 2.4;
+    const annualDividendRate = activeStock.dividendYield || 0;
     const divTaxFactor = 0.90; // 10% dividend tax in Indonesia
     const totalDividends = Math.round(
       realSharesPurchased * (annualDividendRate / 100) * simPrices.years * startPrice * divTaxFactor
@@ -1176,7 +1176,7 @@ export function SimulationTab({
                       </div>
                       <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                         <div className="p-2 bg-white/[0.02] rounded-lg">
-                          <span className="text-label font-mono text-white/40 block">Rebalances</span>
+                          <span className="text-label font-mono text-white/40 block">Trades</span>
                           <span className="text-caption font-bold text-amber-400 font-mono">{backtestResult.totalTrades}</span>
                         </div>
                         <div className="p-2 bg-white/[0.02] rounded-lg">

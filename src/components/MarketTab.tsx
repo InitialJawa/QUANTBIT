@@ -110,10 +110,10 @@ export function MarketTab({
   const macdResult = useMemo(() => computeMACD(ihsgCloses), [ihsgCloses]);
 
   const breadth = useMemo(() => {
-    const advancers = STOCKS_DATA.filter(s => s.change > 0).length;
-    const decliners = STOCKS_DATA.filter(s => s.change < 0).length;
-    return { advancers, decliners, total: STOCKS_DATA.length };
-  }, []);
+    const advancers = allVisibleStocks.filter(s => s.change > 0).length;
+    const decliners = allVisibleStocks.filter(s => s.change < 0).length;
+    return { advancers, decliners, total: allVisibleStocks.length };
+  }, [allVisibleStocks]);
 
   return (
     <div className="space-y-4">
