@@ -13,9 +13,12 @@
   <b>Terminal finansial kuantitatif deterministik untuk screening, backtesting data riil, dan manajemen portofolio Bursa Efek Indonesia (BEI / IDX), dilengkapi AI agent 4-level (read-only tools, action approval, proactive alerts) + Adaptive DCA + Buy Pressure Score.</b>
 </p>
 
-**Versi 1.0.0** · 2026-06-26 · Progress ~97% · Sprint: *3 Faktor Investasi — AMAN, AGRESIF, DIVIDEN*
+**Versi 1.0.1** · 2026-07-12 · Progress ~97% · Sprint: *3 Faktor Investasi — AMAN, AGRESIF, DIVIDEN*
 
 🌐 **Live**: [quantbit-terminal.pages.dev](https://quantbit-terminal.pages.dev) · 216+ tests · 5 AI providers dengan circuit breaker
+
+> [!WARNING]
+> **Keterbatasan Backtest Engine (diperbarui 2026-07-12):** Backtest hanya berjalan di browser (client-side). Cloudflare Pages adalah static hosting — tidak ada server VPS, tidak ada cron job, tidak ada background processing. Backtest tidak bisa dijadwalkan atau dijalankan otomatis. Lihat section **"Kenapa Backtest Tidak Bisa Seperti Kalkulator"** untuk penjelasan lengkap dan solusi yang tersedia.
 
 </div>
 
@@ -74,6 +77,45 @@ Peran AI (5 provider — OpenRouter / Groq / Gemini / Cohere / Mistral) diisolas
 - **Sesi 3 (2026-06-23)** — Data audit: 31 stale prices sync, sector mismatch fix, gold unit consistency
 - **Sesi 2 (2026-06-22)** — UI overhaul: true black + cyan accent, floating AI chat
 - **Sesi 1 (2026-06-21)** — Project bootstrap: deterministic engine, Express API, Vite + React 19 + Tailwind 4
+
+---
+
+## 🖥️ Kenapa Backtest Engine Tidak Bisa Seperti Kalkulator
+
+Backtest di QUANTBIT **berjalan di browser** (client-side JavaScript), bukan di server. Ini bukan bug — ini adalah konsekuensi arsitektur dari memilih **Cloudflare Pages** sebagai platform deployment.
+
+### Kenapa Client-Side?
+
+| Constraint | Penjelasan |
+|---|---|
+| **Cloudflare Pages = Static Hosting** | Pages hanya menyimpan file HTML/CSS/JS yang di-build dari `dist/`. Tidak ada server runtime, tidak ada process yang bisa dijalankan secara background. |
+| **Cloudflare Pages Functions** | Ada Functions (serverless), tapi punya batas: **10 MB memory**, **30 detik CPU time** per request, **tidak ada persistent state**. Backtest butuh menit-hari untuk data 5+ tahun — tidak muat. |
+| **Single-threaded browser** | Backtest engine (`src/core/backtest-engine.ts`) menggunakan satu thread di browser. Tidak ada parallel processing, tidak ada background job. Kalau user tutup tab → backtest hilang. |
+| **Tidak ada scheduling** | Tidak ada cron, tidak ada daemon. Backtest hanya bisa di-trigger oleh user action (klik tombol "Run Backtest"). |
+
+### Perbandingan: Browser vs Server
+
+| Aspek | Browser (Current) | Server (Ideal) |
+|---|---|---|
+| **Memory** | 256 MB - 2 GB (tergantung device) | 8 GB - 64 GB |
+| **CPU time** | Sampai tab ditutup | Unlimited (dengan timeout) |
+| **Parallelism** | Web Workers (limited) | Multi-thread, multi-process |
+| **Scheduling** | Manual (user klik) | Cron, daemon, queue |
+| **State** | localStorage (per-user) | Database (persistent) |
+| **Cost** | Gratis (user's device) | $5-50/bulan (VPS) |
+
+### Solusi yang Tersedia
+
+| Solusi | Effort | Biaya | Hasil |
+|---|---|---|---|
+| **Tetap client-side** | N/A | Gratis | Backtest berjalan saat user klik, hasil tersimpan di localStorage |
+| **VPS / Dedicated Server** | Medium | $5-10/bulan | Full backtest automation, cron scheduling, persistent state |
+| **Cloudflare Workers** | High | $5/bulan (paid plan) | Serverless, tapi 10 MB memory limit — mungkin cukup untuk backtest ringan |
+| **Hybrid (Client + API)** | High | Varies | Backtest di server, UI di browser — best of both worlds |
+| **Accept limitations** | Low | Gratis | Fokus ke fitur lain, backtest tetap manual |
+
+> [!NOTE]
+> **Rekomendasi:** Untuk project ini, **accept limitations** adalah path tercepat. Core engine (scoring, BPS, AI agent) sudah berjalan dengan baik. Backtest manual tetap fungsional — user bisa klik "Run Backtest" dan melihat hasilnya. Kalau ingin full automation, pertimbangkan VPS ($5-10/bulan) atau Cloudflare Workers.
 
 ---
 
@@ -160,6 +202,9 @@ flowchart TD
     style UI fill:#1a3a3a,color:#fff
     style SP fill:#3a3a1a,color:#fff
 ```
+
+> [!NOTE]
+> **Catatan Arsitektur:** Diagram di atas menunjukkan flow data dari collectors → engine → UI. **Backtest engine berjalan di browser (client-side)**, bukan di server. Cloudflare Pages Functions tidak bisa menjalankan backtest karena batasan: 10 MB memory, 30 detik CPU time, tidak ada persistent state. Untuk penjelasan lengkap, lihat section **"Kenapa Backtest Tidak Bisa Seperti Kalkulator"**.
 
 ---
 
@@ -719,9 +764,11 @@ Project ini dibangun dengan ambisi backtest **15-20 tahun** data IDX supaya kita
 
 1. **Yahoo Finance (sumber utama harga) gratisannya payah untuk pre-2022.** Data 2015-2020 bolong-bolong, adjusted close sering tidak match dengan saham yang ada corporate action (stock split, rights issue, delisting). Saya sudah verifikasi sendiri dan akhirnya menyerah. Sudah diarsipkan `data/years/2000..2020` karena corrupt.
 
-2. **IDX Warehouse hanya publish dari 2021.** Mereka migrasi sistem ~2020/2021, data fundamental sebelum itu tidak konsisten / tidak ada schema 통일. Saya pakai IDX API sebagai primary source (DECISIONS 2026-06-24) — bagus untuk 2021+, kosong untuk sebelumnya.
+2. **IDX Warehouse hanya publish dari 2021.** Mereka migrasi sistem ~2020/2021, data fundamental sebelum itu tidak konsisten / tidak ada schema unified. Saya pakai IDX API sebagai primary source (DECISIONS 2026-06-24) — bagus untuk 2021+, kosong untuk sebelumnya.
 
 3. **API premium (GoAPI, EODHD, Bloomberg, Sectors.app) — mahal.** Untuk personal project ini, ROI-nya nggak masuk akal. Saya dokumentasikan opsinya di `.env.example` tapi tidak built-in ke pipeline.
+
+4. **Backtest engine berjalan di browser (client-side).** Cloudflare Pages = static hosting. Tidak ada server VPS, tidak ada cron, tidak ada background processing. Backtest hanya bisa di-trigger oleh user action (klik tombol). Lihat section **"Kenapa Backtest Tidak Bisa Seperti Kalkulator"** untuk penjelasan lengkap.
 
 ### Apa yang bisa kamu lakukan?
 
@@ -734,6 +781,20 @@ Kalau kamu (atau tim, atau donatur) punya **salah satu** ini, project ini bisa d
 | **EODHD / GoAPI** | IDX 2000-2025 | Bayar API, swap `yahoo-finance2` ke `eodhd` di `scripts/fetch_historical_data.ts` |
 | **CSMAR / Wind / Bloomberg** | IDX 20 tahun | Academic license (kamu mahasiswa? coba kontak kampus) |
 | **Arsip Kaggle** | "IDX Historical" dataset | Cari di kaggle.com/datasets — kadang ada yang upload |
+
+### Solusi Backtest (Server-Side)
+
+Kalau kamu ingin backtest berjalan otomatis (cron, scheduling, persistent state), berikut opsi yang tersedia:
+
+| Solusi | Effort | Biaya | Hasil |
+|---|---|---|---|
+| **VPS / Dedicated Server** | Medium | $5-10/bulan | Full backtest automation, cron scheduling, persistent state. Deploy Express API + backtest engine di VPS, biarkan berjalan 24/7. |
+| **Cloudflare Workers** | High | $5/bulan (paid plan) | Serverless, tapi 10 MB memory limit — mungkin cukup untuk backtest ringan (single ticker, 1 tahun). Untuk full backtest (830 ticker, 5 tahun) → tidak muat. |
+| **Hybrid (Client + API)** | High | Varies | Backtest heavy di server (VPS), UI tetap di Cloudflare Pages. Server handle scheduling, Pages handle rendering. Best of both worlds. |
+| **Accept limitations** | Low | Gratis | Fokus ke fitur lain (AI agent, notification, BPS). Backtest tetap manual — user klik "Run Backtest", hasil tersimpan di localStorage. |
+
+> [!TIP]
+> **Rekomendasi untuk maintainer berikutnya:** Kalau kamu tidak punya budget untuk VPS, **accept limitations** adalah path tercepat. Core engine sudah solid. Backtest manual tetap fungsional. Kalau ingin full automation, pertimbangkan VPS $5-10/bulan — ini sudah cukup untuk Express API + backtest engine + cron.
 
 ### Kalau kamu berhasil backfill
 
@@ -755,6 +816,7 @@ Kalau kamu developer berikutnya dan nemu project ini:
 - **Baca `docs/CURRENT_STATE.md`** — sprint terakhir dan kenapa step terhenti
 - **Join diskusi di GitHub Issues** (kalau masih ada) atau buka issue baru
 - **Jangan takut refactor** — project ini masih hidup, ada 216 tests, biar aman
+- **Baca section "Kenapa Backtest Tidak Bisa Seperti Kalkulator"** — pahami constraint arsitektur sebelum mulai
 
 Dan kalau kamu berhasil backfill pre-2021 — **tolong kabarin**. Saya masih di sini (mungkin), dan itu akan jadi closing chapter yang sempurna.
 
