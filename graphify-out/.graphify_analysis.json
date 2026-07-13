@@ -1,7 +1,10 @@
 {
   "communities": {
     "0": [
+      "src_components_portfoliotracker",
       "src_components_portfoliotracker_portfoliotracker",
+      "src_components_portfoliotracker_sortkey",
+      "src_components_portfoliotracker_syncstatus",
       "src_engine_allocator",
       "src_engine_allocator_allocationresult",
       "src_engine_allocator_computebuyamount",
@@ -94,6 +97,8 @@
       "src_marketdata_fd",
       "src_marketdata_fundamentaldetails",
       "src_marketdata_getscandata",
+      "src_marketdata_idxnews",
+      "src_marketdata_l",
       "src_marketdata_leaderstock",
       "src_marketdata_newsitem",
       "src_marketdata_pf",
@@ -177,6 +182,55 @@
       "zod"
     ],
     "3": [
+      "scripts_seed_tickers",
+      "scripts_seed_tickers_alltickers",
+      "scripts_seed_tickers_idx30set",
+      "scripts_seed_tickers_idx80set",
+      "scripts_seed_tickers_lq45set",
+      "src_components_card",
+      "src_components_card_card",
+      "src_components_card_cardprops",
+      "src_components_card_padding",
+      "src_components_card_paddingmap",
+      "src_components_card_signal",
+      "src_components_card_signalmap",
+      "src_components_card_variant",
+      "src_components_card_variantmap",
+      "src_components_confirmmodal",
+      "src_components_confirmmodal_confirmmodal",
+      "src_components_confirmmodal_confirmmodalprops",
+      "src_components_confirmmodal_variant_styles",
+      "src_components_searchableselect",
+      "src_components_searchableselect_option",
+      "src_components_searchableselect_searchableselect",
+      "src_components_searchableselect_searchableselectprops",
+      "src_components_simulationtab",
+      "src_components_simulationtab_backtestdaydata",
+      "src_components_simulationtab_backtestlog",
+      "src_components_simulationtab_formatrupiah",
+      "src_components_simulationtab_generateclientbacktestdata",
+      "src_components_simulationtab_rationale_101",
+      "src_components_simulationtab_simulationtab",
+      "src_components_simulationtab_sleep",
+      "src_components_simulationtab_ticker_colors",
+      "src_constants_idx80",
+      "src_constants_idx80_combined_tickers",
+      "src_constants_idx80_idx30_tickers",
+      "src_constants_idx80_idx80_tickers",
+      "src_constants_idx80_lq45_tickers",
+      "src_engine_dcabaselines_dcabaseline",
+      "src_engine_sync_engine",
+      "src_engine_sync_engine_active_universe",
+      "src_engine_sync_engine_calcdividend",
+      "src_engine_sync_engine_calcgrowth",
+      "src_engine_sync_engine_calcquality",
+      "src_engine_sync_engine_calcvalue",
+      "src_engine_sync_engine_refreshactiveuniverse",
+      "src_engine_sync_engine_runidx80scan",
+      "src_engine_sync_engine_startscannercron",
+      "src_engine_sync_engine_yahoofinance"
+    ],
+    "4": [
       "scripts_pipeline_sync",
       "scripts_pipeline_sync_avg",
       "scripts_pipeline_sync_computemomentumsql",
@@ -218,7 +272,7 @@
       "scripts_sync_profiles_tickers",
       "src_data_yahoo_fetchyahoodata_yf"
     ],
-    "4": [
+    "5": [
       "cloudflare_workers_types",
       "concurrently",
       "jsdom",
@@ -254,7 +308,7 @@
       "vitest",
       "vitest_coverage_v8"
     ],
-    "5": [
+    "6": [
       "package",
       "package_description",
       "package_name",
@@ -289,7 +343,7 @@
       "package_type",
       "package_version"
     ],
-    "6": [
+    "7": [
       "ref",
       "ref_dist",
       "ref_dom",
@@ -323,7 +377,7 @@
       "tsconfig_include",
       "tsconfig_paths"
     ],
-    "7": [
+    "8": [
       "opencode_9router_models",
       "opencode_fm_gpt_5_3_codex_name",
       "opencode_fm_gpt_5_4_mini_name",
@@ -350,7 +404,7 @@
       "opencode_models_kr_glm_5_agentic",
       "opencode_models_kr_qwen3_coder_next_agentic"
     ],
-    "8": [
+    "9": [
       "scripts_seed_local_db",
       "scripts_seed_local_db_dirname",
       "scripts_seed_local_db_main",
@@ -377,7 +431,61 @@
       "src_server_db_seedhistorical",
       "src_server_db_statementtype"
     ],
-    "9": [
+    "10": [
+      "src_ai_aiclient",
+      "src_ai_aiclient_aichatmessage",
+      "src_ai_aiclient_askai",
+      "src_ai_aiclient_askaioptions",
+      "src_ai_aiclient_askairesult",
+      "src_ai_devmockai",
+      "src_ai_devmockai_devmockresult",
+      "src_ai_devmockai_generatemockresponse",
+      "src_ai_devmockai_generatetextresponse",
+      "src_ai_devmockai_matchaction",
+      "src_ai_devmockai_matchreadonly",
+      "src_ai_devmockai_nextid",
+      "src_ai_tests_devmockai_test",
+      "src_ai_tests_extracttoolcalls_test",
+      "src_ai_tests_extracttoolcalls_test_extracttoolcalls",
+      "src_ai_tests_extracttoolcalls_test_findmatchingbrace",
+      "src_ai_toolcallparser",
+      "src_ai_toolcallparser_action_tools",
+      "src_ai_toolcallparser_extracttoolcalls",
+      "src_ai_toolcallparser_findmatchingbrace",
+      "src_ai_toolcallparser_read_only_tools",
+      "src_components_floatingaichat_floatingaichat",
+      "src_components_floatingaichat_newsessionid",
+      "src_components_floatingaichat_persistmessage",
+      "src_types_ai_aitoolcall"
+    ],
+    "11": [
+      "src_components_aiactionapprovalcard",
+      "src_components_aiactionapprovalcard_aiactionapprovalcard",
+      "src_components_aiactionapprovalcard_aiactionapprovalcardprops",
+      "src_components_explainbutton",
+      "src_components_explainbutton_explainbutton",
+      "src_components_explainbutton_explainbuttonprops",
+      "src_components_floatingaichat",
+      "src_components_floatingaichat_summarisetoolresult",
+      "src_components_floatingaichat_toolresultcard",
+      "src_components_floatingaichat_welcome",
+      "src_components_markdownrenderer",
+      "src_components_markdownrenderer_markdownrenderer",
+      "src_components_markdownrenderer_markdownrendererprops",
+      "src_components_tests_aiactionapprovalcard_test",
+      "src_components_tests_aiactionapprovalcard_test_samplepending",
+      "src_contexts_aicockpitcontext",
+      "src_contexts_aicockpitcontext_aicockpitcontext",
+      "src_contexts_aicockpitcontext_aicockpitcontexttype",
+      "src_contexts_aicockpitcontext_aicockpitprovider",
+      "src_contexts_aicockpitcontext_explainrequest",
+      "src_contexts_aicockpitcontext_useaicockpit",
+      "src_types_ai",
+      "src_types_ai_aitoolresult",
+      "src_types_ai_pendingaction",
+      "src_types_ai_proactivealert"
+    ],
+    "12": [
       "src_ai_aiclient_buildlivecontext",
       "src_components_buypressuredashboard",
       "src_components_buypressuredashboard_action_meta",
@@ -386,7 +494,6 @@
       "src_components_buypressuredashboard_factor_meta",
       "src_components_buypressuredashboard_factorbar",
       "src_components_buypressuredashboard_factorbarprops",
-      "src_contexts_engineconfigcontext_useengineconfig",
       "src_engine_buypressure",
       "src_engine_buypressure_actionfromscore",
       "src_engine_buypressure_buildreason",
@@ -400,61 +507,10 @@
       "src_engine_buypressure_usebuypressure",
       "src_engine_buypressure_weights",
       "src_engine_buypressure_withcrisisoverride",
-      "src_hooks_useproactiveagent_useproactiveagent",
       "src_marketregimeengine_getihsgdrawdown60",
       "src_marketregimeengine_iscrashactive"
     ],
-    "10": [
-      "src_app_marketregimesyncbridge",
-      "src_hooks_usemarketregimesync",
-      "src_hooks_usemarketregimesync_usemarketregimesync",
-      "src_marketdata_cw_aman",
-      "src_marketdata_cw_map",
-      "src_marketregimeengine",
-      "src_marketregimeengine_audittrailentry",
-      "src_marketregimeengine_computemarketregime",
-      "src_marketregimeengine_computesma",
-      "src_marketregimeengine_currentdecision",
-      "src_marketregimeengine_filtertickersforuniverse",
-      "src_marketregimeengine_getaudittrail",
-      "src_marketregimeengine_getihsgdailyreturn",
-      "src_marketregimeengine_getihsgmonthlyreturn",
-      "src_marketregimeengine_getihsgweeklyreturn",
-      "src_marketregimeengine_ihsgprices",
-      "src_marketregimeengine_refreshrsfromregime",
-      "src_marketregimeengine_regimeoutput",
-      "src_marketregimeengine_regimestate",
-      "src_marketregimeengine_setactiveconfig",
-      "src_marketregimeengine_setactiveuniverse",
-      "src_marketregimeengine_setcrashprotectionenabled",
-      "src_marketregimeengine_setcrashsensitivity"
-    ],
-    "11": [
-      "src_components_card",
-      "src_components_card_card",
-      "src_components_card_cardprops",
-      "src_components_card_padding",
-      "src_components_card_paddingmap",
-      "src_components_card_signal",
-      "src_components_card_signalmap",
-      "src_components_card_variant",
-      "src_components_card_variantmap",
-      "src_components_confirmmodal",
-      "src_components_confirmmodal_confirmmodal",
-      "src_components_confirmmodal_confirmmodalprops",
-      "src_components_confirmmodal_variant_styles",
-      "src_components_simulationtab",
-      "src_components_simulationtab_backtestdaydata",
-      "src_components_simulationtab_backtestlog",
-      "src_components_simulationtab_formatrupiah",
-      "src_components_simulationtab_generateclientbacktestdata",
-      "src_components_simulationtab_rationale_101",
-      "src_components_simulationtab_simulationtab",
-      "src_components_simulationtab_sleep",
-      "src_components_simulationtab_ticker_colors",
-      "src_engine_dcabaselines_dcabaseline"
-    ],
-    "12": [
+    "13": [
       "src_server_aichathandler",
       "src_server_aichathandler_aichatresult",
       "src_server_aichathandler_aienv",
@@ -479,52 +535,94 @@
       "src_server_aichathandler_tryprovider",
       "src_server_aimemory_memorymessage"
     ],
-    "13": [
-      "src_ai_aiclient_askai",
-      "src_ai_tests_extracttoolcalls_test",
-      "src_ai_tests_extracttoolcalls_test_extracttoolcalls",
-      "src_ai_tests_extracttoolcalls_test_findmatchingbrace",
-      "src_ai_toolcallparser",
-      "src_ai_toolcallparser_action_tools",
-      "src_ai_toolcallparser_extracttoolcalls",
-      "src_ai_toolcallparser_findmatchingbrace",
-      "src_ai_toolcallparser_read_only_tools",
-      "src_app_appcontent",
-      "src_components_floatingaichat",
-      "src_components_floatingaichat_floatingaichat",
-      "src_components_floatingaichat_newsessionid",
-      "src_components_floatingaichat_persistmessage",
-      "src_components_floatingaichat_summarisetoolresult",
-      "src_components_floatingaichat_toolresultcard",
-      "src_components_floatingaichat_welcome",
-      "src_components_markdownrenderer",
-      "src_components_markdownrenderer_markdownrenderer",
-      "src_components_markdownrenderer_markdownrendererprops",
-      "src_contexts_authcontext_useauth",
-      "src_contexts_notificationcontext_usenotifications"
-    ],
     "14": [
-      "src_app",
-      "src_app_analyticstab",
-      "src_app_configsync",
-      "src_app_markettab",
-      "src_app_portfoliotracker",
-      "src_app_proactiveagentbridge",
-      "src_app_simulationtab",
-      "src_app_tickerpage",
-      "src_app_tsx_docref_adr_0003",
-      "src_components_aitestharness_aitestharness",
-      "src_components_alertbanner",
-      "src_components_alertbanner_alertbanner",
-      "src_components_alertbanner_alertbannerprops",
-      "src_components_backtotop",
-      "src_components_backtotop_backtotop",
-      "src_components_backtotop_backtotopprops",
-      "src_components_loginscreen",
-      "src_components_loginscreen_loginscreen",
-      "src_marketdata_mkt"
+      "src_hooks_usemarketregimesync",
+      "src_hooks_usemarketregimesync_usemarketregimesync",
+      "src_marketregimeengine",
+      "src_marketregimeengine_audittrailentry",
+      "src_marketregimeengine_computeema",
+      "src_marketregimeengine_computemarketregime",
+      "src_marketregimeengine_computesma",
+      "src_marketregimeengine_currentdecision",
+      "src_marketregimeengine_filtertickersforuniverse",
+      "src_marketregimeengine_getaudittrail",
+      "src_marketregimeengine_getihsgdailyreturn",
+      "src_marketregimeengine_getihsgmonthlyreturn",
+      "src_marketregimeengine_getihsgweeklyreturn",
+      "src_marketregimeengine_ihsgprices",
+      "src_marketregimeengine_refreshrsfromregime",
+      "src_marketregimeengine_regimeoutput",
+      "src_marketregimeengine_regimestate",
+      "src_marketregimeengine_setactiveconfig",
+      "src_marketregimeengine_setactiveuniverse",
+      "src_marketregimeengine_setcrashprotectionenabled",
+      "src_marketregimeengine_setcrashsensitivity"
     ],
     "15": [
+      "db_migrations_0004_v2_schema",
+      "db_migrations_0004_v2_schema_ai_messages",
+      "db_migrations_0004_v2_schema_ai_sessions",
+      "db_migrations_0004_v2_schema_backtest_logs",
+      "db_migrations_0004_v2_schema_backtest_sessions",
+      "db_migrations_0004_v2_schema_cash_holdings",
+      "db_migrations_0004_v2_schema_idx80_scans",
+      "db_migrations_0004_v2_schema_market_daily",
+      "db_migrations_0004_v2_schema_notification_rules",
+      "db_migrations_0004_v2_schema_pipeline_runs",
+      "db_migrations_0004_v2_schema_portfolios",
+      "db_migrations_0004_v2_schema_stock_daily",
+      "db_migrations_0004_v2_schema_stock_scores",
+      "db_migrations_0004_v2_schema_strategy_profiles",
+      "db_migrations_0004_v2_schema_tickers",
+      "db_migrations_0004_v2_schema_trade_logs",
+      "db_migrations_0004_v2_schema_user_notifications",
+      "db_migrations_0004_v2_schema_user_profiles",
+      "db_migrations_0004_v2_schema_user_strategy_configs",
+      "db_migrations_0004_v2_schema_watchlists"
+    ],
+    "16": [
+      "src_components_appsidebar",
+      "src_components_appsidebar_appsidebar",
+      "src_components_appsidebar_formatrupiah",
+      "src_components_appsidebar_formatvolume",
+      "src_components_appsidebar_minisparkline",
+      "src_components_manageprofilesmodal",
+      "src_components_manageprofilesmodal_manageprofilesmodal",
+      "src_components_markettab_markettab",
+      "src_components_strategysettingspanel",
+      "src_components_strategysettingspanel_default_profile",
+      "src_components_strategysettingspanel_default_universe",
+      "src_components_strategysettingspanel_strategyconfigshape",
+      "src_components_strategysettingspanel_strategysettingspanel",
+      "src_components_strategysettingspanel_strategysettingspanelprops",
+      "src_contexts_engineconfigcontext_useengineconfig",
+      "src_marketdata_mkt",
+      "src_marketdata_rs",
+      "src_marketregimeengine_computemacd",
+      "src_marketregimeengine_computersi"
+    ],
+    "17": [
+      "src_components_lastupdatedchip",
+      "src_components_lastupdatedchip_lastupdatedchip",
+      "src_components_lastupdatedchip_lastupdatedchipprops",
+      "src_components_marketoverviewcharts",
+      "src_components_marketoverviewcharts_chartday",
+      "src_components_marketoverviewcharts_computesma",
+      "src_components_marketoverviewcharts_errorstate",
+      "src_components_marketoverviewcharts_marketoverviewcharts",
+      "src_components_marketoverviewcharts_marketoverviewchartsprops",
+      "src_components_marketoverviewcharts_rawday",
+      "src_components_marketoverviewcharts_skeleton",
+      "src_components_marketoverviewcharts_timeframe",
+      "src_components_markettab",
+      "src_components_markettab_syncstatus",
+      "src_utils_reconstructportfoliohistory",
+      "src_utils_reconstructportfoliohistory_portfoliohistorypoint",
+      "src_utils_reconstructportfoliohistory_portfolioindexedhistory",
+      "src_utils_reconstructportfoliohistory_rawday",
+      "src_utils_reconstructportfoliohistory_reconstructportfoliohistory"
+    ],
+    "18": [
       "src_server_aimemory",
       "src_server_aimemory_aimessage",
       "src_server_aimemory_aimessagerole",
@@ -545,47 +643,7 @@
       "src_server_tests_aimemory_test_now",
       "src_server_tests_aimemory_test_sessions"
     ],
-    "16": [
-      "scripts_seed_tickers",
-      "scripts_seed_tickers_alltickers",
-      "scripts_seed_tickers_idx30set",
-      "scripts_seed_tickers_idx80set",
-      "scripts_seed_tickers_lq45set",
-      "src_components_leaderstab",
-      "src_components_leaderstab_getrotationcolor",
-      "src_components_leaderstab_getrotationdata",
-      "src_components_leaderstab_leaderstab",
-      "src_components_portfoliotracker",
-      "src_components_portfoliotracker_sortkey",
-      "src_components_portfoliotracker_syncstatus",
-      "src_constants_idx80",
-      "src_constants_idx80_idx30_tickers",
-      "src_constants_idx80_idx80_tickers",
-      "src_constants_idx80_lq45_tickers",
-      "src_marketdata_getprocessedleaders",
-      "src_marketdata_l"
-    ],
-    "17": [
-      "src_ai_aiclient_buildcontextinputs",
-      "src_components_analyticstab",
-      "src_components_analyticstab_analyticstab",
-      "src_components_analyticstab_analyticstabprops",
-      "src_components_analyticstab_profiles",
-      "src_components_appsidebar_appsidebarprops",
-      "src_components_floatingaichat_floatingaichatprops",
-      "src_components_leaderstab_leaderstabprops",
-      "src_components_markettab_markettabprops",
-      "src_components_portfoliotracker_portfoliotrackerprops",
-      "src_components_simulationtab_simulationtabprops",
-      "src_hooks_useaitools_buildpendingcontext",
-      "src_hooks_useaitools_portfolioapi",
-      "src_hooks_useaitools_useaitoolsparams",
-      "src_pages_tickerpage_tickerpageprops",
-      "src_types_portfolioitem",
-      "src_types_stockdata",
-      "src_types_watchlistitem"
-    ],
-    "18": [
+    "19": [
       "server",
       "server_app",
       "server_dirname",
@@ -604,26 +662,26 @@
       "server_newmemid",
       "src_server_aichathandler_chatmessage"
     ],
-    "19": [
-      "src_components_aitestharness",
-      "src_components_aitestharness_storage_keys",
-      "src_hooks_tests_useaitools_test",
-      "src_hooks_tests_useaitools_test_mockctx",
-      "src_hooks_useaitools",
-      "src_hooks_useaitools_action_registry",
-      "src_hooks_useaitools_buildmarkethistory",
-      "src_hooks_useaitools_buildpendingactionfromcontext",
-      "src_hooks_useaitools_buildtickermetrics",
-      "src_hooks_useaitools_formatidr",
-      "src_hooks_useaitools_getprocessedleaderssafe",
-      "src_hooks_useaitools_safenum",
-      "src_hooks_useaitools_toolhandler",
-      "src_hooks_useaitools_useaitools",
-      "src_types_ai",
-      "src_types_ai_aiaction",
-      "src_types_ai_aitoolresult"
-    ],
     "20": [
+      "src_app",
+      "src_app_analyticstab",
+      "src_app_configsync",
+      "src_app_marketregimesyncbridge",
+      "src_app_markettab",
+      "src_app_portfoliotracker",
+      "src_app_proactiveagentbridge",
+      "src_app_simulationtab",
+      "src_app_tickerpage",
+      "src_app_tsx_docref_adr_0003",
+      "src_components_aitestharness_aitestharness",
+      "src_components_alertbanner",
+      "src_components_alertbanner_alertbanner",
+      "src_components_alertbanner_alertbannerprops",
+      "src_components_backtotop",
+      "src_components_backtotop_backtotop",
+      "src_components_backtotop_backtotopprops"
+    ],
+    "21": [
       "src_components_capabilitiessection",
       "src_components_capabilitiessection_capabilitiessection",
       "src_components_capabilitiessection_cards",
@@ -642,24 +700,61 @@
       "src_components_motionvariants_titlevariants",
       "src_components_motionvariants_underlinevariants"
     ],
-    "21": [
-      "src_components_appsidebar",
-      "src_components_appsidebar_formatrupiah",
-      "src_components_appsidebar_formatvolume",
-      "src_components_appsidebar_minisparkline",
-      "src_components_explainbutton",
-      "src_components_explainbutton_explainbutton",
-      "src_components_explainbutton_explainbuttonprops",
-      "src_components_strategysettingspanel",
-      "src_components_strategysettingspanel_default_profile",
-      "src_components_strategysettingspanel_default_universe",
-      "src_components_strategysettingspanel_strategyconfigshape",
-      "src_components_strategysettingspanel_strategysettingspanel",
-      "src_components_strategysettingspanel_strategysettingspanelprops",
-      "src_contexts_aicockpitcontext_useaicockpit",
-      "src_marketdata_idxnews"
-    ],
     "22": [
+      "src_ai_aiclient_buildcontextinputs",
+      "src_components_analyticstab_analyticstabprops",
+      "src_components_appsidebar_appsidebarprops",
+      "src_components_floatingaichat_floatingaichatprops",
+      "src_components_leaderstab_leaderstabprops",
+      "src_components_markettab_markettabprops",
+      "src_components_portfoliotracker_portfoliotrackerprops",
+      "src_components_simulationtab_simulationtabprops",
+      "src_hooks_useaitools_buildpendingcontext",
+      "src_hooks_useaitools_portfolioapi",
+      "src_hooks_useaitools_useaitoolsparams",
+      "src_pages_tabs_overviewtab_overviewtabprops",
+      "src_pages_tickerpage_tickerpageprops",
+      "src_types_portfolioitem",
+      "src_types_stockdata",
+      "src_types_watchlistitem"
+    ],
+    "23": [
+      "src_app_appcontent",
+      "src_components_aitestharness",
+      "src_components_aitestharness_storage_keys",
+      "src_contexts_notificationcontext_usenotifications",
+      "src_hooks_tests_proactivecooldown_test",
+      "src_hooks_useproactiveagent",
+      "src_hooks_useproactiveagent_markrulefired",
+      "src_hooks_useproactiveagent_proactiverule",
+      "src_hooks_useproactiveagent_shouldfireontransition",
+      "src_hooks_useproactiveagent_shouldfirerule",
+      "src_hooks_useproactiveagent_useproactiveagent",
+      "src_hooks_useuistate",
+      "src_hooks_useuistate_tab",
+      "src_hooks_useuistate_theme",
+      "src_hooks_useuistate_ts_docref_adr_0003",
+      "src_hooks_useuistate_useuistate"
+    ],
+    "24": [
+      "src_components_forwarddividendsforecast",
+      "src_components_forwarddividendsforecast_forwarddividendsforecast",
+      "src_components_forwarddividendsforecast_forwarddividendsforecastprops",
+      "src_components_multisearchableselect",
+      "src_components_multisearchableselect_multisearchableselect",
+      "src_components_multisearchableselect_multisearchableselectprops",
+      "src_components_multisearchableselect_option",
+      "src_components_tickerlogo",
+      "src_components_tickerlogo_tickerlogo",
+      "src_pages_tickerpage",
+      "src_pages_tickerpage_overviewtab",
+      "src_pages_tickerpage_peercomparisontab",
+      "src_pages_tickerpage_rotationhistorytab",
+      "src_pages_tickerpage_signalhistorytab",
+      "src_pages_tickerpage_ticker_tabs",
+      "src_pages_tickerpage_tickerpage"
+    ],
+    "25": [
       "src_components_scorebreakdown",
       "src_components_scorebreakdown_factors",
       "src_components_scorebreakdown_scorebreakdown",
@@ -676,7 +771,7 @@
       "src_pages_tabs_signalhistorytab_signalhistorytabprops",
       "src_pages_tabs_signalhistorytab_signalsresponse"
     ],
-    "23": [
+    "26": [
       "scripts_compute_intermediate",
       "scripts_compute_intermediate_atr",
       "scripts_compute_intermediate_dailyrow",
@@ -692,7 +787,7 @@
       "scripts_compute_intermediate_sma",
       "scripts_compute_intermediate_sqlpath"
     ],
-    "24": [
+    "27": [
       "server_getaistatusfromenv",
       "src_server_aichathandler_clearallcooldowns",
       "src_server_aichathandler_formatmemoryblock",
@@ -708,39 +803,23 @@
       "src_server_tests_aichathandler_test_mockresp",
       "src_server_tests_aichathandler_test_mocktextresponse"
     ],
-    "25": [
-      "src_ai_aiclient",
-      "src_ai_aiclient_aichatmessage",
-      "src_ai_aiclient_askaioptions",
-      "src_ai_aiclient_askairesult",
-      "src_ai_devmockai",
-      "src_ai_devmockai_devmockresult",
-      "src_ai_devmockai_generatemockresponse",
-      "src_ai_devmockai_generatetextresponse",
-      "src_ai_devmockai_matchaction",
-      "src_ai_devmockai_matchreadonly",
-      "src_ai_devmockai_nextid",
-      "src_ai_tests_devmockai_test",
-      "src_marketdata_rs",
-      "src_types_ai_aitoolcall"
+    "28": [
+      "src_hooks_tests_useaitools_test",
+      "src_hooks_tests_useaitools_test_mockctx",
+      "src_hooks_useaitools",
+      "src_hooks_useaitools_action_registry",
+      "src_hooks_useaitools_buildmarkethistory",
+      "src_hooks_useaitools_buildpendingactionfromcontext",
+      "src_hooks_useaitools_buildtickermetrics",
+      "src_hooks_useaitools_formatidr",
+      "src_hooks_useaitools_getprocessedleaderssafe",
+      "src_hooks_useaitools_safenum",
+      "src_hooks_useaitools_toolhandler",
+      "src_hooks_useaitools_useaitools",
+      "src_marketregimeengine_getihsgdata",
+      "src_types_ai_aiaction"
     ],
-    "26": [
-      "src_components_marketoverviewcharts",
-      "src_components_marketoverviewcharts_chartday",
-      "src_components_marketoverviewcharts_computesma",
-      "src_components_marketoverviewcharts_errorstate",
-      "src_components_marketoverviewcharts_marketoverviewcharts",
-      "src_components_marketoverviewcharts_marketoverviewchartsprops",
-      "src_components_marketoverviewcharts_rawday",
-      "src_components_marketoverviewcharts_skeleton",
-      "src_components_marketoverviewcharts_timeframe",
-      "src_utils_reconstructportfoliohistory",
-      "src_utils_reconstructportfoliohistory_portfoliohistorypoint",
-      "src_utils_reconstructportfoliohistory_portfolioindexedhistory",
-      "src_utils_reconstructportfoliohistory_rawday",
-      "src_utils_reconstructportfoliohistory_reconstructportfoliohistory"
-    ],
-    "27": [
+    "29": [
       "opencode_keirouter_models",
       "opencode_kiro_auto_name",
       "opencode_kiro_auto_thinking_name",
@@ -755,21 +834,7 @@
       "opencode_models_kiro_deepseek_3_2",
       "opencode_models_kiro_qwen3_coder_next"
     ],
-    "28": [
-      "src_components_aiactionapprovalcard",
-      "src_components_aiactionapprovalcard_aiactionapprovalcard",
-      "src_components_aiactionapprovalcard_aiactionapprovalcardprops",
-      "src_components_tests_aiactionapprovalcard_test",
-      "src_components_tests_aiactionapprovalcard_test_samplepending",
-      "src_contexts_aicockpitcontext",
-      "src_contexts_aicockpitcontext_aicockpitcontext",
-      "src_contexts_aicockpitcontext_aicockpitcontexttype",
-      "src_contexts_aicockpitcontext_aicockpitprovider",
-      "src_contexts_aicockpitcontext_explainrequest",
-      "src_types_ai_pendingaction",
-      "src_types_ai_proactivealert"
-    ],
-    "29": [
+    "30": [
       "src_components_appheader",
       "src_components_appheader_appheader",
       "src_components_appheader_appheaderprops",
@@ -782,20 +847,6 @@
       "src_utils_portfoliovalue_totalcost",
       "src_utils_portfoliovalue_totalreturnpercent",
       "src_utils_portfoliovalue_totalwealth"
-    ],
-    "30": [
-      "src_components_manageprofilesmodal",
-      "src_components_manageprofilesmodal_manageprofilesmodal",
-      "src_contexts_engineconfigcontext",
-      "src_contexts_engineconfigcontext_createdefaultconfig",
-      "src_contexts_engineconfigcontext_default_profiles",
-      "src_contexts_engineconfigcontext_engineconfig",
-      "src_contexts_engineconfigcontext_engineconfigcontext",
-      "src_contexts_engineconfigcontext_engineconfigcontexttype",
-      "src_contexts_engineconfigcontext_engineconfigprovider",
-      "src_contexts_engineconfigcontext_gettodaywib",
-      "src_contexts_engineconfigcontext_strategysnapshot",
-      "src_contexts_engineconfigcontext_weightprofile"
     ],
     "31": [
       "scripts_simulate_strategy",
@@ -812,31 +863,18 @@
     ],
     "32": [
       "src_app_app",
+      "src_components_loginscreen",
+      "src_components_loginscreen_loginscreen",
+      "src_contexts_authcontext",
+      "src_contexts_authcontext_authcontext",
+      "src_contexts_authcontext_authcontexttype",
       "src_contexts_authcontext_authprovider",
-      "src_errorboundary",
-      "src_errorboundary_errorboundary",
-      "src_errorboundary_errorboundary_componentdidcatch",
-      "src_errorboundary_errorboundary_constructor",
-      "src_errorboundary_errorboundary_getderivedstatefromerror",
-      "src_errorboundary_errorboundary_render",
-      "src_errorboundary_props",
-      "src_errorboundary_state",
-      "src_main"
+      "src_contexts_authcontext_useauth",
+      "src_main",
+      "src_services_api_authapi",
+      "src_services_api_user"
     ],
     "33": [
-      "src_components_appsidebar_appsidebar",
-      "src_components_lastupdatedchip",
-      "src_components_lastupdatedchip_lastupdatedchip",
-      "src_components_lastupdatedchip_lastupdatedchipprops",
-      "src_components_markettab",
-      "src_components_markettab_markettab",
-      "src_components_markettab_syncstatus",
-      "src_marketregimeengine_computeema",
-      "src_marketregimeengine_computemacd",
-      "src_marketregimeengine_computersi",
-      "src_marketregimeengine_getihsgdata"
-    ],
-    "34": [
       "src_components_rotationbadge",
       "src_components_rotationbadge_rotationbadge",
       "src_components_rotationbadge_rotationbadgeprops",
@@ -849,33 +887,7 @@
       "src_pages_tabs_rotationhistorytab_status_colors",
       "src_services_api_api"
     ],
-    "35": [
-      "src_constants_idx80_combined_tickers",
-      "src_engine_sync_engine",
-      "src_engine_sync_engine_active_universe",
-      "src_engine_sync_engine_calcdividend",
-      "src_engine_sync_engine_calcgrowth",
-      "src_engine_sync_engine_calcquality",
-      "src_engine_sync_engine_calcvalue",
-      "src_engine_sync_engine_refreshactiveuniverse",
-      "src_engine_sync_engine_runidx80scan",
-      "src_engine_sync_engine_startscannercron",
-      "src_engine_sync_engine_yahoofinance"
-    ],
-    "36": [
-      "src_contexts_authcontext",
-      "src_contexts_authcontext_authcontext",
-      "src_contexts_authcontext_authcontexttype",
-      "src_services_api",
-      "src_services_api_authapi",
-      "src_services_api_clearsession",
-      "src_services_api_devmock",
-      "src_services_api_getsession",
-      "src_services_api_request",
-      "src_services_api_setsession",
-      "src_services_api_user"
-    ],
-    "37": [
+    "34": [
       "src_contexts_notificationcontext",
       "src_contexts_notificationcontext_loadpersisted",
       "src_contexts_notificationcontext_notification",
@@ -888,68 +900,42 @@
       "src_hooks_useportfoliomanager_useportfoliomanager",
       "src_types_analysisresult"
     ],
-    "38": [
-      "src_hooks_tests_proactivecooldown_test",
-      "src_hooks_useproactiveagent",
-      "src_hooks_useproactiveagent_markrulefired",
-      "src_hooks_useproactiveagent_proactiverule",
-      "src_hooks_useproactiveagent_shouldfireontransition",
-      "src_hooks_useproactiveagent_shouldfirerule",
-      "src_hooks_useuistate",
-      "src_hooks_useuistate_tab",
-      "src_hooks_useuistate_theme",
-      "src_hooks_useuistate_ts_docref_adr_0003",
-      "src_hooks_useuistate_useuistate"
-    ],
-    "39": [
+    "35": [
       "opencode",
+      "opencode_9router_name",
+      "opencode_9router_npm",
+      "opencode_9router_options",
       "opencode_model",
-      "opencode_models_cohere_north_mini_code_free",
-      "opencode_models_meta_llama_llama_3_3_70b_instruct_free",
-      "opencode_models_nvidia_nemotron_3_super_120b_free",
-      "opencode_models_openai_gpt_oss_120b_free",
-      "opencode_openrouter_models",
       "opencode_provider",
+      "opencode_provider_9router",
       "opencode_provider_openrouter",
       "opencode_schema"
     ],
-    "40": [
-      "src_components_forwarddividendsforecast",
-      "src_components_forwarddividendsforecast_forwarddividendsforecast",
-      "src_components_forwarddividendsforecast_forwarddividendsforecastprops",
-      "src_pages_tickerpage",
-      "src_pages_tickerpage_overviewtab",
-      "src_pages_tickerpage_peercomparisontab",
-      "src_pages_tickerpage_rotationhistorytab",
-      "src_pages_tickerpage_signalhistorytab",
-      "src_pages_tickerpage_ticker_tabs",
-      "src_types"
+    "36": [
+      "src_components_analyticstab",
+      "src_components_analyticstab_analyticstab",
+      "src_components_analyticstab_profiles",
+      "src_components_leaderstab",
+      "src_components_leaderstab_getrotationcolor",
+      "src_components_leaderstab_getrotationdata",
+      "src_components_leaderstab_leaderstab",
+      "src_marketdata_cw_aman",
+      "src_marketdata_cw_map",
+      "src_marketdata_getprocessedleaders"
     ],
-    "41": [
-      "src_components_multisearchableselect",
-      "src_components_multisearchableselect_multisearchableselect",
-      "src_components_multisearchableselect_multisearchableselectprops",
-      "src_components_multisearchableselect_option",
-      "src_components_searchableselect",
-      "src_components_searchableselect_option",
-      "src_components_searchableselect_searchableselect",
-      "src_components_searchableselect_searchableselectprops",
-      "src_components_tickerlogo",
-      "src_components_tickerlogo_tickerlogo"
+    "37": [
+      "src_contexts_engineconfigcontext",
+      "src_contexts_engineconfigcontext_createdefaultconfig",
+      "src_contexts_engineconfigcontext_default_profiles",
+      "src_contexts_engineconfigcontext_engineconfig",
+      "src_contexts_engineconfigcontext_engineconfigcontext",
+      "src_contexts_engineconfigcontext_engineconfigcontexttype",
+      "src_contexts_engineconfigcontext_engineconfigprovider",
+      "src_contexts_engineconfigcontext_gettodaywib",
+      "src_contexts_engineconfigcontext_strategysnapshot",
+      "src_contexts_engineconfigcontext_weightprofile"
     ],
-    "42": [
-      "src_pages_tabs_peercomparisontab",
-      "src_pages_tabs_peercomparisontab_compare_metrics",
-      "src_pages_tabs_peercomparisontab_fmtscore",
-      "src_pages_tabs_peercomparisontab_peercomparisontab",
-      "src_pages_tabs_peercomparisontab_peercomparisontabprops",
-      "src_pages_tabs_peercomparisontab_peerdata",
-      "src_pages_tabs_peercomparisontab_peerresponse",
-      "src_pages_tabs_peercomparisontab_scorecell",
-      "src_pages_tickerpage_tickerpage",
-      "src_stocksdata_stocks_data"
-    ],
-    "43": [
+    "38": [
       "opencode_claude_haiku_4_5_name",
       "opencode_claude_sonnet_4_5_name",
       "opencode_mistral_large_name",
@@ -960,7 +946,18 @@
       "opencode_models_mistral_medium_3_5",
       "opencode_nara_models"
     ],
-    "44": [
+    "39": [
+      "src_pages_tabs_peercomparisontab",
+      "src_pages_tabs_peercomparisontab_compare_metrics",
+      "src_pages_tabs_peercomparisontab_fmtscore",
+      "src_pages_tabs_peercomparisontab_peercomparisontab",
+      "src_pages_tabs_peercomparisontab_peercomparisontabprops",
+      "src_pages_tabs_peercomparisontab_peerdata",
+      "src_pages_tabs_peercomparisontab_peerresponse",
+      "src_pages_tabs_peercomparisontab_scorecell",
+      "src_stocksdata_stocks_data"
+    ],
+    "40": [
       "functions_tsconfig",
       "functions_tsconfig_compileroptions",
       "functions_tsconfig_compileroptions_types",
@@ -970,7 +967,7 @@
       "ref_ts",
       "ref_tsconfig_json"
     ],
-    "45": [
+    "41": [
       "opencode_keirouter_name",
       "opencode_keirouter_npm",
       "opencode_keirouter_options",
@@ -980,7 +977,7 @@
       "opencode_provider_keirouter",
       "opencode_virtusoul_options"
     ],
-    "46": [
+    "42": [
       "src_ai_systemknowledge",
       "src_ai_systemknowledge_ailivecontext",
       "src_ai_systemknowledge_behavior",
@@ -990,7 +987,7 @@
       "src_ai_systemknowledge_system_knowledge",
       "src_ai_tests_systemknowledge_test"
     ],
-    "47": [
+    "43": [
       "src_components_loadingskeletons",
       "src_components_loadingskeletons_cardskeleton",
       "src_components_loadingskeletons_chartskeleton",
@@ -1000,7 +997,7 @@
       "src_components_loadingskeletons_spinneroverlay",
       "src_components_loadingskeletons_tablerowskeleton"
     ],
-    "48": [
+    "44": [
       "src_db_localdb",
       "src_db_localdb_db_query_script",
       "src_db_localdb_dirname",
@@ -1010,7 +1007,17 @@
       "src_db_localdb_queryfirst",
       "src_db_localdb_root"
     ],
-    "49": [
+    "45": [
+      "src_errorboundary",
+      "src_errorboundary_errorboundary",
+      "src_errorboundary_errorboundary_componentdidcatch",
+      "src_errorboundary_errorboundary_constructor",
+      "src_errorboundary_errorboundary_getderivedstatefromerror",
+      "src_errorboundary_errorboundary_render",
+      "src_errorboundary_props",
+      "src_errorboundary_state"
+    ],
+    "46": [
       "scripts_compute_rank_history",
       "scripts_compute_rank_history_dirname",
       "scripts_compute_rank_history_esc",
@@ -1019,7 +1026,7 @@
       "scripts_compute_rank_history_run",
       "scripts_compute_rank_history_w"
     ],
-    "50": [
+    "47": [
       "scripts_compute_rotation",
       "scripts_compute_rotation_dirname",
       "scripts_compute_rotation_esc",
@@ -1028,7 +1035,7 @@
       "scripts_compute_rotation_root",
       "scripts_compute_rotation_run"
     ],
-    "51": [
+    "48": [
       "scripts_compute_signals",
       "scripts_compute_signals_dirname",
       "scripts_compute_signals_esc",
@@ -1037,7 +1044,7 @@
       "scripts_compute_signals_root",
       "scripts_compute_signals_run"
     ],
-    "52": [
+    "49": [
       "scripts_find_best_config",
       "scripts_find_best_config_cfg",
       "scripts_find_best_config_d",
@@ -1046,7 +1053,7 @@
       "scripts_find_best_config_res",
       "scripts_find_best_config_run"
     ],
-    "53": [
+    "50": [
       "src_components_digitalwalletui",
       "src_components_digitalwalletui_digitalwalletui",
       "src_components_digitalwalletui_digitalwalletuiprops",
@@ -1055,16 +1062,24 @@
       "src_components_floatingwallet_floatingwallet",
       "src_components_floatingwallet_floatingwalletprops"
     ],
-    "54": [
+    "51": [
       "src_components_historicalchart",
       "src_components_historicalchart_historicalchart",
       "src_components_historicalchart_historicalchartprops",
       "src_pages_tabs_overviewtab",
       "src_pages_tabs_overviewtab_metrics",
       "src_pages_tabs_overviewtab_overviewtab",
-      "src_pages_tabs_overviewtab_overviewtabprops"
+      "src_types"
     ],
-    "55": [
+    "52": [
+      "db_migrations_0007_ticker_detail",
+      "db_migrations_0007_ticker_detail_company_profile",
+      "db_migrations_0007_ticker_detail_financial_statements",
+      "db_migrations_0007_ticker_detail_rank_history",
+      "db_migrations_0007_ticker_detail_rotation_history",
+      "db_migrations_0007_ticker_detail_signal_history"
+    ],
+    "53": [
       "opencode_models_virtusoul_v1",
       "opencode_provider_virtusoul",
       "opencode_virtusoul_models",
@@ -1072,7 +1087,7 @@
       "opencode_virtusoul_npm",
       "opencode_virtusoul_v1_name"
     ],
-    "56": [
+    "54": [
       "src_server_aichathandler_buildproviderlist",
       "src_server_aichathandler_chatgemini",
       "src_server_aichathandler_getaistatuswithquota",
@@ -1080,61 +1095,75 @@
       "src_server_aichathandler_iskeyset",
       "src_server_aichathandler_trygeminifallback"
     ],
-    "57": [
+    "55": [
+      "src_services_api",
+      "src_services_api_clearsession",
+      "src_services_api_devmock",
+      "src_services_api_getsession",
+      "src_services_api_request",
+      "src_services_api_setsession"
+    ],
+    "56": [
       "scripts_compute_scores",
       "scripts_compute_scores_dirname",
       "scripts_compute_scores_main",
       "scripts_compute_scores_run",
       "scripts_compute_scores_sql_file"
     ],
-    "58": [
+    "57": [
       "src_data_yahoo_fetchyahoodata",
       "src_data_yahoo_fetchyahoodata_fetchyahoodata",
       "src_data_yahoo_fetchyahoodata_yahoostock",
       "src_server_yahooapi",
       "src_server_yahooapi_handleyahoorequest"
     ],
-    "59": [
+    "58": [
       "functions_api_backtest_run",
       "functions_api_backtest_run_env",
       "functions_api_backtest_run_onrequest",
       "functions_api_backtest_run_strategyconfig"
     ],
-    "60": [
+    "59": [
       "functions_api_portfolio",
       "functions_api_portfolio_env",
       "functions_api_portfolio_getuseremail",
       "functions_api_portfolio_onrequest"
     ],
-    "61": [
+    "60": [
       "functions_api_trade_logs",
       "functions_api_trade_logs_env",
       "functions_api_trade_logs_getuseremail",
       "functions_api_trade_logs_onrequest"
     ],
-    "62": [
+    "61": [
       "functions_api_watchlist",
       "functions_api_watchlist_env",
       "functions_api_watchlist_getuseremail",
       "functions_api_watchlist_onrequest"
     ],
-    "63": [
-      "opencode_9router_name",
-      "opencode_9router_npm",
-      "opencode_9router_options",
-      "opencode_provider_9router"
+    "62": [
+      "opencode_models_cohere_north_mini_code_free",
+      "opencode_models_meta_llama_llama_3_3_70b_instruct_free",
+      "opencode_models_nvidia_nemotron_3_super_120b_free",
+      "opencode_models_openai_gpt_oss_120b_free",
+      "opencode_openrouter_models"
     ],
-    "64": [
+    "63": [
       "src_components_tests_floatingaichat_history_test",
       "src_components_tests_floatingaichat_history_test_testharness",
       "src_components_tests_floatingaichat_history_test_usechathistory",
       "src_components_tests_floatingaichat_history_test_welcome"
     ],
-    "65": [
+    "64": [
       "src_hooks_useshortcuts",
       "src_hooks_useshortcuts_iseditabletarget",
       "src_hooks_useshortcuts_shortcutmap",
       "src_hooks_useshortcuts_useshortcuts"
+    ],
+    "65": [
+      "db_migrations_0005_auth_tables",
+      "db_migrations_0005_auth_tables_sessions",
+      "db_migrations_0005_auth_tables_users"
     ],
     "66": [
       "functions_api_auth_login",
@@ -1222,86 +1251,123 @@
       "vite_config_rationale_16"
     ],
     "83": [
+      "db_migrations_0006_intermediate",
+      "db_migrations_0006_intermediate_backtest_intermediate"
+    ],
+    "84": [
       "functions_api_auth_logout",
       "functions_api_auth_logout_onrequest"
     ],
-    "84": [
-      "playwright_config"
-    ],
     "85": [
-      "vitest_config"
+      "db_seeds_momentum"
     ],
     "86": [
+      "db_seeds_momentum_query"
+    ],
+    "87": [
+      "db_seeds_profiles"
+    ],
+    "88": [
+      "db_seeds_seed_historical_2021"
+    ],
+    "89": [
+      "db_seeds_seed_historical_2022"
+    ],
+    "90": [
+      "db_seeds_seed_historical_2023"
+    ],
+    "91": [
+      "db_seeds_seed_historical_2024"
+    ],
+    "92": [
+      "db_seeds_seed_historical_2025"
+    ],
+    "93": [
+      "db_seeds_seed_historical_2026"
+    ],
+    "94": [
+      "db_seeds_seed_scores"
+    ],
+    "95": [
+      "db_seeds_seed_tickers"
+    ],
+    "96": [
+      "playwright_config"
+    ],
+    "97": [
+      "vitest_config"
+    ],
+    "98": [
       "vitest_setup"
     ]
   },
   "cohesion": {
-    "0": 0.08994032395566923,
-    "1": 0.07013574660633484,
+    "0": 0.08646322378716745,
+    "1": 0.06778476589797344,
     "2": 0.04081632653061224,
-    "3": 0.08205128205128205,
-    "4": 0.06060606060606061,
+    "3": 0.060129509713228495,
+    "4": 0.08205128205128205,
     "5": 0.06060606060606061,
-    "6": 0.0625,
-    "7": 0.08,
-    "8": 0.13333333333333333,
-    "9": 0.14,
-    "10": 0.16996047430830039,
-    "11": 0.10276679841897234,
-    "12": 0.13043478260869565,
-    "13": 0.1645021645021645,
-    "14": 0.1286549707602339,
-    "15": 0.19298245614035087,
-    "16": 0.2222222222222222,
-    "17": 0.23529411764705882,
-    "18": 0.1323529411764706,
-    "19": 0.2426470588235294,
-    "20": 0.20588235294117646,
-    "21": 0.1619047619047619,
-    "22": 0.1523809523809524,
-    "23": 0.25274725274725274,
-    "24": 0.18681318681318682,
-    "25": 0.25274725274725274,
-    "26": 0.18681318681318682,
-    "27": 0.15384615384615385,
-    "28": 0.24242424242424243,
-    "29": 0.30303030303030304,
-    "30": 0.24242424242424243,
+    "6": 0.06060606060606061,
+    "7": 0.0625,
+    "8": 0.08,
+    "9": 0.13333333333333333,
+    "10": 0.15666666666666668,
+    "11": 0.14,
+    "12": 0.14624505928853754,
+    "13": 0.13043478260869565,
+    "14": 0.19523809523809524,
+    "15": 0.21052631578947367,
+    "16": 0.15789473684210525,
+    "17": 0.14035087719298245,
+    "18": 0.19298245614035087,
+    "19": 0.1323529411764706,
+    "20": 0.1323529411764706,
+    "21": 0.20588235294117646,
+    "22": 0.26666666666666666,
+    "23": 0.19166666666666668,
+    "24": 0.15,
+    "25": 0.1523809523809524,
+    "26": 0.25274725274725274,
+    "27": 0.18681318681318682,
+    "28": 0.26373626373626374,
+    "29": 0.15384615384615385,
+    "30": 0.30303030303030304,
     "31": 0.2909090909090909,
-    "32": 0.2,
-    "33": 0.2909090909090909,
-    "34": 0.2,
-    "35": 0.3090909090909091,
-    "36": 0.3090909090909091,
-    "37": 0.2545454545454545,
-    "38": 0.23636363636363636,
-    "39": 0.2,
-    "40": 0.24444444444444444,
-    "41": 0.24444444444444444,
-    "42": 0.24444444444444444,
-    "43": 0.2222222222222222,
-    "44": 0.25,
-    "45": 0.32142857142857145,
-    "46": 0.35714285714285715,
-    "47": 0.25,
-    "48": 0.2857142857142857,
-    "49": 0.38095238095238093,
-    "50": 0.42857142857142855,
-    "51": 0.42857142857142855,
+    "32": 0.2727272727272727,
+    "33": 0.2,
+    "34": 0.2545454545454545,
+    "35": 0.2222222222222222,
+    "36": 0.3333333333333333,
+    "37": 0.28888888888888886,
+    "38": 0.2222222222222222,
+    "39": 0.2777777777777778,
+    "40": 0.25,
+    "41": 0.32142857142857145,
+    "42": 0.35714285714285715,
+    "43": 0.25,
+    "44": 0.2857142857142857,
+    "45": 0.25,
+    "46": 0.38095238095238093,
+    "47": 0.42857142857142855,
+    "48": 0.42857142857142855,
+    "49": 0.3333333333333333,
+    "50": 0.3333333333333333,
+    "51": 0.38095238095238093,
     "52": 0.3333333333333333,
     "53": 0.3333333333333333,
-    "54": 0.3333333333333333,
-    "55": 0.3333333333333333,
-    "56": 0.4,
-    "57": 0.5,
-    "58": 0.6,
-    "59": 0.5,
+    "54": 0.4,
+    "55": 0.6,
+    "56": 0.5,
+    "57": 0.6,
+    "58": 0.5,
+    "59": 0.6666666666666666,
     "60": 0.6666666666666666,
     "61": 0.6666666666666666,
-    "62": 0.6666666666666666,
-    "63": 0.5,
+    "62": 0.4,
+    "63": 0.6666666666666666,
     "64": 0.6666666666666666,
-    "65": 0.6666666666666666,
+    "65": 1.0,
     "66": 0.6666666666666666,
     "67": 0.6666666666666666,
     "68": 0.6666666666666666,
@@ -1322,7 +1388,19 @@
     "83": 1.0,
     "84": 1.0,
     "85": 1.0,
-    "86": 1.0
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0
   },
   "gods": [
     {
@@ -1436,33 +1514,33 @@
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `useDataFeed()` connect `marketData.ts` to `marketRegimeEngine.ts`, `pipeline-sync.ts`, `FloatingAIChat.tsx`, `App.tsx`?",
-      "why": "High betweenness centrality (0.045) - this node is a cross-community bridge."
+      "question": "Why does `StockData` connect `StockData` to `PortfolioTracker.tsx`, `marketData.ts`, `usePortfolioManager.ts`, `SimulationTab.tsx`, `LeadersTab.tsx`, `api`, `STOCKS_DATA`, `aiClient.ts`, `FloatingAIChat.tsx`, `AppSidebar.tsx`, `MarketTab.tsx`, `types.ts`, `App.tsx`, `TickerPage.tsx`, `SignalHistoryTab.tsx`, `useAITools.ts`, `portfolioValue.ts`?",
+      "why": "High betweenness centrality (0.028) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `useDataFeed()` connect `marketData.ts` to `App.tsx`, `pipeline-sync.ts`, `marketRegimeEngine.ts`, `useProactiveAgent.ts`?",
+      "why": "High betweenness centrality (0.026) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
       "question": "Why does `fetchPrices()` connect `pipeline-sync.ts` to `marketData.ts`?",
-      "why": "High betweenness centrality (0.042) - this node is a cross-community bridge."
-    },
-    {
-      "type": "bridge_node",
-      "question": "Why does `StockData` connect `StockData` to `MarketTab.tsx`, `marketData.ts`, `api`, `usePortfolioManager.ts`, `types.ts`, `STOCKS_DATA`, `SimulationTab.tsx`, `FloatingAIChat.tsx`, `App.tsx`, `PortfolioTracker.tsx`, `useAITools.ts`, `AppSidebar.tsx`, `OverviewTab.tsx`, `SignalHistoryTab.tsx`, `aiClient.ts`, `portfolioValue.ts`?",
-      "why": "High betweenness centrality (0.038) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.025) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
-      "question": "What connects `Env`, `Env`, `Env` to the rest of the system?",
-      "why": "348 weakly-connected nodes found - possible documentation gaps or missing edges."
+      "question": "What connects `pipeline_runs`, `market_daily`, `backtest_intermediate` to the rest of the system?",
+      "why": "356 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `index.ts` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.08994032395566923 - nodes in this community are weakly interconnected."
+      "question": "Should `PortfolioTracker.tsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08646322378716745 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
       "question": "Should `marketData.ts` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.07013574660633484 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.06778476589797344 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
