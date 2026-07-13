@@ -1,32 +1,27 @@
 # AI Onboarding — QUANTBIT
 
-## Dev Mode
-
-Jalankan **satu** command untuk menjalankan kedua server sekaligus:
-
+## Quick Start
 ```bash
-npm run dev
+npm run dev    # Express API (:3001) + Vite (:5173)
 ```
 
-Ini menggunakan `concurrently` untuk menjalankan:
-- **Express API** (`npm run serve-api`) di `http://localhost:3001` — backend data + AI endpoint
-- **Vite dev server** di `http://localhost:5173` — React frontend dengan HMR
+## Code Navigation
+```bash
+graphify query "apa fungsi backtest engine?"
+graphify explain "StockData"
+graphify path "core.ts" "FloatingAIChat.tsx"
+```
 
-Vite proxy otomatis forward `/api/*` ke Express.
+## Key Files
+- **AI Chat**: `src/components/FloatingAIChat.tsx` + `src/ai/aiClient.ts`
+- **System Prompt**: `src/ai/systemKnowledge.ts`
+- **Engine**: `src/engine/core.ts` (strategy), `src/engine/ranker.ts` (scoring)
+- **Config**: `src/contexts/EngineConfigContext.tsx`
+- **Portfolio**: `src/hooks/usePortfolioManager.ts`
+- **API**: `functions/api/[[path]].ts`
 
-> Jangan lupa `npm install` dulu jika `concurrently` belum terinstall.
-
-## AI Chat
-
-- Komponen: `src/components/FloatingAIChat.tsx`
-- Context: `src/contexts/AICockpitContext.tsx`
-- Client: `src/ai/aiClient.ts`
-- System prompt: `src/ai/systemKnowledge.ts`
-
-AI Chat panel hanya terbuka jika user mengklik tombol floating AI Chat — tidak auto-trigger oleh event lain.
-
-## Notes
-
-- Source of truth: `docs/TASK.md`
-- Semua data dari D1 via CF Functions (dev mode via Express + SQLite lokal)
+## Rules
 - Semua kalkulasi deterministic — NO AI untuk financial math
+- AI hanya untuk presentation (summary, chat, explanations)
+- Data dari D1 via CF Functions (dev mode via Express + SQLite)
+- Source of truth: `docs/TASK.md`

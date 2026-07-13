@@ -4,134 +4,24 @@
 **QUANTBIT** — Quantitative Stock Terminal (React 19 + Vite 6 + TypeScript)
 Repo: `https://github.com/InitialJawa/QUANTBIT`
 
-## Current Mission
-**Bugfix Sesi 25 — AI Chat auto-open + docs restoration ✅**
-AI Chat tidak lagi auto-trigger saat klik ticker. `docs/AI_ONBOARDING.md` direcreate dengan instruksi dev yang jelas.
+## Current Status
+- **Version**: 1.0.1 (2026-07-12)
+- **Progress**: ~97%
+- **Live**: https://quantbit-terminal.pages.dev
 
-## Session Context
-- **Sesi 25** — 2026-07-09
-- Branch: `main`
-- Status: **Bugfix** — AI Chat auto-open on ticker click fixed; AI_ONBOARDING.md recreated
-- Data source: **Yahoo Finance** via pipeline → D1 Cloudflare
-
-## Arsitektur Baru
+## Architecture
 ```
-GitHub Actions (tiap 6 jam)
+GitHub Actions (cron tiap 6 jam)
   └→ pipeline-sync.ts → D1 Cloudflare
-  └→ compute-intermediate.ts → D1 Cloudflare (SMA/RSI/MACD/ATR)
+  └→ compute-intermediate.ts → D1 (SMA/RSI/MACD/ATR)
 
 Frontend React → CF Pages Functions → D1 Cloudflare
-  └→ /api/stocks/scores, /api/stocks/profiles, /api/stocks/fundamentals
-  └→ /api/engine/idx80, /api/backtest-data, /api/db-sync-status
-  └→ /api/yahoo/live-prices (Yahoo dengan D1 fallback)
-  └→ /api/backtest/run (strategy compute dari intermediate table)
-  └→ /api/auth/* (login/signup/me/logout via D1)
+  └→ /api/stocks/*, /api/engine/*, /api/backtest/*
+  └→ /api/auth/*, /api/yahoo/live-prices
 
 Dev mode: npm run dev (Express + Vite concurrently)
-Production: CF Pages Functions + D1 (no server needed)
+Production: CF Pages Functions + D1
 ```
-
----
-
-## Master Task List — Status
-
-### ✅ Phase 7 — CF Functions (8 endpoints)
-- [x] **7.1** — `/api/stocks/scores`
-- [x] **7.2** — `/api/stocks/profiles`
-- [x] **7.3** — `/api/stocks/fundamentals`
-- [x] **7.4** — `/api/engine/idx80`
-- [x] **7.5** — `/api/backtest-data`
-- [x] **7.6** — `/api/db-sync-status`
-- [x] **7.7** — `/api/yahoo/live-prices`, `/api/market/sync`
-- [x] **7.8** — `/api/backtest/run`
-
-### ✅ Phase 8 — GitHub Actions Pipeline
-- [x] **8.1** — `.github/workflows/pipeline.yml` (cron tiap 6 jam)
-- [x] **8.2** — Pipeline: pipeline-sync.ts → D1 + compute-intermediate.ts → D1
-
-### ✅ Phase 9 — Intermediate Backtest
-- [x] **9.1** — Migration 0006: `backtest_intermediate` table
-- [x] **9.2** — `scripts/compute-intermediate.ts` (SMA20/50/200, RSI14, MACD, ATR14, drawdown)
-- [x] **9.3** — CF Function `/api/backtest/run` (strategy DCA, topN selection, weighted scoring)
-
-### ✅ Phase 10 — Frontend Update
-- [x] **10.1** — Hapus semua `devMock()` data di `api.ts` (sisain auth mock)
-- [x] **10.2** — Wire `initDataService()` di `App.tsx` → L[]/PF[]/FD[] dari D1
-- [x] **10.3** — Update MKT fallback values dari D1 seed (IHSG=5875.78, gold=2.417.492)
-- [x] **10.4** — Seed MKT values dari backtest-data D1 saat Yahoo offline
-
-### ✅ Phase 11 — Docs
-- [x] **11.1** — TASK.md di-update
-- [x] **11.2** — AGENTS.md di-update
-- [x] **11.3** — functions/tsconfig.json (workers-types)
-
-### ✅ Phase 12 — Deploy
-- [x] 12.1 — `npx tsc --noEmit` ✅
-- [x] 12.2 — `npx vite build` ✅
-- [x] 12.3 — Setup GitHub Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
-- [x] 12.4 — Push ke GitHub → CF Pages auto-deploy
-- [ ] 12.5 — Buka dari HP, test Market/Analytics/Backtest (pending user test)
-
----
-
-## Sesi 22 — Bugfix: Gold Zeros + Backtest Broken
-
-### Bug 1: Gold chart zeros on Market tab
-**Root cause**: Silent GC=F fetch failure in pipeline + missing USD/oz → IDR/gram conversion in chart
-- `scripts/pipeline-sync.ts`: empty try-catch swallows Yahoo errors for GC=F; gold_close written as NULL/0
-- `src/components/MarketOverviewCharts.tsx`: renders raw gold_close (USD/oz ~$2,600) without converting to IDR/gram (~Rp 1,400,000)
-
-**Fixes applied**:
-- `scripts/pipeline-sync.ts` (lines 66-69): error logging now prints Yahoo fail message instead of silent `⚠️`
-- `scripts/pipeline-sync.ts` (lines 256-258): explicit warning when GC=F returns 0 days
-- `scripts/pipeline-sync.ts` (lines 107-114): separate `UPDATE` for gold fields `WHERE gold_close IS NULL OR gold_close = 0` — fixes existing rows that have NULL gold from previous failures
-- `src/components/MarketOverviewCharts.tsx` (line 141-154): gold converted from USD/oz → IDR/gram via `(goldPrice * usdidrRate) / 31.1035`
-- `src/components/MarketOverviewCharts.tsx` (lines 23, 95): `usdidrRate` added to `RawDay` interface and fetched from API
-
-### Bug 2: Backtest chart not showing, results = 0%
-**Root cause**: `.JK` suffix mismatch — `functions/api/backtest-data.ts` line 50 used `stockNormScores[tkr + ".JK"]` while stockPrices/stockAdjPrices use bare tickers. This caused `pickTopTickersByRank` (ranker.ts) to always return empty because `.JK`-suffixed tickers never matched bare `allowedTickers` or `dayPrices`.
-
-**Fixes applied**:
-- `functions/api/backtest-data.ts` (line 50): removed `.JK` suffix — now uses bare tickers throughout
-- `server.ts` (line 527): same fix applied to dev-mode Express server
-
-## Sesi 23 — Backtest Production Fix (2026-07-04)
-
-### Bug 1: Migration 0004 wipes stock_daily data every pipeline run
-**Root cause**: `db/migrations/0004_v2_schema.sql` contains `DROP TABLE IF EXISTS stock_daily;` before `CREATE TABLE IF NOT EXISTS stock_daily`. Each pipeline "Apply D1 migrations" step drops and recreates the table, deleting all data.
-
-**Fixes**:
-- Removed `DROP TABLE IF EXISTS stock_daily;` from `db/migrations/0004_v2_schema.sql`
-
-### Bug 2: --full flag breaks pipeline-sync
-**Root cause**: `scripts/pipeline-sync.ts` reads `process.argv[2]` as mode (all/prices/fundamentals). `--full` was passed as first arg, making mode=`--full` instead of `all`, skipping both price and fundamental fetching.
-
-**Fixes**:
-- `scripts/pipeline-sync.ts`: parse `--full` as flag (not mode) using `process.argv.slice(2).find()`
-- `.github/workflows/pipeline.yml`: added `workflow_dispatch.inputs.full_sync` boolean for manual trigger
-
-### Bug 3: compute-intermediate NaN in SQL
-**Root cause**: `esc()` helper doesn't handle NaN. SMA/RSI/MACD return NaN for early days (not enough data), inserted as `NaN` in SQL → `SQLITE_ERROR: no such column: NaN`
-
-**Fixes**:
-- `scripts/compute-intermediate.ts`: `esc()` now uses `!isFinite(v)` to catch NaN/Infinity → returns `NULL`
-
-### Bug 4: backtest/run.ts missing topN rebalancing
-**Root cause**: `functions/api/backtest/run.ts` only had DCA buying logic (`if (dcaActive && dcaAmount > 0)`). The main rebalancing strategy (sell all → buy topN each period) was completely absent.
-
-**Fixes**:
-- Added monthly/weekly/quarterly rebalance date detection
-- Added sell-all → buy-topN logic on rebalance days
-- Added crash protection (skip buy when SMA50 < SMA200)
-- Sell uses full daily data (`allToday`, not topN-only `stocks`) for correct price
-- Unsold stocks carried forward when price data missing on rebalance day
-- Guard against `close <= 0` in buy calculations (prevents Infinity shares)
-
-### Status: ✅ ALL PRODUCTION BUGS FIXED
-- Gold chart: ✅ fixed earlier
-- Pipeline data fetching: ✅ fixed
-- Intermediate computation: ✅ fixed  
-- Backtest results: ✅ returns +16.64% with 319 trades
 
 ## Key Constraints
 - **NO AI for financial math**
@@ -139,89 +29,13 @@ Production: CF Pages Functions + D1 (no server needed)
 - **No Express, no SQLite lokal, no mock** — full serverless
 - **Ask before adding dependencies**
 
-## Sesi 25 — Bugfix: AI Chat Auto-Open + AI_ONBOARDING.md (2026-07-09)
-
-### Bug 1: AI Chat auto-opens saat klik ticker ranking
-**Root cause**: `src/components/FloatingAIChat.tsx` lines 192-204 — useEffect yang auto-open AI Chat + auto-send analisa setiap kali StockDrawer terbuka.
-
-**Fix**:
-- Hapus `isDrawerOpen` prop dari `FloatingAIChatProps` interface
-- Hapus seluruh `useEffect` block yang auto-trigger `setIsOpen(true)` dan `send("Analisa ringkas...")`
-- Hapus `isDrawerOpen={ui.isDrawerOpen}` dari `<FloatingAIChat>` di `App.tsx`
-
-**Verifikasi**: `npx tsc --noEmit` — no new errors (pre-existing errors di `PortfolioTracker.tsx` tidak terkait).
-
-### Bug 2: "Backend AI tidak reachable" + missing docs
-**Root cause**: `docs/AI_ONBOARDING.md` terhapus di Sesi 18 cleanup; user mungkin cuma jalan `npx vite` tanpa Express.
-
-**Fix**:
-- Recreate `docs/AI_ONBOARDING.md` dengan instruksi dev yang jelas
-- Command `npm run dev` (via `concurrently`) sudah benar run both Express + Vite — tidak perlu tambahan dependency
-
-### Pending
-- `PortfolioTracker.tsx` — pre-existing TS errors tidak dibahas di sesi ini
-- Grid search belum tes Dual Momentum + Vol Weight
-- Revert Lucid design (commit efa14fb)
-
-## Sesi 26 — Ticker Detail Full-Page + Konten Tab (2026-07-09)
-
-### Phase 1: Pipeline & Routing (completed)
-- [x] **Migration 0007**: 5 tabel baru (rank_history, rotation_history, signal_history, company_profile, financial_statements)
-- [x] **3 compute scripts**: compute-rank-history.ts, compute-signals.ts, compute-rotation.ts
-- [x] **Pipeline update**: populate company_profile saat fetch fundamentals di pipeline-sync.ts
-- [x] **GitHub Actions**: 3 step compute baru di pipeline.yml
-- [x] **wouter routing**: main.tsx Router wrapper, App.tsx route `/ticker/:code`
-- [x] **TickerPage.tsx**: full-page dengan 9 tab navigasi (Overview, Chart, Financials, Dividend, Profile, Peer, Rotation, Signals, AI)
-- [x] **4 tab komponen baru**: OverviewTab, PeerComparisonTab, RotationHistoryTab, SignalHistoryTab
-- [x] **Phase 4 cleanup**: search redirect ke /ticker/:code, hapus StockDrawer + file, bersihkan useUIState
-
-### Phase 2: Konten Tab (Sesi 26 — BARU)
-- [x] **3 CF Functions baru**:
-  - `/api/stocks/peers?ticker=X` — sector peers dengan score columns + sector averages
-  - `/api/stocks/signals?ticker=X` — signal tier history per ticker
-  - `/api/stocks/rotation?ticker=X` — rotation status history per ticker
-- [x] **3 Express routes padanan** di server.ts
-- [x] **Reusable badge components**: SignalBadge (tier 1-5 color-coded), RotationBadge (up/stable/down), ScoreBreakdown (Q/G/V/M bar chart)
-- [x] **PeerComparisonTab rewrite**: fetch dari `/api/stocks/peers`, tambah kolom Quality/Growth/Value/Momentum/Score, baris "Rata-rata Sektor", urut by total score desc
-- [x] **SignalHistoryTab rewrite**: signal tier badge + score breakdown bar + strongest/weakest factor + history timeline
-- [x] **RotationHistoryTab rewrite**: rotation badge + status card + score display + history timeline
-- [x] **Financials tab**: condition render — jika metrics kosong/0, tampilkan "Data keuangan belum tersedia" (HAPUS dummy)
-- [x] **Profile tab**: fallback "-" untuk sector/subSector/marketCap/description yang kosong atau "Unknown"
-- [x] **AI tab**: context display + starter prompt buttons + auto-focus ke FloatingAIChat input
-- [x] **Fix: CardProps key error** — tambah `key?: string | number` di Card.tsx (tsc exit 0)
-- [x] **Fix: FloatingAIChat hilang** — dikembalikan ke App.tsx (jangan dihapus)
-- [x] **Deploy**: build + deploy sukses ke https://1d5aef19.quantbit-terminal.pages.dev
-- [x] **Push ke fase-1-card-layout** (0469a5f)
-
-### Tab Status Setelah Sesi 26
-| Tab | Status | Sumber Data |
-|-----|--------|-------------|
-| Overview | ✅ Live | StockData client-side + 52W range dari chartDataMonthly |
-| Chart | ✅ Live | HistoricalChart component |
-| Financials | ⚠️ Safe fallback | Pipeline financial_statements belum jalan → render "belum tersedia" |
-| Dividend | ✅ Live | ForwardDividendsForecast component |
-| Profile | ✅ Safe fallback | stock.sector/subSector/description — "-" jika tidak ada data |
-| Peer | ✅ Baru | D1 via `/api/stocks/peers` + score columns + sector avg |
-| Rotation | ✅ Baru | D1 via `/api/stocks/rotation` |
-| Signals | ✅ Baru | D1 via `/api/stocks/signals` + score breakdown |
-| AI | ✅ Starter prompts | FloatingAIChat + context injection |
-
-### Data Gap (perlu task terpisah)
-- `company_profile` table: 0 baris → perlu script populate dari yfinance
-- `financial_statements` table: 0 baris → perlu script populate dari yfinance
-- Ke 2 tabel di atas akan mengisi Financials tab (table financial) dan Profile tab (company detail)
-
 ## Test Commands
-```
-npx tsc --noEmit
-npx vite build
-npm run dev  # Express + Vite (dev mode with real data)
+```bash
+npx tsc --noEmit       # TypeScript check
+npx vite build         # Bundle build
+npm run dev            # Dev server (Express + Vite)
 ```
 
-## Backtest CURL
-```bash
-curl -X POST "https://quantbit-terminal.pages.dev/api/backtest/run" \
-  -H "Content-Type: application/json" \
-  -d '{"from":"2021-01-01","to":"2026-12-31","initialCash":100000000,"config":{"weights":{"quality":0.45,"growth":0.1,"value":0.05,"momentum":0.40,"dividend":0},"topN":5,"rebalanceFreq":"monthly","crashProtection":true,"dcaActive":false,"dcaAmount":0}}'
-```
-/mo
+## Data Gaps
+- `company_profile` table: 0 baris — perlu script populate dari yfinance
+- `financial_statements` table: 0 baris — perlu script populate dari yfinance
