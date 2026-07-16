@@ -235,11 +235,9 @@ export function SimulationTab({
   // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
     const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
-    console.log(`[Backtest] Fetching data: ${backtestConfig.simStartDate} to ${backtestConfig.simEndDate}, configType=${configType}`);
     api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { 
         if (res.success && Array.isArray(res.data)) {
-          console.log(`[Backtest] Loaded ${res.data.length} days from API`);
           setHistoricalData(res.data);
         } else {
           console.warn('[Backtest] API returned invalid data, falling back to synthetic');
@@ -1245,7 +1243,9 @@ export function SimulationTab({
                   </div>
 
                   {/* Advanced Risk Analytics — Row 2 */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="pt-4 border-t border-emerald-500/20">
+                    <span className="text-caption uppercase font-bold tracking-widest text-emerald-400/70 block mb-3">Advanced Risk Analytics</span>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
                     <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Information Ratio</span>
@@ -1298,6 +1298,8 @@ export function SimulationTab({
                       <span className="text-label text-white/40 block">Sharpe terpisah berdasarkan tren IHSG (SMA20 vs SMA50)</span>
                     </Card>
                   )}
+
+                  </div>
 
                   {/* Profit comparison notice card */}
                   <Card variant="inset" padding="md" className="leading-relaxed space-y-2">
