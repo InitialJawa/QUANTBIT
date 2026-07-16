@@ -129,6 +129,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   const dividendByTicker: Record<string, number> = {};
   let maxVal = cap;
   let maxDrawdownValue = 0;
+  let totalFeesPaid = 0;
   // Adaptive DCA tracking — how much cash has been deployed and the BPS
   // history (used by SimulationTab for charting).
   let totalDeployed = config.simulationMode === "adaptive_dca" ? 0 : initialInvestable;
@@ -152,6 +153,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   let lastJulyYear = 2019;
   const dailyReturns: number[] = [];
+  const ihsgDailyPrices: number[] = [day0.ihsgPrice];
+  const benchmarkDailyReturns: number[] = [];
+  let lastIhsgDayVal = day0.ihsgPrice;
   let lastDayVal = cap;
 
   const configName = config.simulationMode === "adaptive_dca"
@@ -185,6 +189,13 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     ihsgRollingWindow.push(day.ihsgPrice);
     if (ihsgRollingWindow.length > 60) ihsgRollingWindow.shift();
 
+    ihsgDailyPrices.push(day.ihsgPrice);
+    if (ihsgDailyPrices.length > 1) {
+      const ihsgRet = ((day.ihsgPrice - lastIhsgDayVal) / lastIhsgDayVal) * 100;
+      benchmarkDailyReturns.push(ihsgRet);
+      lastIhsgDayVal = day.ihsgPrice;
+    }
+
     if (pendingTickers.length > 0) {
       for (let pi = pendingTickers.length - 1; pi >= 0; pi--) {
         const pt = pendingTickers[pi];
@@ -198,6 +209,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
             positions[pt.ticker] = sharesToBuy;
             cash -= sharesToBuy * costPerShare;
             totalTransactionVolume += sharesToBuy * entryPrice;
+            totalFeesPaid += sharesToBuy * (costPerShare - availPrice);
             logs.push({
               date: day.date,
               type: "BUY",
@@ -287,6 +299,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       positions = {};
       cash += liq.proceeds;
       totalTransactionVolume += liq.totalVolume;
+      totalFeesPaid += Math.max(0, liq.totalVolume - liq.proceeds);
 
       inCrashState = true;
       crashCount += 1;
@@ -416,6 +429,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         cash -= (deployAmount - alloc.cash);
         totalDeployed += deployAmount;
         totalTransactionVolume += alloc.totalVolume;
+        totalFeesPaid += Math.max(0, (deployAmount - alloc.cash) - alloc.totalVolume);
         logs.push({
           date: day.date,
           type: "BUY",
@@ -454,6 +468,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           const sellResult = computeSellProceeds(positions[ticker], day.stockPrices[ticker] || 0, fees);
           const swapProceeds = sellResult.proceeds;
           totalTransactionVolume += sellResult.volume;
+          totalFeesPaid += Math.max(0, sellResult.volume - sellResult.proceeds);
           delete positions[ticker];
 
           const topCandidates = pickTopTickersByRank(
@@ -470,6 +485,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
               positions[swapInTicker] = (positions[swapInTicker] || 0) + swapResult.shares;
               cash += swapResult.cashRemainder;
               totalTransactionVolume += swapResult.totalVolume;
+              totalFeesPaid += Math.max(0, (swapProceeds - swapResult.cashRemainder) - swapResult.totalVolume);
               logs.push({
                 date: day.date,
                 type: "REBALANCE",
@@ -533,6 +549,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     lastIhsgPrice: lastDayObj.ihsgPrice,
     initialGoldPrice,
     lastGoldPrice: lastDayObj.goldPrice,
+    benchmarkDailyReturns,
+    ihsgPrices: ihsgDailyPrices,
+    totalFeesPaid,
   });
 
   const ihsgFinalValue = Math.round((lastDayObj.ihsgPrice / initialIhsgPrice) * cap);
@@ -567,6 +586,17 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     turnoverPct: metrics.turnoverPct,
     bench6040FinalVal: metrics.bench6040FinalVal,
     bench6040ReturnPct: metrics.bench6040ReturnPct,
+    informationRatio: metrics.informationRatio,
+    omegaRatio: metrics.omegaRatio,
+    skewness: metrics.skewness,
+    kurtosis: metrics.kurtosis,
+    rollingSharpe: metrics.rollingSharpe,
+    rollingSortino: metrics.rollingSortino,
+    bullSharpe: metrics.bullSharpe,
+    bearSharpe: metrics.bearSharpe,
+    bullDays: metrics.bullDays,
+    bearDays: metrics.bearDays,
+    turnoverAdjustedReturnPct: metrics.turnoverAdjustedReturnPct,
     configName,
     logs: allLogs,
     chartData,

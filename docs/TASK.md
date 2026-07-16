@@ -99,3 +99,31 @@ src/server/db.ts                      — H6
 functions/api/backtest/run.ts         — C2, C3, H7
 functions/api/backtest-data.ts        — M6
 ```
+
+---
+
+## Sesi 28 (2026-07-16): Enhanced Metrics — 6 Advanced Risk Analytics
+
+### Status: 6/6 metrics implemented, 63 tests pass, tsc clean, vite build OK
+
+### New Metrics
+
+| Metric | Formula | Keterangan |
+|--------|---------|------------|
+| **Information Ratio** | `(Rp - Rb) / tracking_error × √252` | Excess return vs IHSG benchmark per unit tracking error |
+| **Omega Ratio** | `Σ max(r-Rf,0) / Σ max(Rf-r,0)` | Full distribution risk-adjusted — lebih baik dari Sharpe |
+| **Skewness** | `E[(x-μ)³] / σ³` | Asimetri distribusi return (negatif = fat left tail) |
+| **Kurtosis** | `E[(x-μ)⁴] / σ⁴ - 3` | Excess kurtosis — positif = fat tails (lebih banyak extreme events) |
+| **Rolling Sharpe/Sortino** | Window 252 hari bergeser | Bukan cuma 1 angka final — lihat evolusi risk-adjusted return |
+| **Regime-Conditional Sharpe** | Sharpe terpisah bull/bear (SMA20 vs SMA50 IHSG) | Performa saat market naik vs turun |
+| **Turnover-Adjusted Return** | `totalReturn - (feesPaid/capital × 100)` | Return beneran setelah biaya transaksi |
+
+### Files Changed
+```
+src/engine/metrics.ts            — 6 new functions + MetricsInput/MetricsResult extension
+src/engine/types.ts              — BacktestResult: 12 new fields
+src/engine/core.ts               — fee tracking, IHSG prices, benchmark returns, pass to computeMetrics
+src/engine/index.ts              — export MetricsResult type
+src/engine/__tests__/metrics.test.ts — 6 new test cases (63 total)
+src/components/SimulationTab.tsx  — 4 new metric cards + regime conditional display
+```

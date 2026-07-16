@@ -1244,6 +1244,61 @@ export function SimulationTab({
 
                   </div>
 
+                  {/* Advanced Risk Analytics — Row 2 */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+                    <Card variant="inset" padding="sm" className="space-y-1">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Information Ratio</span>
+                      <span className="text-sm font-bold font-mono text-cyan-400 block">
+                        {backtestResult.informationRatio !== null ? backtestResult.informationRatio.toFixed(3) : "—"}
+                      </span>
+                      <span className="text-label text-white/40 block">Excess Return / Tracking Error</span>
+                    </Card>
+
+                    <Card variant="inset" padding="sm" className="space-y-1">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Omega Ratio</span>
+                      <span className="text-sm font-bold font-mono text-cyan-400 block">
+                        {isFinite(backtestResult.omegaRatio) ? backtestResult.omegaRatio.toFixed(3) : "∞"}
+                      </span>
+                      <span className="text-label text-white/40 block">Full Distribution Risk-Adjusted</span>
+                    </Card>
+
+                    <Card variant="inset" padding="sm" className="space-y-1">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Tail Risk</span>
+                      <span className="text-sm font-bold font-mono text-orange-400 block">
+                        Skew: {backtestResult.skewness.toFixed(2)} / Kurt: {backtestResult.kurtosis.toFixed(2)}
+                      </span>
+                      <span className="text-label text-white/40 block">Distribusi Return (fat tails)</span>
+                    </Card>
+
+                    <Card variant="inset" padding="sm" className="space-y-1">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Net Return (Fee-Adjusted)</span>
+                      <span className={`text-sm font-bold font-mono ${backtestResult.turnoverAdjustedReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
+                        {backtestResult.turnoverAdjustedReturnPct >= 0 ? "+" : ""}{backtestResult.turnoverAdjustedReturnPct.toFixed(2)}%
+                      </span>
+                      <span className="text-label text-white/40 block">Return setelah biaya transaksi</span>
+                    </Card>
+
+                  </div>
+
+                  {/* Regime-Conditional Sharpe — only if data available */}
+                  {(backtestResult.bullSharpe !== null || backtestResult.bearSharpe !== null) && (
+                    <Card variant="inset" padding="sm" className="space-y-2">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Regime-Conditional Sharpe Ratio</span>
+                      <div className="flex gap-6 text-sm font-mono">
+                        <div>
+                          <span className="text-white/40">Bull ({backtestResult.bullDays}d): </span>
+                          <span className="text-green-400 font-bold">{backtestResult.bullSharpe !== null ? backtestResult.bullSharpe.toFixed(3) : "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-white/40">Bear ({backtestResult.bearDays}d): </span>
+                          <span className="text-rose-400 font-bold">{backtestResult.bearSharpe !== null ? backtestResult.bearSharpe.toFixed(3) : "—"}</span>
+                        </div>
+                      </div>
+                      <span className="text-label text-white/40 block">Sharpe terpisah berdasarkan tren IHSG (SMA20 vs SMA50)</span>
+                    </Card>
+                  )}
+
                   {/* Profit comparison notice card */}
                   <Card variant="inset" padding="md" className="leading-relaxed space-y-2">
                     <div className="flex items-start gap-3">

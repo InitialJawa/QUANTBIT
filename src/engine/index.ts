@@ -12,6 +12,7 @@ export {
   computeSellProceeds,
 } from "./allocator";
 export { computeMetrics, calcStdDev } from "./metrics";
+export type { MetricsResult } from "./metrics";
 export {
   rule_tickerOutOfTopN,
   rule_crashProtectionTriggered,

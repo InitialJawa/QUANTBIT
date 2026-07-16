@@ -100,6 +100,17 @@ export interface BacktestResult {
   turnoverPct: number;
   bench6040FinalVal: number;
   bench6040ReturnPct: number;
+  informationRatio: number | null;
+  omegaRatio: number;
+  skewness: number;
+  kurtosis: number;
+  rollingSharpe: number[];
+  rollingSortino: number[];
+  bullSharpe: number | null;
+  bearSharpe: number | null;
+  bullDays: number;
+  bearDays: number;
+  turnoverAdjustedReturnPct: number;
   configName: string;
   logs: TradeLog[];
   chartData: ChartPoint[];

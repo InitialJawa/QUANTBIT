@@ -31,6 +31,9 @@ describe("computeMetrics", () => {
     lastIhsgPrice: 7200,
     initialGoldPrice: 900_000,
     lastGoldPrice: 1_100_000,
+    benchmarkDailyReturns: [0.4, -0.2, 0.3, 0.05, -0.15],
+    ihsgPrices: [6000, 6024, 6012, 6030, 6033, 6024],
+    totalFeesPaid: 500_000,
   };
 
   it("calculates total return correctly", () => {
@@ -90,5 +93,42 @@ describe("computeMetrics", () => {
     const avgVal = (base.cap + base.currentPortfolioVal) / 2;
     const expected = (base.totalTransactionVolume / avgVal) * 100;
     assert.equal(m.turnoverPct, expected);
+  });
+
+  it("computes information ratio from portfolio vs benchmark returns", () => {
+    const m = computeMetrics(base);
+    assert.ok(typeof m.informationRatio === "number");
+  });
+
+  it("computes omega ratio from daily returns", () => {
+    const m = computeMetrics(base);
+    assert.ok(typeof m.omegaRatio === "number");
+    assert.ok(m.omegaRatio > 0);
+  });
+
+  it("computes skewness and kurtosis (tail risk)", () => {
+    const m = computeMetrics(base);
+    assert.ok(typeof m.skewness === "number");
+    assert.ok(typeof m.kurtosis === "number");
+  });
+
+  it("computes rolling sharpe and sortino arrays", () => {
+    const m = computeMetrics(base);
+    assert.ok(Array.isArray(m.rollingSharpe));
+    assert.ok(Array.isArray(m.rollingSortino));
+    assert.ok(m.rollingSharpe.length > 0);
+  });
+
+  it("computes regime-conditional sharpe (bull/bear)", () => {
+    const m = computeMetrics(base);
+    assert.ok(typeof m.bullDays === "number");
+    assert.ok(typeof m.bearDays === "number");
+    assert.ok(m.bullDays + m.bearDays > 0);
+  });
+
+  it("computes turnover-adjusted return (net of fees)", () => {
+    const m = computeMetrics(base);
+    assert.ok(typeof m.turnoverAdjustedReturnPct === "number");
+    assert.ok(m.turnoverAdjustedReturnPct < m.totalReturnPct);
   });
 });
