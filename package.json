@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:serve-api\" \"vite\"",
     "dev:full": "concurrently -k -n api,web -c blue,green \"npm:serve-api\" \"vite\"",
-    "serve-api": "NODE_OPTIONS='--experimental-sqlite' tsx server.ts",
+    "serve-api": "cross-env NODE_OPTIONS='--experimental-sqlite' tsx server.ts",
     "build:db": "tsx scripts/build-db.ts",
     "db:status": "tsx scripts/migrate.ts status",
     "db:status:local": "tsx scripts/migrate.ts status --local",
@@ -71,6 +71,7 @@
     "@types/papaparse": "^5.5.2",
     "@vitest/coverage-v8": "^4.1.9",
     "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
     "jsdom": "^29.1.1",
     "playwright": "^1.61.1",
     "rollup-plugin-visualizer": "^7.0.1",
