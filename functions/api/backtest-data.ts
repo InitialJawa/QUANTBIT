@@ -39,25 +39,37 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       stockAdjByDate[sr.date][sr.ticker] = sr.adj_close ?? sr.close;
     }
 
-    const scoreDateRow = await env.DB.prepare("SELECT MAX(score_date) as sd FROM stock_scores").first<any>();
-    let stockNormScores: Record<string, any> = {};
-    if (scoreDateRow?.sd) {
-      const scoreRows = await env.DB.prepare("SELECT ticker,quality,growth,value,dividend,momentum FROM stock_scores WHERE score_date=?").bind(scoreDateRow.sd).all<any>();
-      for (const sr of scoreRows.results) {
-        stockNormScores[sr.ticker] = {
-          quality: sr.quality ?? 50,
-          growth: sr.growth ?? 50,
-          value: sr.value ?? 50,
-          momentum: sr.momentum ?? 50,
-          dividend: sr.dividend ?? 50,
-        };
-      }
+    const allScoreRows = await env.DB.prepare(
+      "SELECT score_date, ticker, quality, growth, value, dividend, momentum FROM stock_scores ORDER BY score_date, ticker"
+    ).all<any>();
+
+    const scoresByDate: Record<string, Record<string, any>> = {};
+    for (const sr of allScoreRows.results) {
+      if (!scoresByDate[sr.score_date]) scoresByDate[sr.score_date] = {};
+      scoresByDate[sr.score_date][sr.ticker] = {
+        quality: sr.quality ?? 50,
+        growth: sr.growth ?? 50,
+        value: sr.value ?? 50,
+        momentum: sr.momentum ?? 50,
+        dividend: sr.dividend ?? 50,
+      };
     }
-    const hasScores = Object.keys(stockNormScores).length > 0;
+    const scoreDates = Object.keys(scoresByDate).sort();
+
+    const getScoresForDate = (date: string): Record<string, any> | undefined => {
+      if (scoreDates.length === 0) return undefined;
+      let lo = 0, hi = scoreDates.length - 1, best = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (scoreDates[mid] <= date) { best = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      return best >= 0 ? scoresByDate[scoreDates[best]] : undefined;
+    };
 
     const data = marketRows.results.map((m: any) => {
       const stockPrices = stockByDate[m.date] || {};
       const stockAdj = stockAdjByDate[m.date] || {};
+      const dayScores = getScoresForDate(m.date);
 
       return {
         date: m.date,
@@ -66,7 +78,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         usdidrRate: m.usdidr_rate,
         stockAdjPrices: stockAdj,
         stockPrices,
-        stockNormScores: hasScores ? stockNormScores : undefined,
+        stockNormScores: dayScores && Object.keys(dayScores).length > 0 ? dayScores : undefined,
       };
     });
 
