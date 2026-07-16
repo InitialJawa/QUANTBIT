@@ -333,6 +333,18 @@ async function main() {
   }
 
   console.log("\nPipeline complete!");
+
+  // H5 fix: run compute-intermediate after pipeline to populate backtest_intermediate table
+  if (mode === "all") {
+    console.log("\n=== Step 3: Compute Intermediate (RSI/SMA/MACD/ATR) ===");
+    try {
+      run(`npx tsx ${join(__dirname, "compute-intermediate.ts")}`);
+      console.log("  Intermediate data computed successfully");
+    } catch (e: any) {
+      console.error(`  WARNING: compute-intermediate failed: ${e.message}`);
+      console.error("  Backtest CF endpoint may have stale/empty intermediate data");
+    }
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

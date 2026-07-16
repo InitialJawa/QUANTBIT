@@ -36,16 +36,26 @@ export async function ensureSchema(): Promise<void> {
   const d = await getDb();
   const stmt = d.prepare("SELECT count(*) as n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
   const row = stmt.get() as any;
-  if (row.n >= 19) return;
+  if (row.n >= 23) return;
 
   const mig004 = join(__root, "db", "migrations", "0004_v2_schema.sql");
   const mig005 = join(__root, "db", "migrations", "0005_auth_tables.sql");
+  const mig006 = join(__root, "db", "migrations", "0006_backtest_intermediate.sql");
+  const mig007 = join(__root, "db", "migrations", "0007_rank_rotation_signal.sql");
   if (existsSync(mig004)) {
     const sql = readFileSync(mig004, "utf-8");
     d.exec(sql);
   }
   if (existsSync(mig005)) {
     const sql = readFileSync(mig005, "utf-8");
+    d.exec(sql);
+  }
+  if (existsSync(mig006)) {
+    const sql = readFileSync(mig006, "utf-8");
+    d.exec(sql);
+  }
+  if (existsSync(mig007)) {
+    const sql = readFileSync(mig007, "utf-8");
     d.exec(sql);
   }
 }

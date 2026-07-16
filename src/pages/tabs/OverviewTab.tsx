@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { STOCKS_DATA } from "../../stocksData";
 import { HistoricalChart } from "../../components/HistoricalChart";
 import type { StockData, PortfolioItem } from "../../types";
@@ -18,21 +19,24 @@ const METRICS = [
 ];
 
 export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: OverviewTabProps) {
-  const peers = STOCKS_DATA.filter(s => s.sector === stock.sector && s.ticker !== stock.ticker).slice(0, 5);
   const portfolioItem = portfolio.find(p => p.ticker === stock.ticker);
   const gainLoss = portfolioItem ? ((stock.currentPrice - portfolioItem.buyPrice) / portfolioItem.buyPrice * 100) : null;
+
+  const peers = useMemo(() =>
+    STOCKS_DATA.filter(s => s.sector === stock.sector && s.ticker !== stock.ticker).slice(0, 5),
+    [stock.sector]
+  );
 
   const high52w = Math.max(...stock.chartDataMonthly.slice(-12).map(d => d.price));
   const low52w = Math.min(...stock.chartDataMonthly.slice(-12).map(d => d.price));
   const pctFromHigh = ((stock.currentPrice - high52w) / high52w * 100);
   const pctFromLow = ((stock.currentPrice - low52w) / low52w * 100);
 
+  const hasFinancials = stock.metrics.length > 0 && stock.metrics[0]?.revenue > 0;
+
   return (
     <div className="space-y-5">
-      <div className="border border-white/[0.06] rounded-lg p-4">
-        <HistoricalChart stock={stock} theme={theme} />
-      </div>
-
+      {/* Metrik cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {METRICS.map(({ key, label, fmt }) => (
           <div key={key} className="border border-white/[0.06] rounded-lg p-3">
@@ -42,6 +46,7 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
         ))}
       </div>
 
+      {/* 52W Range + Portfolio ringkasan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="border border-white/[0.06] rounded-lg p-3">
           <span className="text-label text-white/30 block">52W Range</span>
@@ -69,13 +74,13 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
           </div>
         </div>
 
-        {portfolioItem && (
+        {portfolioItem ? (
           <div className="border border-white/[0.06] rounded-lg p-3">
             <span className="text-label text-white/30 block">Portfolio</span>
             <div className="mt-2 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-white/60">Shares</span>
-                <span className="text-white font-mono">{portfolioItem.shares}</span>
+                <span className="text-white font-mono">{portfolioItem.shares} lot</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-white/60">Avg Price</span>
@@ -93,26 +98,36 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
               </div>
             </div>
           </div>
+        ) : (
+          <div className="border border-white/[0.06] rounded-lg p-3">
+            <span className="text-label text-white/30 block">Portfolio</span>
+            <p className="text-white/40 text-sm mt-1">Belum memiliki <span className="font-mono text-white/60">{stock.ticker}</span></p>
+          </div>
         )}
       </div>
 
+      {/* Chart */}
+      <div className="border border-white/[0.06] rounded-lg p-4">
+        <span className="text-caption text-white/35 uppercase tracking-wider font-medium mb-3 block">Chart Harga</span>
+        <HistoricalChart stock={stock} theme={theme} />
+      </div>
+
+      {/* Financials */}
       <div className="border border-white/[0.06] rounded-lg p-4">
         <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Financial Statement (IDR B)</span>
-        {stock.metrics.length === 0 || stock.metrics[0]?.revenue === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.04] flex items-center justify-center">
-              <span className="text-white/20 text-lg font-mono">$</span>
+        {!hasFinancials ? (
+          <div className="text-center py-8">
+            <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-white/[0.04] flex items-center justify-center">
+              <span className="text-white/20 text-base font-mono">$</span>
             </div>
             <p className="text-white/40 text-sm">
               Data keuangan untuk <span className="font-mono text-white/60">{stock.ticker}</span> belum tersedia.
             </p>
-            <p className="text-white/20 text-xs mt-2">
-              Pipeline data keuangan akan mengisi data ini setelah tersedia.
-            </p>
+            <p className="text-white/20 text-xs mt-1">Pipeline data keuangan akan mengisi data ini setelah tersedia.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left mt-3 text-body">
+          <div className="overflow-x-auto mt-3">
+            <table className="w-full text-left text-body">
               <thead>
                 <tr className="border-b border-white/[0.04] text-white/25 text-label tracking-wide uppercase">
                   <th className="pb-2 font-medium">Metric</th>
@@ -147,6 +162,7 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
         )}
       </div>
 
+      {/* Company Profile */}
       <div className="border border-white/[0.06] rounded-lg p-4">
         <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Company Profile</span>
         <div className="mt-3 space-y-4">
@@ -175,14 +191,18 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
         </div>
       </div>
 
+      {/* Sektor info + lightweight peers */}
       <div className="border border-white/[0.06] rounded-lg p-4">
-        <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Sektor: {stock.sector}</span>
-        <p className="text-body text-white/60 mt-2 leading-relaxed">{stock.description}</p>
-      </div>
-
-      {peers.length > 0 && (
-        <div className="border border-white/[0.06] rounded-lg p-4">
-          <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Peer di Sektor {stock.sector}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-caption text-white/35 uppercase tracking-wider font-medium">Sektor: {stock.sector}</span>
+          {portfolioItem && (
+            <span className="text-[10px] text-emerald-400/60 font-mono">{portfolioItem.shares} lot</span>
+          )}
+        </div>
+        {stock.description && (
+          <p className="text-body text-white/60 mt-2 leading-relaxed">{stock.description}</p>
+        )}
+        {peers.length > 0 && (
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {peers.map(peer => (
               <div key={peer.ticker} className="flex items-center gap-2 text-sm text-white/60 hover:text-white/80 transition-colors">
@@ -192,8 +212,8 @@ export function OverviewTab({ stock, getDynamicStock, portfolio, theme }: Overvi
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

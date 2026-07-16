@@ -624,6 +624,31 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               </div>
             </div>
 
+            {/* Ticker-specific starter prompts — show when selectedStock is present */}
+            {selectedStock?.ticker && (
+              <div className="px-3 pb-1 border-t border-white/5">
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {[
+                    `Apa analisis fundamental ${selectedStock.ticker}?`,
+                    `Bandingkan ${selectedStock.ticker} dengan peer di sektor`,
+                    `Apa risiko utama ${selectedStock.ticker} saat ini?`,
+                    `Apa rekomendasi untuk ${selectedStock.ticker}?`,
+                    `Analisis teknikal ${selectedStock.ticker} dalam 3 bulan terakhir`,
+                    `Apakah ${selectedStock.ticker} cocok untuk strategi value investing?`,
+                  ].map((q, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => send(q)}
+                      className="text-caption bg-white/5 hover:bg-emerald-950/30 px-2 py-1 rounded-lg border border-emerald-500/10 transition-all cursor-pointer"
+                      style={{ color: "rgba(16,185,129,0.7)" }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Input */}
             <div className="p-3 border-t border-white/5 flex items-center gap-2">
               <input

@@ -113,6 +113,10 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
   let lastDeploymentDay = -intervalDays;
   const logs: TradeLog[] = [];
   const chartData: ChartPoint[] = [];
+  let maxVal = cap;
+  let maxDD = 0;
+  const dailyReturnTracker: number[] = [];
+  let lastPortfolioVal = cap;
 
   const initialIHSG = day0.ihsgPrice;
   const initialGold = day0.goldPrice;
@@ -161,7 +165,7 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
         logs.push({
           date: day.date,
           type: "BUY",
-          message: `[${label}] Deploy Rp ${Math.round(deployAmount).toLocaleString("id-ID")} ke ${alloc.positions.length} emiten.`,
+          message: `[${label}] Deploy Rp ${Math.round(deployAmount).toLocaleString("id-ID")} ke ${Object.keys(alloc.positions).length} emiten.`,
         });
       }
     }
@@ -175,12 +179,16 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
 
     const todayPortfolioVal = cash + stocksValue + bufferCash;
 
-    // Track max drawdown.
-    if (stepIndex > 0) {
-      const prev = chartData[chartData.length - 1]["Strategi Rebalancer"] || cap;
-      const dd = ((todayPortfolioVal - prev) / prev) * 100;
-      void dd; // computed implicitly via Sharpe below
+    // H4 fix: track max drawdown properly (was discarded with `void dd`)
+    if (todayPortfolioVal > maxVal) maxVal = todayPortfolioVal;
+    const ddPct = maxVal > 0 ? ((maxVal - todayPortfolioVal) / maxVal) * 100 : 0;
+    if (ddPct > maxDD) maxDD = ddPct;
+
+    // M7 fix: track daily returns for accurate Sharpe (was using 8-day samples)
+    if (stepIndex > 0 && lastPortfolioVal > 0) {
+      dailyReturnTracker.push(((todayPortfolioVal - lastPortfolioVal) / lastPortfolioVal) * 100);
     }
+    lastPortfolioVal = todayPortfolioVal;
 
     // Sample chart every 8 days.
     if (stepIndex % 8 === 0 || stepIndex === filtered.length - 1) {
@@ -205,13 +213,8 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
   const years = Math.max(0.1, (new Date(lastDay.date).getTime() - new Date(day0.date).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
   const cagr = (Math.pow(finalValue / cap, 1 / years) - 1) * 100;
 
-  // Daily returns for Sharpe.
-  const dailyReturns: number[] = [];
-  for (let i = 1; i < chartData.length; i++) {
-    const prev = chartData[i - 1]["Strategi Rebalancer"];
-    const curr = chartData[i]["Strategi Rebalancer"];
-    if (prev > 0) dailyReturns.push(((curr - prev) / prev) * 100);
-  }
+  // Daily returns for Sharpe — M7 fix: use actual daily returns, not 8-day samples
+  const dailyReturns = dailyReturnTracker;
   const meanRet = dailyReturns.length > 0 ? dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length : 0;
   const variance = dailyReturns.length > 1
     ? dailyReturns.reduce((sum, r) => sum + Math.pow(r - meanRet, 2), 0) / (dailyReturns.length - 1)
@@ -220,15 +223,8 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
   const annVol = stdDev * Math.sqrt(252) / 100;
   const sharpe = annVol > 0 ? (cagr / 100 - 0.05) / annVol : 0;
 
-  // Max drawdown from chart series.
-  let peak = cap;
-  let maxDD = 0;
-  for (const pt of chartData) {
-    const v = pt["Strategi Rebalancer"];
-    if (v > peak) peak = v;
-    const dd = ((peak - v) / peak) * 100;
-    if (dd > maxDD) maxDD = dd;
-  }
+  // H4 fix: use properly tracked max drawdown (was re-computed from 8-day sampled chartData)
+  const maxDrawdown = maxDD;
 
   const avgBuyPrice = totalSharesBought > 0 ? totalSpent / totalSharesBought : 0;
   const cashUtilization = cap > 0 ? (totalSpent / cap) * 100 : 0;
@@ -241,7 +237,7 @@ export function runBaselineDca(input: BaselineInput): BaselineResult {
     totalDividends: Math.round(totalDividends),
     cagr,
     sharpe,
-    maxDrawdown: maxDD,
+    maxDrawdown,
     avgBuyPrice: Math.round(avgBuyPrice),
     cashUtilization: Math.min(100, cashUtilization),
     chartData,

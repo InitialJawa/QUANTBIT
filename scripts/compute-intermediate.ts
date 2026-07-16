@@ -35,25 +35,28 @@ function sma(values: number[], period: number): (number | null)[] {
   return result;
 }
 
-// RSI — relative strength index
+// RSI — relative strength index (Wilder's smoothing)
 function rsi(values: number[], period: number): (number | null)[] {
-  const result: (number | null)[] = [null];
-  let gain = 0, loss = 0;
-  for (let i = 1; i < values.length; i++) {
+  if (values.length < period + 1) return values.map(() => null);
+  const result: (number | null)[] = [];
+  for (let i = 0; i < period; i++) result.push(null);
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
     const diff = values[i] - values[i - 1];
-    if (diff > 0) gain += diff; else loss -= diff;
-    if (i < period) { result.push(null); continue; }
-    if (i === period) {
-      const avgG = gain / period, avgL = loss / period;
-      const rs = avgL === 0 ? 100 : avgG / avgL;
-      result.push(100 - 100 / (1 + rs));
-    } else {
-      const avgG = (gain * (period - 1) + (diff > 0 ? diff : 0)) / period;
-      const avgL = (loss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
-      gain = avgG * period; loss = avgL * period;
-      const rs = avgL === 0 ? 100 : avgG / avgL;
-      result.push(100 - 100 / (1 + rs));
-    }
+    if (diff > 0) avgGain += diff; else avgLoss -= diff;
+  }
+  avgGain /= period;
+  avgLoss /= period;
+  const rs0 = avgLoss === 0 ? 100 : avgGain / avgLoss;
+  result.push(100 - 100 / (1 + rs0));
+  for (let i = period + 1; i < values.length; i++) {
+    const diff = values[i] - values[i - 1];
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? -diff : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    result.push(100 - 100 / (1 + rs));
   }
   return result;
 }
@@ -101,16 +104,18 @@ function atr(highs: number[], lows: number[], closes: number[], period: number):
   return result.map(v => v != null ? Math.round(v * 100) / 100 : null) as (number | null)[];
 }
 
-// Max drawdown
-function maxDrawdown(values: number[]): number {
+// Rolling max drawdown — returns array of max drawdown (%) as of each index
+function rollingMaxDrawdown(values: number[]): number[] {
+  const result: number[] = [];
   let peak = values[0];
   let maxDd = 0;
   for (const v of values) {
     if (v > peak) peak = v;
     const dd = (peak - v) / peak;
     if (dd > maxDd) maxDd = dd;
+    result.push(Math.round(maxDd * 10000) / 100);
   }
-  return Math.round(maxDd * 10000) / 100;
+  return result;
 }
 
 interface DailyRow {
@@ -181,7 +186,7 @@ async function main() {
       const rsi14 = rsi(closes, 14);
       const macdResult = macd(closes, 12, 26, 9);
       const atr14 = atr(highs, lows, closes, 14);
-      const dd = maxDrawdown(closes);
+      const rollingDd = rollingMaxDrawdown(closes);
 
       for (let i = 0; i < dates.length; i++) {
         allLines.push(
@@ -189,7 +194,7 @@ async function main() {
           `'${dates[i]}','${tkr}',` +
           `${esc(closes[i])},${esc(sma20[i])},${esc(sma50[i])},${esc(sma200[i])},` +
           `${esc(rsi14[i])},${esc(macdResult.macd[i])},${esc(macdResult.signal[i])},` +
-          `${esc(atr14[i])},${esc(dd)},${esc(volumes[i])}` +
+          `${esc(atr14[i])},${esc(rollingDd[i])},${esc(volumes[i])}` +
           `);`
         );
       }

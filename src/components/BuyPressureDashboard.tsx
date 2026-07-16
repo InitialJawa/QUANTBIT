@@ -110,16 +110,7 @@ export function BuyPressureDashboard({ compact }: { compact?: boolean }) {
 
   return (
     <div className={`relative bg-[#050505] border ${meta.border} rounded-2xl overflow-hidden shadow-sm`}>
-      {/* Crisis overlay */}
-      {!bps.valid && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
-          <div className="text-center space-y-2 px-6">
-            <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto animate-pulse" />
-            <h3 className="text-base font-black uppercase tracking-widest text-rose-400 font-mono">CASH DEFENSE</h3>
-            <p className="text-caption text-white/60 max-w-sm font-sans">{bps.reason}</p>
-          </div>
-        </div>
-      )}
+      {/* Crisis overlay removed to prevent visual duplication - crisis status is handled by page-level consolidated alert */}
 
       <div className={`${compact ? "p-4" : "p-5 sm:p-6"} flex flex-col md:flex-row gap-6`}>
         {!compact && (

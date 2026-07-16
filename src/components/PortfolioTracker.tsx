@@ -109,6 +109,7 @@ export function PortfolioTracker({
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
   const [manualBuyOpen, setManualBuyOpen] = useState(false);
   const [bpsExpanded, setBpsExpanded] = useState(false);
+  const [dismissedCrisisBanner, setDismissedCrisisBanner] = useState(false);
 
   useEffect(() => {
     if (notification) {

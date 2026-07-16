@@ -76,10 +76,11 @@ describe("liquidateHoldings", () => {
     assert.equal(result.totalVolume, 0);
   });
 
-  it("uses default price 100 for missing ticker prices", () => {
+  it("skips delisted tickers (no phantom Rp 100 price)", () => {
     const positions = { BBCA: 100 };
     const result = liquidateHoldings(positions, {});
-    assert.ok(result.proceeds > 0);
+    assert.equal(result.proceeds, 0);
+    assert.equal(result.totalVolume, 0);
   });
 });
 

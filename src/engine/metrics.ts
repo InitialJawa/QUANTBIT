@@ -50,15 +50,17 @@ export function computeMetrics(input: MetricsInput): MetricsResult {
     lastGoldPrice,
   } = input;
 
-  const totalReturnPct = ((currentPortfolioVal - cap) / cap) * 100;
-  const ihsgReturnPct = ((lastIhsgPrice - initialIhsgPrice) / initialIhsgPrice) * 100;
-  const goldReturnPct = ((lastGoldPrice - initialGoldPrice) / initialGoldPrice) * 100;
+  const totalReturnPct = cap > 0 ? ((currentPortfolioVal - cap) / cap) * 100 : 0;
+  const ihsgReturnPct = initialIhsgPrice > 0 ? ((lastIhsgPrice - initialIhsgPrice) / initialIhsgPrice) * 100 : 0;
+  const goldReturnPct = initialGoldPrice > 0 ? ((lastGoldPrice - initialGoldPrice) / initialGoldPrice) * 100 : 0;
 
   const daysDiff = Math.ceil(
     (new Date(lastDayDate).getTime() - new Date(day0Date).getTime()) / (1000 * 60 * 60 * 24)
   ) || 1;
   const yearsElapsed = daysDiff / 365.25;
-  const cagr = Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1;
+  const cagr = cap > 0 && currentPortfolioVal > 0
+    ? Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1
+    : 0;
 
   const validReturns = dailyReturns.filter(r => Number.isFinite(r));
   const insufficientData = validReturns.length < 2;

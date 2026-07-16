@@ -87,8 +87,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const defaultWeights = {
-      prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40 },
-      res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30 },
+      prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40, dividend: 0 },
+      res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30, dividend: 0 },
     };
 
     return Response.json({ success: true, count: data.length, configType, weights: defaultWeights, data });

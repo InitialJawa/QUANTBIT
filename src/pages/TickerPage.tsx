@@ -1,10 +1,9 @@
 import { useState, lazy, Suspense, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
-  ArrowLeft, Coins, Info,
-  LayoutDashboard, GitCompare, RotateCcw, Activity,
+  ArrowLeft, Coins, LayoutDashboard, GitCompare, RotateCcw, Activity,
   Plus, Minus, Trash2, Bookmark, BookmarkCheck,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { STOCKS_DATA } from "../stocksData";

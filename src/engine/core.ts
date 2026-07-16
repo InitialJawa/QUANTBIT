@@ -20,7 +20,7 @@ import {
   computeSellProceeds,
 } from "./allocator";
 import { computeMetrics } from "./metrics";
-import { computeBuyPressureFromMarket } from "./buyPressure";
+import { computeBuyPressureFromMarket } from "./buyPressurePure";
 import { getDividendPerShare } from "./dividendCache";
 
 export function runStrategy(input: StrategiesInput): BacktestResult {
@@ -46,12 +46,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       const yields: { ticker: string; y: number }[] = [];
       for (const t of tickersInDay) {
         const ns = d.stockNormScores[t];
-        const existing = (ns as any).dividend;
-        let yieldPct = 0;
+        const existing = ns.dividend;
         if (existing === undefined) {
-          const price = d.stockPrices?.[t];
-          yieldPct = 0;
-          yields.push({ ticker: t, y: yieldPct });
+          // M1 fix: assign neutral 50 instead of broken 0-based random
+          // Real dividend data comes from dividendCache in the main loop
+          yields.push({ ticker: t, y: 50 });
         }
         enrichedScores[t] = {
           quality: ns.quality ?? 50,
@@ -61,13 +60,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           dividend: existing ?? 50,
         };
       }
-      if (yields.length > 0) {
-        yields.sort((a, b) => a.y - b.y);
-        const n = yields.length;
-        yields.forEach((it, i) => {
-          enrichedScores[it.ticker].dividend = (i / Math.max(1, n - 1)) * 95;
-        });
-      }
+      // No more random re-ranking for missing dividend — all get neutral 50
       const stockRanks = computeDayRankings(enrichedScores, currentWeights);
       return { ...d, stockRanks };
     }
@@ -218,8 +211,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     let stocksValue = 0;
     Object.entries(positions).forEach(([ticker, shares]) => {
-      const price = day.stockPrices[ticker] || 100;
-      stocksValue += shares * price;
+      const price = day.stockPrices[ticker];
+      if (price && price > 0) {
+        stocksValue += shares * price;
+      }
+      // H1 fix: skip delisted/missing tickers instead of valuing at Rp 100
     });
 
     const goldVal = goldGrams * day.goldPrice;
@@ -423,7 +419,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         logs.push({
           date: day.date,
           type: "BUY",
-          message: `[Adaptive DCA] BPS ${bps.score} → ${bps.action.toUpperCase()} → deploy Rp ${deployAmount.toLocaleString("id-ID")} (${bps.deployPct}%) ke ${alloc.positions.length} emiten.`,
+          message: `[Adaptive DCA] BPS ${bps.score} → ${bps.action.toUpperCase()} → deploy Rp ${deployAmount.toLocaleString("id-ID")} (${bps.deployPct}%) ke ${Object.keys(alloc.positions).length} emiten.`,
         });
       }
     }
@@ -455,7 +451,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           : isMonthChange && currentRank > rankThreshold;
 
         if (isEmergencyExit || isRoutineExit) {
-          const sellResult = computeSellProceeds(positions[ticker], day.stockPrices[ticker] || 100, fees);
+          const sellResult = computeSellProceeds(positions[ticker], day.stockPrices[ticker] || 0, fees);
           const swapProceeds = sellResult.proceeds;
           totalTransactionVolume += sellResult.volume;
           delete positions[ticker];
@@ -517,7 +513,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   }
 
   const currentPortfolioVal = cash +
-    (Object.entries(positions).reduce((sum, [t, s]) => sum + s * (filtered[filtered.length - 1].stockPrices[t] || 100), 0)) +
+    (Object.entries(positions).reduce((sum, [t, s]) => {
+      const p = filtered[filtered.length - 1].stockPrices[t];
+      return sum + (p && p > 0 ? s * p : 0);
+    }, 0)) +
     (goldGrams * filtered[filtered.length - 1].goldPrice) + bufferCash;
 
   const lastDayObj = filtered[filtered.length - 1];

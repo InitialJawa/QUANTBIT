@@ -12,15 +12,6 @@ export interface LiquidationResult {
   totalVolume: number;
 }
 
-export interface SwapResult {
-  sold: boolean;
-  sellProceeds: number;
-  swappedTo: string;
-  newShares: number;
-  cashDelta: number;
-  totalVolume: number;
-}
-
 export function computeInitialAllocation(
   capital: number,
   topTickers: string[],
@@ -73,7 +64,8 @@ export function liquidateHoldings(
   let totalVolume = 0;
 
   Object.entries(positions).forEach(([ticker, shares]) => {
-    const rawPrice = dayPrices[ticker] || 100;
+    const rawPrice = dayPrices[ticker];
+    if (!rawPrice || rawPrice <= 0) return; // skip delisted/missing tickers
     const exitPrice = rawPrice * (1 - fees.slippage);
     const proceed = shares * exitPrice * (1 - fees.sellFee - fees.tax);
     proceeds += proceed;
