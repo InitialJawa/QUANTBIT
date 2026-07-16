@@ -197,6 +197,7 @@ export function SimulationTab({
 }: SimulationTabProps) {
   const visibleStocks = STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [scoreLookup, setScoreLookup] = useState<{ dates: string[]; byDate: Record<string, any> } | null>(null);
 
   const isMarketClosedDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -235,18 +236,21 @@ export function SimulationTab({
   // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
     const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
-    api.get<{ success: boolean; data: any[] }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
+    api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> } }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { 
         if (res.success && Array.isArray(res.data)) {
           setHistoricalData(res.data);
+          setScoreLookup(res.scoreLookup || null);
         } else {
           console.warn('[Backtest] API returned invalid data, falling back to synthetic');
           setHistoricalData(generateClientBacktestData());
+          setScoreLookup(null);
         }
       })
       .catch((err) => {
         console.warn('[Backtest] API fetch failed, using synthetic data:', err);
         setHistoricalData(generateClientBacktestData());
+        setScoreLookup(null);
       });
   }, [backtestConfig.activeProfileId, backtestConfig.simStartDate, backtestConfig.simEndDate]);
 
@@ -490,6 +494,7 @@ export function SimulationTab({
           idx30: IDX30_TICKERS,
           lq45: LQ45_TICKERS,
         },
+        scoreLookup: scoreLookup || undefined,
       });
 
       setBacktestProgress(95);
@@ -525,6 +530,7 @@ export function SimulationTab({
             idx30: IDX30_TICKERS,
             lq45: LQ45_TICKERS,
           },
+          scoreLookup: scoreLookup || undefined,
         };
         const baselines: BaselineResult[] = [];
         for (const baseline of ["lump_sum", "monthly_dca", "quarterly_dca"] as DcaBaseline[]) {

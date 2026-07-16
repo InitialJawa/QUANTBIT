@@ -20,6 +20,7 @@ import {
   type ExecutionFees,
   type ProfileWeights,
   type TradeLog,
+  type ScoreLookup,
 } from "./types";
 import { computeDayRankings, pickTopTickersByRank, getCleanTickerList } from "./ranker";
 import { computeInitialAllocation, computeSellProceeds } from "./allocator";
@@ -32,6 +33,7 @@ export interface BaselineInput {
   profileWeights: ProfileWeights;
   universeTickers: { idx80: string[]; idx30: string[]; lq45: string[] };
   baseline: DcaBaseline;
+  scoreLookup?: ScoreLookup;
   fees?: ExecutionFees;
 }
 
@@ -62,22 +64,31 @@ function getIntervalDays(baseline: DcaBaseline): number {
   return Number.MAX_SAFE_INTEGER; // lump sum = once
 }
 
-function recalcRanks(day: BacktestDayData, weights: ProfileWeights): Record<string, number> {
-  if (day.stockNormScores) {
-    return computeDayRankings(day.stockNormScores, weights);
+function recalcRanks(day: BacktestDayData, weights: ProfileWeights, scoreLookup?: ScoreLookup): Record<string, number> {
+  const normScores = day.stockNormScores || (() => {
+    if (!scoreLookup || scoreLookup.dates.length === 0) return undefined;
+    let lo = 0, hi = scoreLookup.dates.length - 1, best = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (scoreLookup.dates[mid] <= day.date) { best = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return best >= 0 ? scoreLookup.byDate[scoreLookup.dates[best]] : undefined;
+  })();
+  if (normScores) {
+    return computeDayRankings(normScores, weights);
   }
   return day.stockRanks;
 }
 
 export function runBaselineDca(input: BaselineInput): BaselineResult {
-  const { dayData: rawInput, config, profileWeights, universeTickers, baseline, fees = DEFAULT_FEES } = input;
+  const { dayData: rawInput, config, profileWeights, universeTickers, baseline, fees = DEFAULT_FEES, scoreLookup } = input;
   const label = BASELINE_LABEL[baseline];
   const intervalDays = getIntervalDays(baseline);
 
   // Pre-compute ranks for every day using the same weights as the
   // adaptive DCA strategy. Ensures apples-to-apples comparison.
   const dayData: BacktestDayData[] = rawInput.map((d) => {
-    const stockRanks = recalcRanks(d, profileWeights);
+    const stockRanks = recalcRanks(d, profileWeights, scoreLookup);
     return { ...d, stockRanks };
   });
 

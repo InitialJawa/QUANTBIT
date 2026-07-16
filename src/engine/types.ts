@@ -132,6 +132,17 @@ export interface BacktestResult {
   finalInCrashState?: boolean;
 }
 
+export interface ScoreLookup {
+  dates: string[];
+  byDate: Record<string, Record<string, {
+    quality: number;
+    growth: number;
+    value: number;
+    momentum: number;
+    dividend: number;
+  }>>;
+}
+
 export interface StrategiesInput {
   dayData: BacktestDayData[];
   config: BacktestConfig;
@@ -141,5 +152,6 @@ export interface StrategiesInput {
     idx30: string[];
     lq45: string[];
   };
+  scoreLookup?: ScoreLookup;
   fees?: ExecutionFees;
 }

@@ -56,20 +56,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
     const scoreDates = Object.keys(scoresByDate).sort();
 
-    const getScoresForDate = (date: string): Record<string, any> | undefined => {
-      if (scoreDates.length === 0) return undefined;
-      let lo = 0, hi = scoreDates.length - 1, best = -1;
-      while (lo <= hi) {
-        const mid = (lo + hi) >> 1;
-        if (scoreDates[mid] <= date) { best = mid; lo = mid + 1; } else hi = mid - 1;
-      }
-      return best >= 0 ? scoresByDate[scoreDates[best]] : undefined;
-    };
-
     const data = marketRows.results.map((m: any) => {
       const stockPrices = stockByDate[m.date] || {};
       const stockAdj = stockAdjByDate[m.date] || {};
-      const dayScores = getScoresForDate(m.date);
 
       return {
         date: m.date,
@@ -78,7 +67,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         usdidrRate: m.usdidr_rate,
         stockAdjPrices: stockAdj,
         stockPrices,
-        stockNormScores: dayScores && Object.keys(dayScores).length > 0 ? dayScores : undefined,
       };
     });
 
@@ -103,7 +91,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30, dividend: 0 },
     };
 
-    return Response.json({ success: true, count: data.length, configType, weights: defaultWeights, data });
+    return Response.json({ success: true, count: data.length, configType, weights: defaultWeights, data, scoreLookup: { dates: scoreDates, byDate: scoresByDate } });
   } catch (e: any) {
     return Response.json({ success: false, error: e.message }, { status: 500 });
   }
