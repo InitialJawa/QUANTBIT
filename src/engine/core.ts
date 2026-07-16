@@ -35,7 +35,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       const mid = (lo + hi) >> 1;
       if (scoreLookup.dates[mid] <= date) { best = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    return best >= 0 ? scoreLookup.byDate[scoreLookup.dates[best]] : undefined;
+    if (best >= 0) return scoreLookup.byDate[scoreLookup.dates[best]];
+    return scoreLookup.byDate[scoreLookup.dates[0]];
   };
 
   // Fallback rank key for legacy data that lacks `stockNormScores`. Newer data

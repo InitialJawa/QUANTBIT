@@ -72,7 +72,8 @@ function recalcRanks(day: BacktestDayData, weights: ProfileWeights, scoreLookup?
       const mid = (lo + hi) >> 1;
       if (scoreLookup.dates[mid] <= day.date) { best = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    return best >= 0 ? scoreLookup.byDate[scoreLookup.dates[best]] : undefined;
+    if (best >= 0) return scoreLookup.byDate[scoreLookup.dates[best]];
+    return scoreLookup.byDate[scoreLookup.dates[0]];
   })();
   if (normScores) {
     return computeDayRankings(normScores, weights);
