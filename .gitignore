@@ -62,6 +62,9 @@ data/idx_page.html
 .trae
 .windsurf
 
+# Downloaded component snippets
+download/
+
 # Graphify cache
 cache/
 *.sig
