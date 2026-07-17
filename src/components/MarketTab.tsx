@@ -1,9 +1,8 @@
-﻿import { useState, useMemo } from "react";
-import { MKT } from "../marketData";
+﻿import { useState, useMemo, useRef } from "react";
 import { STOCKS_DATA } from "../stocksData";
 import { StockData, PortfolioItem, WatchlistItem } from "../types";
 import { computeRSI, computeMACD, getIhsgData } from "../marketRegimeEngine";
-import { Eye, Trash2, Plus, Sparkles } from "lucide-react";
+import { Eye, Trash2, Plus, Sparkles, Activity } from "lucide-react";
 import { MarketOverviewCharts } from "./MarketOverviewCharts";
 import { LastUpdatedChip } from "./LastUpdatedChip";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
@@ -11,7 +10,7 @@ import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { MarketRegimeCard } from "./MarketRegimeCard";
-import { MarketInsightPanel } from "./MarketInsightPanel";
+import { MarketInsightPanel, type MarketInsightPanelHandle } from "./MarketInsightPanel";
 import { MarketMetricsDashboard } from "./MarketMetricsDashboard";
 
 interface SyncStatus {
@@ -35,6 +34,7 @@ interface MarketTabProps {
   triggerSync?: () => void;
   watchlist?: WatchlistItem[];
   onToggleWatchlist?: (ticker: string) => void;
+  onNavigateTab?: (tab: string, context?: string) => void;
 }
 
 export function MarketTab({
@@ -51,8 +51,10 @@ export function MarketTab({
   triggerSync,
   watchlist = [],
   onToggleWatchlist,
+  onNavigateTab,
 }: MarketTabProps) {
   const { engineConfig } = useEngineConfig();
+  const insightRef = useRef<MarketInsightPanelHandle>(null);
 
   const allVisibleStocks = useMemo(
     () => STOCKS_DATA.map(s => getDynamicStock(s.ticker) || s),
@@ -92,6 +94,16 @@ export function MarketTab({
     return { advancers, decliners, total: allVisibleStocks.length };
   }, [allVisibleStocks]);
 
+  const handleNavigate = (tab: string, context?: string) => {
+    if (onNavigateTab) {
+      onNavigateTab(tab, context);
+    }
+  };
+
+  const handleOpenInsight = () => {
+    insightRef.current?.expandReason();
+  };
+
   return (
     <div className="space-y-4">
 
@@ -103,13 +115,18 @@ export function MarketTab({
         </div>
       )}
 
-      {/* 1. DOMINANT: Market Regime Status + Action CTAs */}
-      <MarketRegimeCard myReturnPercent={myReturnPercent} portfolioCount={portfolio.length} />
+      {/* 1. MARKET REGIME HERO — dominant status + clickable action CTAs */}
+      <MarketRegimeCard
+        myReturnPercent={myReturnPercent}
+        portfolioCount={portfolio.length}
+        onNavigate={handleNavigate}
+        onOpenInsight={handleOpenInsight}
+      />
 
-      {/* 2. Chart utama — IHSG vs Gold vs Portfolio */}
+      {/* 2. CHART — IHSG vs Gold vs Portfolio */}
       <MarketOverviewCharts portfolio={portfolio} />
 
-      {/* 3. Metrics Dashboard — grouped: Tren, Momentum, Risiko, Alokasi */}
+      {/* 3. MARKET DIAGNOSTICS — 4 expandable panels */}
       <MarketMetricsDashboard
         rsiIHSG={rsiIHSG}
         macdResult={macdResult}
@@ -117,17 +134,18 @@ export function MarketTab({
         breadth={breadth}
       />
 
-      {/* 4. Wawasan AI — merged AI Quick Pulse + AI Brief */}
-      <MarketInsightPanel />
+      {/* 4. AI INSIGHT — compact + collapsible detail */}
+      <MarketInsightPanel ref={insightRef} />
 
-      {/* 5. Ringkasan Parameter — sync status bar */}
+      {/* 5. SYNC STATUS BAR — minimal */}
       <div className="flex items-center justify-between px-1">
         <h3 className="text-label uppercase tracking-wider text-white/30 flex items-center gap-1.5">
+          <Activity className="w-3 h-3" />
           Ringkasan Data
           <ExplainButton label="IHSG, USD/IDR, Quant Score Gap, Market Breadth" />
         </h3>
         <div className="flex items-center gap-3">
-          <LastUpdatedChip iso={MKT.market_last_update} />
+          <LastUpdatedChip iso={""} />
           {syncStatus && (
             <div className="flex items-center gap-2">
               <div className={`w-1.5 h-1.5 rounded-full ${
@@ -152,7 +170,7 @@ export function MarketTab({
         </div>
       </div>
 
-      {/* 6. Watchlist — posisi sekunder, lebih compact */}
+      {/* 6. WATCHLIST — secondary */}
       <div className="bg-[#0A0A0A] bg-card-gradient-alt rounded-2xl border border-white/10 p-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <h3 className="text-xs font-semibold text-white/85 uppercase tracking-widest flex items-center gap-2">

@@ -328,6 +328,7 @@ function AppContent({ logout }: { logout: () => void }) {
                           triggerSync={triggerSync}
                           watchlist={pm.watchlist}
                           onToggleWatchlist={pm.handleToggleWatchlist}
+                          onNavigateTab={(tab, _context) => ui.setActiveTab(tab as any)}
                         />
                         </Suspense>
                       </motion.div>
