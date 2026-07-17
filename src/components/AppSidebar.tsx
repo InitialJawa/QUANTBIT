@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from "motion/react";
-import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, FileSpreadsheet, ChevronLeft, PanelLeftClose, PanelLeftOpen, Play, Download, Calendar, Settings, BarChart2, Link2, Sparkles, Zap } from "lucide-react";
+import { Newspaper, TrendingUp, TrendingDown, Wallet, BarChart3, Clock, ChevronLeft, PanelLeftClose, PanelLeftOpen, Calendar, Settings, BarChart2, Link2, Zap } from "lucide-react";
 import { idxNews, MKT, RS } from "../marketData";
 import { STOCKS_DATA } from "../stocksData";
 import { getIhsgData, computeRSI, computeMACD, isCrashActive } from "../marketRegimeEngine";
@@ -133,19 +133,6 @@ export function AppSidebar({
 
   const renderMarketContent = () => (
     <>
-      {/* AI QUICK PULSE — 1 baris */}
-      <div id="sidebar-ai-pulse" className="mx-2">
-        <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
-          <Sparkles className="w-3 h-3 text-tertiary" />
-          <span className="text-caption font-medium text-tertiary uppercase tracking-wider">AI Quick Pulse</span>
-        </div>
-        <div className="px-2 py-1.5">
-          <p className="text-caption text-tertiary leading-relaxed line-clamp-2 font-sans">
-            {RS.rationale}
-          </p>
-        </div>
-      </div>
-
       {/* TOP MOVERS — Gainers + Losers compact */}
       <div id="sidebar-top-movers" className="mx-2">
         <div className="px-2 py-1 flex items-center gap-1.5 border-b border-white/[0.04]">
@@ -183,7 +170,7 @@ export function AppSidebar({
                   <div key={stock.ticker} className="flex items-center gap-1 min-w-0">
                     <span className="text-caption font-medium text-primary shrink-0" title={stock.ticker.replace(".JK","")}>{stock.ticker.replace(".JK","")}</span>
                     <MiniSparkline data={sparkData} width={28} height={14} color="#fb7185" />
-                    <span className="text-caption font-mono font-bold text-rose-400 shrink-0">{stock.change.toFixed(1)}%</span>
+                    <span className="text-caption font-mono font-bold text-rose-400 shrink-0">-{Math.abs(stock.change).toFixed(1)}%</span>
                   </div>
                 );
               })}
@@ -234,6 +221,11 @@ export function AppSidebar({
               <h4 className="text-caption text-tertiary group-hover:text-secondary leading-snug line-clamp-2 mt-0">
                 {news.title}
               </h4>
+              {news.badge && (
+                <span className={`inline-block mt-1 text-label font-bold px-1.5 py-0.5 rounded border ${news.color}`}>
+                  {news.badge}
+                </span>
+              )}
             </a>
           ))}
         </div>

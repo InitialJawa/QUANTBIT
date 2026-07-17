@@ -80,6 +80,9 @@ type FactorBarProps = {
 };
 
 const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon, description }) => {
+  const barColor = value >= 70 ? "from-green-500/70 via-green-500 to-green-400"
+    : value >= 40 ? "from-amber-500/70 via-amber-500 to-amber-400"
+    : "from-rose-500/70 via-rose-500 to-rose-400";
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-caption">
@@ -92,7 +95,7 @@ const FactorBar: React.FC<FactorBarProps> = ({ label, value, weight, icon: Icon,
       </div>
       <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-green-500/70 via-green-500 to-green-400"
+          className={`h-full rounded-full bg-gradient-to-r ${barColor}`}
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -119,7 +122,7 @@ export function BuyPressureDashboard({ compact }: { compact?: boolean }) {
             <CircularGauge score={bps.score} valid={bps.valid} ringColor={meta.ring} />
             <div className="text-center space-y-1.5">
               <span className="text-caption uppercase tracking-widest text-white/30 font-bold font-mono block">
-                Buy Pressure Score
+                Skor Tekanan Beli
               </span>
               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${meta.bg} ${meta.border} border`}>
                 <Sparkles className={`w-3 h-3 ${meta.color}`} />
@@ -149,7 +152,7 @@ export function BuyPressureDashboard({ compact }: { compact?: boolean }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h3 className={`${compact ? "text-caption" : "text-base"} font-black text-white uppercase tracking-widest font-sans`}>
-                {compact ? "AI Rekomendasi" : "Adaptive DCA Recommendation"}
+                {compact ? "Rekomendasi AI" : "Rekomendasi DCA Adaptif"}
               </h3>
               {!compact && (
                 <p className="text-caption text-white/40 font-sans mt-0.5">
@@ -193,7 +196,7 @@ export function BuyPressureDashboard({ compact }: { compact?: boolean }) {
         {/* Right: Deploy/Cash stats */}
         <div className="md:border-l md:border-white/[0.05] md:pl-6 flex md:flex-col gap-3 shrink-0 md:w-44">
           <div className="flex-1 p-3 bg-white/[0.01] border border-white/[0.03] rounded-xl">
-            <span className="text-label uppercase font-bold tracking-widest text-white/30 block font-mono mb-1">Deploy</span>
+            <span className="text-label uppercase font-bold tracking-widest text-white/30 block font-mono mb-1">Alokasi Deploy</span>
             <div className="flex items-baseline gap-1.5">
               <span className={`text-xl font-mono font-black ${meta.color}`}>{bps.deployPct}</span>
               <span className="text-caption text-white/30 font-mono">% kas</span>

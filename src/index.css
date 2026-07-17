@@ -169,10 +169,24 @@
    CARD GRADIENTS — subtle accent glow on dark surfaces
    ========================================================================== */
 
-[data-theme="dark"] .bg-card-gradient {
+/* Hero gradient — ONLY for top-level hero/header cards */
+[data-theme="dark"] .bg-hero-gradient {
   background:
     radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%),
     var(--bg-surface) !important;
+}
+[data-theme="light"] .bg-hero-gradient {
+  background:
+    radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%),
+    var(--bg-surface) !important;
+}
+
+/* Legacy: kept for backward compat but should migrate to bg-hero-gradient */
+[data-theme="dark"] .bg-card-gradient {
+  background: var(--bg-surface) !important;
+}
+[data-theme="light"] .bg-card-gradient {
+  background: var(--bg-surface) !important;
 }
 
 [data-theme="dark"] .bg-card-gradient-alt {
@@ -180,17 +194,17 @@
     radial-gradient(ellipse at 0% 0%, var(--accent-glow) 0%, transparent 55%),
     var(--bg-surface) !important;
 }
-
-[data-theme="light"] .bg-card-gradient {
-  background:
-    radial-gradient(ellipse at 100% 100%, var(--accent-glow) 0%, transparent 60%),
-    var(--bg-surface) !important;
-}
-
 [data-theme="light"] .bg-card-gradient-alt {
   background:
     radial-gradient(ellipse at 0% 0%, var(--accent-glow) 0%, transparent 55%),
     var(--bg-surface) !important;
+}
+
+/* Neutral card — no glow, just surface + border */
+.bg-neutral-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
 }
 
 /* ==========================================================================

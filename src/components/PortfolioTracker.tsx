@@ -7,7 +7,7 @@ import { SearchableSelect } from "./SearchableSelect";
 import { TickerLogo } from "./TickerLogo";
 import { ExplainButton } from "./ExplainButton";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
-import { getProcessedLeaders, MKT } from "../marketData";
+import { getProcessedLeaders, MKT, RS } from "../marketData";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import {
@@ -110,6 +110,8 @@ export function PortfolioTracker({
   const [manualBuyOpen, setManualBuyOpen] = useState(false);
   const [bpsExpanded, setBpsExpanded] = useState(false);
   const [dismissedCrisisBanner, setDismissedCrisisBanner] = useState(false);
+  const [strategyExpanded, setStrategyExpanded] = useState(false);
+  const [ledgerExpanded, setLedgerExpanded] = useState(false);
 
   useEffect(() => {
     if (notification) {
@@ -677,11 +679,11 @@ export function PortfolioTracker({
               syncStatus.stale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
             }`} />
             <span className="font-bold uppercase tracking-widest">
-              {syncStatus.stale ? "DATA STALE" : "DATA SYNCED"}
+              {syncStatus.stale ? "DATA PERLU SYNC" : "DATA TERSINKRONISASI"}
             </span>
             {syncStatus.latestDate && (
               <span className="text-white/50">
-                Latest: {syncStatus.latestDate}
+                Terakhir: {syncStatus.latestDate}
               </span>
             )}
             {syncStatus.stale && (
@@ -699,12 +701,12 @@ export function PortfolioTracker({
                 : "bg-white/10 hover:bg-white/20 text-white"
             }`}
           >
-            {syncStatus.syncing ? "Syncing..." : "Sync Now"}
+            {syncStatus.syncing ? "Menyinkronkan..." : "Sinkron Sekarang"}
           </button>
         </div>
       )}
 
-      {/* Active Strategy Banner */}
+      {/* Active Strategy Banner — collapsible */}
       <div className="bg-[#0A0A0A] border border-emerald-500/20 p-4 rounded-2xl shadow-sm">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -713,114 +715,127 @@ export function PortfolioTracker({
                 <Sparkles className="w-5 h-5 text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-caption uppercase tracking-widest text-emerald-400 font-bold mb-0.5">Active Strategy</div>
+                <div className="text-caption uppercase tracking-widest text-emerald-400 font-bold mb-0.5">Strategi Aktif</div>
                 <div className="text-base font-bold text-white truncate">{activeProfile.name}</div>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
-              <div className="text-right">
-                <div className="text-white/30 text-label">QUALITY</div>
-                <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-3 text-caption font-mono shrink-0">
+                <div className="text-right">
+                  <div className="text-white/30 text-label">KUALITAS</div>
+                  <div className="text-white font-bold">{Math.round(activeProfile.qualityWeight * 100)}%</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-white/30 text-label">PERTUMBUHAN</div>
+                  <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-white/30 text-label">NILAI</div>
+                  <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-white/30 text-label">MOMENTUM</div>
+                  <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-white/30 text-label">GROWTH</div>
-                <div className="text-white font-bold">{Math.round(activeProfile.growthWeight * 100)}%</div>
-              </div>
-              <div className="text-right">
-                <div className="text-white/30 text-label">VALUE</div>
-                <div className="text-white font-bold">{Math.round(activeProfile.valueWeight * 100)}%</div>
-              </div>
-              <div className="text-right">
-                <div className="text-white/30 text-label">MOMENTUM</div>
-                <div className="text-white font-bold">{Math.round(activeProfile.momentumWeight * 100)}%</div>
-              </div>
+              <button
+                onClick={() => setStrategyExpanded(!strategyExpanded)}
+                className="flex items-center gap-1 text-caption font-bold uppercase tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-white/[0.05] shrink-0"
+              >
+                {strategyExpanded ? "Tutup" : "Detail"}
+                {strategyExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.05]">
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-              MODE: {engineConfig.simulationMode.toUpperCase()}
-            </div>
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
-              UNIVERSE: {engineConfig.simulationMode === "custom"
-                ? `Custom (${engineConfig.customUniverse.length})`
-                : engineConfig.universe.toUpperCase()}
-            </div>
-            {engineConfig.simulationMode === "algo" && (
+          {strategyExpanded && (
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.05]">
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                MODE: {engineConfig.simulationMode === "algo" ? "ALGORITMA" : engineConfig.simulationMode === "custom" ? "KUSTOM" : engineConfig.simulationMode.toUpperCase()}
+              </div>
               <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
-                TOP {engineConfig.topNCount}
+                UNIVERSE: {engineConfig.simulationMode === "custom"
+                  ? `Kustom (${engineConfig.customUniverse.length})`
+                  : engineConfig.universe.toUpperCase()}
               </div>
-            )}
-            {engineConfig.enableCrashProtection && (
-              <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                CRASH ≤ {engineConfig.crashSensitivity}%
+              {engineConfig.simulationMode === "algo" && (
+                <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/60 border border-white/[0.06]">
+                  TOP {engineConfig.topNCount}
+                </div>
+              )}
+              {engineConfig.enableCrashProtection && (
+                <div className="text-label font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20">
+                  KRASH ≤ {engineConfig.crashSensitivity}%
+                </div>
+              )}
+              {engineConfig.enableCrashProtection && (
+                <div className="text-label font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                  SAFE HAVEN: {engineConfig.safeHavenAsset === "emas" ? "EMAS" : engineConfig.safeHavenAsset.toUpperCase()}
+                </div>
+              )}
+              <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/[0.06]">
+                BUFFER: {engineConfig.reserveBufferPct}%
               </div>
-            )}
-            {engineConfig.enableCrashProtection && (
-              <div className="text-label font-mono px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
-                SAFE HAVEN: {engineConfig.safeHavenAsset.toUpperCase()}
-              </div>
-            )}
-            <div className="text-label font-mono px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/[0.06]">
-              BUFFER: {engineConfig.reserveBufferPct}%
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Sesi 12 — Net Wealth hero card + 3 summary cards */}
+      {/* Sesi 12 — Total Kekayaan hero card + 3 summary cards */}
       <div className="space-y-2">
-        {/* Hero: Total Net Wealth */}
-        <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-emerald-500/15 p-5 relative overflow-hidden">
+        {/* Hero: Total Kekayaan */}
+        <div className="bg-[#050505] bg-hero-gradient rounded-2xl border border-emerald-500/15 p-5 relative overflow-hidden">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
                 <Wallet className="w-4 h-4 text-emerald-400" />
                 <span className="text-caption uppercase font-bold tracking-widest text-emerald-400/80 font-sans">
-                  Net Wealth (Saham + Kas + Emas)
+                  Total Kekayaan (Saham + Kas + Emas)
                 </span>
-                <ExplainButton label="Net Wealth = modal di saham + kas RDI + gram emas × harga spot. Sumber kebenaran tunggal untuk nilai portofolio." />
+                <ExplainButton label="Total Kekayaan = modal di saham + kas RDI + gram emas × harga spot. Sumber kebenaran tunggal untuk nilai portofolio." />
               </div>
               <h4 className="text-3xl font-black text-white font-mono flex items-baseline gap-2">
                 <span className="text-xs text-white/30 font-semibold uppercase">IDR</span>
                 {(totalCurrentValue + cash).toLocaleString("id-ID")}
               </h4>
-              <div className="mt-1.5 flex items-center gap-2 text-label font-mono text-white/40">
-                <span>Modal: {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}</span>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-label font-mono text-white/40">
+                <span>Dana Tersedia: <span className="text-amber-400/80 font-bold">{cash.toLocaleString("id-ID", { notation: "compact" })}</span></span>
                 <span>•</span>
-                <span>Kas: {cash.toLocaleString("id-ID", { notation: "compact" })}</span>
+                <span>Modal Beli: {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}</span>
+                <span>•</span>
+                <span>Nilai Saham: {totalCurrentValue.toLocaleString("id-ID", { notation: "compact" })}</span>
                 <span>•</span>
                 <span>Emas: {((portfolio.find(p => p.ticker === "EMAS" || p.ticker === "GOLD")?.shares ?? 0) * (MKT.gold.value || 0)).toLocaleString("id-ID", { notation: "compact" })}</span>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-caption uppercase font-bold text-white/30 tracking-widest">P&amp;L</div>
-              <div className={`text-2xl font-black font-mono ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
-                {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
+              <div className="text-caption uppercase font-bold text-white/30 tracking-widest">Laba / Rugi</div>
+              <div className={`text-2xl font-black font-mono ${totalReturn > 0 ? "text-green-400" : totalReturn < 0 ? "text-rose-400" : "text-white/40"}`}>
+                {totalReturn > 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
               </div>
-              <div className={`text-caption font-mono font-bold mt-0.5 ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
-                {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
+              <div className={`text-caption font-mono font-bold mt-0.5 ${totalReturn > 0 ? "text-green-400" : totalReturn < 0 ? "text-rose-400" : "text-white/40"}`}>
+                {totalReturn > 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
               </div>
             </div>
           </div>
         </div>
 
-        {/* 3 merged summary cards */}
+        {/* 3 summary cards — neutral background */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {/* Modal + Nilai (merged) */}
-          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+          {/* Modal + Nilai */}
+          <div className="bg-[#050505] border border-white/[0.06] rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-2">
               <FileSpreadsheet className="w-3 h-3 text-white/40" />
               <span className="text-label font-mono text-white/40 uppercase tracking-widest">Modal / Nilai</span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
               <div>
-                <div className="text-label font-mono text-white/30">Cost</div>
+                <div className="text-label font-mono text-white/30">Modal Beli</div>
                 <div id="portfolio-total-cost" className="text-data font-mono font-bold text-white">
                   {totalInvestment.toLocaleString("id-ID", { notation: "compact" })}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-label font-mono text-white/30">Market</div>
+                <div className="text-label font-mono text-white/30">Nilai Pasar</div>
                 <div id="portfolio-current-value" className="text-data font-mono font-bold text-white">
                   {totalCurrentValue.toLocaleString("id-ID", { notation: "compact" })}
                 </div>
@@ -828,30 +843,30 @@ export function PortfolioTracker({
             </div>
           </div>
 
-          {/* P&L */}
-          <div className="bg-[#050505] border border-white/[0.04] rounded-xl p-3">
+          {/* Laba / Rugi */}
+          <div className="bg-[#050505] border border-white/[0.06] rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              {totalReturn >= 0 ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : <TrendingDown className="w-3 h-3 text-rose-400" />}
-              <span className="text-label font-mono text-white/40 uppercase tracking-widest">P&amp;L</span>
+              {totalReturn > 0 ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : totalReturn < 0 ? <TrendingDown className="w-3 h-3 text-rose-400" /> : <TrendingUp className="w-3 h-3 text-white/30" />}
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Laba / Rugi</span>
             </div>
-            <div id="portfolio-total-return" className={`text-data font-mono font-bold ${totalReturn >= 0 ? "text-green-400" : "text-rose-400"}`}>
-              {totalReturn >= 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
+            <div id="portfolio-total-return" className={`text-data font-mono font-bold ${totalReturn > 0 ? "text-green-400" : totalReturn < 0 ? "text-rose-400" : "text-white/40"}`}>
+              {totalReturn > 0 ? "+" : ""}{totalReturnPercent.toFixed(2)}%
             </div>
-            <div className={`text-label font-mono mt-0.5 ${totalReturn >= 0 ? "text-green-400/70" : "text-rose-400/70"}`}>
-              {totalReturn >= 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
+            <div className={`text-label font-mono mt-0.5 ${totalReturn > 0 ? "text-green-400/70" : totalReturn < 0 ? "text-rose-400/70" : "text-white/30"}`}>
+              {totalReturn > 0 ? "+" : ""}{totalReturn.toLocaleString("id-ID", { notation: "compact" })}
             </div>
           </div>
 
           {/* Dividen /thn */}
-          <div className="bg-[#050505] border border-emerald-500/15 rounded-xl p-3">
+          <div className="bg-[#050505] border border-white/[0.06] rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
-              <span className="text-label font-mono text-emerald-400/70 uppercase tracking-widest">Dividen/thn</span>
+              <Sparkles className="w-3 h-3 text-white/40" />
+              <span className="text-label font-mono text-white/40 uppercase tracking-widest">Dividen/thn</span>
             </div>
-            <div id="portfolio-annual-dividend" className="text-data font-mono font-bold text-green-400">
-              +{totalAnnualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
+            <div id="portfolio-annual-dividend" className={`text-data font-mono font-bold ${totalAnnualDividend > 0 ? "text-green-400" : "text-white/40"}`}>
+              {totalAnnualDividend > 0 ? "+" : ""}{totalAnnualDividend.toLocaleString("id-ID", { notation: "compact", maximumFractionDigits: 0 })}
             </div>
-            <div className="text-label font-mono text-green-400/60 mt-0.5">
+            <div className={`text-label font-mono mt-0.5 ${totalAnnualDividend > 0 ? "text-green-400/60" : "text-white/30"}`}>
               {totalCurrentValue > 0 ? `${(totalAnnualDividend / totalCurrentValue * 100).toFixed(2)}% yield` : "—"}
             </div>
           </div>
@@ -865,13 +880,18 @@ export function PortfolioTracker({
         <div className="bg-[#050505] border border-white/[0.05] rounded-2xl p-5 flex items-center gap-3">
           <Sparkles className="w-5 h-5 text-white/20 shrink-0" />
           <div className="flex-1">
-            <h3 className="text-caption font-bold uppercase tracking-widest text-white/40 font-mono">
-              Adaptive DCA Recommendation
+            <h3 className="text-caption font-bold uppercase tracking-widest text-white/40 font-sans">
+              Rekomendasi DCA Adaptif
             </h3>
             <p className="text-caption text-white/50 font-sans mt-0.5">
-              <span className="text-rose-400 font-bold">DISABLED</span> — aktifkan di
-              Active Strategy banner (<span className="text-emerald-400">DCA Rekomendasi</span>)
-              untuk melihat Buy Pressure Score & deploy recommendation.
+              <span className="text-rose-400 font-bold">NONAKTIF</span> — aktifkan di
+              banner Strategi Aktif (<span className="text-emerald-400">DCA Rekomendasi</span>)
+              untuk melihat skor Buy Pressure & rekomendasi deploy.
+              {isIHSGInCrisis && (
+                <span className="block mt-1.5 text-amber-400/80">
+                  ⚠️ Pasar Risk Off: saat ini disarankan simpan kas/safe haven, bukan deploy ke saham.
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -886,7 +906,7 @@ export function PortfolioTracker({
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.05] gap-2">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-white/50" />
-                Holding Saham Aktif
+                Saham Dimiliki
               </h3>
               <div className="flex items-center gap-2">
                 <input
@@ -903,37 +923,60 @@ export function PortfolioTracker({
 
             {enrichedPortfolio.length === 0 ? (
               <div className="p-8 text-center rounded-2xl bg-white/[0.01] border border-dashed border-white/10 flex flex-col items-center gap-3">
-                <Briefcase className="w-8 h-8 text-emerald-400/60" />
+                <Briefcase className="w-8 h-8 text-white/20" />
                 <span className="text-xs font-bold text-white/60 uppercase tracking-widest">
                   Portofolio Kosong
                 </span>
-                <p className="text-white/40 text-caption font-sans max-w-sm leading-relaxed">
-                  Belum ada saham yang dibeli. Mulai dengan beli pertama, atau
-                  lihat rekomendasi AI di tab Analitik.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const form = document.getElementById("manual-buy-form");
-                    form?.scrollIntoView({ behavior: "smooth", block: "center" });
-                    (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
-                  }}
-                  className="mt-2 px-3 py-1.5 text-caption font-bold uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
-                  style={{ backgroundColor: '#00c9a5', color: '#000' }}
-                >
-                  <Plus className="w-3.5 h-3.5 inline-block mr-1" /> Beli Pertama
-                </button>
+                {isIHSGInCrisis ? (
+                  <div className="space-y-2 max-w-sm">
+                    <p className="text-amber-400/80 text-caption font-sans leading-relaxed">
+                      Pasar sedang <span className="font-bold">Risk Off</span>. Alokasi saham 0% —
+                      simpan dana di kas atau safe haven (emas).
+                    </p>
+                    <p className="text-white/40 text-caption font-sans leading-relaxed">
+                      Tunggu sinyal recovery sebelum mulai beli saham pertama.
+                      Aktifkan <span className="text-emerald-400">DCA Rekomendasi</span> untuk
+                      simulasi masuk bertahap saat pasar membaik.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-white/40 text-caption font-sans max-w-sm leading-relaxed">
+                    Belum ada saham yang dibeli. Mulai dengan beli pertama, atau
+                    lihat rekomendasi AI di tab Analitik.
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  {!isIHSGInCrisis && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const form = document.getElementById("manual-buy-form");
+                        form?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        (form?.querySelector("input[type='number']") as HTMLInputElement | null)?.focus();
+                      }}
+                      className="px-4 py-2 text-caption font-bold uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
+                      style={{ backgroundColor: '#00c9a5', color: '#000' }}
+                    >
+                      <Plus className="w-3.5 h-3.5 inline-block mr-1" /> Beli Pertama
+                    </button>
+                  )}
+                  {isIHSGInCrisis && (
+                    <span className="px-4 py-2 text-caption font-bold uppercase tracking-widest rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                      Tunggu Recovery
+                    </span>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
                 <table className="w-full text-left min-w-max border-collapse">
                   <thead className="sticky top-0 z-10 bg-[#050505]">
                     <tr className="border-b border-white/[0.05] text-label font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">
-                      <SortHeader k="ticker" label="Emiten Saham" align="left" />
-                      <SortHeader k="rank" label="Model Rank" align="center" />
+                      <SortHeader k="ticker" label="Emiten" align="left" />
+                      <SortHeader k="rank" label="Peringkat" align="center" />
                       <SortHeader k="shares" label="Volume (Lembar)" align="right" />
-                      <SortHeader k="currentPrice" label="Entry vs Live (Rp)" align="right" />
-                      <SortHeader k="valueNow" label="Net Value (Rp) & P&L" align="right" />
+                      <SortHeader k="currentPrice" label="Beli vs Live (Rp)" align="right" />
+                      <SortHeader k="valueNow" label="Nilai & Laba/Rugi" align="right" />
                       <SortHeader k="annualDividend" label="Dividen/thn" align="right" />
                       <th className="pb-3 w-[110px]"></th>
                     </tr>
@@ -1002,9 +1045,9 @@ export function PortfolioTracker({
                           <td className="py-3.5 pl-3 text-right">
                             <div className="font-bold text-white text-xs font-mono">{item.valueNow.toLocaleString()}</div>
                             <div className={`text-caption font-bold mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${
-                              isPos ? "bg-green-500/10 text-green-400" : "bg-rose-500/10 text-rose-400"
+                              item.profitOrLoss > 0 ? "bg-green-500/10 text-green-400" : item.profitOrLoss < 0 ? "bg-rose-500/10 text-rose-400" : "bg-white/5 text-white/40"
                             }`}>
-                              {isPos ? "+" : ""}{item.profitOrLoss.toLocaleString()} ({isPos ? "+" : ""}{item.percentChange.toFixed(1)}%)
+                              {item.profitOrLoss > 0 ? "+" : ""}{item.profitOrLoss.toLocaleString()} ({item.profitOrLoss > 0 ? "+" : ""}{item.percentChange.toFixed(1)}%)
                             </div>
                           </td>
                           <td className="py-3.5 pl-3 text-right">
@@ -1036,7 +1079,7 @@ export function PortfolioTracker({
                                     }
                                   }}
                                   className="px-3 py-1.5 text-label tracking-widest font-bold uppercase text-white bg-white/10 hover:bg-white/20 cursor-pointer transition-colors border-l border-white/[0.05]"
-                                  title="Jual">Eks</button>
+                                  title="Jual">Jual</button>
                               </div>
                               <button onClick={() => onRemoveTransaction(item.ticker)}
                                 className="p-1.5 text-white/40 hover:text-white hover:bg-rose-600 rounded-lg bg-white/5 cursor-pointer border border-white/[0.05] hover:border-rose-500 transition-all flex items-center justify-center shrink-0"
@@ -1058,19 +1101,34 @@ export function PortfolioTracker({
           <div className="w-full lg:w-80 xl:w-96 shrink-0 p-4 space-y-3 flex flex-col">
             <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-white/50" />
-              Instruksi Ledger Cerdas
+              Instruksi Cerdas
             </h3>
 
             <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin flex-1">
               {activeAlerts.length === 0 ? (
                 <div className="p-6 text-center rounded-2xl bg-white/[0.02] border border-white/[0.03] flex flex-col items-center gap-3">
                   <CheckCircle2 className="w-6 h-6 text-white/50" />
-                  <span className="text-body text-white font-extrabold uppercase tracking-widest">Portofolio Optimal</span>
-                  <p className="text-caption text-white/40 leading-relaxed max-w-xs">
-                    Distribusi alokasi modal saat ini selaras 100% dengan
-                    parameter kebijakan investasi & analisa kuantitatif. Tidak
-                    ada transaksi yang disarankan.
-                  </p>
+                  {enrichedPortfolio.length === 0 ? (
+                    <>
+                      <span className="text-body text-white font-extrabold uppercase tracking-widest">Belum Ada Instruksi</span>
+                      <p className="text-caption text-white/40 leading-relaxed max-w-xs">
+                        {isIHSGInCrisis ? (
+                          <>Pasar Risk Off — tidak ada instruksi beli. Simpan dana di kas atau alokasikan ke emas (safe haven).</>
+                        ) : (
+                          <>Portofolio kosong. Beli saham pertama untuk mulai menerima instruksi rebalancing dari strategi kuantitatif.</>
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-body text-white font-extrabold uppercase tracking-widest">Portofolio Optimal</span>
+                      <p className="text-caption text-white/40 leading-relaxed max-w-xs">
+                        Distribusi alokasi modal saat ini selaras 100% dengan
+                        parameter kebijakan investasi & analisa kuantitatif. Tidak
+                        ada transaksi yang disarankan.
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1090,7 +1148,7 @@ export function PortfolioTracker({
                             </h4>
                           </div>
                           <div className="text-right font-mono">
-                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">Pricing Spot</span>
+                            <span className="text-label text-white/40 block font-bold uppercase tracking-widest">Harga Spot</span>
                             <span className="text-xs font-bold text-white mt-1 block">Rp {alertItem.price.toLocaleString()}</span>
                           </div>
                         </div>
@@ -1101,7 +1159,7 @@ export function PortfolioTracker({
 
                         <div className="flex border-t border-white/[0.05] pt-3 items-center justify-between gap-4 mt-1">
                           <div className="font-mono">
-                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">Volume Trading</span>
+                            <span className="text-label text-white/40 block uppercase font-bold tracking-widest">Volume Perdagangan</span>
                             <span className="text-xs font-black text-white mt-1 block">
                               {alertItem.shares.toLocaleString()}{" "}
                               {alertItem.ticker === "EMAS" || alertItem.ticker === "GOLD" ? "Gram" : "Lembar"}
@@ -1141,12 +1199,12 @@ export function PortfolioTracker({
         </div>
       </div>
 
-      {/* Moved Sector Allocation Card */}
-      <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] flex flex-col justify-between">
+      {/* Alokasi Sektor — neutral card */}
+      <div className="bg-[#050505] border border-white/[0.06] p-4 rounded-2xl flex flex-col justify-between">
         <div className="flex items-center gap-2 pb-3 border-b border-white/[0.05]">
           <PieChart className="w-4 h-4 text-white/50" />
           <h4 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
-            Alokasi Sektor (Exposure)
+            Alokasi Sektor
           </h4>
         </div>
         <div className="flex-1 w-full relative min-h-[160px] flex items-center justify-center mt-4">
@@ -1186,15 +1244,16 @@ export function PortfolioTracker({
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <span className="text-white/20 text-xs uppercase tracking-widest">
-              Kosong
-            </span>
+            <div className="text-center space-y-1">
+              <span className="text-white/30 text-caption block">Belum ada exposure sektor</span>
+              <span className="text-white/20 text-label block">karena belum ada saham aktif</span>
+            </div>
           )}
         </div>
       </div>
 
       {/* TRANSAKSI MANDIRI — collapsed by default */}
-      <div className="bg-[#050505] bg-card-gradient p-4 rounded-2xl border border-white/[0.03] space-y-3">
+      <div className="bg-[#050505] border border-white/[0.06] p-4 rounded-2xl space-y-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-4 h-4 text-white/50" />
@@ -1295,83 +1354,91 @@ export function PortfolioTracker({
         </p>
       </div>
 
-          {/* HISTORICAL TRADE LOG DATABASE */}
-          <div className="bg-[#050505] bg-card-gradient rounded-2xl border border-white/[0.03] p-4 flex flex-col max-h-[420px]">
-            <div className="flex justify-between items-center pb-3 mb-3 border-b border-white/[0.05] shrink-0">
+          {/* RIWAYAT TRANSAKSI — collapsible */}
+          <div className="bg-[#050505] border border-white/[0.06] rounded-2xl p-4 flex flex-col">
+            <div className="flex justify-between items-center pb-3 mb-3 border-b border-white/[0.05] shrink-0 cursor-pointer" onClick={() => setLedgerExpanded(!ledgerExpanded)}>
               <h3 className="text-xs font-bold text-white uppercase tracking-widest font-sans flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-white/50" />
-                Ledger Statement Audit
+                Riwayat Transaksi
+                {tradeLogs.length > 0 && (
+                  <span className="text-label font-mono px-1.5 py-0.5 bg-white/5 text-white/40 rounded">{tradeLogs.length}</span>
+                )}
               </h3>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    let csvContent = "\ufeff"; // BOM for Excel UTF-8 support
-                    csvContent +=
-                      "ID,Tanggal,Tipe,Sandi Saham (Ticker),Jumlah Lembar (Shares),Harga Eksekusi (Rp),Nilai Kotor (Gross Rp),Slippage/Spread (Rp),Komisi Broker (Rp),Pajak Transaksi (Rp),Nilai Bersih (Net Cash Rp)\n";
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => {
+                      let csvContent = "\ufeff";
+                      csvContent += "ID,Tanggal,Tipe,Sandi Saham (Ticker),Jumlah Lembar (Shares),Harga Eksekusi (Rp),Nilai Kotor (Gross Rp),Slippage/Spread (Rp),Komisi Broker (Rp),Pajak Transaksi (Rp),Nilai Bersih (Net Cash Rp)\n";
 
-                    tradeLogs.forEach((log) => {
-                      const typeLabel =
-                        log.type === "BUY"
-                          ? "BELI"
-                          : log.type === "BUY_GOLD"
-                            ? "BELI EMAS"
-                            : log.type === "SELL"
-                              ? "JUAL"
-                              : "JUAL EMAS";
-                      const dt = calculateTradeDetails(
-                        log.type,
-                        log.ticker,
-                        log.shares,
-                        log.price,
+                      tradeLogs.forEach((log) => {
+                        const typeLabel =
+                          log.type === "BUY"
+                            ? "BELI"
+                            : log.type === "BUY_GOLD"
+                              ? "BELI EMAS"
+                              : log.type === "SELL"
+                                ? "JUAL"
+                                : "JUAL EMAS";
+                        const dt = calculateTradeDetails(
+                          log.type,
+                          log.ticker,
+                          log.shares,
+                          log.price,
+                        );
+                        const dateFormatted =
+                          new Date(log.timestamp).toLocaleDateString("id-ID") +
+                          " " +
+                          new Date(log.timestamp).toLocaleTimeString("id-ID");
+                        csvContent += `"${log.id}","${dateFormatted}","${typeLabel}","${log.ticker}",${log.shares},${log.price},${dt.gross.toFixed(0)},${dt.slippage.toFixed(0)},${dt.fee.toFixed(0)},${dt.tax.toFixed(0)},${dt.net.toFixed(0)}\n`;
+                      });
+
+                      const blob = new Blob([csvContent], {
+                        type: "text/csv;charset=utf-8;",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", url);
+                      link.setAttribute(
+                        "download",
+                        `laporan_transaksi_${new Date().toISOString().slice(0, 10)}.csv`,
                       );
-                      const dateFormatted =
-                        new Date(log.timestamp).toLocaleDateString("id-ID") +
-                        " " +
-                        new Date(log.timestamp).toLocaleTimeString("id-ID");
-                      csvContent += `"${log.id}","${dateFormatted}","${typeLabel}","${log.ticker}",${log.shares},${log.price},${dt.gross.toFixed(0)},${dt.slippage.toFixed(0)},${dt.fee.toFixed(0)},${dt.tax.toFixed(0)},${dt.net.toFixed(0)}\n`;
-                    });
-
-                    const blob = new Blob([csvContent], {
-                      type: "text/csv;charset=utf-8;",
-                    });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", url);
-                    link.setAttribute(
-                      "download",
-                      `laporan_transaksi_ledger_${new Date().toISOString().slice(0, 10)}.csv`,
-                    );
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  disabled={tradeLogs.length === 0}
-                  className="text-label uppercase tracking-widest font-bold text-white/80 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-white/20 bg-white/5 px-3 py-1.5 rounded-lg font-sans"
-                  title="Unduh Laporan CSV"
-                >
-                  <Download className="w-3 h-3" /> Ekspor (CSV)
-                </button>
-                <button
-                  onClick={() => {
-                    if (isConfirmingClear) {
-                      setTradeLogs([]);
-                      setIsConfirmingClear(false);
-                    } else {
-                      setIsConfirmingClear(true);
-                      setTimeout(() => setIsConfirmingClear(false), 3000); // reset after 3s
-                    }
-                  }}
-                  className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-white"}`}
-                >
-                  {isConfirmingClear ? "⚠️ Klik Konfirmasi" : "Hapus Riwayat"}
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    disabled={tradeLogs.length === 0}
+                    className="text-label uppercase tracking-widest font-bold text-white/80 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-1.5 border border-white/20 bg-white/5 px-3 py-1.5 rounded-lg font-sans"
+                    title="Unduh Laporan CSV"
+                  >
+                    <Download className="w-3 h-3" /> Ekspor
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (isConfirmingClear) {
+                        setTradeLogs([]);
+                        setIsConfirmingClear(false);
+                      } else {
+                        setIsConfirmingClear(true);
+                        setTimeout(() => setIsConfirmingClear(false), 3000);
+                      }
+                    }}
+                    className={`text-label uppercase tracking-widest font-bold transition-colors cursor-pointer ${isConfirmingClear ? "text-white bg-rose-600 px-3 py-1.5 rounded-lg" : "text-white/40 hover:text-rose-400"}`}
+                  >
+                    {isConfirmingClear ? "⚠️ Konfirmasi Hapus" : "Hapus"}
+                  </button>
+                </div>
+                <button className="text-white/40 hover:text-white transition-colors cursor-pointer">
+                  {ledgerExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
+            {ledgerExpanded && (
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin space-y-3">
               {tradeLogs.length === 0 ? (
                 <div className="p-6 text-center text-caption text-white/30 font-mono italic">
-                  Belum ada log transaksi teraudit yang dilakukan pada sesi ini.
+                  Belum ada transaksi tercatat di sesi ini.
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1496,7 +1563,7 @@ export function PortfolioTracker({
                           </div>
                           <div className="text-right font-sans">
                             <span className={`block font-bold ${textColor}`}>
-                              Net Value
+                              Nilai Bersih
                             </span>
                             <span
                               className={`${textColor} font-extrabold text-label`}
@@ -1511,6 +1578,7 @@ export function PortfolioTracker({
                 </div>
               )}
             </div>
+            )}
           </div>
 
       {/* Floating Custom Notification Toast */}

@@ -78,6 +78,10 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
   const [rawData, setRawData] = useState<RawDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showIHSG, setShowIHSG] = useState(true);
+  const [showGold, setShowGold] = useState(true);
+  const [showPortfolio, setShowPortfolio] = useState(true);
+  const [showSMA, setShowSMA] = useState(true);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -210,37 +214,45 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
         </div>
 
         <div className="flex items-center gap-4 mb-3 text-caption flex-wrap">
-          <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowIHSG(!showIHSG)}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${showIHSG ? "bg-white/10" : "bg-white/[0.03] opacity-40"}`}
+          >
             <span className="w-3 h-0.5 rounded-full bg-white/80" />
-            <span className="text-white/50">IHSG</span>
+            <span className="text-white/70">IHSG</span>
             <span className={`font-mono font-medium ${ihsgChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
               {ihsgChange >= 0 ? "+" : ""}{ihsgChange.toFixed(1)}%
             </span>
-          </div>
-          <div className="flex items-center gap-1.5">
+          </button>
+          <button
+            onClick={() => setShowGold(!showGold)}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${showGold ? "bg-white/10" : "bg-white/[0.03] opacity-40"}`}
+          >
             <span className="w-3 h-0.5 rounded-full bg-amber-400" />
-            <span className="text-white/50">Gold</span>
+            <span className="text-white/70">Gold</span>
             <span className={`font-mono font-medium ${goldChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
               {goldChange >= 0 ? "+" : ""}{goldChange.toFixed(1)}%
             </span>
-          </div>
+          </button>
           {portChange !== null && (
-            <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowPortfolio(!showPortfolio)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${showPortfolio ? "bg-white/10" : "bg-white/[0.03] opacity-40"}`}
+            >
               <span className="w-3 h-0.5 rounded-full bg-emerald-400" />
-              <span className="text-white/50">Portfolio</span>
+              <span className="text-white/70">Portfolio</span>
               <span className={`font-mono font-medium ${portChange >= 0 ? "text-green-400" : "text-rose-400"}`}>
                 {portChange >= 0 ? "+" : ""}{portChange.toFixed(1)}%
               </span>
-            </div>
+            </button>
           )}
-          <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowSMA(!showSMA)}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${showSMA ? "bg-white/10" : "bg-white/[0.03] opacity-40"}`}
+          >
             <span className="w-3 h-0.5 border-t border-dashed border-white/40" />
-            <span className="text-white/50">SMA20</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 border-t border-dashed border-white/20" />
-            <span className="text-white/50">SMA50</span>
-          </div>
+            <span className="text-white/70">SMA</span>
+          </button>
         </div>
 
         <motion.div 
@@ -313,13 +325,21 @@ export function MarketOverviewCharts({ portfolio }: MarketOverviewChartsProps) {
                   return [value.toFixed(0), labels[name] || name];
                 }}
               />
-              <Area yAxisId="left" type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
-              <Area yAxisId="right" type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
-              {portfolio && portfolio.length > 0 && (
+              {showIHSG && (
+                <Area yAxisId="left" type="monotone" dataKey="ihsg" stroke="#ffffff" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIhsg)" dot={false} connectNulls />
+              )}
+              {showGold && (
+                <Area yAxisId="right" type="monotone" dataKey="gold" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorGold)" dot={false} connectNulls />
+              )}
+              {showPortfolio && portfolio && portfolio.length > 0 && (
                 <Area yAxisId="left" type="monotone" dataKey="portfolio" stroke="#00c9a5" strokeWidth={1.5} fillOpacity={1} fill="url(#colorPortfolio)" dot={false} connectNulls />
               )}
-              <Line yAxisId="left" type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
-              <Line yAxisId="left" type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
+              {showSMA && (
+                <>
+                  <Line yAxisId="left" type="monotone" dataKey="ihsgSma20" stroke="#ffffff" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
+                  <Line yAxisId="left" type="monotone" dataKey="ihsgSma50" stroke="#666666" strokeWidth={1} strokeDasharray="4 4" dot={false} connectNulls />
+                </>
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
