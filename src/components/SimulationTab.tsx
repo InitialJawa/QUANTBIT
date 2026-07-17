@@ -214,8 +214,13 @@ export function SimulationTab({
     return null;
   };
   const { engineConfig, todayWIBStr, backtestResult, isBacktesting, triggerRun, setBacktesting, setBacktestResult, backtestConfig, updateBacktestValue, backtestUseLiveStrategy, isDraftEqualToEngine, promoteDraftToEngine } = useEngineConfig();
+  // F3 fix: activeProfileId DIKECUALIKAN dari merge — profil di backtest UI
+  // selalu menggunakan pilihan user (backtestConfig), bukan dari Portfolio.
+  // Tanpa ini, ketika backtestUseLiveStrategy=true, user memilih "Dividen" tapi
+  // engine tetap jalan dengan profil Portfolio (misal "aman") → 0 trades karena
+  // config tidak match.
   const STRATEGY_MERGE_KEYS: Array<keyof typeof engineConfig> = [
-    "activeProfileId", "universe", "topNCount", "simulationMode",
+    "universe", "topNCount", "simulationMode",
     "safeHavenAsset", "crashSensitivity", "enableCrashProtection",
     "customUniverse", "enableAdaptiveWeights", "reserveBufferPct",
     "singleSellTrigger", "singleBuyTrigger", "crossoverMode",
@@ -391,11 +396,23 @@ export function SimulationTab({
   }, [simCapital, startPrice, simPrices.endPrice, activeStock.dividendYield, simPrices.years]);
 
   // Interpolate charting points trace for simulation
+  // F3 fix: gunakan data IHSG asli dari API, bukan interpolasi fake sin()
   const simulatorChartData = useMemo(() => {
     const steps = 6;
     const data = [];
-    const ticker = backtestConfig.singleTicker;
     const finalPrice = simPrices.endPrice;
+
+    // Ambil IHSG asli dari historicalData
+    let ihsgStart = 6100;
+    let ihsgEnd = 6170;
+    if (historicalData.length > 0) {
+      let si = historicalData.findIndex((d: any) => d.date >= backtestConfig.simStartDate);
+      if (si === -1) si = 0;
+      let ei = historicalData.findIndex((d: any) => d.date >= backtestConfig.simEndDate);
+      if (ei === -1) ei = historicalData.length - 1;
+      ihsgStart = historicalData[si]?.ihsgPrice || ihsgStart;
+      ihsgEnd = historicalData[ei]?.ihsgPrice || ihsgEnd;
+    }
 
     for (let i = 0; i <= steps; i++) {
       const progress = i / steps;
@@ -410,8 +427,9 @@ export function SimulationTab({
 
       const totalStepVal = stepAssetVal + cashResidual + stepDividends;
 
-      const ihsgProgress = 1 + (0.05 * progress) + (0.09 * Math.sin(progress * Math.PI) * progress);
-      const benchmarkVal = Math.round(simCapital * ihsgProgress);
+      // IHSG benchmark: proporsional dari start ke end (real data)
+      const ihsgBenchmark = ihsgStart + (ihsgEnd - ihsgStart) * progress;
+      const benchmarkVal = Math.round(ihsgStart > 0 ? (ihsgBenchmark / ihsgStart) * simCapital : simCapital);
 
       let stepLabel = "";
       if (i === 0) stepLabel = "Mulai";
@@ -428,7 +446,7 @@ export function SimulationTab({
       });
     }
     return data;
-  }, [backtestConfig.singleTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails]);
+  }, [backtestConfig.singleTicker, startPrice, activeStock.currentPrice, simCapital, simReturnDetails, historicalData, backtestConfig.simStartDate, backtestConfig.simEndDate]);
 
   // Today ledger values
   const portfolioSummary = useMemo(() => {
@@ -601,16 +619,18 @@ export function SimulationTab({
     }
   };
 
-  // Backtest hanya auto-run sekali saat data pertama kali dimuat (initial load).
-  // Setelah itu, user harus klik "Jalankan Backtest" secara eksplisit.
-  // Handler sudah fetch fresh data dari D1 setiap kali dijalankan.
-  const initialRunRef = useRef(false);
+  // F3 fix: auto-run SEKALI saat data pertama kali dimuat, DAN re-trigger
+  // saat user mengganti profil (activeProfileId). Sebelumnya initialRunRef
+  // tidak pernah di-reset, sehingga ganti profil = result null + tidak re-run.
+  const lastAutoRunProfileRef = useRef<string>("");
   useEffect(() => {
-    if (historicalData.length === 0 || initialRunRef.current) return;
-    initialRunRef.current = true;
+    if (historicalData.length === 0) return;
+    const currentProfile = backtestConfig.activeProfileId;
+    if (lastAutoRunProfileRef.current === currentProfile && backtestResult) return;
+    lastAutoRunProfileRef.current = currentProfile;
     handleRunAlgoBacktest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historicalData.length]);
+  }, [historicalData.length, backtestConfig.activeProfileId]);
 
   useEffect(() => {
     const handler = () => {
