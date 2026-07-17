@@ -10,6 +10,7 @@ export interface BacktestDayData {
   date: string;
   ihsgPrice: number;
   goldPrice: number;
+  usdidrRate?: number;
   stockPrices: Record<string, number>;
   stockVolumes?: Record<string, number>;
   stockRanks: Record<string, number>;
@@ -147,6 +148,11 @@ export interface BacktestResult {
     goldPriceEnd: number;
     ihsgPriceStart: number;
     ihsgPriceEnd: number;
+    goldPurchaseSkippedCount: number;
+    goldSaleFailedCount: number;
+    recoveryCashZeroCount: number;
+    finalGoldGramsSafe: boolean;
+    bufferCashWasZero: boolean;
   };
 }
 

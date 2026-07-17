@@ -173,6 +173,11 @@ export function validateBacktestResult(
     diag["period"] = `${d.startDate} → ${d.endDate}`;
     diag["ihsgRange"] = `${d.ihsgPriceStart.toFixed(0)} → ${d.ihsgPriceEnd.toFixed(0)}`;
     diag["goldRange"] = `${d.goldPriceStart.toFixed(0)} → ${d.goldPriceEnd.toFixed(0)}`;
+    if (d.goldPurchaseSkippedCount > 0) diag["goldPurchaseSkipped"] = d.goldPurchaseSkippedCount;
+    if (d.goldSaleFailedCount > 0) diag["goldSaleFailed"] = d.goldSaleFailedCount;
+    if (d.recoveryCashZeroCount > 0) diag["recoveryCashZero"] = d.recoveryCashZeroCount;
+    diag["finalGoldGramsSafe"] = d.finalGoldGramsSafe;
+    diag["bufferCashWasZero"] = d.bufferCashWasZero;
   }
 
   if (result.finalValue === 0 && initialCapital > 0) {
@@ -182,10 +187,19 @@ export function validateBacktestResult(
         errors.push("bufferCash = 0. Reserve Buffer Percentage mungkin bernilai 0.");
       }
       if (d.initialAllocatedTickers === 0) {
-        errors.push("Tidak ada emitentyang dialokasikan di hari pertama.");
+        errors.push("Tidak ada emitenyang dialokasikan di hari pertama.");
       }
       if (d.finalGoldValue === 0 && d.finalStockValue === 0 && d.finalCash === 0) {
         errors.push("Semua komponen portfolio bernilai 0 (stock + gold + cash).");
+      }
+      if (d.goldPurchaseSkippedCount > 0) {
+        errors.push(`Pembelian emas dilewati ${d.goldPurchaseSkippedCount}x karena goldPrice tidak valid — modal terjebak di kas.`);
+      }
+      if (d.goldSaleFailedCount > 0) {
+        errors.push(`Penjualan emas gagal ${d.goldSaleFailedCount}x — emas tidak dapat dijual kembali.`);
+      }
+      if (d.recoveryCashZeroCount > 0) {
+        errors.push(`Recovery tanpa modal ${d.recoveryCashZeroCount}x — tidak ada re-entry setelah pasar pulih.`);
       }
     }
   }
@@ -225,6 +239,10 @@ export function validateBacktestResult(
     if (!d.scoreLookupAvailable) {
       warnings.push("Score lookup tidak tersedia — ranking menggunakan data fallback.");
     }
+
+    if (!d.finalGoldGramsSafe) {
+      warnings.push("Gold grams tidak valid di akhir backtest (NaN/Infinity) — safe haven lifecycle terganggu.");
+    }
   }
 
   if (result.ihsgReturnPct > 50 && Math.abs(result.totalReturnPct) < 1) {
@@ -233,6 +251,10 @@ export function validateBacktestResult(
 
   if (result.goldReturnPct > 100 && result.totalReturnPct < -50) {
     warnings.push("Emas naik >100% tapi strategi rugi >50%. Periksa apakah safe haven aktif.");
+  }
+
+  if (result.crashCount && result.crashCount > 0 && result.totalTrades <= result.crashCount) {
+    warnings.push(`Jumlah trades (${result.totalTrades}) ≤ jumlah crash (${result.crashCount}) — kemungkinan tidak ada re-entry setelah crash.`);
   }
 
   const status: ValidationStatus = errors.length > 0 ? "invalid" : warnings.length > 0 ? "warning" : "valid";

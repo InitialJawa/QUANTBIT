@@ -78,18 +78,27 @@ export function liquidateHoldings(
 export function computeGoldPurchase(
   cash: number,
   goldPrice: number
-): { goldGrams: number; cash: number } {
+): { goldGrams: number; cash: number; skipped: boolean } {
+  if (!Number.isFinite(cash) || cash <= 0 || !Number.isFinite(goldPrice) || goldPrice <= 0) {
+    return { goldGrams: 0, cash, skipped: true };
+  }
   const goldBuyPrice = goldPrice * 1.01;
   const goldGrams = cash / goldBuyPrice;
-  return { goldGrams, cash: 0 };
+  if (!Number.isFinite(goldGrams) || goldGrams <= 0) {
+    return { goldGrams: 0, cash, skipped: true };
+  }
+  return { goldGrams, cash: 0, skipped: false };
 }
 
 export function computeGoldSale(
   goldGrams: number,
   goldPrice: number
-): { cash: number } {
+): { cash: number; skipped: boolean } {
+  if (!Number.isFinite(goldGrams) || goldGrams <= 0 || !Number.isFinite(goldPrice) || goldPrice <= 0) {
+    return { cash: 0, skipped: true };
+  }
   const goldSellPrice = goldPrice * 0.99;
-  return { cash: goldGrams * goldSellPrice };
+  return { cash: goldGrams * goldSellPrice, skipped: false };
 }
 
 export function computeRebalanceSwap(

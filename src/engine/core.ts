@@ -168,6 +168,14 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   const initialIhsgPrice = day0.ihsgPrice;
   const initialGoldPrice = day0.goldPrice;
+  const GOLD_OZ_TO_GRAM = 31.1035;
+  const initialUsdidrRate = day0.usdidrRate && day0.usdidrRate > 0 ? day0.usdidrRate : 15500;
+  const initialGoldIDRperGram = initialGoldPrice > 0 ? (initialGoldPrice * initialUsdidrRate) / GOLD_OZ_TO_GRAM : 0;
+
+  let goldPurchaseSkippedCount = 0;
+  let goldSaleFailedCount = 0;
+  let recoveryCashZeroCount = 0;
+  let lastValidGoldPrice = initialGoldPrice;
 
   // A5 fix: incremental IHSG price window — was O(n²) because we called
   // filtered.slice(0, stepIndex + 1).map(...) on every day. For a 1500-day
@@ -178,7 +186,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
   let lastJulyYear = 2019;
   const dailyReturns: number[] = [];
-  const ihsgDailyPrices: number[] = [day0.ihsgPrice];
+  const ihsgDailyPrices: number[] = [];
   const benchmarkDailyReturns: number[] = [];
   let lastIhsgDayVal = day0.ihsgPrice;
   let lastDayVal = cap;
@@ -213,6 +221,17 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     // detectCrashAlgo's own 60-day lookback — anything older is irrelevant.
     ihsgRollingWindow.push(day.ihsgPrice);
     if (ihsgRollingWindow.length > 60) ihsgRollingWindow.shift();
+
+    // Carry-forward gold price for dates with gold_close = 0 in DB
+    if (day.goldPrice > 0) {
+      lastValidGoldPrice = day.goldPrice;
+    } else if (lastValidGoldPrice > 0) {
+      (day as any).goldPrice = lastValidGoldPrice;
+    }
+    // Carry-forward usdidrRate for dates with usdidr_rate = 0 in DB
+    if (!day.usdidrRate || day.usdidrRate <= 0) {
+      (day as any).usdidrRate = initialUsdidrRate;
+    }
 
     ihsgDailyPrices.push(day.ihsgPrice);
     if (ihsgDailyPrices.length > 1) {
@@ -333,8 +352,17 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
       if (config.safeHavenAsset === "emas") {
         const gold = computeGoldPurchase(cash, day.goldPrice);
-        goldGrams = gold.goldGrams;
-        cash = gold.cash;
+        if (gold.skipped) {
+          goldPurchaseSkippedCount++;
+          logs.push({
+            date: day.date,
+            type: "CRASH_TRIGGER",
+            message: `PERINGATAN: Pembelian emas dilewati (goldPrice tidak valid: ${day.goldPrice}) — Rp ${cash.toLocaleString("id-ID")} tetap dalam kas.`,
+          });
+        } else {
+          goldGrams = gold.goldGrams;
+          cash = gold.cash;
+        }
       }
 
       crashCooldown = 20;
@@ -360,42 +388,60 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         inCrashState = false;
         let recoveryCash = cash;
 
-        if (goldGrams > 0) {
+        if (Number.isFinite(goldGrams) && goldGrams > 0) {
           const goldSale = computeGoldSale(goldGrams, day.goldPrice);
-          recoveryCash += goldSale.cash;
+          if (goldSale.skipped) {
+            goldSaleFailedCount++;
+            logs.push({
+              date: day.date,
+              type: "RECOVERY",
+              message: `PERINGATAN: Penjualan emas dilewati (goldPrice tidak valid: ${day.goldPrice}) — ${goldGrams.toFixed(2)} unit emas tidak dapat dijual.`,
+            });
+          } else {
+            recoveryCash += goldSale.cash;
+          }
           goldGrams = 0;
         }
 
-        let reentryTickers: string[];
-        if (config.simulationMode === "custom") {
-          reentryTickers = (config.customUniverse || []).filter(
-            t => day.stockPrices[t] && day.stockPrices[t] > 0
-          );
-        } else if (config.simulationMode === "algo") {
-          reentryTickers = pickTopTickersByRank(
-            day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
-          );
+        if (!Number.isFinite(recoveryCash) || recoveryCash <= 0) {
+          recoveryCashZeroCount++;
+          logs.push({
+            date: day.date,
+            type: "RE_ENTRY",
+            message: `RECOVERY TANPA MODAL: RecoveryCash = Rp ${recoveryCash.toLocaleString("id-ID")} — tidak ada re-entry.`,
+          });
         } else {
-          reentryTickers = [];
+          let reentryTickers: string[];
+          if (config.simulationMode === "custom") {
+            reentryTickers = (config.customUniverse || []).filter(
+              t => day.stockPrices[t] && day.stockPrices[t] > 0
+            );
+          } else if (config.simulationMode === "algo") {
+            reentryTickers = pickTopTickersByRank(
+              day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
+            );
+          } else {
+            reentryTickers = [];
+          }
+
+          const reentryAlloc = computeInitialAllocation(
+            recoveryCash, reentryTickers, day.stockPrices, day.stockVolumes, fees
+          );
+
+          Object.entries(reentryAlloc.positions).forEach(([t, shares]) => {
+            positions[t] = (positions[t] || 0) + shares;
+          });
+          totalBuys += Object.keys(reentryAlloc.positions).length;
+          cash = reentryAlloc.cash;
+          totalTransactionVolume += reentryAlloc.totalVolume;
+          pendingTickers.push(...reentryAlloc.pendingTickers);
+
+          logs.push({
+            date: day.date,
+            type: "RE_ENTRY",
+            message: `RE-ENTRY: ${reentryTickers.length} emiten setelah recovery pasar — alokasi Rp ${recoveryCash.toLocaleString("id-ID")}`,
+          });
         }
-
-        const reentryAlloc = computeInitialAllocation(
-          recoveryCash, reentryTickers, day.stockPrices, day.stockVolumes, fees
-        );
-
-        Object.entries(reentryAlloc.positions).forEach(([t, shares]) => {
-          positions[t] = (positions[t] || 0) + shares;
-        });
-        totalBuys += Object.keys(reentryAlloc.positions).length;
-        cash = reentryAlloc.cash;
-        totalTransactionVolume += reentryAlloc.totalVolume;
-        pendingTickers.push(...reentryAlloc.pendingTickers);
-
-        logs.push({
-          date: day.date,
-          type: "RE_ENTRY",
-          message: `RE-ENTRY: ${reentryTickers.length} emiten setelah recovery pasar — alokasi Rp ${recoveryCash.toLocaleString("id-ID")}`,
-        });
 
         crashCooldown = 20;
       }
@@ -534,8 +580,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     }
 
     if (stepIndex % 8 === 0 || stepIndex === filtered.length - 1) {
-      const benchmarkIhsgVal = Math.round((day.ihsgPrice / initialIhsgPrice) * cap);
-      const benchmarkGoldVal = Math.round((day.goldPrice / initialGoldPrice) * cap);
+      const benchmarkIhsgVal = Math.round(initialIhsgPrice > 0 ? (day.ihsgPrice / initialIhsgPrice) * cap : cap);
+      const goldIDR = day.goldPrice > 0 ? (day.goldPrice * (day.usdidrRate || initialUsdidrRate)) / GOLD_OZ_TO_GRAM : 0;
+      const benchmarkGoldVal = Math.round(initialGoldIDRperGram > 0 ? (goldIDR / initialGoldIDRperGram) * cap : cap);
 
       chartData.push({
         date: day.date,
@@ -563,7 +610,10 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     const p = lastDayObj.stockPrices[t];
     return sum + (p && p > 0 ? s * p : 0);
   }, 0);
-  const finalGoldValue = goldGrams * lastDayObj.goldPrice;
+  let finalGoldValue = goldGrams * lastDayObj.goldPrice;
+  if (!Number.isFinite(finalGoldValue) || finalGoldValue < 0) {
+    finalGoldValue = 0;
+  }
 
   let currentPortfolioVal = cash + finalStockValue + finalGoldValue + bufferCash;
   if (!Number.isFinite(currentPortfolioVal) || currentPortfolioVal < 0) {
@@ -572,6 +622,19 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   if (currentPortfolioVal < bufferCash && bufferCash > 0) {
     currentPortfolioVal = bufferCash;
   }
+
+  // Portfolio invariant check: finalValue ≈ stock + cash + gold + buffer
+  const expectedValue = finalStockValue + cash + finalGoldValue + bufferCash;
+  const invariantTolerance = Math.abs(expectedValue) * 0.01;
+  if (Number.isFinite(expectedValue) && Math.abs(currentPortfolioVal - expectedValue) > Math.max(invariantTolerance, 1)) {
+    logs.push({
+      date: lastDayObj.date,
+      type: "REBALANCE",
+      message: `PERINGATAN INVARIAN: Portfolio (${currentPortfolioVal.toLocaleString("id-ID")}) ≠ komponen (${expectedValue.toLocaleString("id-ID")}). Selisih Rp ${Math.abs(currentPortfolioVal - expectedValue).toLocaleString("id-ID")}`,
+    });
+  }
+
+  const lastGoldIDR = lastDayObj.goldPrice > 0 ? (lastDayObj.goldPrice * (lastDayObj.usdidrRate || initialUsdidrRate)) / GOLD_OZ_TO_GRAM : 0;
 
   const metrics = computeMetrics({
     cap,
@@ -583,15 +646,15 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     totalTransactionVolume,
     initialIhsgPrice,
     lastIhsgPrice: lastDayObj.ihsgPrice,
-    initialGoldPrice,
-    lastGoldPrice: lastDayObj.goldPrice,
+    initialGoldPrice: initialGoldIDRperGram,
+    lastGoldPrice: lastGoldIDR,
     benchmarkDailyReturns,
     ihsgPrices: ihsgDailyPrices,
     totalFeesPaid,
   });
 
-  const ihsgFinalValue = Math.round((lastDayObj.ihsgPrice / initialIhsgPrice) * cap);
-  const goldFinalValue = Math.round((lastDayObj.goldPrice / initialGoldPrice) * cap);
+  const ihsgFinalValue = Math.round(initialIhsgPrice > 0 ? (lastDayObj.ihsgPrice / initialIhsgPrice) * cap : cap);
+  const goldFinalValue = Math.round(initialGoldIDRperGram > 0 ? (lastGoldIDR / initialGoldIDRperGram) * cap : cap);
 
   const allLogs: TradeLog[] = [
     ...logs,
@@ -660,6 +723,11 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       goldPriceEnd: lastDayObj.goldPrice,
       ihsgPriceStart: initialIhsgPrice,
       ihsgPriceEnd: lastDayObj.ihsgPrice,
+      goldPurchaseSkippedCount,
+      goldSaleFailedCount,
+      recoveryCashZeroCount,
+      finalGoldGramsSafe: Number.isFinite(goldGrams) && goldGrams >= 0,
+      bufferCashWasZero: bufferCash === 0,
     },
   };
 }

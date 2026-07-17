@@ -90,12 +90,49 @@ describe("computeGoldPurchase", () => {
     const buyPrice = 1_000_000 * 1.01;
     assert.equal(result.goldGrams, 10_000_000 / buyPrice);
     assert.equal(result.cash, 0);
+    assert.equal(result.skipped, false);
   });
 
-  it("handles zero cash", () => {
+  it("handles zero cash — returns cash back", () => {
     const result = computeGoldPurchase(0, 1_000_000);
     assert.equal(result.goldGrams, 0);
     assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is 0 — returns cash back", () => {
+    const result = computeGoldPurchase(80_000_000, 0);
+    assert.equal(result.goldGrams, 0);
+    assert.equal(result.cash, 80_000_000);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is NaN — returns cash back", () => {
+    const result = computeGoldPurchase(80_000_000, NaN);
+    assert.equal(result.goldGrams, 0);
+    assert.equal(result.cash, 80_000_000);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is negative — returns cash back", () => {
+    const result = computeGoldPurchase(80_000_000, -100);
+    assert.equal(result.goldGrams, 0);
+    assert.equal(result.cash, 80_000_000);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when cash is negative — returns cash back", () => {
+    const result = computeGoldPurchase(-1000, 1_000_000);
+    assert.equal(result.goldGrams, 0);
+    assert.equal(result.cash, -1000);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when cash is Infinity — returns cash back", () => {
+    const result = computeGoldPurchase(Infinity, 1_000_000);
+    assert.equal(result.goldGrams, 0);
+    assert.equal(result.cash, Infinity);
+    assert.equal(result.skipped, true);
   });
 });
 
@@ -103,11 +140,55 @@ describe("computeGoldSale", () => {
   it("converts gold to cash with 1% discount", () => {
     const result = computeGoldSale(10, 1_000_000);
     assert.equal(result.cash, 10 * 1_000_000 * 0.99);
+    assert.equal(result.skipped, false);
   });
 
-  it("handles zero grams", () => {
+  it("handles zero grams — returns 0 cash", () => {
     const result = computeGoldSale(0, 1_000_000);
     assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldGrams is NaN — returns 0 cash", () => {
+    const result = computeGoldSale(NaN, 1_000_000);
+    assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldGrams is Infinity — returns 0 cash", () => {
+    const result = computeGoldSale(Infinity, 1_000_000);
+    assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is 0 — returns 0 cash (prevents Infinity * 0 = NaN)", () => {
+    const result = computeGoldSale(9999, 0);
+    assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is NaN — returns 0 cash", () => {
+    const result = computeGoldSale(9999, NaN);
+    assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("skips when goldPrice is negative — returns 0 cash", () => {
+    const result = computeGoldSale(9999, -100);
+    assert.equal(result.cash, 0);
+    assert.equal(result.skipped, true);
+  });
+
+  it("round-trip: buy then sell preserves capital within 2% spread", () => {
+    const cash = 80_000_000;
+    const goldPrice = 2650;
+    const buy = computeGoldPurchase(cash, goldPrice);
+    assert.equal(buy.skipped, false);
+    const sell = computeGoldSale(buy.goldGrams, goldPrice);
+    assert.equal(sell.skipped, false);
+    const spreadLoss = cash - sell.cash;
+    const spreadPct = (spreadLoss / cash) * 100;
+    assert.ok(spreadPct < 2, `Spread loss ${spreadPct.toFixed(2)}% should be < 2%`);
   });
 });
 

@@ -64,6 +64,7 @@ interface BacktestDayData {
   date: string;
   ihsgPrice: number;
   goldPrice: number;
+  usdidrRate?: number;
   stockPrices: Record<string, number>;
   stockVolumes?: Record<string, number>;
   stockRanks: Record<string, number>;
@@ -1211,7 +1212,7 @@ export function SimulationTab({
                           <Legend verticalAlign="top" height={36} iconType="circle" />
                           <Area type="monotone" name="Strategi Rebalance Algo" dataKey="Strategi Rebalancer" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorStrategy)" />
                           <Area type="monotone" name="Benchmark IHSG (Beli & Simpan)" dataKey="Benchmark IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorIHSGBench)" />
-                          <Area type="monotone" name="Benchmark Emas (Hold)" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
+                          <Area type="monotone" name="Beli Emas Fisik (IDR/gr)" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -1241,7 +1242,7 @@ export function SimulationTab({
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Benchmark Emas (Hold)</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Beli Emas Fisik (IDR/gr)</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
                         {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
@@ -1483,7 +1484,7 @@ export function SimulationTab({
                     {/* Comparative index list */}
                     <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
                       <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> <span className={backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}%</span></div>
-                      <div>🪙 Benchmark Emas (Hold): <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> <span className={backtestResult.goldReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}%</span></div>
+                      <div>🪙 Beli Emas Fisik (IDR/gr): <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> <span className={backtestResult.goldReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}%</span></div>
                       <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> <span className={backtestResult.bench6040ReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.bench6040ReturnPct >= 0 ? "+" : ""}{backtestResult.bench6040ReturnPct.toFixed(1)}%</span></div>
                     </div>
                   </Card>
