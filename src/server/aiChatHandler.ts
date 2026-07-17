@@ -720,14 +720,10 @@ function buildErrorMessage(
     lines.push("3. Restart `npm run dev` (atau `npm run serve-api` + Vite)");
     lines.push("");
   } else {
-    lines.push("**Solusi (production — Cloudflare Dashboard):**");
-    lines.push("1. Buka https://dash.cloudflare.com → Pages → quantbit-terminal → Settings → Environment Variables");
-    lines.push("2. Tambah (kalau belum ada):");
-    lines.push("   - `OPENROUTER_API_KEY` = `sk-or-v1-...` (https://openrouter.ai/keys)");
-    lines.push("   - `GROQ_API_KEY` = `gsk_...` (https://console.groq.com/keys)");
-    lines.push("   - `GEMINI_API_KEY` = `AIza...` (https://aistudio.google.com/app/apikey)");
-    lines.push("3. Save → automatic redeploy");
-    lines.push("");
+    lines.push("**Solusi:**");
+    lines.push("Layanan AI sedang tidak tersedia saat ini. Tim kami sedang memperbaikinya.");
+    lines.push("Anda tetap bisa menggunakan fitur analisis, portofolio, dan backtest secara langsung di aplikasi.");
+    lines.push("Coba lagi nanti.");
   }
   lines.push("**Rekomendasi**: `OPENROUTER_API_KEY` (https://openrouter.ai/keys) — 26+ free models, no geo-restriction, route via OpenRouter pool. Add $10 credits untuk 1000 req/day (vs default 50/day).");
   lines.push("");

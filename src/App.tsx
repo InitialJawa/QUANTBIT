@@ -99,7 +99,7 @@ function AppContent({ logout }: { logout: () => void }) {
   const dbSyncStatus = df.syncStatus;
   const triggerSync = df.triggerSync;
   // FASE 2.6 — baca engineConfig di sini untuk dipakai sebagai activeConfig AppHeader
-  const { engineConfig, setActiveProfile } = useEngineConfig();
+  const { engineConfig, setActiveProfile, backtestResult } = useEngineConfig();
 
   // Route: /ticker/:code — full-page ticker detail
   const [isTickerRoute, tickerRouteParams] = useRoute<{ code: string }>("/ticker/:code");
@@ -430,6 +430,7 @@ function AppContent({ logout }: { logout: () => void }) {
             pm={pm}
             getDynamicStock={df.getDynamicStock}
             activeTab={ui.activeTab}
+            backtestResult={backtestResult}
           />
         </>
       )}

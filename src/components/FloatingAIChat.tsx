@@ -20,6 +20,7 @@ interface FloatingAIChatProps {
   pm: PortfolioAPI;
   getDynamicStock?: (ticker: string) => StockData | undefined;
   activeTab?: string;
+  backtestResult?: any;
 }
 
 const WELCOME: AIChatMessage = {
@@ -55,7 +56,7 @@ async function persistMessage(
   }
 }
 
-export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock, activeTab = "market" }: FloatingAIChatProps) {
+export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicStock, activeTab = "market", backtestResult }: FloatingAIChatProps) {
   const { pendingExplain, clearExplain, pendingActions, approveAction, rejectAction, addPendingAction, proactiveAlerts, openChatWithPrompt, setOpenChatWithPrompt } = useAICockpit();
   const { engineConfig, backtestConfig, isConfigSynced, setActiveProfile, syncFromBacktest, updateConfigValue } = useEngineConfig();
   const { notifications } = useNotifications();
@@ -107,6 +108,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const tabSuggestions = useMemo(() => {
     const t = selectedStock?.ticker;
     const n = selectedStock?.name;
+    const isBacktestInvalid = activeTab === "backtest" && backtestResult && backtestResult.finalValue === 0;
     switch (activeTab) {
       case "portfolio":
         return {
@@ -116,23 +118,36 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
             { label: "Rekomendasi beli", query: "Saham apa yang bagus dibeli sekarang berdasarkan data?" },
           ],
           quick: [
-            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
             { label: "Kas darurat", query: "Berapa kas yang harus saya sisakan? Cek reserve buffer." },
             { label: "Strategi aktif", query: "Strategi apa yang sedang aktif? Profil, universe, top N." },
-            ...tickerChips,
+            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
           ],
         };
       case "backtest":
+        if (isBacktestInvalid) {
+          return {
+            followUp: [
+              { label: "Kenapa invalid?", query: "Kenapa hasil backtest invalid? Jelaskan penyebabnya." },
+              { label: "Kenapa Rp0?", query: "Kenapa strategi backtest jadi Rp0? Cek lifecycle emas dan crash." },
+              { label: "Cek data emas", query: "Cek data emas di backtest — apakah ada harga nol?" },
+            ],
+            quick: [
+              { label: "Cek benchmark IHSG", query: "Bagaimana benchmark IHSG di backtest ini?" },
+              { label: "Jelaskan jurnal", query: "Jelaskan jurnal transaksi backtest — kronologi peristiwa." },
+              { label: "Yang harus diperbaiki", query: "Apa yang harus diperbaiki dari backtest ini?" },
+            ],
+          };
+        }
         return {
           followUp: [
-            { label: "Hasil backtest", query: "Ringkas hasil backtest terakhir — metrik utama dan kesimpulan." },
-            { label: "Bandingkan", query: "Bandingkan hasil backtest ini dengan strategi default." },
-            ...(t ? [{ label: `Cek ${t}`, query: `Kinerja ${t} di backtest — beli, jual, dividen.` }] : []),
+            { label: "Ringkas hasil", query: "Ringkas hasil backtest terakhir — metrik utama dan kesimpulan." },
+            { label: "Bandingkan vs IHSG", query: "Bandingkan hasil backtest ini dengan benchmark IHSG." },
+            { label: "Jelaskan risiko", query: "Jelaskan metrik risiko dari backtest — Sharpe, Sortino, Drawdown." },
           ],
           quick: [
             { label: "Settings backtest", query: "Apa setting backtest saya sekarang? Profile, mode, universe." },
-            { label: "BPS skrg", query: "Berapa BPS sekarang? Cocok buat backtest?" },
-            ...tickerChips,
+            { label: "Cek jurnal transaksi", query: "Tinjau jurnal transaksi backtest — kapan beli, jual, dan crash." },
+            ...(t ? [{ label: `Cek ${t}`, query: `Kinerja ${t} di backtest — beli, jual, dividen.` }] : []),
           ],
         };
       case "analytics":
@@ -162,7 +177,7 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           ],
         };
     }
-  }, [activeTab, selectedStock, tickerChips]);
+  }, [activeTab, selectedStock, tickerChips, backtestResult]);
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
@@ -350,9 +365,14 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       // ── Error path (all providers failed) ──
       if (result.provider === "none" || result.provider === "error") {
         consecutiveFailuresRef.current += 1;
-        // Show the error diagnostic from the server directly.
+        // In production: show user-friendly message, not dev diagnostics.
+        // In dev: show full diagnostic from server.
         if (result.content) {
-          setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+          const isProd = !import.meta.env?.DEV;
+          const content = isProd
+            ? "Layanan AI sedang tidak tersedia saat ini. Anda tetap bisa menggunakan fitur analisis, portofolio, dan backtest secara langsung di aplikasi.\n\nCoba lagi nanti atau gunakan analisis ringkas dari halaman yang sedang dibuka."
+            : result.content;
+          setMessages((prev) => [...prev, { role: "assistant", content }]);
         }
         // On 3rd consecutive failure in dev mode, suggest dev mock.
         if (consecutiveFailuresRef.current === 3 && import.meta.env?.DEV && !useDevMockAI) {
@@ -364,6 +384,15 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                 "⚠ Semua provider AI gagal (3x berturut-turut). Mungkin Gemini geo-blocked dan tidak ada OPENROUTER_API_KEY.\n\n" +
                 "**Aktifkan `Use Dev Mock`** di Settings → AI Agent untuk testing tanpa API key. " +
                 "Atau tambahkan OPENROUTER_API_KEY di `.env.local` lalu restart dev server.",
+            },
+          ]);
+        } else if (consecutiveFailuresRef.current === 3 && !import.meta.env?.DEV) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                "Layanan AI sedang tidak tersedia saat ini. Anda tetap bisa menggunakan fitur analisis, portofolio, dan backtest secara langsung di aplikasi. Coba lagi nanti.",
             },
           ]);
         }
@@ -407,14 +436,15 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
                 toolCallId: r.toolCallId,
               })),
             ];
-            const followupRaw = await api.post<{ content: string; provider?: string }>(
-              "/api/ai/chat",
-              { messages: followupHistory.map((m) => ({ role: m.role, content: m.content })), context: ctx }
+            const followupResult = await askAI(
+              followupHistory.map((m) => ({ role: m.role, content: m.content }) as AIChatMessage),
+              ctx,
+              { useDevMock: useDevMockAI, sessionId, userId: user?.id || "dev-user" },
             );
-            const followupText = followupRaw.content || "";
+            const followupText = followupResult.content || "";
             const { cleanText: followupClean, toolCalls: followupCalls } = extractToolCalls(followupText);
-            setProvider(followupRaw.provider || "unknown");
-            if (followupClean && followupRaw.provider !== "none" && followupRaw.provider !== "error") {
+            setProvider(followupResult.provider || "unknown");
+            if (followupClean && followupResult.provider !== "none" && followupResult.provider !== "error") {
               setMessages((prev) => [...prev, { role: "assistant", content: followupClean }]);
               // Surface any new action tool calls from the followup.
               for (const tc of followupCalls) {
@@ -438,9 +468,12 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
         }
       }
     } catch (e: any) {
+      const isProd = !import.meta.env?.DEV;
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `Ada kendala teknis: ${e.message || "gagal hubungi AI"}. Coba lagi ya.` },
+        { role: "assistant", content: isProd
+          ? "Layanan AI sedang tidak tersedia saat ini. Coba lagi nanti."
+          : `Ada kendala teknis: ${e.message || "gagal hubungi AI"}. Coba lagi ya.` },
       ]);
     } finally {
       sendingRef.current = false;
@@ -511,8 +544,18 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
           <div className="min-w-0 flex-1">
             <h4 className="text-heading font-bold flex items-center gap-1.5" style={{ color: "#fff" }}>Quantbit AI</h4>
             <p className="text-label" style={{ color: "#7a7a7a" }}>
-              {selectedStock ? `Konteks: ${selectedStock.ticker} · ` : ""}sadar-sistem & live
-              {provider && provider !== "dev-mock" ? ` · ${provider}` : ""}
+              {(() => {
+                const contextLabel = activeTab === "backtest"
+                  ? backtestResult && backtestResult.finalValue === 0
+                    ? "Backtest · hasil invalid"
+                    : "Backtest"
+                  : activeTab === "portfolio" ? "Portofolio"
+                  : activeTab === "analytics" ? "Analitik"
+                  : activeTab === "market" && selectedStock?.ticker ? selectedStock.ticker
+                  : "Pasar";
+                return `Konteks: ${contextLabel} · sadar-sistem & live`;
+              })()}
+              {provider && provider !== "dev-mock" && provider !== "none" ? ` · ${provider}` : ""}
             </p>
           </div>
           <button
@@ -624,8 +667,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               </div>
             </div>
 
-            {/* Ticker-specific starter prompts — show when selectedStock is present */}
-            {selectedStock?.ticker && (
+            {/* Ticker-specific starter prompts — only on Market & Analytics tabs */}
+            {selectedStock?.ticker && (activeTab === "market" || activeTab === "analytics") && (
               <div className="px-3 pb-1 border-t border-white/5">
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {[

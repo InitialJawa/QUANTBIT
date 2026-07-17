@@ -44,22 +44,28 @@ function devMock(path: string, options: RequestInit): any {
     return {};
   }
   if (path === "/api/ai/chat") {
-    // The frontend called /api/ai/chat but no backend is reachable.
-    // Likely cause: Vite dev server running without `npm run serve-api`
-    // in another terminal. We return a structured error so the chat
-    // shows a helpful hint instead of a misleading "data dari file statis"
-    // message.
+    if (IS_DEV) {
+      // Dev mode: backend AI (Express on port 3001) is not reachable.
+      return {
+        content:
+          "⚠ Backend AI tidak reachable. " +
+          "Kemungkinan: `npm run serve-api` belum jalan di terminal lain (port 3001).\n\n" +
+          "**Solusi dev mode:**\n" +
+          "1. Terminal 1: `npm run serve-api` (Express server, baca `OPENROUTER_API_KEY` dari `.env.local`)\n" +
+          "2. Terminal 2: `npm run dev` (Vite di port 5173)\n\n" +
+          "**Atau tanpa API key:**\n" +
+          "- Settings → AI Agent → **Use Dev Mock** → ON (pattern-matching canned responses, support tool calls)\n\n" +
+          "Lihat `docs/AI_ONBOARDING.md` untuk detail.",
+        provider: "dev-mock",
+      };
+    }
+    // Production: AI backend is not configured. Return user-friendly message.
     return {
       content:
-        "⚠ Backend AI tidak reachable. " +
-        "Kemungkinan: `npm run serve-api` belum jalan di terminal lain (port 3001).\n\n" +
-        "**Solusi dev mode:**\n" +
-        "1. Terminal 1: `npm run serve-api` (Express server, baca `OPENROUTER_API_KEY` dari `.env.local`)\n" +
-        "2. Terminal 2: `npm run dev` (Vite di port 5173)\n\n" +
-        "**Atau tanpa API key:**\n" +
-        "- Settings → AI Agent → **Use Dev Mock** → ON (pattern-matching canned responses, support tool calls)\n\n" +
-        "Lihat `docs/AI_ONBOARDING.md` untuk detail.",
-      provider: "dev-mock",
+        "Maaf, layanan AI sedang tidak tersedia saat ini. " +
+        "Anda tetap bisa menggunakan fitur analisis, portofolio, dan backtest secara langsung di aplikasi.\n\n" +
+        "Coba lagi nanti atau gunakan analisis ringkas dari halaman yang sedang dibuka.",
+      provider: "none",
     };
   }
   // Data endpoints removed — production uses CF Pages Functions.
