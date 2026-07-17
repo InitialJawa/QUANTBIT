@@ -6,7 +6,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
   try {
     const url = new URL(request.url);
-    const configType = url.searchParams.get("configType") === "res" ? "res" : "prod";
+    const rawConfigType = (url.searchParams.get("configType") || "prod").toLowerCase();
+    const configType = (rawConfigType === "res" || rawConfigType === "agresif" || rawConfigType === "growth-heavy") ? "res" : "prod";
     const yearStart = parseInt(url.searchParams.get("from") as string) || 2021;
     const yearEnd = parseInt(url.searchParams.get("to") as string) || 2026;
     const isLight = url.searchParams.has("light");
@@ -27,16 +28,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const stockRows = await env.DB.prepare(
-      "SELECT date,ticker,close,adj_close FROM stock_daily WHERE date >= (SELECT MIN(date) FROM market_daily) ORDER BY date,ticker"
+      "SELECT date,ticker,close,adj_close,volume FROM stock_daily WHERE date >= (SELECT MIN(date) FROM market_daily) ORDER BY date,ticker"
     ).all<any>();
 
     const stockByDate: Record<string, Record<string, number>> = {};
     const stockAdjByDate: Record<string, Record<string, number>> = {};
+    const stockVolByDate: Record<string, Record<string, number>> = {};
     for (const sr of stockRows.results) {
       if (!stockByDate[sr.date]) stockByDate[sr.date] = {};
       stockByDate[sr.date][sr.ticker] = sr.close;
       if (!stockAdjByDate[sr.date]) stockAdjByDate[sr.date] = {};
       stockAdjByDate[sr.date][sr.ticker] = sr.adj_close ?? sr.close;
+      if (sr.volume && sr.volume > 0) {
+        if (!stockVolByDate[sr.date]) stockVolByDate[sr.date] = {};
+        stockVolByDate[sr.date][sr.ticker] = sr.volume;
+      }
     }
 
     const allScoreRows = await env.DB.prepare(
@@ -59,6 +65,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const data = marketRows.results.map((m: any) => {
       const stockPrices = stockByDate[m.date] || {};
       const stockAdj = stockAdjByDate[m.date] || {};
+      const stockVol = stockVolByDate[m.date] || {};
 
       return {
         date: m.date,
@@ -67,6 +74,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         usdidrRate: m.usdidr_rate,
         stockAdjPrices: stockAdj,
         stockPrices,
+        stockVolumes: stockVol,
       };
     });
 

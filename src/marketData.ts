@@ -162,14 +162,18 @@ export function setScanData(data: { stocks: ScanStock[]; lastUpdated: string } |
 
 function buildDividendCache(stocks: ScanStock[]) {
   const cache: Record<string, Record<string, number>> = {};
-  const currentYear = new Date().getFullYear().toString();
+  const currentYear = new Date().getFullYear();
 
   for (const s of stocks) {
     const ticker = s.ticker.replace(".JK", "");
     if (s.dividendYield && s.dividendYield > 0 && s.currentPrice > 0) {
       const dps = (s.dividendYield / 100) * s.currentPrice;
       if (dps > 0) {
-        cache[ticker] = { [currentYear]: dps };
+        const yearMap: Record<string, number> = {};
+        for (let y = 2021; y <= currentYear; y++) {
+          yearMap[y.toString()] = dps;
+        }
+        cache[ticker] = yearMap;
       }
     }
   }

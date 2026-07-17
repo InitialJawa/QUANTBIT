@@ -237,7 +237,7 @@ export function SimulationTab({
   // Sesi 13 fix: tambah dependency simStartDate/simEndDate agar data re-fetch
   // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
-    const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
+    const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "res" : "prod";
     api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> } }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { 
         if (res.success && Array.isArray(res.data)) {
@@ -456,7 +456,7 @@ export function SimulationTab({
     setResultValidation(null);
 
     try {
-      const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
+      const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "res" : "prod";
 
       setBacktestProgress(25);
 
