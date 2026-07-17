@@ -32,14 +32,33 @@ window.addEventListener("error", (e) => {
   }
 });
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <Router>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </Router>
-    </ErrorBoundary>
-  </StrictMode>,
-);
+// Capture fatal errors so we can diagnose blank-screen issues.
+window.addEventListener("error", (e) => {
+  console.error("[QUANTBIT] Global error:", e.message, e.filename, e.lineno, e.colno, e.error);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("[QUANTBIT] Unhandled rejection:", e.reason);
+});
+
+try {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <Router>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </Router>
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+} catch (err) {
+  console.error("[QUANTBIT] Fatal render error:", err);
+  const root = document.getElementById('root');
+  if (root) {
+    root.innerHTML = `<div style="padding:32px;color:#ef4444;font-family:system-ui">
+      <h2 style="margin-bottom:8px">QUANTBIT — Error Fatal</h2>
+      <pre style="white-space:pre-wrap;font-size:13px">${err instanceof Error ? err.stack || err.message : String(err)}</pre>
+    </div>`;
+  }
+}
