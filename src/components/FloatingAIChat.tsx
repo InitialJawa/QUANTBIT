@@ -81,103 +81,72 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Index of the latest assistant message for follow-up suggestions.
-  const lastAssistantIdx = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant" && messages[i] !== WELCOME) return i;
-    }
-    return -1;
-  }, [messages]);
-
-  // Ticker-specific starter chips (from former AI tab)
-  const tickerChips = useMemo(() => {
-    const t = selectedStock?.ticker;
-    const s = selectedStock?.sector;
-    if (!t) return [];
-    return [
-      { label: `Analisa fundamental ${t}`, query: `Apa analisis fundamental ${t}?` },
-      { label: `Peer ${t}`, query: `Bandingkan ${t} dengan peer di sektor ${s || "sama"}` },
-      { label: `Risiko ${t}`, query: `Apa risiko utama ${t} saat ini?` },
-      { label: `Rekomendasi ${t}`, query: `Apa rekomendasi untuk ${t}?` },
-      { label: `Teknikal ${t}`, query: `Analisis teknikal ${t} dalam 3 bulan terakhir` },
-      { label: `${t} value investing`, query: `Apakah ${t} cocok untuk strategi value investing?` },
-    ];
-  }, [selectedStock]);
-
-  // Context-aware suggestions per tab (no duplicates between follow-up & quick prompts)
-  const tabSuggestions = useMemo(() => {
+  // ── Context-aware suggestions (single unified list, max 5) ──────
+  const MAX_SUGGESTIONS = 5;
+  const visibleSuggestions = useMemo(() => {
     const t = selectedStock?.ticker;
     const n = selectedStock?.name;
     const isBacktestInvalid = activeTab === "backtest" && backtestResult && backtestResult.finalValue === 0;
+    let pool: { label: string; query: string }[] = [];
     switch (activeTab) {
       case "portfolio":
-        return {
-          followUp: [
-            { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, kondisi tiap posisi." },
-            { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
-            { label: "Rekomendasi beli", query: "Saham apa yang bagus dibeli sekarang berdasarkan data?" },
-          ],
-          quick: [
-            { label: "Kas darurat", query: "Berapa kas yang harus saya sisakan? Cek reserve buffer." },
-            { label: "Strategi aktif", query: "Strategi apa yang sedang aktif? Profil, universe, top N." },
-            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
-          ],
-        };
+        pool = [
+          { label: "Cek portofolio", query: "Cek portofolio saya — nilai total, P&L, kondisi tiap posisi." },
+          { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+          { label: "Rekomendasi beli", query: "Saham apa yang bagus dibeli sekarang berdasarkan data?" },
+          { label: "Kas darurat", query: "Berapa kas yang harus saya sisakan? Cek reserve buffer." },
+          { label: "Strategi aktif", query: "Strategi apa yang sedang aktif? Profil, universe, top N." },
+          ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
+        ];
+        break;
       case "backtest":
         if (isBacktestInvalid) {
-          return {
-            followUp: [
-              { label: "Kenapa invalid?", query: "Kenapa hasil backtest invalid? Jelaskan penyebabnya." },
-              { label: "Kenapa Rp0?", query: "Kenapa strategi backtest jadi Rp0? Cek lifecycle emas dan crash." },
-              { label: "Cek data emas", query: "Cek data emas di backtest — apakah ada harga nol?" },
-            ],
-            quick: [
-              { label: "Cek benchmark IHSG", query: "Bagaimana benchmark IHSG di backtest ini?" },
-              { label: "Jelaskan jurnal", query: "Jelaskan jurnal transaksi backtest — kronologi peristiwa." },
-              { label: "Yang harus diperbaiki", query: "Apa yang harus diperbaiki dari backtest ini?" },
-            ],
-          };
-        }
-        return {
-          followUp: [
+          pool = [
+            { label: "Kenapa invalid?", query: "Kenapa hasil backtest invalid? Jelaskan penyebabnya." },
+            { label: "Kenapa Rp0?", query: "Kenapa strategi backtest jadi Rp0? Cek lifecycle emas dan crash." },
+            { label: "Cek data emas", query: "Cek data emas di backtest — apakah ada harga nol?" },
+            { label: "Cek benchmark IHSG", query: "Bagaimana benchmark IHSG di backtest ini?" },
+            { label: "Yang harus diperbaiki", query: "Apa yang harus diperbaiki dari backtest ini?" },
+          ];
+        } else {
+          pool = [
             { label: "Ringkas hasil", query: "Ringkas hasil backtest terakhir — metrik utama dan kesimpulan." },
             { label: "Bandingkan vs IHSG", query: "Bandingkan hasil backtest ini dengan benchmark IHSG." },
             { label: "Jelaskan risiko", query: "Jelaskan metrik risiko dari backtest — Sharpe, Sortino, Drawdown." },
-          ],
-          quick: [
             { label: "Settings backtest", query: "Apa setting backtest saya sekarang? Profile, mode, universe." },
             { label: "Cek jurnal transaksi", query: "Tinjau jurnal transaksi backtest — kapan beli, jual, dan crash." },
             ...(t ? [{ label: `Cek ${t}`, query: `Kinerja ${t} di backtest — beli, jual, dividen.` }] : []),
-          ],
-        };
+          ];
+        }
+        break;
       case "analytics":
-        return {
-          followUp: [
-            { label: "Metrik utama", query: "Ringkas metrik utama di tab Analitik — apa artinya." },
-            { label: "Sektor terbaik", query: "Sektor apa yang paling bagus saat ini berdasarkan ranking." },
-            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ${t} — ${n}. Skor, rank, sektor.` }] : []),
-          ],
-          quick: [
-            { label: "Top N saat ini", query: "Saham top N rekomendasi sistem berdasarkan profil aktif." },
-            { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
-            ...tickerChips,
-          ],
-        };
+        pool = [
+          { label: "Metrik utama", query: "Ringkas metrik utama di tab Analitik — apa artinya." },
+          { label: "Sektor terbaik", query: "Sektor apa yang paling bagus saat ini berdasarkan ranking." },
+          { label: "Top N saat ini", query: "Saham top N rekomendasi sistem berdasarkan profil aktif." },
+          { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
+          ...(t ? [
+            { label: `Analisa ${t}`, query: `Analisa ${t} — ${n}. Skor, rank, sektor.` },
+            { label: `Risiko ${t}`, query: `Apa risiko utama ${t} saat ini?` },
+          ] : []),
+        ];
+        break;
       default: // market
-        return {
-          followUp: [
-            { label: "Ringkas pasar", query: "Kondisi pasar IHSG terkait dan implikasinya buat keputusan saya." },
-            { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
-            ...(t ? [{ label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` }] : []),
-          ],
-          quick: [
-            { label: "Top movers", query: "Siapa top movers hari ini dan kenapa?" },
-            { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
-            ...tickerChips,
-          ],
-        };
+        pool = [
+          { label: "Ringkas pasar", query: "Kondisi pasar IHSG terkait dan implikasinya buat keputusan saya." },
+          { label: "Jelaskan regime", query: "Status regime — health, risk, action, dan alasannya." },
+          { label: "Top movers", query: "Siapa top movers hari ini dan kenapa?" },
+          { label: "BPS skrg", query: "Berapa BPS sekarang? Action apa?" },
+          ...(t ? [
+            { label: `Analisa ${t}`, query: `Analisa ringkas ${t} — ${n}. Pake data live.` },
+            { label: `Risiko ${t}`, query: `Apa risiko utama ${t} saat ini?` },
+            { label: `Rekomendasi ${t}`, query: `Apa rekomendasi untuk ${t}?` },
+          ] : []),
+        ];
+        break;
     }
-  }, [activeTab, selectedStock, tickerChips, backtestResult]);
+    return pool.slice(0, MAX_SUGGESTIONS);
+  }, [activeTab, selectedStock, backtestResult]);
 
   const { executeTool, buildPendingAction, actionRegistry } = useAITools({ pm, getDynamicStock });
 
@@ -536,8 +505,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
       <div className={`bg-surface-alt border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden ${isMinimized ? "h-auto" : "flex-1 max-h-[620px]"}`}
         style={{ background: "#0a0a0a" }}
       >
-        {/* Header */}
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5">
+        {/* Header — fixed */}
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5 shrink-0">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
@@ -584,8 +553,8 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
 
         {!isMinimized && (
           <>
-            {/* Messages */}
-            <div ref={containerRef} className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin" style={{ minHeight: "300px", maxHeight: "400px" }}>
+            {/* Messages — ONLY scrollable area */}
+            <div ref={containerRef} className="flex-1 overflow-y-auto space-y-3 p-3 scrollbar-thin min-h-0">
               {messages.filter((m) => m.role !== "tool").map((msg, i) => (
                 <div key={i} className={`flex gap-2 w-full ${msg.role === "user" ? "ml-auto flex-row-reverse max-w-[88%]" : "mr-auto max-w-[96%]"}`}>
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-emerald-500 text-black" : "bg-white/10"}`} style={{ color: msg.role === "user" ? "#000" : "#fff" }}>
@@ -634,15 +603,16 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               ))}
             </div>
 
-            {/* Follow-up suggestion chips (after latest assistant response) */}
-            {lastAssistantIdx >= 0 && !isLoading && (
-              <div className="px-3 pb-0 pt-0 border-t border-white/5">
-                <div className="flex flex-wrap gap-1.5 py-1.5">
-                  {tabSuggestions.followUp.map((s, idx) => (
+            {/* Suggestions — compact, max 5, horizontal scroll on mobile */}
+            {visibleSuggestions.length > 0 && !isLoading && (
+              <div className="px-3 py-1.5 border-t border-white/5 shrink-0">
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-thin">
+                  {visibleSuggestions.map((s, idx) => (
                     <button
-                      key={idx}
+                      key={`${activeTab}-${idx}`}
                       onClick={() => send(s.query)}
-                      className="text-caption bg-emerald-950/20 hover:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/15 transition-all cursor-pointer text-emerald-300/70 hover:text-emerald-300"
+                      className="text-caption bg-white/5 hover:bg-emerald-950/30 px-2 py-1 rounded-lg border border-white/10 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                      style={{ color: "rgba(255,255,255,0.6)" }}
                     >
                       {s.label}
                     </button>
@@ -651,56 +621,20 @@ export function FloatingAIChat({ selectedStock, portfolio, cash, pm, getDynamicS
               </div>
             )}
 
-            {/* Quick prompts — context-aware per tab */}
-            <div className="px-3 pb-1 pt-1 border-t border-white/5">
-              <div className="flex flex-wrap gap-1.5">
-                {tabSuggestions.quick.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => send(p.query)}
-                    className="text-caption bg-white/5 hover:bg-emerald-950/30 px-2 py-1 rounded-lg border border-white/10 transition-all cursor-pointer"
-                    style={{ color: "rgba(255,255,255,0.6)" }}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Ticker-specific starter prompts — only on Market & Analytics tabs */}
-            {selectedStock?.ticker && (activeTab === "market" || activeTab === "analytics") && (
-              <div className="px-3 pb-1 border-t border-white/5">
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[
-                    `Apa analisis fundamental ${selectedStock.ticker}?`,
-                    `Bandingkan ${selectedStock.ticker} dengan peer di sektor`,
-                    `Apa risiko utama ${selectedStock.ticker} saat ini?`,
-                    `Apa rekomendasi untuk ${selectedStock.ticker}?`,
-                    `Analisis teknikal ${selectedStock.ticker} dalam 3 bulan terakhir`,
-                    `Apakah ${selectedStock.ticker} cocok untuk strategi value investing?`,
-                  ].map((q, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => send(q)}
-                      className="text-caption bg-white/5 hover:bg-emerald-950/30 px-2 py-1 rounded-lg border border-emerald-500/10 transition-all cursor-pointer"
-                      style={{ color: "rgba(16,185,129,0.7)" }}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Input */}
-            <div className="p-3 border-t border-white/5 flex items-center gap-2">
+            {/* Input — always visible, sticky bottom */}
+            <div className="p-3 border-t border-white/5 flex items-center gap-2 shrink-0">
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Tanya apa saja — Risk 85 dari mana, beli BBCA 100"
+                placeholder="Tanyakan sesuatu tentang pasar, saham, atau portfolio..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send(input)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send(input);
+                  }
+                }}
                 disabled={isLoading}
                 className="flex-1 text-body px-3 py-2.5 bg-white/5 focus:bg-white/[0.08] rounded-lg outline-none border border-white/10 transition-all disabled:opacity-50"
                 style={{ color: "#fff" }}
