@@ -622,13 +622,16 @@ export function SimulationTab({
   // F3 fix: auto-run SEKALI saat data pertama kali dimuat, DAN re-trigger
   // saat user mengganti profil (activeProfileId). Sebelumnya initialRunRef
   // tidak pernah di-reset, sehingga ganti profil = result null + tidak re-run.
+  // M10 fix: use ref to avoid stale closure capture in auto-run effect.
+  const runBacktestRef = useRef(handleRunAlgoBacktest);
+  runBacktestRef.current = handleRunAlgoBacktest;
   const lastAutoRunProfileRef = useRef<string>("");
   useEffect(() => {
     if (historicalData.length === 0) return;
     const currentProfile = backtestConfig.activeProfileId;
     if (lastAutoRunProfileRef.current === currentProfile && backtestResult) return;
     lastAutoRunProfileRef.current = currentProfile;
-    handleRunAlgoBacktest();
+    runBacktestRef.current();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historicalData.length, backtestConfig.activeProfileId]);
 

@@ -534,7 +534,6 @@ export function AppSidebar({
             onChange={(key, value) => {
               if (key === "activeProfileId") {
                 updateBacktestValue("activeProfileId", value);
-                setActiveProfile(value);
               } else {
                 updateBacktestValue(key as string, value);
               }
