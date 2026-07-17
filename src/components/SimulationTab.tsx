@@ -1714,7 +1714,7 @@ export function SimulationTab({
                         );
                       })}
                     </div>
-                    <Card variant="default" padding="md" className="h-64 overflow-y-auto font-mono text-caption space-y-3 leading-relaxed">
+                    <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] max-h-[420px] overflow-y-auto overflow-x-hidden font-mono text-caption space-y-3 leading-relaxed">
                       
                       {backtestResult.logs
                         .filter((log: any) => journalFilter === "all" || log.type === journalFilter)
@@ -1746,7 +1746,7 @@ export function SimulationTab({
                         );
                       })}
 
-                    </Card>
+                    </div>
                   </div>
 
                 </motion.div>
