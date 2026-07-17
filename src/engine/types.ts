@@ -60,7 +60,7 @@ export const DEFAULT_FEES: ExecutionFees = {
 
 export interface TradeLog {
   date: string;
-  type: "BUY" | "SELL" | "REBALANCE" | "CRASH_TRIGGER" | "CRASH_RECOVERY";
+  type: "BUY" | "SELL" | "REBALANCE" | "CRASH_TRIGGER" | "RECOVERY" | "RE_ENTRY";
   message: string;
 }
 

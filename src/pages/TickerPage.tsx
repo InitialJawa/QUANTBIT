@@ -3,12 +3,14 @@ import { useLocation } from "wouter";
 import {
   ArrowLeft, Coins, LayoutDashboard, GitCompare, RotateCcw, Activity,
   Plus, Minus, Trash2, Bookmark, BookmarkCheck,
-  ChevronDown, ChevronUp, Info
+  ChevronDown, ChevronUp, Info, AlertTriangle, Shield
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { STOCKS_DATA } from "../stocksData";
 import { TickerLogo } from "../components/TickerLogo";
 import { ForwardDividendsForecast } from "../components/ForwardDividendsForecast";
+import { assessTickerDataQuality, getDataQualityColor, getDecisionBadge } from "../utils/tickerDataQuality";
+import { isCrashActive } from "../marketRegimeEngine";
 import type { StockData, PortfolioItem, WatchlistItem } from "../types";
 
 const OverviewTab = lazy(() => import("./tabs/OverviewTab").then(m => ({ default: m.OverviewTab })));
@@ -31,11 +33,11 @@ interface TickerPageProps {
 }
 
 const TICKER_TABS = [
-  { id: "overview", icon: LayoutDashboard, label: "Overview" },
-  { id: "forecast", icon: Coins, label: "Dividend" },
+  { id: "overview", icon: LayoutDashboard, label: "Ringkasan" },
+  { id: "forecast", icon: Coins, label: "Dividen" },
   { id: "peers", icon: GitCompare, label: "Peer" },
-  { id: "rotation", icon: RotateCcw, label: "Rotation" },
-  { id: "signals", icon: Activity, label: "Signals" },
+  { id: "rotation", icon: RotateCcw, label: "Rotasi" },
+  { id: "signals", icon: Activity, label: "Sinyal" },
 ];
 
 export function TickerPage({
@@ -61,6 +63,8 @@ export function TickerPage({
   const isWatchlisted = watchlist.some(w => w.ticker === code);
   const price = stock?.currentPrice ?? 0;
 
+  const isRiskOff = isCrashActive();
+
   const safeStock = stock ?? {
     ticker: code,
     name: code,
@@ -83,6 +87,9 @@ export function TickerPage({
     chartDataMonthly: [],
   };
 
+  const dataQuality = useMemo(() => assessTickerDataQuality(safeStock), [safeStock.ticker]);
+  const decision = useMemo(() => getDecisionBadge(safeStock, isRiskOff), [safeStock.ticker, isRiskOff]);
+
   if (!stock) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-white/60 gap-4">
@@ -101,6 +108,16 @@ export function TickerPage({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <header className="shrink-0 border-b border-white/[0.06] bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-40">
+        {/* Risk-Off Banner */}
+        {isRiskOff && (
+          <div className="px-4 py-2 bg-rose-500/10 border-b border-rose-500/20 flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+            <span className="text-caption text-rose-400 font-medium">
+              Pasar Risk Off — pembelian saham perlu kehati-hatian. Simpan kas atau alokasikan ke safe haven.
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate("/")}
@@ -110,15 +127,31 @@ export function TickerPage({
           </button>
           <TickerLogo ticker={safeStock.ticker} fallbackColor={safeStock.logoColor} />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-bold text-white truncate">{safeStock.ticker}</h1>
               <span className="text-xs text-white/40 truncate hidden sm:inline">{safeStock.name}</span>
+              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${getDataQualityColor(dataQuality.status)}`}>
+                {dataQuality.label}
+              </span>
+              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${decision.color}`}>
+                {decision.label}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <span className="font-mono text-white font-medium">Rp{price.toLocaleString("id-ID")}</span>
               <span className={`font-mono text-xs ${(safeStock.change ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
                 {(safeStock.change ?? 0) >= 0 ? "+" : ""}{(safeStock.change ?? 0).toFixed(2)}%
               </span>
+              {safeStock.sector !== "-" && safeStock.sector !== "Unknown" && (
+                <span className="text-[10px] text-white/30 font-mono hidden sm:inline">
+                  {safeStock.sector}{safeStock.subSector !== "-" ? ` · ${safeStock.subSector}` : ""}
+                </span>
+              )}
+              {safeStock.marketCap > 0 && (
+                <span className="text-[10px] text-white/30 font-mono hidden sm:inline">
+                  Rp{safeStock.marketCap.toLocaleString("id-ID")}T
+                </span>
+              )}
             </div>
           </div>
 
@@ -133,10 +166,14 @@ export function TickerPage({
 
             <button
               onClick={() => setTradeExpanded(!tradeExpanded)}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                isRiskOff
+                  ? "bg-amber-600/80 hover:bg-amber-500 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
+              }`}
             >
               {tradeExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              Trade
+              {isRiskOff ? "Simulasi" : "Beli"}
             </button>
           </div>
         </div>
@@ -151,7 +188,7 @@ export function TickerPage({
             >
               <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/40 font-medium">Lots</span>
+                  <span className="text-xs text-white/40 font-medium">Lot</span>
                   <div className="flex items-center bg-white/[0.06] rounded-lg">
                     <button
                       onClick={() => setLots(l => l === "" ? "" : Math.max(0, Number(l) - 1))}
@@ -176,26 +213,27 @@ export function TickerPage({
                   </div>
                 </div>
                 <div className="text-xs text-white/40">
-                  1 lot = 100 shares · Rp{(price * (Number(lots) || 0) * 100).toLocaleString("id-ID")}
+                  1 lot = 100 lembar · Rp{(price * (Number(lots) || 0) * 100).toLocaleString("id-ID")}
                 </div>
                 <button
                   onClick={() => { onAddTransaction(code, (Number(lots) || 1) * 100, price); setTradeExpanded(false); }}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors"
                 >
-                  Buy
+                  Beli
                 </button>
                 {portfolioItem && (
                   <button
                     onClick={() => { onSellTransaction(code, (Number(lots) || 1) * 100); setTradeExpanded(false); }}
                     className="px-3 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white text-xs font-medium rounded-lg transition-colors"
                   >
-                    Sell
+                    Jual
                   </button>
                 )}
                 {portfolioItem && (
                   <button
                     onClick={() => { onRemoveTransaction(code); setTradeExpanded(false); }}
-                    className="px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.1] text-white/50 hover:text-rose-400 text-xs rounded-lg transition-colors"
+                    className="p-1.5 text-white/40 hover:text-white hover:bg-rose-600 rounded-lg bg-white/5 border border-white/[0.05]"
+                    title="Hapus dari portofolio"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -226,39 +264,50 @@ export function TickerPage({
         <AnimatePresence mode="wait">
           {tab === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat overview...</div>}>
+              <Suspense fallback={<TabLoader label="Ringkasan" />}>
                 <OverviewTab stock={safeStock} getDynamicStock={getDynamicStock} portfolio={portfolio} theme={theme} />
               </Suspense>
             </motion.div>
           )}
           {tab === "forecast" && (
             <motion.div key="forecast" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ForwardDividendsForecast stock={safeStock} theme={theme} />
+              <Suspense fallback={<TabLoader label="Dividen" />}>
+                <ForwardDividendsForecast stock={safeStock} theme={theme} />
+              </Suspense>
             </motion.div>
           )}
           {tab === "peers" && (
             <motion.div key="peers" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat peer comparison...</div>}>
+              <Suspense fallback={<TabLoader label="Peer" />}>
                 <PeerComparisonTab stock={safeStock} getDynamicStock={getDynamicStock} />
               </Suspense>
             </motion.div>
           )}
           {tab === "rotation" && (
             <motion.div key="rotation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat rotation history...</div>}>
+              <Suspense fallback={<TabLoader label="Rotasi" />}>
                 <RotationHistoryTab stock={safeStock} />
               </Suspense>
             </motion.div>
           )}
           {tab === "signals" && (
             <motion.div key="signals" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Suspense fallback={<div className="text-white/40 text-center py-12">Memuat signal history...</div>}>
+              <Suspense fallback={<TabLoader label="Sinyal" />}>
                 <SignalHistoryTab stock={safeStock} />
               </Suspense>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+function TabLoader({ label }: { label: string }) {
+  return (
+    <div className="text-center py-12">
+      <div className="w-6 h-6 mx-auto mb-3 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+      <p className="text-white/40 text-caption">Memuat {label}...</p>
     </div>
   );
 }

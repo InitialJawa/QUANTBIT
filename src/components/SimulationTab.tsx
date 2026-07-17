@@ -26,6 +26,7 @@ import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { runStrategy } from "../engine";
+import { validateBacktestData, type ValidationResult } from "../engine/backtestValidation";
 import { runBaselineDca, type BaselineResult, type DcaBaseline } from "../engine/dcaBaselines";
 import { SearchableSelect } from "./SearchableSelect";
 import { RS, MKT } from "../marketData";
@@ -55,7 +56,7 @@ const formatRupiah = (val: number) => {
 
 interface BacktestLog {
   date: string;
-  type: "BUY" | "SELL" | "REBALANCE" | "CRASH_TRIGGER" | "CRASH_RECOVERY";
+  type: "BUY" | "SELL" | "REBALANCE" | "CRASH_TRIGGER" | "RECOVERY" | "RE_ENTRY";
   message: string;
 }
 
@@ -271,6 +272,8 @@ export function SimulationTab({
   const [backtestProgress, setBacktestProgress] = useState(0);
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
   const [baselineResults, setBaselineResults] = useState<BaselineResult[]>([]);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [journalFilter, setJournalFilter] = useState<string>("all");
 
   // D7 — track last-run config so we can show "Config changed" banner
   const lastRunConfigRef = useRef<string>("");
@@ -446,14 +449,45 @@ export function SimulationTab({
 
   const handleRunAlgoBacktest = async () => {
     setBacktesting(true);
-    setBacktestProgress(15);
+    setBacktestProgress(10);
+    setValidationResult(null);
 
     try {
+      const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
+
+      setBacktestProgress(25);
+
+      let freshData: any[];
+      let freshScoreLookup: { dates: string[]; byDate: Record<string, any> } | null = null;
+
+      try {
+        const res = await api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> } }>(
+          `/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`
+        );
+        if (res.success && Array.isArray(res.data)) {
+          freshData = res.data;
+          freshScoreLookup = res.scoreLookup || null;
+        } else {
+          freshData = generateClientBacktestData();
+          freshScoreLookup = null;
+        }
+      } catch {
+        freshData = generateClientBacktestData();
+        freshScoreLookup = null;
+      }
+
+      setHistoricalData(freshData);
+      setScoreLookup(freshScoreLookup);
       setBacktestProgress(45);
 
-      if (historicalData.length === 0) {
+      const topN = parseInt(String(backtestConfig.topNCount)) || 4;
+      const validation = validateBacktestData(freshData, backtestConfig.simStartDate, backtestConfig.simEndDate, topN);
+      setValidationResult(validation);
+
+      if (validation.status === "invalid") {
         setBacktesting(false);
         setBacktestProgress(0);
+        toast.error("Data tidak valid. " + validation.errors[0]);
         return;
       }
 
@@ -462,7 +496,7 @@ export function SimulationTab({
       await new Promise(r => setTimeout(r, 0));
 
       const result = runStrategy({
-        dayData: historicalData,
+        dayData: freshData,
         config: {
           capital: cap,
           reserveBufferPct: effectiveConfig.reserveBufferPct,
@@ -494,24 +528,24 @@ export function SimulationTab({
           idx30: IDX30_TICKERS,
           lq45: LQ45_TICKERS,
         },
-        scoreLookup: scoreLookup || undefined,
+        scoreLookup: freshScoreLookup || undefined,
       });
 
-      setBacktestProgress(95);
+      setBacktestProgress(85);
 
       setBacktestResult(result);
 
       // Adaptive DCA: also run 3 baseline simulations for comparison
       if (backtestConfig.simulationMode === "adaptive_dca") {
         const baselineInputs = {
-          dayData: historicalData,
+          dayData: freshData,
           config: {
             capital: cap,
             reserveBufferPct: backtestConfig.reserveBufferPct,
             topNCount: backtestConfig.topNCount,
             universe: backtestConfig.universe,
             safeHavenAsset: backtestConfig.safeHavenAsset,
-            enableCrashProtection: false, // baselines are simple DCA, no crash protection
+            enableCrashProtection: false,
             crashSensitivity: backtestConfig.crashSensitivity,
             simStartDate: backtestConfig.simStartDate,
             simEndDate: backtestConfig.simEndDate,
@@ -530,7 +564,7 @@ export function SimulationTab({
             idx30: IDX30_TICKERS,
             lq45: LQ45_TICKERS,
           },
-          scoreLookup: scoreLookup || undefined,
+          scoreLookup: freshScoreLookup || undefined,
         };
         const baselines: BaselineResult[] = [];
         for (const baseline of ["lump_sum", "monthly_dca", "quarterly_dca"] as DcaBaseline[]) {
@@ -548,6 +582,7 @@ export function SimulationTab({
       setBacktesting(false);
       setBacktestProgress(100);
       lastRunConfigRef.current = configFingerprint;
+      toast.success("Backtest selesai — data fresh dari D1.");
     } catch (err: any) {
       console.error("Backtest failed:", err);
       alert(err.message || "Backtest gagal. Periksa tanggal mulai.");
@@ -556,10 +591,9 @@ export function SimulationTab({
     }
   };
 
-  // FASE 2.7 — Backtest TIDAK auto-run lagi. User klik tombol "Jalankan Backtest"
-  // eksplisit di sidebar. Mengurangi flicker + backtest sia-sia saat drag slider.
-  // Initial run: jalankan sekali saat historicalData pertama kali dimuat.
-  // Sesi 13 fix: auto-run juga saat config parameter berubah (strategy fields)
+  // Backtest hanya auto-run sekali saat data pertama kali dimuat (initial load).
+  // Setelah itu, user harus klik "Jalankan Backtest" secara eksplisit.
+  // Handler sudah fetch fresh data dari D1 setiap kali dijalankan.
   const initialRunRef = useRef(false);
   useEffect(() => {
     if (historicalData.length === 0 || initialRunRef.current) return;
@@ -567,15 +601,6 @@ export function SimulationTab({
     handleRunAlgoBacktest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historicalData.length]);
-
-  // Sesi 13: Auto-run backtest saat strategy config berubah
-  useEffect(() => {
-    if (historicalData.length === 0 || !initialRunRef.current) return;
-    if (configChanged) {
-      handleRunAlgoBacktest();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configFingerprint, historicalData.length]);
 
   useEffect(() => {
     const handler = () => {
@@ -1045,6 +1070,35 @@ export function SimulationTab({
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 >
 
+                  {/* Validation status banner */}
+                  {validationResult && validationResult.status === "warning" && validationResult.warnings.length > 0 && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="text-caption font-bold text-amber-300 font-sans uppercase tracking-wider">Peringatan Data</span>
+                      </div>
+                      {validationResult.warnings.map((w, i) => (
+                        <p key={i} className="text-[11px] text-amber-200/70 font-sans leading-relaxed">{w}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Run summary — one-liner with coverage info */}
+                  {validationResult && (
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-white/30">
+                      <span>{validationResult.coverage.totalTradingDays} hari trading</span>
+                      <span className="text-white/10">|</span>
+                      <span>{validationResult.coverage.dateRangeStart} → {validationResult.coverage.dateRangeEnd}</span>
+                      <span className="text-white/10">|</span>
+                      <span>{validationResult.coverage.avgStocksPerDay} saham/hari rata-rata</span>
+                      <span className="text-white/10">|</span>
+                      <span className={backtestResult.totalReturnPct >= 0 ? "text-green-400/60" : "text-rose-400/60"}>
+                        Return {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(2)}% | IHSG {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(2)}% | Emas {backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(2)}%
+                      </span>
+                      {!validationResult.coverage.hasScores && <span className="text-amber-400/60">⚠ tanpa score</span>}
+                    </div>
+                  )}
+
                   {/* Recharts chart — moved to top for visibility */}
                   <div className="space-y-4">
                     <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 block">Grafik Compounding Multi-Asset Backtest (Strategi vs IHSG &amp; Emas)</span>
@@ -1097,11 +1151,11 @@ export function SimulationTab({
                     
                     <Card variant="inset" padding="sm" className="space-y-1">
                       <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Hasil Akhir Strategi</span>
-                      <span className="text-base font-black font-mono text-green-400 block">
+                      <span className={`text-base font-black font-mono ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"} block`}>
                         {formatRupiah(backtestResult.finalValue)}
                       </span>
-                      <span className="text-caption font-bold text-green-300 font-mono bg-green-500/15 px-1.5 py-0.5 rounded inline-block">
-                        +{backtestResult.totalReturnPct.toFixed(1)}% Absolut
+                      <span className={`text-caption font-bold font-mono px-1.5 py-0.5 rounded inline-block ${backtestResult.totalReturnPct >= 0 ? "text-green-300 bg-green-500/15" : "text-rose-300 bg-rose-500/15"}`}>
+                        {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(1)}% Absolut
                       </span>
                     </Card>
 
@@ -1110,18 +1164,18 @@ export function SimulationTab({
                       <span className="text-sm font-semibold font-mono text-white/70 block">
                         {formatRupiah(backtestResult.ihsgFinalValue)}
                       </span>
-                      <span className={`text-caption font-mono font-bold ${backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
+                      <span className={`text-caption font-mono ${backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"} block`}>
                         {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Pelarian Emas / Kas</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Safe Haven (Emas/Kas)</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
                         {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
                       <span className="text-caption font-mono text-[#A0A0A0] block">
-                        Emas: +{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
+                        {backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
                       </span>
                     </Card>
 
@@ -1140,7 +1194,7 @@ export function SimulationTab({
                             <ShieldAlert className="w-4 h-4" /> Di Safe Haven
                           </div>
                           <span className="text-caption font-mono text-white/50 block">
-                            Crash #{(backtestResult.crashCount ?? 0)} aktif. Saham sudah dilikuidasi, modal di EMAS.
+                            Crash #{(backtestResult.crashCount ?? 0)} aktif. Saham dilikuidasi, modal di {backtestConfig.safeHavenAsset === "emas" ? "Emas" : "Kas"}.
                           </span>
                         </>
                       ) : Object.keys(backtestResult.finalPositions || {}).length > 0 ? (
@@ -1215,32 +1269,40 @@ export function SimulationTab({
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">CAGR (Annualized)</span>
-                      <span className="text-sm font-bold font-mono text-white block">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Compound Annual Growth Rate — rata-rata pertumbuhan tahunan yang dismooth">
+                        CAGR (Annualized)
+                      </span>
+                      <span className={`text-sm font-bold font-mono block ${backtestResult.cagr >= 0 ? "text-green-400" : "text-rose-400"}`}>
                         {backtestResult.cagr.toFixed(2)}%
                       </span>
                       <span className="text-label text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Rasio Sharpe &amp; Sortino</span>
-                      <span className="text-sm font-bold font-mono text-green-400 block">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Sharpe = (CAGR - Rf) / Volatilitas. Sortino = (CAGR - Rf) / Downside Vol. Rf=5%">
+                        Rasio Sharpe &amp; Sortino
+                      </span>
+                      <span className={`text-sm font-bold font-mono block ${(backtestResult.sharpe ?? 0) >= 0.5 ? "text-green-400" : (backtestResult.sharpe ?? 0) > 0 ? "text-amber-400" : "text-rose-400"}`}>
                         S: {backtestResult.sharpe !== null ? backtestResult.sharpe.toFixed(2) : "—"} / So: {backtestResult.sortino !== null ? backtestResult.sortino.toFixed(2) : "—"}
                       </span>
                       <span className="text-label text-white/40 block">Risiko Terkoreksi (Rf=5%)</span>
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Volatilitas &amp; Calmar</span>
-                      <span className="text-sm font-bold font-mono text-rose-400 block">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Volatilitas = StdDev return tahunan. Calmar = CAGR / MaxDrawdown.">
+                        Volatilitas &amp; Calmar
+                      </span>
+                      <span className="text-sm font-bold font-mono text-amber-400 block">
                         V: {backtestResult.volatility !== null ? backtestResult.volatility.toFixed(1) : "—"}% / C: {backtestResult.calmar.toFixed(2)}
                       </span>
-
+                      <span className="text-label text-white/40 block">Risk-Return Profile</span>
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Win Rate &amp; Turnover</span>
-                      <span className="text-sm font-bold font-mono text-amber-400 block">
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Win Rate = % hari dengan return positif. Turnover = total volume transaksi / rata-rata portofolio.">
+                        Win Rate &amp; Turnover
+                      </span>
+                      <span className="text-sm font-bold font-mono text-cyan-400 block">
                         W: {backtestResult.winRatePct.toFixed(1)}% / T: {backtestResult.turnoverPct.toFixed(1)}%
                       </span>
                       <span className="text-label text-white/40 block">Aktivitas Rotasi Portfolio</span>
@@ -1254,7 +1316,9 @@ export function SimulationTab({
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Information Ratio</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Information Ratio = (Rp - Rb) / Tracking Error. Semakin tinggi, semakin konsisten mengalahkan benchmark.">
+                        Information Ratio
+                      </span>
                       <span className="text-sm font-bold font-mono text-cyan-400 block">
                         {backtestResult.informationRatio !== null ? backtestResult.informationRatio.toFixed(3) : "—"}
                       </span>
@@ -1262,7 +1326,9 @@ export function SimulationTab({
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Omega Ratio</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Omega Ratio = Total gains / Total losses relatif threshold. >1 = lebih banyak gain daripada loss.">
+                        Omega Ratio
+                      </span>
                       <span className="text-sm font-bold font-mono text-cyan-400 block">
                         {isFinite(backtestResult.omegaRatio) ? backtestResult.omegaRatio.toFixed(3) : "∞"}
                       </span>
@@ -1270,7 +1336,9 @@ export function SimulationTab({
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Tail Risk</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Skewness < 0 = tail kiri lebih panjang (risiko downside). Kurtosis > 0 = fat tails, crash lebih sering dari normal.">
+                        Tail Risk
+                      </span>
                       <span className="text-sm font-bold font-mono text-orange-400 block">
                         Skew: {backtestResult.skewness.toFixed(2)} / Kurt: {backtestResult.kurtosis.toFixed(2)}
                       </span>
@@ -1278,7 +1346,9 @@ export function SimulationTab({
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Net Return (Fee-Adjusted)</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block" title="Return total dikurangi total biaya transaksi (fee + pajak + slippage).">
+                        Net Return (Fee-Adjusted)
+                      </span>
                       <span className={`text-sm font-bold font-mono ${backtestResult.turnoverAdjustedReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>
                         {backtestResult.turnoverAdjustedReturnPct >= 0 ? "+" : ""}{backtestResult.turnoverAdjustedReturnPct.toFixed(2)}%
                       </span>
@@ -1310,20 +1380,38 @@ export function SimulationTab({
                   {/* Profit comparison notice card */}
                   <Card variant="inset" padding="md" className="leading-relaxed space-y-2">
                     <div className="flex items-start gap-3">
-                      <span className="text-lg">📈</span>
+                      <span className="text-lg">
+                        {backtestResult.totalReturnPct > backtestResult.ihsgReturnPct ? "📈" : backtestResult.totalReturnPct > 0 ? "📊" : "📉"}
+                      </span>
                       <div className="text-xs text-white/60">
                         {backtestConfig.simulationMode === "algo" ? (
-                          <>Algoritma rotasi harian dengan penyisihan saham Rank &ge;7 berbasis <strong className="text-emerald-400">{backtestResult.configName}</strong> berhasil melampaui tolok ukur pasar IHSG! Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, rebalancing portofolio otomatis Anda melonjak menjadi <span className="text-green-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span> dibandingkan acuan pasar IHSG <span className="text-yellow-400 font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span>.</>
+                          (() => {
+                            const cap = parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000;
+                            const beatsIHSG = backtestResult.totalReturnPct > backtestResult.ihsgReturnPct;
+                            const beatsGold = backtestResult.totalReturnPct > backtestResult.goldReturnPct;
+                            const returnLabel = backtestResult.totalReturnPct >= 0 ? `+${backtestResult.totalReturnPct.toFixed(1)}%` : `${backtestResult.totalReturnPct.toFixed(1)}%`;
+                            const ihsgLabel = backtestResult.ihsgReturnPct >= 0 ? `+${backtestResult.ihsgReturnPct.toFixed(1)}%` : `${backtestResult.ihsgReturnPct.toFixed(1)}%`;
+                            return (
+                              <>
+                                Strategi rebalancing otomatis dengan profil <strong className="text-emerald-400">{backtestResult.configName}</strong> menghasilkan return <span className={`font-bold ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>{returnLabel}</span> pada periode {backtestConfig.simStartDate} → {backtestConfig.simEndDate}. Modal awal <span className="text-white font-bold">{formatRupiah(cap)}</span> menjadi <span className={`font-extrabold ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>{formatRupiah(backtestResult.finalValue)}</span>.
+                                {beatsIHSG
+                                  ? <> Melebihi benchmark IHSG (<span className="text-white">{ihsgLabel}</span>).</>
+                                  : <> Di bawah benchmark IHSG (<span className="text-rose-300">{ihsgLabel}</span>).</>
+                                }
+                                {beatsGold ? " Mengungguli emas sebagai safe haven." : backtestResult.goldReturnPct > backtestResult.ihsgReturnPct ? " Emas ternyata lebih kuat dari strategi ini." : ""}
+                              </>
+                            );
+                          })()
                         ) : (
-                          <>Simulasi Hold & Protect pada saham tunggal <strong className="text-emerald-400">#{backtestConfig.singleTicker}</strong> dengan proteksi risiko krisis. Dengan modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> sejak {backtestConfig.simStartDate} hingga {backtestConfig.simEndDate}, nilai investasi Anda berubah menjadi <span className="text-green-400 font-extrabold">{formatRupiah(backtestResult.finalValue)}</span>.</>
+                          <>Simulasi Hold &amp; Protect pada saham tunggal <strong className="text-emerald-400">#{backtestConfig.singleTicker}</strong>. Modal awal <span className="text-white font-bold">{formatRupiah(parseInt(backtestConfig.algoCapital.replace(/[^0-9]/g, "")) || 100000000)}</span> pada {backtestConfig.simStartDate} bernilai <span className={`font-extrabold ${backtestResult.totalReturnPct >= 0 ? "text-green-400" : "text-rose-400"}`}>{formatRupiah(backtestResult.finalValue)}</span> pada {backtestConfig.simEndDate}.</>
                         )}
                       </div>
                     </div>
                     {/* Comparative index list */}
                     <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
-                      <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> (+{backtestResult.ihsgReturnPct.toFixed(1)}%)</div>
-                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> (+{backtestResult.goldReturnPct.toFixed(1)}%)</div>
-                      <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> (+{backtestResult.bench6040ReturnPct.toFixed(1)}%)</div>
+                      <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> <span className={backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}%</span></div>
+                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> <span className={backtestResult.goldReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}%</span></div>
+                      <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> <span className={backtestResult.bench6040ReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.bench6040ReturnPct >= 0 ? "+" : ""}{backtestResult.bench6040ReturnPct.toFixed(1)}%</span></div>
                     </div>
                   </Card>
 
@@ -1519,24 +1607,52 @@ export function SimulationTab({
                       <span className="text-caption uppercase font-bold tracking-widest text-[#E0E0E0]/50 flex items-center gap-1.5 font-sans">
                         <Clock className="w-3.5 h-3.5 text-emerald-400" /> Buku Jurnal Transaksi Algoritma Harian
                       </span>
-                      <button
-                        type="button"
-                        onClick={handleDownloadJournal}
-                        className="bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[9.5px] font-bold uppercase font-sans px-2.5 py-1 rounded transition-all cursor-pointer flex items-center gap-1 shrink-0"
-                      >
-                        <Download className="w-3 h-3" /> Unduh Buku Jurnal (CSV)
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleDownloadJournal}
+                          className="bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/25 text-emerald-400 text-[9.5px] font-bold uppercase font-sans px-2.5 py-1 rounded transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                        >
+                          <Download className="w-3 h-3" /> Unduh Buku Jurnal (CSV)
+                        </button>
+                      </div>
+                    </div>
+                    {/* Journal filter chips */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {(["all", "BUY", "SELL", "REBALANCE", "CRASH_TRIGGER", "RECOVERY", "RE_ENTRY"] as const).map((filter) => {
+                        const isActive = journalFilter === filter;
+                        const count = filter === "all"
+                          ? backtestResult.logs.length
+                          : backtestResult.logs.filter((l: any) => l.type === filter).length;
+                        const label = filter === "all" ? "Semua" : filter === "CRASH_TRIGGER" ? "CRASH" : filter;
+                        return (
+                          <button
+                            key={filter}
+                            onClick={() => setJournalFilter(filter)}
+                            className={`px-2 py-0.5 text-label font-bold font-mono rounded-md border transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-white/10 text-white border-white/20"
+                                : "bg-transparent text-white/30 border-white/5 hover:border-white/10 hover:text-white/50"
+                            }`}
+                          >
+                            {label} <span className="text-white/20">({count})</span>
+                          </button>
+                        );
+                      })}
                     </div>
                     <Card variant="default" padding="md" className="h-64 overflow-y-auto font-mono text-caption space-y-3 leading-relaxed">
                       
-                      {backtestResult.logs.map((log: any, idx: number) => {
+                      {backtestResult.logs
+                        .filter((log: any) => journalFilter === "all" || log.type === journalFilter)
+                        .map((log: any, idx: number) => {
                         const dateStr = log.date && log.date.length >= 10 ? log.date.slice(0, 10) : log.date;
                         const [, typeColor] = {
                           BUY: ["bg-green-500/20 text-green-400 border-green-500/20", "text-green-300"],
                           SELL: ["bg-rose-500/20 text-rose-400 border-rose-500/20", "text-rose-300"],
                           REBALANCE: ["bg-green-500/20 text-green-400 border-green-500/20", "text-green-300"],
                           CRASH_TRIGGER: ["bg-rose-500/25 text-rose-400 border-rose-500/30", "text-rose-300"],
-                          CRASH_RECOVERY: ["bg-amber-500/20 text-amber-400 border-amber-500/20", "text-amber-300"],
+                          RECOVERY: ["bg-emerald-500/20 text-emerald-400 border-emerald-500/20", "text-emerald-300"],
+                          RE_ENTRY: ["bg-cyan-500/20 text-cyan-400 border-cyan-500/20", "text-cyan-300"],
                         }[log.type] || ["bg-white/5 text-white/60 border-white/10", "text-white/60"];
                         return (
                           <div key={idx} className="border-b border-white/5 pb-2.5 last:border-0 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
@@ -1545,7 +1661,7 @@ export function SimulationTab({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   <span className={`inline-block px-1.5 py-0.5 rounded text-label font-extrabold uppercase font-sans tracking-wider shrink-0 border ${typeColor}`}>
-                                    {log.type === "CRASH_TRIGGER" ? "CRASH" : log.type === "CRASH_RECOVERY" ? "RECOVERY" : log.type}
+                                    {log.type === "CRASH_TRIGGER" ? "CRASH" : log.type}
                                   </span>
                                   <span className="text-label text-zinc-500 font-mono">{dateStr}</span>
                                 </div>

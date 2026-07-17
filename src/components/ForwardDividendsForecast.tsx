@@ -190,6 +190,20 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
 
   const isLight = theme === "light";
 
+  if (currentYield === 0 && eps0 <= 0) {
+    return (
+      <div className="border border-white/[0.06] rounded-lg p-4">
+        <div className="text-center py-12">
+          <Coins className="w-10 h-10 mx-auto mb-3 text-white/15" />
+          <p className="text-white/40 text-body">
+            Simulasi dividen tidak tersedia untuk <span className="font-mono text-white/60">{stock.ticker}</span>
+          </p>
+          <p className="text-white/25 text-caption mt-1">Emiten ini belum memiliki data dividen atau laba bersih yang cukup.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="dividends-forecast-card" className="space-y-6">
       
@@ -202,7 +216,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
           </div>
           <div>
             <h3 className="text-sm font-bold text-white tracking-tight font-serif italic">
-              Forward Dividends Forecast &amp; Compounder
+              Simulasi Dividen & Komponen
             </h3>
             <p className="text-body text-white/40 mt-1 leading-relaxed">
               Model pertumbuhan dividen dan korelasi harga emiten <span className="text-emerald-400 font-bold">{stock.ticker}</span> dalam kurun waktu 5 tahun mendatang. Analisis kekuatan bunga berbunga (<span className="text-emerald-400">compounding effect</span>) dan Yield on Cost (YoC).
@@ -217,7 +231,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
         {/* Parameters Control Panel */}
         <div className="md:col-span-12 lg:col-span-5 bg-[#0A0A0A] border border-white/5 p-5 rounded-2xl space-y-4">
           <span className="text-caption text-white/40 uppercase font-black tracking-widest block font-mono">
-            SETUP PAROCHIAL MATRIX
+            Parameter Simulasi
           </span>
 
           {/* Capital Input field */}
@@ -324,7 +338,7 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
         <div className="md:col-span-12 lg:col-span-7 bg-[#0A0A0A] border border-white/5 p-5 rounded-2xl flex flex-col justify-between space-y-4">
           <div className="space-y-4">
             <span className="text-caption text-white/40 uppercase font-black tracking-widest block font-mono">
-              OUTPUT EVALUASI COMPOUNDING
+              OUTPUT EVALUASI KOMPOUNDING
             </span>
 
             {/* Results Grid Metrics */}
@@ -411,10 +425,18 @@ export function ForwardDividendsForecast({ stock, theme }: ForwardDividendsForec
 
       </div>
 
-      {/* 3. Detailed Data Table Projection block */}
+      {/* 3. Simulation Disclaimer */}
+      <div className="bg-amber-950/10 border border-amber-500/10 rounded-xl p-3.5 flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+        <p className="text-caption text-white/50 leading-relaxed">
+          <strong className="text-amber-400">Disclaimer:</strong> Simulasi ini bersifat hipotetis berdasarkan asumsi pertumbuhan konstan. Hasil aktual dapat berbeda secara signifikan. Data fundamental yang digunakan bersumber dari laporan keuangan publik dan <strong className="text-white/60">bukan merupakan rekomendasi beli/jual</strong>.
+        </p>
+      </div>
+
+      {/* 4. Detailed Data Table Projection block */}
       <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-5 overflow-hidden">
         <span className="text-caption text-white/40 uppercase font-black tracking-widest block font-mono mb-4">
-          TABEL PROYEKSI PERTUMBUHAN DIVIDEN BERKALA
+          Tabel Proyeksi Dividen
         </span>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-body font-mono">

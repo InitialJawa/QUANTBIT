@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { api } from "../../services/api";
 import { STOCKS_DATA } from "../../stocksData";
+import { assessTickerDataQuality, getDataQualityColor } from "../../utils/tickerDataQuality";
 import type { StockData } from "../../types";
 
 interface PeerComparisonTabProps {
@@ -84,6 +85,15 @@ export function PeerComparisonTab({ stock, getDynamicStock }: PeerComparisonTabP
     }));
   }, [data, getDynamicStock]);
 
+  const sectorSummary = useMemo(() => {
+    if (!peers.length) return null;
+    const total = peers.length;
+    const avgScore = peers.reduce((s, p) => s + p.totalScore, 0) / total;
+    const top3 = peers.slice(0, 3).map(p => p.ticker);
+    const selfRank = peers.find(p => p.ticker === stock.ticker)?.rank ?? null;
+    return { total, avgScore: Math.round(avgScore), top3, selfRank };
+  }, [peers, stock.ticker]);
+
   if (loading) {
     return (
       <div className="border border-white/[0.06] rounded-lg p-4">
@@ -113,6 +123,37 @@ export function PeerComparisonTab({ stock, getDynamicStock }: PeerComparisonTabP
 
   return (
     <div className="space-y-3">
+      {/* Sector Summary */}
+      {sectorSummary && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="border border-white/[0.06] rounded-lg p-3 text-center">
+            <span className="text-[10px] text-white/30 block uppercase">Emiten Sektor</span>
+            <span className="text-sm font-bold text-white font-mono mt-1 block">{sectorSummary.total}</span>
+          </div>
+          <div className="border border-white/[0.06] rounded-lg p-3 text-center">
+            <span className="text-[10px] text-white/30 block uppercase">Rata-rata Skor</span>
+            <span className={`text-sm font-bold font-mono mt-1 block ${sectorSummary.avgScore >= 70 ? "text-emerald-400" : sectorSummary.avgScore >= 50 ? "text-yellow-400" : "text-rose-400"}`}>
+              {sectorSummary.avgScore}
+            </span>
+          </div>
+          <div className="border border-white/[0.06] rounded-lg p-3 text-center">
+            <span className="text-[10px] text-white/30 block uppercase">Peringkat {stock.ticker}</span>
+            <span className={`text-sm font-bold font-mono mt-1 block ${sectorSummary.selfRank && sectorSummary.selfRank <= 3 ? "text-emerald-400" : "text-white"}`}>
+              {sectorSummary.selfRank ? `#${sectorSummary.selfRank}` : "—"}
+            </span>
+          </div>
+          <div className="border border-white/[0.06] rounded-lg p-3 text-center">
+            <span className="text-[10px] text-white/30 block uppercase">Top 3</span>
+            <span className="text-sm font-mono mt-1 block">
+              {sectorSummary.top3.map(t => (
+                <span key={t} className={`mr-1 ${t === stock.ticker ? "text-emerald-400 font-bold" : "text-white/60"}`}>{t}</span>
+              ))}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Sector Header */}
       <div className="flex items-center justify-between">
         <span className="text-caption text-white/35 uppercase tracking-wider font-medium">
           Sektor: {data.sector} ({data.peers.length} emiten)
@@ -126,29 +167,32 @@ export function PeerComparisonTab({ stock, getDynamicStock }: PeerComparisonTabP
         )}
       </div>
 
+      {/* Peer Table — scrollable */}
       <div className="overflow-x-auto border border-white/[0.06] rounded-lg">
-        <table className="w-full text-left text-body">
+        <table className="w-full text-left text-body min-w-[800px]">
           <thead>
             <tr className="border-b border-white/[0.04] text-white/25 text-label tracking-wide uppercase">
-              <th className="p-3 font-medium sticky left-0 bg-[#0a0a0f] z-10">#</th>
-              <th className="p-3 font-medium sticky left-0 bg-[#0a0a0f] z-10">Ticker</th>
-              <th className="p-3 font-medium">Price</th>
-              <th className="p-3 font-medium">Quality</th>
-              <th className="p-3 font-medium">Growth</th>
-              <th className="p-3 font-medium">Value</th>
-              <th className="p-3 font-medium">Momentum</th>
-              <th className="p-3 font-medium">Score</th>
+              <th className="p-3 font-medium sticky left-0 bg-[#0a0a0f] z-10 min-w-[36px]">#</th>
+              <th className="p-3 font-medium sticky left-[36px] bg-[#0a0a0f] z-10 min-w-[90px]">Ticker</th>
+              <th className="p-3 font-medium min-w-[60px]">Data</th>
+              <th className="p-3 font-medium min-w-[60px]">Price</th>
+              <th className="p-3 font-medium min-w-[56px]">Quality</th>
+              <th className="p-3 font-medium min-w-[56px]">Growth</th>
+              <th className="p-3 font-medium min-w-[56px]">Value</th>
+              <th className="p-3 font-medium min-w-[60px]">Momentum</th>
+              <th className="p-3 font-medium min-w-[50px]">Score</th>
               {COMPARE_METRICS.map(m => (
-                <th key={m.key} className="p-3 font-medium whitespace-nowrap">{m.label}</th>
+                <th key={m.key} className="p-3 font-medium whitespace-nowrap min-w-[56px]">{m.label}</th>
               ))}
-              <th className="p-3 font-medium whitespace-nowrap">M.Cap</th>
+              <th className="p-3 font-medium whitespace-nowrap min-w-[72px]">M.Cap</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
             {avgs && (
               <tr className="bg-white/[0.03] border-b border-white/[0.06]">
                 <td className="p-3 font-mono text-[10px] text-white/30 sticky left-0 bg-[#0a0a0f]/95 z-10">-</td>
-                <td className="p-3 font-medium text-white/60 sticky left-0 bg-[#0a0a0f]/95 z-10">Rata-rata Sektor</td>
+                <td className="p-3 font-medium text-white/60 sticky left-[36px] bg-[#0a0a0f]/95 z-10">Rata-rata</td>
+                <td className="p-3 font-mono text-[10px] text-white/30">—</td>
                 <td className="p-3 font-mono text-white/50">-</td>
                 <ScoreCell v={avgs.quality} isSelf={false} isAvg />
                 <ScoreCell v={avgs.growth} isSelf={false} isAvg />
@@ -163,14 +207,25 @@ export function PeerComparisonTab({ stock, getDynamicStock }: PeerComparisonTabP
             )}
             {peers.map((s) => {
               const isSelf = s.ticker === stock.ticker;
+              const dynStock = s.dyn;
+              const dq = dynStock ? assessTickerDataQuality(dynStock) : null;
               return (
                 <tr key={s.ticker} className={`hover:bg-white/[0.02] ${isSelf ? "bg-emerald-600/5" : ""}`}>
                   <td className={`p-3 font-mono text-[11px] whitespace-nowrap sticky left-0 bg-[#0a0a0f] z-10 ${isSelf ? "text-emerald-500" : "text-white/30"}`}>
                     {s.rank}
                   </td>
-                  <td className={`p-3 font-mono font-medium whitespace-nowrap sticky left-0 bg-[#0a0a0f] z-10 ${isSelf ? "text-emerald-500" : "text-white/80"}`}>
+                  <td className={`p-3 font-mono font-medium whitespace-nowrap sticky left-[36px] bg-[#0a0a0f] z-10 ${isSelf ? "text-emerald-500" : "text-white/80"}`}>
                     {s.ticker}
-                    {isSelf && <span className="ml-2 text-[10px] text-emerald-500/60">← this</span>}
+                    {isSelf && <span className="ml-2 text-[10px] text-emerald-500/60">← ini</span>}
+                  </td>
+                  <td className="p-3 text-[10px] font-mono">
+                    {dq ? (
+                      <span className={`px-1.5 py-0.5 rounded border ${getDataQualityColor(dq.status)}`}>
+                        {dq.label}
+                      </span>
+                    ) : (
+                      <span className="text-white/20">—</span>
+                    )}
                   </td>
                   <td className="p-3 font-mono text-white/70 whitespace-nowrap">
                     {s.dyn ? `Rp${s.dyn.currentPrice.toLocaleString("id-ID")}` : "-"}

@@ -333,13 +333,13 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         const result = detectRecoveryAlgo(ihsgRollingWindow, day.ihsgPrice);
         recoverySignaled = result.signaled;
 
-        if (result.signaled) {
-          logs.push({
-            date: day.date,
-            type: "CRASH_RECOVERY",
-            message: `RECOVERY: ${result.reason} — IHSG ${day.ihsgPrice.toLocaleString("id-ID")}`,
-          });
-        }
+      if (recoverySignaled) {
+        logs.push({
+          date: day.date,
+          type: "RECOVERY",
+          message: `PASAR PULIH: ${result.reason} — IHSG ${day.ihsgPrice.toLocaleString("id-ID")}`,
+        });
+      }
       }
 
       if (recoverySignaled) {
@@ -378,8 +378,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
         logs.push({
           date: day.date,
-          type: "CRASH_RECOVERY",
-          message: `Re-entry ${reentryTickers.length} emiten setelah recovery pasar — alokasi Rp ${recoveryCash.toLocaleString("id-ID")}`,
+          type: "RE_ENTRY",
+          message: `RE-ENTRY: ${reentryTickers.length} emiten setelah recovery pasar — alokasi Rp ${recoveryCash.toLocaleString("id-ID")}`,
         });
 
         crashCooldown = 20;
