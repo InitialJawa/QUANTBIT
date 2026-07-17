@@ -123,6 +123,23 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     topTickers = [];
   }
 
+  const chartData: ChartPoint[] = [];
+  const logs: TradeLog[] = [];
+
+  let totalSwaps = 0;
+  let totalBuys = 0;
+  let totalSells = 0;
+  let totalDividendsEarned = 0;
+  const dividendByTicker: Record<string, number> = {};
+
+  if (topTickers.length === 0 && config.simulationMode !== "adaptive_dca") {
+    logs.push({
+      date: day0.date,
+      type: "BUY",
+      message: `PERINGATAN: Tidak ada emitentersedia untuk alokasi. Modal Rp ${initialInvestable.toLocaleString("id-ID")} tetap dalam kas.`,
+    });
+  }
+
   const initialAlloc = computeInitialAllocation(
     initialInvestable, topTickers, day0.stockPrices, day0.stockVolumes, fees
   );
@@ -136,10 +153,8 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   let totalTransactionVolume = initialAlloc.totalVolume;
   let lastRebalanceMonth = new Date(day0.date).getMonth();
   let pendingTickers = [...initialAlloc.pendingTickers];
+  totalBuys += Object.keys(initialAlloc.positions).length;
 
-  let totalSwaps = 0;
-  let totalDividendsEarned = 0;
-  const dividendByTicker: Record<string, number> = {};
   let maxVal = cap;
   let maxDrawdownValue = 0;
   let totalFeesPaid = 0;
@@ -150,9 +165,6 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     ? -1
     : new Date(day0.date).getMonth();
   const bpsHistory: Array<{ date: string; score: number; deployPct: number; action: string }> = [];
-
-  const chartData: ChartPoint[] = [];
-  const logs: TradeLog[] = [];
 
   const initialIhsgPrice = day0.ihsgPrice;
   const initialGoldPrice = day0.goldPrice;
@@ -228,6 +240,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
               type: "BUY",
               message: `Eksekusi #${pt.ticker} ${sharesToBuy} lembar @ Rp ${Math.round(entryPrice).toLocaleString("id-ID")} = Rp ${(sharesToBuy * Math.round(entryPrice)).toLocaleString("id-ID")}`,
             });
+            totalBuys++;
           }
           pendingTickers.splice(pi, 1);
         }
@@ -304,6 +317,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
 
     if (crashSignaled && !inCrashState && crashCooldown <= 0) {
       const liq = liquidateHoldings(positions, day.stockPrices, fees);
+      totalSells += Object.keys(positions).length;
       logs.push({
         date: day.date,
         type: "CRASH_TRIGGER",
@@ -333,13 +347,13 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         const result = detectRecoveryAlgo(ihsgRollingWindow, day.ihsgPrice);
         recoverySignaled = result.signaled;
 
-      if (recoverySignaled) {
-        logs.push({
-          date: day.date,
-          type: "RECOVERY",
-          message: `PASAR PULIH: ${result.reason} — IHSG ${day.ihsgPrice.toLocaleString("id-ID")}`,
-        });
-      }
+        if (recoverySignaled) {
+          logs.push({
+            date: day.date,
+            type: "RECOVERY",
+            message: `PASAR PULIH: ${result.reason} — IHSG ${day.ihsgPrice.toLocaleString("id-ID")}`,
+          });
+        }
       }
 
       if (recoverySignaled) {
@@ -372,6 +386,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         Object.entries(reentryAlloc.positions).forEach(([t, shares]) => {
           positions[t] = (positions[t] || 0) + shares;
         });
+        totalBuys += Object.keys(reentryAlloc.positions).length;
         cash = reentryAlloc.cash;
         totalTransactionVolume += reentryAlloc.totalVolume;
         pendingTickers.push(...reentryAlloc.pendingTickers);
@@ -483,6 +498,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
           totalTransactionVolume += sellResult.volume;
           totalFeesPaid += Math.max(0, sellResult.volume - sellResult.proceeds);
           delete positions[ticker];
+          totalSells++;
 
           const topCandidates = pickTopTickersByRank(
             day.stockRanks, day.stockPrices, getUniverseTickers(), config.topNCount
@@ -541,14 +557,21 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     }
   }
 
-  const currentPortfolioVal = cash +
-    (Object.entries(positions).reduce((sum, [t, s]) => {
-      const p = filtered[filtered.length - 1].stockPrices[t];
-      return sum + (p && p > 0 ? s * p : 0);
-    }, 0)) +
-    (goldGrams * filtered[filtered.length - 1].goldPrice) + bufferCash;
-
   const lastDayObj = filtered[filtered.length - 1];
+
+  const finalStockValue = Object.entries(positions).reduce((sum, [t, s]) => {
+    const p = lastDayObj.stockPrices[t];
+    return sum + (p && p > 0 ? s * p : 0);
+  }, 0);
+  const finalGoldValue = goldGrams * lastDayObj.goldPrice;
+
+  let currentPortfolioVal = cash + finalStockValue + finalGoldValue + bufferCash;
+  if (!Number.isFinite(currentPortfolioVal) || currentPortfolioVal < 0) {
+    currentPortfolioVal = bufferCash;
+  }
+  if (currentPortfolioVal < bufferCash && bufferCash > 0) {
+    currentPortfolioVal = bufferCash;
+  }
 
   const metrics = computeMetrics({
     cap,
@@ -587,7 +610,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     ihsgReturnPct: metrics.ihsgReturnPct,
     goldReturnPct: metrics.goldReturnPct,
     maxDrawdown: maxDrawdownValue,
-    totalTrades: totalSwaps,
+    totalTrades: totalBuys + totalSells + totalSwaps,
     totalDividends: totalDividendsEarned,
     dividendByTicker,
     cagr: metrics.cagr,
@@ -621,6 +644,23 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
     crashTriggered: crashCount > 0,
     crashCount,
     finalInCrashState: inCrashState,
+    diagnostics: {
+      initialCapital: cap,
+      bufferCash,
+      finalStockValue: Math.round(finalStockValue),
+      finalGoldValue: Math.round(finalGoldValue),
+      finalCash: Math.round(cash),
+      initialAllocatedTickers: topTickers.length,
+      initialPositionsCount: Object.keys(initialAlloc.positions).length,
+      scoreLookupAvailable: !!scoreLookup && scoreLookup.dates.length > 0,
+      dataDaysTotal: filtered.length,
+      startDate: filtered[0]?.date || "",
+      endDate: lastDayObj.date || "",
+      goldPriceStart: initialGoldPrice,
+      goldPriceEnd: lastDayObj.goldPrice,
+      ihsgPriceStart: initialIhsgPrice,
+      ihsgPriceEnd: lastDayObj.ihsgPrice,
+    },
   };
 }
 

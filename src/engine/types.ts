@@ -130,6 +130,24 @@ export interface BacktestResult {
   crashCount?: number;
   /** True if backtest ended while still in crash state (i.e., still holding safe haven). */
   finalInCrashState?: boolean;
+  /** Diagnostic snapshot for result validation and debugging. */
+  diagnostics?: {
+    initialCapital: number;
+    bufferCash: number;
+    finalStockValue: number;
+    finalGoldValue: number;
+    finalCash: number;
+    initialAllocatedTickers: number;
+    initialPositionsCount: number;
+    scoreLookupAvailable: boolean;
+    dataDaysTotal: number;
+    startDate: string;
+    endDate: string;
+    goldPriceStart: number;
+    goldPriceEnd: number;
+    ihsgPriceStart: number;
+    ihsgPriceEnd: number;
+  };
 }
 
 export interface ScoreLookup {

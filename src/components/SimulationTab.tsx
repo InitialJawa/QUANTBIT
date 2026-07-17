@@ -26,7 +26,7 @@ import { PortfolioItem, StockData } from "../types";
 import { STOCKS_DATA } from "../stocksData";
 import { IDX80_TICKERS, IDX30_TICKERS, LQ45_TICKERS } from "../constants/idx80";
 import { runStrategy } from "../engine";
-import { validateBacktestData, type ValidationResult } from "../engine/backtestValidation";
+import { validateBacktestData, validateBacktestResult, type ValidationResult, type ResultValidation } from "../engine/backtestValidation";
 import { runBaselineDca, type BaselineResult, type DcaBaseline } from "../engine/dcaBaselines";
 import { SearchableSelect } from "./SearchableSelect";
 import { RS, MKT } from "../marketData";
@@ -273,6 +273,7 @@ export function SimulationTab({
   const [activeRankTickers, setActiveRankTickers] = useState<string[]>(["BBCA", "BMRI", "ADRO", "GOTO", "TLKM"]);
   const [baselineResults, setBaselineResults] = useState<BaselineResult[]>([]);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [resultValidation, setResultValidation] = useState<ResultValidation | null>(null);
   const [journalFilter, setJournalFilter] = useState<string>("all");
 
   // D7 — track last-run config so we can show "Config changed" banner
@@ -451,6 +452,7 @@ export function SimulationTab({
     setBacktesting(true);
     setBacktestProgress(10);
     setValidationResult(null);
+    setResultValidation(null);
 
     try {
       const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "agresif" : backtestConfig.activeProfileId === "dividen" ? "dividen" : "aman";
@@ -534,6 +536,13 @@ export function SimulationTab({
       setBacktestProgress(85);
 
       setBacktestResult(result);
+
+      const rv = validateBacktestResult(result, cap);
+      setResultValidation(rv);
+
+      if (rv.status === "invalid") {
+        toast.error("Hasil backtest tidak valid: " + rv.errors[0]);
+      }
 
       // Adaptive DCA: also run 3 baseline simulations for comparison
       if (backtestConfig.simulationMode === "adaptive_dca") {
@@ -1083,6 +1092,60 @@ export function SimulationTab({
                     </div>
                   )}
 
+                  {/* Result validation banner — invalid results */}
+                  {resultValidation && resultValidation.status === "invalid" && (
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                        <span className="text-caption font-bold text-rose-300 font-sans uppercase tracking-wider">Hasil Tidak Valid</span>
+                        <span className="ml-auto px-2 py-0.5 text-[9px] font-mono font-bold bg-rose-500/20 text-rose-400 rounded border border-rose-500/30">INVALID</span>
+                      </div>
+                      {resultValidation.errors.map((e, i) => (
+                        <p key={i} className="text-[11px] text-rose-200/80 font-sans leading-relaxed">{e}</p>
+                      ))}
+                      {resultValidation.warnings.length > 0 && (
+                        <div className="pt-1 border-t border-rose-500/20 space-y-0.5">
+                          {resultValidation.warnings.map((w, i) => (
+                            <p key={i} className="text-[10px] text-amber-200/60 font-sans leading-relaxed">⚠ {w}</p>
+                          ))}
+                        </div>
+                      )}
+                      <details className="mt-1">
+                        <summary className="text-[10px] font-mono text-white/30 cursor-pointer hover:text-white/50">Diagnostics</summary>
+                        <div className="mt-1 p-2 bg-black/30 rounded-lg grid grid-cols-2 md:grid-cols-3 gap-1.5 text-[9px] font-mono text-white/40">
+                          {Object.entries(resultValidation.diagnostics).map(([k, v]) => (
+                            <div key={k}>
+                              <span className="text-white/25">{k}: </span>
+                              <span className="text-white/60 font-bold">{String(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
+                  )}
+
+                  {/* Result validation banner — warning only */}
+                  {resultValidation && resultValidation.status === "warning" && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="text-caption font-bold text-amber-300 font-sans uppercase tracking-wider">Peringatan Hasil</span>
+                        <span className="ml-auto px-2 py-0.5 text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 rounded border border-amber-500/30">WARNING</span>
+                      </div>
+                      {resultValidation.warnings.map((w, i) => (
+                        <p key={i} className="text-[11px] text-amber-200/70 font-sans leading-relaxed">{w}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Result validation badge — valid */}
+                  {resultValidation && resultValidation.status === "valid" && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[10px] font-mono font-bold text-emerald-400/70 uppercase tracking-wider">Hasil Valid</span>
+                    </div>
+                  )}
+
                   {/* Run summary — one-liner with coverage info */}
                   {validationResult && (
                     <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-white/30">
@@ -1092,8 +1155,16 @@ export function SimulationTab({
                       <span className="text-white/10">|</span>
                       <span>{validationResult.coverage.avgStocksPerDay} saham/hari rata-rata</span>
                       <span className="text-white/10">|</span>
+                      <span>TopN={backtestConfig.topNCount} | Buffer={backtestConfig.reserveBufferPct}%</span>
+                      <span className="text-white/10">|</span>
                       <span className={backtestResult.totalReturnPct >= 0 ? "text-green-400/60" : "text-rose-400/60"}>
-                        Return {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(2)}% | IHSG {backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(2)}% | Emas {backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(2)}%
+                        Return {backtestResult.totalReturnPct >= 0 ? "+" : ""}{backtestResult.totalReturnPct.toFixed(2)}%
+                      </span>
+                      <span className={backtestResult.totalReturnPct > backtestResult.ihsgReturnPct ? "text-green-400/70 font-bold" : "text-rose-400/70"}>
+                        {backtestResult.totalReturnPct > backtestResult.ihsgReturnPct ? "▲ Outperform IHSG" : "▼ Underperform IHSG"} ({(backtestResult.totalReturnPct - backtestResult.ihsgReturnPct).toFixed(1)}pp)
+                      </span>
+                      <span className={backtestResult.totalReturnPct > backtestResult.goldReturnPct ? "text-amber-400/70 font-bold" : "text-rose-400/50"}>
+                        {backtestResult.totalReturnPct > backtestResult.goldReturnPct ? "▲ Outperform Emas" : "▼ Underperform Emas"} ({(backtestResult.totalReturnPct - backtestResult.goldReturnPct).toFixed(1)}pp)
                       </span>
                       {!validationResult.coverage.hasScores && <span className="text-amber-400/60">⚠ tanpa score</span>}
                     </div>
@@ -1140,7 +1211,7 @@ export function SimulationTab({
                           <Legend verticalAlign="top" height={36} iconType="circle" />
                           <Area type="monotone" name="Strategi Rebalance Algo" dataKey="Strategi Rebalancer" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorStrategy)" />
                           <Area type="monotone" name="Benchmark IHSG (Beli & Simpan)" dataKey="Benchmark IHSG" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="3 3" fillOpacity={1} fill="url(#colorIHSGBench)" />
-                          <Area type="monotone" name="Benchmark Emas Fisik" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
+                          <Area type="monotone" name="Benchmark Emas (Hold)" dataKey="Benchmark Emas" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="1 1" fillOpacity={1} fill="url(#colorGoldBench)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -1170,12 +1241,12 @@ export function SimulationTab({
                     </Card>
 
                     <Card variant="inset" padding="sm" className="space-y-1">
-                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Safe Haven (Emas/Kas)</span>
+                      <span className="text-label uppercase font-bold tracking-widest text-white/30 block">Benchmark Emas (Hold)</span>
                       <span className="text-sm font-bold font-mono text-amber-500 block">
                         {formatRupiah(backtestResult.goldFinalValue)}
                       </span>
                       <span className="text-caption font-mono text-[#A0A0A0] block">
-                        {backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}% (Hold)
+                        {backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}% — Beli &amp; Simpan Emas
                       </span>
                     </Card>
 
@@ -1236,6 +1307,7 @@ export function SimulationTab({
                         <div className="p-2 bg-white/[0.02] rounded-lg">
                           <span className="text-label font-mono text-white/40 block">Trades</span>
                           <span className="text-caption font-bold text-amber-400 font-mono">{backtestResult.totalTrades}</span>
+                          <span className="text-[9px] text-white/20 font-mono block">Buy + Sell + Swap</span>
                         </div>
                         <div className="p-2 bg-white/[0.02] rounded-lg">
                           <span className="text-label font-mono text-white/40 block">Avg yield/thn</span>
@@ -1274,6 +1346,7 @@ export function SimulationTab({
                       </span>
                       <span className={`text-sm font-bold font-mono block ${backtestResult.cagr >= 0 ? "text-green-400" : "text-rose-400"}`}>
                         {backtestResult.cagr.toFixed(2)}%
+                        {backtestResult.finalValue === 0 && <span className="text-[9px] text-rose-400/60 ml-1">(Total Loss)</span>}
                       </span>
                       <span className="text-label text-white/40 block">Tingkat Pertumbuhan Tahunan</span>
                     </Card>
@@ -1398,7 +1471,7 @@ export function SimulationTab({
                                   ? <> Melebihi benchmark IHSG (<span className="text-white">{ihsgLabel}</span>).</>
                                   : <> Di bawah benchmark IHSG (<span className="text-rose-300">{ihsgLabel}</span>).</>
                                 }
-                                {beatsGold ? " Mengungguli emas sebagai safe haven." : backtestResult.goldReturnPct > backtestResult.ihsgReturnPct ? " Emas ternyata lebih kuat dari strategi ini." : ""}
+                                {beatsGold ? " Mengungguli benchmark emas (beli & simpan)." : backtestResult.goldReturnPct > backtestResult.ihsgReturnPct ? " Benchmark emas ternyata lebih kuat dari strategi ini." : ""}
                               </>
                             );
                           })()
@@ -1410,7 +1483,7 @@ export function SimulationTab({
                     {/* Comparative index list */}
                     <div className="pt-2 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-caption text-white/40 font-mono">
                       <div>📊 IHSG Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.ihsgFinalValue)}</span> <span className={backtestResult.ihsgReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.ihsgReturnPct >= 0 ? "+" : ""}{backtestResult.ihsgReturnPct.toFixed(1)}%</span></div>
-                      <div>🪙 Emas Benchmark: <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> <span className={backtestResult.goldReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}%</span></div>
+                      <div>🪙 Benchmark Emas (Hold): <span className="text-white font-bold">{formatRupiah(backtestResult.goldFinalValue)}</span> <span className={backtestResult.goldReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.goldReturnPct >= 0 ? "+" : ""}{backtestResult.goldReturnPct.toFixed(1)}%</span></div>
                       <div>⚖️ 60/40 Campuran: <span className="text-green-400 font-bold">{formatRupiah(backtestResult.bench6040FinalVal)}</span> <span className={backtestResult.bench6040ReturnPct >= 0 ? "text-green-400" : "text-rose-400"}>{backtestResult.bench6040ReturnPct >= 0 ? "+" : ""}{backtestResult.bench6040ReturnPct.toFixed(1)}%</span></div>
                     </div>
                   </Card>

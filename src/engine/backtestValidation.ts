@@ -1,4 +1,4 @@
-import type { BacktestDayData } from "./types";
+import type { BacktestDayData, BacktestResult } from "./types";
 
 export type ValidationStatus = "valid" | "warning" | "invalid";
 
@@ -136,4 +136,106 @@ export function validateBacktestData(
       hasScores,
     },
   };
+}
+
+export interface ResultValidation {
+  status: ValidationStatus;
+  errors: string[];
+  warnings: string[];
+  diagnostics: Record<string, string | number | boolean>;
+}
+
+export function validateBacktestResult(
+  result: BacktestResult,
+  initialCapital: number
+): ResultValidation {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const diag: Record<string, string | number | boolean> = {};
+
+  const d = result.diagnostics;
+
+  diag["finalValue"] = result.finalValue;
+  diag["totalReturnPct"] = result.totalReturnPct.toFixed(2) + "%";
+  diag["cagr"] = result.cagr.toFixed(2) + "%";
+  diag["totalTrades"] = result.totalTrades;
+  diag["crashCount"] = result.crashCount ?? 0;
+  diag["finalInCrashState"] = result.finalInCrashState ?? false;
+
+  if (d) {
+    diag["bufferCash"] = d.bufferCash;
+    diag["finalStockValue"] = d.finalStockValue;
+    diag["finalGoldValue"] = d.finalGoldValue;
+    diag["finalCash"] = d.finalCash;
+    diag["initialAllocatedTickers"] = d.initialAllocatedTickers;
+    diag["scoreLookupAvailable"] = d.scoreLookupAvailable;
+    diag["dataDays"] = d.dataDaysTotal;
+    diag["period"] = `${d.startDate} → ${d.endDate}`;
+    diag["ihsgRange"] = `${d.ihsgPriceStart.toFixed(0)} → ${d.ihsgPriceEnd.toFixed(0)}`;
+    diag["goldRange"] = `${d.goldPriceStart.toFixed(0)} → ${d.goldPriceEnd.toFixed(0)}`;
+  }
+
+  if (result.finalValue === 0 && initialCapital > 0) {
+    errors.push("Final value Rp0 dari modal awal — hasil tidak valid.");
+    if (d) {
+      if (d.bufferCash === 0) {
+        errors.push("bufferCash = 0. Reserve Buffer Percentage mungkin bernilai 0.");
+      }
+      if (d.initialAllocatedTickers === 0) {
+        errors.push("Tidak ada emitentyang dialokasikan di hari pertama.");
+      }
+      if (d.finalGoldValue === 0 && d.finalStockValue === 0 && d.finalCash === 0) {
+        errors.push("Semua komponen portfolio bernilai 0 (stock + gold + cash).");
+      }
+    }
+  }
+
+  if (result.totalReturnPct === -100 && result.cagr === 0) {
+    errors.push("Return -100% tetapi CAGR = 0%. Inkonsistensi metrik.");
+  }
+
+  if (result.totalTrades === 0 && result.logs.length > 1) {
+    warnings.push(`Trades = 0 tetapi jurnal memiliki ${result.logs.length} event. Kemungkinan hanya ada inisialisasi.`);
+  }
+
+  if (result.totalTrades === 0 && result.finalInCrashState) {
+    warnings.push("Status crash aktif tetapi tidak ada transaksi tercatat.");
+  }
+
+  if (result.finalInCrashState && result.finalGoldGrams === 0 && result.finalCash === 0) {
+    errors.push("Status Safe Haven aktif tetapi tidak ada holding emas atau cash.");
+  }
+
+  if (d) {
+    if (d.initialAllocatedTickers > 0 && d.finalStockValue === 0 && !result.finalInCrashState) {
+      warnings.push("Alokasi awal ada tetapi nilai saham akhir = 0 tanpa status crash.");
+    }
+
+    const ihsgReturn = d.ihsgPriceStart > 0
+      ? ((d.ihsgPriceEnd - d.ihsgPriceStart) / d.ihsgPriceStart) * 100
+      : 0;
+    if (Math.abs(ihsgReturn - result.ihsgReturnPct) > 0.1) {
+      warnings.push(`IHSG return inkonsisten: diagnosa ${ihsgReturn.toFixed(2)}% vs metrik ${result.ihsgReturnPct.toFixed(2)}%.`);
+    }
+
+    if (d.dataDaysTotal < 10) {
+      warnings.push(`Hanya ${d.dataDaysTotal} hari data — hasil mungkin tidak representatif.`);
+    }
+
+    if (!d.scoreLookupAvailable) {
+      warnings.push("Score lookup tidak tersedia — ranking menggunakan data fallback.");
+    }
+  }
+
+  if (result.ihsgReturnPct > 50 && Math.abs(result.totalReturnPct) < 1) {
+    warnings.push("IHSG return sangat tinggi tapi strategi flat — kemungkinan masalah data atau ranking.");
+  }
+
+  if (result.goldReturnPct > 100 && result.totalReturnPct < -50) {
+    warnings.push("Emas naik >100% tapi strategi rugi >50%. Periksa apakah safe haven aktif.");
+  }
+
+  const status: ValidationStatus = errors.length > 0 ? "invalid" : warnings.length > 0 ? "warning" : "valid";
+
+  return { status, errors, warnings, diagnostics: diag };
 }

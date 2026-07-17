@@ -186,6 +186,8 @@ export function computeMetrics(input: MetricsInput): MetricsResult {
   const yearsElapsed = daysDiff / 365.25;
   const cagr = cap > 0 && currentPortfolioVal > 0
     ? Math.pow(currentPortfolioVal / cap, 1 / yearsElapsed) - 1
+    : currentPortfolioVal === 0 && cap > 0
+    ? -1
     : 0;
 
   const validReturns = dailyReturns.filter(r => Number.isFinite(r));
