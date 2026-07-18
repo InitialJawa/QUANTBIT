@@ -31,6 +31,7 @@ import { runBaselineDca, type BaselineResult, type DcaBaseline } from "../engine
 import { SearchableSelect } from "./SearchableSelect";
 import { RS, MKT } from "../marketData";
 import { api } from "../services/api";
+import { setDividendCache } from "../engine/dividendCache";
 import { useEngineConfig } from "../contexts/EngineConfigContext";
 import { toast } from "sonner";
 import { ConfirmModal } from "./ConfirmModal";
@@ -243,11 +244,14 @@ export function SimulationTab({
   // saat user ubah date range (sebelumnya data tidak reload saat ganti range)
   useEffect(() => {
     const configType = backtestConfig.activeProfileId === "agresif" || backtestConfig.activeProfileId === "growth-heavy" ? "res" : "prod";
-    api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> } }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
+    api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> }; dividendLookup?: Record<string, Record<string, number>> }>(`/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`)
       .then(res => { 
         if (res.success && Array.isArray(res.data)) {
           setHistoricalData(res.data);
           setScoreLookup(res.scoreLookup || null);
+          if (res.dividendLookup && Object.keys(res.dividendLookup).length > 0) {
+            setDividendCache(res.dividendLookup);
+          }
         } else {
           console.warn('[Backtest] API returned invalid data, falling back to synthetic');
           setHistoricalData(generateClientBacktestData());
@@ -482,12 +486,15 @@ export function SimulationTab({
       let freshScoreLookup: { dates: string[]; byDate: Record<string, any> } | null = null;
 
       try {
-        const res = await api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> } }>(
+        const res = await api.get<{ success: boolean; data: any[]; scoreLookup?: { dates: string[]; byDate: Record<string, any> }; dividendLookup?: Record<string, Record<string, number>> }>(
           `/api/backtest-data?configType=${configType}&from=${backtestConfig.simStartDate}&to=${backtestConfig.simEndDate}`
         );
         if (res.success && Array.isArray(res.data)) {
           freshData = res.data;
           freshScoreLookup = res.scoreLookup || null;
+          if (res.dividendLookup && Object.keys(res.dividendLookup).length > 0) {
+            setDividendCache(res.dividendLookup);
+          }
         } else {
           freshData = generateClientBacktestData();
           freshScoreLookup = null;

@@ -19,6 +19,8 @@ interface StrategySettingsPanelProps {
   onChange: (key: keyof StrategyConfigShape, value: any) => void;
   /** When true, all inputs are greyed out (read-only display mode) */
   disabled?: boolean;
+  /** When true, profile weight sliders are locked — profile switch still works */
+  weightsLocked?: boolean;
   /** Tooltip shown on hover when disabled */
   disabledTooltip?: string;
   /** Optional override for the universe buttons (default: Semua/IDX80/IDX30/LQ45) */
@@ -58,6 +60,7 @@ export function StrategySettingsPanel({
   config,
   onChange,
   disabled = false,
+  weightsLocked = false,
   disabledTooltip = "Locked ke Strategi Portofolio Anda. Toggle off DRAFT MODE di header Backtest untuk edit.",
   universeOptions = DEFAULT_UNIVERSE,
   profileOptions = DEFAULT_PROFILE,

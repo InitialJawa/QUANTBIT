@@ -198,7 +198,7 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
   // buffer of (up to 60) closing prices that we push to as the loop advances.
   const ihsgRollingWindow: number[] = [day0.ihsgPrice];
 
-  let lastJulyYear = 2019;
+  let lastDividendMonth = -1;
   const dailyReturns: number[] = [];
   const ihsgDailyPrices: number[] = [];
   const benchmarkDailyReturns: number[] = [];
@@ -305,25 +305,28 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
       if (dd > maxDrawdownValue) maxDrawdownValue = dd;
     }
 
-    if (currentYear > lastJulyYear && currentMonth >= 5 && dateObj.getDate() >= 15) {
-      let yearlyDividends = 0;
-      const yearlyDividendByTicker: Record<string, number> = {};
+    if (currentMonth !== lastDividendMonth) {
+      lastDividendMonth = currentMonth;
+      let monthlyDividends = 0;
+      const monthlyDividendByTicker: Record<string, number> = {};
       Object.entries(positions).forEach(([ticker, shares]) => {
         const dps = getDividendPerShare(ticker, dateObj);
         if (dps > 0 && shares > 0) {
-          const divPaid = Math.round(shares * dps * 0.90);
-          yearlyDividends += divPaid;
-          yearlyDividendByTicker[ticker] = (yearlyDividendByTicker[ticker] ?? 0) + divPaid;
+          const monthlyDps = dps / 12;
+          const divPaid = Math.round(shares * monthlyDps * 0.90);
+          if (divPaid > 0) {
+            monthlyDividends += divPaid;
+            monthlyDividendByTicker[ticker] = (monthlyDividendByTicker[ticker] ?? 0) + divPaid;
+          }
         }
       });
-      if (yearlyDividends > 0) {
-        cash += yearlyDividends;
-        totalDividendsEarned += yearlyDividends;
-        // Per-ticker accumulator for UI breakdown
-        for (const [t, amt] of Object.entries(yearlyDividendByTicker)) {
+      if (monthlyDividends > 0) {
+        cash += monthlyDividends;
+        totalDividendsEarned += monthlyDividends;
+        for (const [t, amt] of Object.entries(monthlyDividendByTicker)) {
           dividendByTicker[t] = (dividendByTicker[t] ?? 0) + amt;
         }
-        const topContrib = Object.entries(yearlyDividendByTicker)
+        const topContrib = Object.entries(monthlyDividendByTicker)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 3)
           .map(([t, a]) => `${t} ${(a / 1e6).toFixed(1)}M`)
@@ -331,10 +334,9 @@ export function runStrategy(input: StrategiesInput): BacktestResult {
         logs.push({
           date: day.date,
           type: "REBALANCE",
-          message: `Dividen tahunan dikreditkan: Rp ${yearlyDividends.toLocaleString("id-ID")} (net 90%) — top: ${topContrib}`,
+          message: `Dividen bulanan dikreditkan: Rp ${monthlyDividends.toLocaleString("id-ID")} (net 90%) — top: ${topContrib}`,
         });
       }
-      lastJulyYear = currentYear;
     }
 
     let crashSignaled = false;

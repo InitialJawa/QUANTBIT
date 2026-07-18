@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr" style="color-scheme:dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategi DCA Saham Indonesia — Dollar Cost Averaging Adaptif 2026 | QUANTBIT</title>
+  <meta name="description" content="Strategi DCA (Dollar Cost Averaging) saham Indonesia yang adaptif: auto-adjust alokasi berdasarkan kondisi pasar. Backtest dengan data real IDX.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://quantbit.pro/pages/strategi-dca/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Strategi DCA Saham Indonesia — Dollar Cost Averaging Adaptif 2026">
+  <meta property="og:description" content="DCA saham Indonesia yang adaptif. Auto-adjust alokasi berdasarkan kondisi pasar.">
+  <meta property="og:url" content="https://quantbit.pro/pages/strategi-dca/">
+  <meta property="og:image" content="https://quantbit.pro/og-image.png">
+  <meta property="og:site_name" content="QUANTBIT">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0f">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#e5e5e5;line-height:1.7}
+    a{color:#00c9a5;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .skip-link{position:absolute;top:-100%;left:16px;padding:8px 16px;background:#00c9a5;color:#000;border-radius:0 0 8px 8px;font-weight:700;z-index:200}
+    .skip-link:focus{top:0}
+    nav{position:sticky;top:0;background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid #1a1a2e;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+    .brand{font-size:18px;font-weight:800;color:#fff}
+    .brand span{color:#00c9a5}
+    .nav-cta{background:#00c9a5;color:#000;padding:10px 22px;border-radius:8px;font-weight:700;font-size:14px;display:inline-block;touch-action:manipulation}
+    .nav-cta:hover{background:#00a88a;text-decoration:none}
+    .nav-cta:focus-visible{outline:2px solid #00c9a5;outline-offset:2px}
+    .hero{padding:100px 24px 60px;max-width:720px;margin:0 auto;text-align:center}
+    .hero h1{font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.2;margin-bottom:20px;text-wrap:balance}
+    .hero h1 em{font-style:normal;color:#00c9a5}
+    .hero-quote{background:#111827;border-left:3px solid #00c9a5;padding:16px 20px;border-radius:0 8px 8px 0;margin:0 auto 32px;max-width:560px;color:#a3a3a3;font-size:15px;text-align:left}
+    .hero-cta{display:inline-block;background:#00c9a5;color:#000;padding:14px 36px;border-radius:10px;font-weight:700;font-size:16px;touch-action:manipulation;transition:background .15s}
+    .hero-cta:hover{background:#00a88a;text-decoration:none}
+    .hero-cta:focus-visible{outline:2px solid #00c9a5;outline-offset:4px}
+    .hero-stats{display:flex;gap:24px;justify-content:center;margin-top:24px;color:#484f58;font-size:14px}
+    .hero-stats strong{color:#e5e5e5}
+    .section{max-width:700px;margin:0 auto;padding:0 24px 56px}
+    .section h2{font-size:clamp(22px,3.5vw,28px);font-weight:700;margin-bottom:16px;color:#fff;text-wrap:balance}
+    .section p{color:#a3a3a3;margin-bottom:14px;font-size:16px;max-width:640px}
+    .section ul,.section ol{color:#a3a3a3;margin:0 0 14px 24px}
+    .section li{margin-bottom:8px}
+    .step{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:20px;margin:16px 0}
+    .step-num{color:#00c9a5;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .step h4{font-size:17px;color:#fff;margin-bottom:6px}
+    .step p{color:#a3a3a3;font-size:15px;margin:0}
+    .compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+    .compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #1e293b}
+    .compare-table th{color:#fff;font-weight:600;background:#111827}
+    .compare-table td{color:#a3a3a3}
+    details{background:#111827;border:1px solid #1e293b;border-radius:10px;margin:10px 0}
+    summary{padding:16px 20px;cursor:pointer;font-weight:600;color:#e5e5e5;list-style:none}
+    summary::before{content:'▸ ';color:#00c9a5}
+    details[open] summary::before{content:'▾ '}
+    details .faq-body{padding:0 20px 16px;color:#a3a3a3;font-size:15px;max-width:600px}
+    .cta-box{background:linear-gradient(135deg,#0d2818,#0a1628);border:1px solid #00c9a522;border-radius:14px;padding:40px 24px;text-align:center;margin:40px 0}
+    .cta-box h3{font-size:22px;color:#fff;margin-bottom:10px}
+    .cta-box p{color:#8b949e;margin:0 auto 20px;max-width:420px}
+    footer{text-align:center;padding:32px 24px;border-top:1px solid #1a1a2e;color:#484f58;font-size:13px}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Langsung ke konten</a>
+  <nav aria-label="Navigasi utama">
+    <a href="https://quantbit.pro" class="brand" aria-label="QUANTBIT — Beranda">QUANT<span>BIT</span></a>
+    <a href="https://quantbit.pro" class="nav-cta">Buka Terminal</a>
+  </nav>
+
+  <main id="main">
+    <section class="hero">
+      <h1>Strategi DCA Saham Indonesia — <em>Adaptif</em> ke Kondisi Pasar</h1>
+      <blockquote class="hero-quote">
+        QUANTBIT mengotomatiskan strategi Dollar Cost Averaging (DCA) untuk saham Indonesia dengan auto-adjust alokasi berdasarkan kondisi pasar aktual, sehingga investasi rutinmu lebih responsif dibanding DCA konvensional.
+      </blockquote>
+      <a href="https://quantbit.pro" class="hero-cta">Coba DCA Adaptif</a>
+      <div class="hero-stats">
+        <span><strong>Auto-adjust</strong> alokasi</span>
+        <span><strong>Crash Protection</strong> bawaan</span>
+        <span><strong>Backtest</strong> data real</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>DCA Biasa Itu Bagus, tapi Ada Masalahnya</h2>
+      <p>DCA (Dollar Cost Averaging) adalah strategi beli saham secara rutin, misalnya Rp 500 ribu per bulan, tanpa peduli harga naik atau turun. Idenya: rata-rata harga beli jadi lebih rendah dalam jangka panjang.</p>
+      <p>Masalahnya:</p>
+      <ul>
+        <li>Investasi Rp 500 ribu di saat market crash = kehilangan peluang beli lebih banyak di harga murah</li>
+        <li>Tetap beli di harga tinggi saat market sudah overbought</li>
+        <li>Gak ada proteksi saat IHSG turun tajam</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>DCA Adaptif: Beli Lebih Banyak Saat Murah</h2>
+      <p>QUANTBIT pakai sistem yang beda. Alokasi investasi bulananmu disesuaikan berdasarkan kondisi pasar:</p>
+      <ul>
+        <li><strong>Market turun tajam</strong> → alokasi naik (beli lebih banyak di harga murah)</li>
+        <li><strong>Market overbought</strong> → alokasi turun (simpan cash)</li>
+        <li><strong>Crash terdeteksi</strong> → rotasi ke Emas sampai stabil</li>
+      </ul>
+      <p>Hasilnya: average beli lebih optimal dibanding DCA tetap.</p>
+    </section>
+
+    <section class="section">
+      <h2>Yang Kamu Dapat</h2>
+      <table class="compare-table" role="table">
+        <thead><tr><th scope="col">Fitur</th><th scope="col">Manfaat</th></tr></thead>
+        <tbody>
+          <tr><td>Adaptive DCA</td><td>Alokasi auto-adjust berdasarkan Buy Pressure Score</td></tr>
+          <tr><td>Crash Protection</td><td>Auto-rotasi ke Emas saat IHSG turun tajam</td></tr>
+          <tr><td>Backtest DCA</td><td>Uji strategi DCA-mu dengan data IDX 2021–2026</td></tr>
+          <tr><td>Custom Profil</td><td>Atur bobot Quality/Growth/Value/Momentum/Dividend</td></tr>
+          <tr><td>Buy Pressure Score</td><td>Indikator tekanan beli pasar 0–100</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="cta-box">
+        <h3>Uji DCA Adaptif Sekarang</h3>
+        <p>Backtest strategi DCA dengan data real. Gratis.</p>
+        <a href="https://quantbit.pro" class="hero-cta">Mulai Backtest →</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Cara Kerja DCA Adaptif</h2>
+      <div class="step">
+        <div class="step-num">Langkah 1</div>
+        <h4>Atur Alokasi Bulanan</h4>
+        <p>Tentukan berapa yang mau diinvestasikan per bulan.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 2</div>
+        <h4>Pilih Profil Strategi</h4>
+        <p>Aman, Agresif, Dividen, atau Custom. Setiap profil punya komposisi berbeda.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 3</div>
+        <h4>QUANTBIT Hitung</h4>
+        <p>Sistem baca Buy Pressure Score dan kondisi IHSG. Tetapkan alokasi optimal untuk bulan ini.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 4</div>
+        <h4>Evaluasi</h4>
+        <p>Lihat hasil DCA vs DCA tetap. Berapa selisih return-nya?</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>DCA Tetap vs DCA Adaptif</h2>
+      <table class="compare-table" role="table">
+        <thead><tr><th scope="col">Aspek</th><th scope="col">DCA Tetap</th><th scope="col">DCA Adaptif</th></tr></thead>
+        <tbody>
+          <tr><td>Alokasi per bulan</td><td>Sama selalu</td><td>Naik/turun sesuai pasar</td></tr>
+          <tr><td>Saat market crash</td><td>Tetap beli jumlah sama</td><td>Beli lebih banyak (diskon)</td></tr>
+          <tr><td>Saat overbought</td><td>Tetap beli jumlah sama</td><td>Kurangi, simpan cash</td></tr>
+          <tr><td>Proteksi crash</td><td>Tidak ada</td><td>Rotasi ke Emas otomatis</td></tr>
+          <tr><td>Kompleksitas</td><td>Sangat mudah</td><td>Otomatis, tetap mudah</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Pertanyaan yang Sering Diajukan</h2>
+      <details>
+        <summary>Apa itu DCA?</summary>
+        <div class="faq-body">Dollar Cost Averaging adalah strategi investasi rutin dengan jumlah tetap secara berkala, tanpa peduli harga pasar saat itu.</div>
+      </details>
+      <details>
+        <summary>Bedanya DCA biasa dan DCA adaptif?</summary>
+        <div class="faq-body">DCA biasa pakai jumlah tetap. DCA adaptif menyesuaikan jumlah beli berdasarkan kondisi pasar: lebih banyak saat murah, lebih sedikit saat mahal.</div>
+      </details>
+      <details>
+        <summary>Apakah DCA adaptif lebih untung?</summary>
+        <div class="faq-body">Hasil backtest menunjukkan DCA adaptif bisa menghasilkan return lebih tinggi karena beli lebih agresif di harga rendah. Tapi tidak menjamin profit.</div>
+      </details>
+      <details>
+        <summary>Bagaimana cara kerja Crash Protection?</summary>
+        <div class="faq-body">Saat terdeteksi IHSG turun tajam, sistem mengalihkan alokasi ke instrumen Emas sampai kondisi pasar stabil kembali.</div>
+      </details>
+      <details>
+        <summary>Berapa minimal investasi per bulan?</summary>
+        <div class="faq-body">Tidak ada batasan minimal di QUANTBIT. Platform hanya simulasi backtest. Anda menentukan jumlah sendiri sesuai kemampuan.</div>
+      </details>
+      <details>
+        <summary>Apakah ini saran finansial?</summary>
+        <div class="faq-body">Bukan. QUANTBIT adalah alat simulasi. Semua keputusan investasi adalah tanggung jawab Anda.</div>
+      </details>
+    </section>
+
+    <section class="section" style="text-align:center;color:#484f58;font-size:14px">
+      <p>Bukan saran finansial. Investasi melibatkan risiko kerugian. Pelajari risiko sebelum memutuskan.</p>
+    </section>
+
+    <section class="section">
+      <div class="cta-box">
+        <h3>Optimalkan DCA-mu</h3>
+        <p>Backtest DCA adaptif sekarang. Gratis.</p>
+        <a href="https://quantbit.pro" class="hero-cta">Buka QUANTBIT →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 <a href="https://quantbit.pro">QUANTBIT</a> — Terminal Kuantitatif Saham IDX Indonesia</p>
+  </footer>
+</body>
+</html>

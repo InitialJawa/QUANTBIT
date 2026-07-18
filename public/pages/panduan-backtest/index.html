@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr" style="color-scheme:dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cara Backtest Saham IDX Gratis — Panduan Lengkap 2026 | QUANTBIT</title>
+  <meta name="description" content="Backtest strategi saham Indonesia dengan data real IDX 2021–2026. 3 profil otomatis: Aman, Agresif, Dividen. Tanpa install.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://quantbit.pro/pages/panduan-backtest/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Cara Backtest Saham IDX Gratis — Panduan Lengkap 2026">
+  <meta property="og:description" content="Backtest strategi saham Indonesia dengan data real IDX 2021–2026. 3 profil otomatis.">
+  <meta property="og:url" content="https://quantbit.pro/pages/panduan-backtest/">
+  <meta property="og:image" content="https://quantbit.pro/og-image.png">
+  <meta property="og:site_name" content="QUANTBIT">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0f">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#e5e5e5;line-height:1.7}
+    a{color:#00c9a5;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .skip-link{position:absolute;top:-100%;left:16px;padding:8px 16px;background:#00c9a5;color:#000;border-radius:0 0 8px 8px;font-weight:700;z-index:200}
+    .skip-link:focus{top:0}
+
+    /* Nav */
+    nav{position:sticky;top:0;background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid #1a1a2e;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+    .brand{font-size:18px;font-weight:800;color:#fff}
+    .brand span{color:#00c9a5}
+    .nav-cta{background:#00c9a5;color:#000;padding:10px 22px;border-radius:8px;font-weight:700;font-size:14px;display:inline-block;touch-action:manipulation}
+    .nav-cta:hover{background:#00a88a;text-decoration:none}
+    .nav-cta:focus-visible{outline:2px solid #00c9a5;outline-offset:2px}
+
+    /* Hero */
+    .hero{padding:100px 24px 60px;max-width:720px;margin:0 auto;text-align:center}
+    .hero h1{font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.2;margin-bottom:20px;text-wrap:balance}
+    .hero h1 em{font-style:normal;color:#00c9a5}
+    .hero-quote{background:#111827;border-left:3px solid #00c9a5;padding:16px 20px;border-radius:0 8px 8px 0;margin:0 auto 32px;max-width:560px;color:#a3a3a3;font-size:15px;text-align:left}
+    .hero-cta{display:inline-block;background:#00c9a5;color:#000;padding:14px 36px;border-radius:10px;font-weight:700;font-size:16px;touch-action:manipulation;transition:background .15s}
+    .hero-cta:hover{background:#00a88a;text-decoration:none}
+    .hero-cta:focus-visible{outline:2px solid #00c9a5;outline-offset:4px}
+    .hero-stats{display:flex;gap:24px;justify-content:center;margin-top:24px;color:#484f58;font-size:14px}
+    .hero-stats strong{color:#e5e5e5}
+
+    /* Sections */
+    .section{max-width:700px;margin:0 auto;padding:0 24px 56px}
+    .section h2{font-size:clamp(22px,3.5vw,28px);font-weight:700;margin-bottom:16px;color:#fff;text-wrap:balance}
+    .section h3{font-size:20px;font-weight:600;margin:28px 0 10px;color:#e5e5e5}
+    .section p{color:#a3a3a3;margin-bottom:14px;font-size:16px;max-width:640px}
+    .section ul,.section ol{color:#a3a3a3;margin:0 0 14px 24px}
+    .section li{margin-bottom:8px}
+
+    /* Step cards */
+    .step{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:20px;margin:16px 0}
+    .step-num{color:#00c9a5;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .step h4{font-size:17px;color:#fff;margin-bottom:6px}
+    .step p{color:#a3a3a3;font-size:15px;margin:0}
+
+    /* Table */
+    .compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+    .compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #1e293b}
+    .compare-table th{color:#fff;font-weight:600;background:#111827}
+    .compare-table td{color:#a3a3a3}
+    .compare-table tr:hover td{background:#111827}
+
+    /* FAQ */
+    details{background:#111827;border:1px solid #1e293b;border-radius:10px;margin:10px 0}
+    summary{padding:16px 20px;cursor:pointer;font-weight:600;color:#e5e5e5;list-style:none}
+    summary::before{content:'▸ ';color:#00c9a5}
+    details[open] summary::before{content:'▾ '}
+    details .faq-body{padding:0 20px 16px;color:#a3a3a3;font-size:15px;max-width:600px}
+
+    /* CTA box */
+    .cta-box{background:linear-gradient(135deg,#0d2818,#0a1628);border:1px solid #00c9a522;border-radius:14px;padding:40px 24px;text-align:center;margin:40px 0}
+    .cta-box h3{font-size:22px;color:#fff;margin-bottom:10px}
+    .cta-box p{color:#8b949e;margin:0 auto 20px;max-width:420px}
+
+    /* Footer */
+    footer{text-align:center;padding:32px 24px;border-top:1px solid #1a1a2e;color:#484f58;font-size:13px}
+
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Langsung ke konten</a>
+
+  <nav aria-label="Navigasi utama">
+    <a href="https://quantbit.pro" class="brand" aria-label="QUANTBIT — Beranda">QUANT<span>BIT</span></a>
+    <a href="https://quantbit.pro" class="nav-cta">Buka Terminal</a>
+  </nav>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero">
+      <h1>Cara Backtest Saham IDX <em>Gratis</em> dengan Data Real</h1>
+      <blockquote class="hero-quote">
+        QUANTBIT adalah terminal kuantitatif gratis yang memungkinkanmu menguji strategi saham Indonesia menggunakan data historis real IDX 2021–2026, tanpa install, tanpa kartu kredit.
+      </blockquote>
+      <a href="https://quantbit.pro" class="hero-cta">Mulai Backtest Sekarang</a>
+      <div class="hero-stats">
+        <span><strong>830+</strong> saham IDX</span>
+        <span><strong>5 tahun</strong> data historis</span>
+        <span><strong>3 profil</strong> otomatis</span>
+      </div>
+    </section>
+
+    <!-- PROBLEM -->
+    <section class="section">
+      <h2>Investasi Berdasarkan Feeling Sering Rugi</h2>
+      <p>Beli saham karena teman bilang bagus. Tahan terus karena "katanya bakal naik." Cut loss telat karena gak tau kapan harus keluar.</p>
+      <p>Kamu bukan satu-satunya. Rata-rata investor ritel Indonesia rugi di tahun pertama karena:</p>
+      <ul>
+        <li>Gak punya cara uji strategi sebelum pakai uang beneran</li>
+        <li>Ikut-ikutan rekomendasi tanpa tau track record strateginya</li>
+        <li>Kelamaan hold saham yang trend-nya sudah turun</li>
+        <li>Gak tau profil risiko diri sendiri</li>
+      </ul>
+    </section>
+
+    <!-- SOLUTION -->
+    <section class="section">
+      <h2>Backtest: Uji Dulu, Beli Kemudian</h2>
+      <p>Backtest adalah simulasi. Kamu masukkan strategi, komputer jalankan menggunakan data historis, dan keluar hasilnya: berapa untung/rugi, seberapa besar drawdown, apakah lebih baik dari IHSG.</p>
+      <p>QUANTBIT bikin proses ini gratis dan tanpa ribet. Buka browser, pilih profil, klik "Run Backtest." Selesai.</p>
+    </section>
+
+    <!-- FEATURES AS BENEFITS -->
+    <section class="section">
+      <h2>Apa yang Kamu Dapat</h2>
+      <table class="compare-table" role="table">
+        <thead>
+          <tr><th scope="col">Fitur</th><th scope="col">Manfaat untuk Kamu</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>3 Profil Otomatis</td><td>Aman, Agresif, Dividen — sesuai toleransi risiko</td></tr>
+          <tr><td>Data Real IDX 2021–2026</td><td>Bukan data dummy, hasilnya relevan</td></tr>
+          <tr><td>Custom Profile</td><td>Buat alokasi sendiri: Quality, Growth, Value, Momentum, Dividend</td></tr>
+          <tr><td>Buy Pressure Score</td><td>Skor 0–100 tekanan beli pasar saat ini</td></tr>
+          <tr><td>Adaptive DCA</td><td>Dollar Cost Averaging yang adjust otomatis</td></tr>
+          <tr><td>Crash Protection</td><td>Rotasi ke Emas saat IHSG jatuh</td></tr>
+          <tr><td>AI Agent</td><td>Tanya portofoliomu ke AI assistant</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <section class="section">
+      <h2>Hasil Nyata</h2>
+      <p>Profil Backtest QUANTBIT dioptimasi dari data IDX80 selama 10+ tahun. Bukan tebakan, tapi hasil simulasi.</p>
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div class="step" style="flex:1;min-width:200px;text-align:center">
+          <div class="step-num">Profil Aman</div>
+          <p style="font-size:28px;font-weight:800;color:#00c9a5;margin:8px 0">Conservative</p>
+          <p>Quality 30% · Growth 45% · Dividend 15%</p>
+        </div>
+        <div class="step" style="flex:1;min-width:200px;text-align:center">
+          <div class="step-num">Profil Agresif</div>
+          <p style="font-size:28px;font-weight:800;color:#f59e0b;margin:8px 0">Growth-Heavy</p>
+          <p>Growth 60% · Quality 20% · Momentum 10%</p>
+        </div>
+        <div class="step" style="flex:1;min-width:200px;text-align:center">
+          <div class="step-num">Profil Dividen</div>
+          <p style="font-size:28px;font-weight:800;color:#a78bfa;margin:8px 0">Income Focus</p>
+          <p>Dividend 60% · Growth 20% · Quality 15%</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MID CTA -->
+    <section class="section">
+      <div class="cta-box">
+        <h3>Coba Sekarang — Gratis</h3>
+        <p>830+ saham, data 5 tahun, zero setup.</p>
+        <a href="https://quantbit.pro" class="hero-cta">Buka QUANTBIT →</a>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section">
+      <h2>Langkah-langkah Backtest</h2>
+      <div class="step">
+        <div class="step-num">Langkah 1</div>
+        <h4>Buka Terminal</h4>
+        <p>Kunjungi quantbit.pro. Tidak perlu install apa pun.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 2</div>
+        <h4>Pilih Profil Investasi</h4>
+        <p>Pilih: Aman, Agresif, atau Dividen. Atau buat Custom Profile.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 3</div>
+        <h4>Run Backtest</h4>
+        <p>Klik "Run Backtest." QUANTBIT simulasi portofolio menggunakan data real 2021–2026.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Langkah 4</div>
+        <h4>Lihat Hasilnya</h4>
+        <p>CAGR, max drawdown, Sharpe ratio, perbandingan vs IHSG. Semua ada di dashboard.</p>
+      </div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="section">
+      <h2>QUANTBIT vs Alternatif Lain</h2>
+      <table class="compare-table" role="table">
+        <thead>
+          <tr><th scope="col">Fitur</th><th scope="col">QUANTBIT</th><th scope="col">Aplikasi Broker</th><th scope="col">Excel Manual</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Harga</td><td><strong>Gratis</strong></td><td>Gratis</td><td>Gratis</td></tr>
+          <tr><td>Data Historis IDX</td><td>5 tahun real</td><td>Terbatas</td><td>Perlu download manual</td></tr>
+          <tr><td>Backtest Otomatis</td><td>Ya, 1 klik</td><td>Tidak ada</td><td>Buat formula sendiri</td></tr>
+          <tr><td>Profil Kuantitatif</td><td>3 + Custom</td><td>Tidak ada</td><td>Manual</td></tr>
+          <tr><td>Buy Pressure Score</td><td>Ya</td><td>Tidak</td><td>Tidak</td></tr>
+          <tr><td>AI Assistant</td><td>Ya</td><td>Tidak</td><td>Tidak</td></tr>
+          <tr><td>Install Diperlukan</td><td>Tidak</td><td>Ya</td><td>Tidak</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section">
+      <h2>Pertanyaan yang Sering Diajukan</h2>
+
+      <details>
+        <summary>Apakah QUANTBIT benar-benar gratis?</summary>
+        <div class="faq-body">Ya. Tidak ada biaya tersembunyi, tidak perlu kartu kredit. Semua fitur backtest bisa dipakai gratis.</div>
+      </details>
+      <details>
+        <summary>Data sahamnya dari mana?</summary>
+        <div class="faq-body">Data historis IDX dari 2021–2026, di-update secara berkala. Sumber data dari publik pasar Indonesia.</div>
+      </details>
+      <details>
+        <summary>Apakah ini saran finansial?</summary>
+        <div class="faq-body">Bukan. QUANTBIT adalah alat simulasi. Semua keputusan investasi adalah tanggung jawab Anda.</div>
+      </details>
+      <details>
+        <summary>Bagaimana cara kerja profil Aman?</summary>
+        <div class="faq-body">Profil Aman mengalokasikan: Quality 30%, Growth 45%, Value 10%, Momentum 0%, Dividend 15%. Dioptimasi dari data historis IDX80.</div>
+      </details>
+      <details>
+        <summary>Bisa pakai di HP?</summary>
+        <div class="faq-body">Ya. QUANTBIT berjalan di browser, bisa diakses dari HP atau komputer tanpa install.</div>
+      </details>
+      <details>
+        <summary>Apakah ada fitur AI?</summary>
+        <div class="faq-body">Ya. QUANTBIT punya AI agent yang bisa ditanya tentang portofolio, strategi, dan kondisi pasar.</div>
+      </details>
+    </section>
+
+    <!-- TRUST SIGNALS -->
+    <section class="section" style="text-align:center;color:#484f58;font-size:14px">
+      <p>Dibangun untuk investor Indonesia yang ingin keputusan berbasis data.</p>
+      <p>Bukan saran finansial. Semua keputusan investasi adalah tanggung jawab Anda.</p>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="section">
+      <div class="cta-box">
+        <h3>Siap Uji Strategimu?</h3>
+        <p>Backtest sekarang, putuskan besok.</p>
+        <a href="https://quantbit.pro" class="hero-cta">Mulai Backtest Gratis →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 <a href="https://quantbit.pro">QUANTBIT</a> — Terminal Kuantitatif Saham IDX Indonesia</p>
+  </footer>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import type { BacktestDayData } from "./types";
+import { getDividendPerShare } from "./dividendCache";
 
 interface ScoreResult {
   quality: number;
@@ -20,6 +21,12 @@ function percentileRank(sorted: number[], value: number): number {
     if (sorted[mid] < value) lo = mid + 1; else hi = mid;
   }
   return Math.round((lo / (sorted.length - 1)) * 100);
+}
+
+function computeDividendScore(dps: number, price: number): number {
+  if (dps <= 0 || price <= 0) return 0;
+  const yieldPct = (dps / price) * 100;
+  return clamp(Math.round(yieldPct * (100 / 15)), 0, 100);
 }
 
 export function enrichDayDataWithScores(dayData: BacktestDayData[]): void {
@@ -68,7 +75,11 @@ export function enrichDayDataWithScores(dayData: BacktestDayData[]): void {
       const mRet = (prices[i] - prices[i - 19]) / prices[i - 19];
       const momentum = clamp(Math.round((mRet + 0.3) * 166.7), 0, 100);
 
-      arr[i] = { quality, growth, value, momentum, dividend: 50 };
+      const dateStr = tickerDates[ticker][i];
+      const dps = getDividendPerShare(ticker, new Date(dateStr));
+      const dividend = computeDividendScore(dps, prices[i]);
+
+      arr[i] = { quality, growth, value, momentum, dividend };
     }
     tickerScoreArr[ticker] = arr;
   }

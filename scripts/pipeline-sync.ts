@@ -136,6 +136,7 @@ interface Funda {
   per: number; pbv: number; payout: number; dy: number; dr: number;
   roe: number; pm: number; om: number; gm: number;
   rg: number; eg: number; mc: number;
+  currentPrice: number; volume: number; week52High: number; week52Low: number; changePct: number;
 }
 
 function avg(vals: (number | undefined)[]): number {
@@ -169,6 +170,9 @@ async function fetchFundamentals(symbol: string): Promise<Funda | null> {
       dy: sd?.dividendYield, dr: sd?.dividendRate,
       roe: fd?.returnOnEquity, pm: fd?.profitMargins, om: fd?.operatingMargins, gm: fd?.grossMargins,
       rg: fd?.revenueGrowth, eg: fd?.earningsGrowth, mc: p?.marketCap,
+      currentPrice: p?.regularMarketPrice, volume: p?.regularMarketVolume,
+      week52High: sd?.fiftyTwoWeekHigh, week52Low: sd?.fiftyTwoWeekLow,
+      changePct: p?.regularMarketChangePercent,
     };
   } catch (e) { return null; }
 }
@@ -232,6 +236,21 @@ function computeMomentumSQL(scoreDate: string): string[] {
   for (const r of momRows) {
     const score = Math.round(((r6.get(r.ticker)! + r12.get(r.ticker)!) / 2) * 1000) / 10;
     lines.push(`UPDATE stock_scores SET momentum=${score} WHERE ticker='${r.ticker}' AND score_date='${scoreDate}';`);
+  }
+  return lines;
+}
+
+// ── IDX80 Scans ──
+function writeIdx80ScansSQL(fundas: Funda[], scanDate: string): string[] {
+  const lines: string[] = [];
+  for (const f of fundas) {
+    lines.push(
+      `INSERT OR REPLACE INTO idx80_scans(ticker,scan_date,current_price,change_pct,pe_ratio,pb_ratio,market_cap,volume,dividend_yield,week_52_high,week_52_low) VALUES(` +
+      `'${f.ticker}','${scanDate}',` +
+      `${esc(f.currentPrice)},${esc(f.changePct)},${esc(f.per)},${esc(f.pbv)},${esc(f.mc)},${esc(f.volume)},` +
+      `${esc(f.dy != null ? f.dy * 100 : null)},${esc(f.week52High)},${esc(f.week52Low)})` +
+      `;`
+    );
   }
   return lines;
 }
@@ -330,6 +349,17 @@ async function main() {
     // Verify
     const v = run(`npx wrangler d1 execute quantbit-db --remote --command="SELECT COUNT(*) as total, ROUND(AVG(quality),1) as avg_q, ROUND(AVG(growth),1) as avg_g, ROUND(AVG(value),1) as avg_v, ROUND(AVG(dividend),1) as avg_d, ROUND(AVG(momentum),1) as avg_m FROM stock_scores WHERE score_date='${SCORE_DATE}'"`);
     console.log(v);
+
+    // Seed idx80_scans (dividend_yield, pe, pb, volume, etc.)
+    console.log("\n=== IDX80 Scans ===");
+    const scanLines = writeIdx80ScansSQL(fundas, SCORE_DATE);
+    if (scanLines.length > 0) {
+      const scanSql = sqlPath("_idx80_scans.sql");
+      writeFileSync(scanSql, scanLines.join("\n") + "\n", "utf-8");
+      console.log(`  ${scanLines.length} scan rows written`);
+      run(`npx wrangler d1 execute quantbit-db --remote --file="${scanSql}"`);
+      console.log("  idx80_scans seeded OK");
+    }
   }
 
   console.log("\nPipeline complete!");

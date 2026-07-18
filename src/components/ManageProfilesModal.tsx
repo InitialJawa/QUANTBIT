@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2, Lock } from "lucide-react";
 import { useEngineConfig, type WeightProfile } from "../contexts/EngineConfigContext";
 
 export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
@@ -63,15 +63,21 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
                   {(["qualityWeight", "growthWeight", "valueWeight", "momentumWeight", "dividendWeight"] as const).map(key => {
                     const label = { qualityWeight: "Quality", growthWeight: "Growth", valueWeight: "Value", momentumWeight: "Momentum", dividendWeight: "Dividen" }[key];
                     const pct = Math.round((p[key] ?? 0) * 100);
+                    const locked = isDefault(p.id);
                     return (
                       <div key={key}>
                         <div className="flex justify-between text-caption mb-0.5">
-                          <span className="text-white/50">{label}</span>
+                          <span className="text-white/50 flex items-center gap-1">
+                            {label}
+                            {locked && <Lock className="w-2.5 h-2.5 text-white/20" />}
+                          </span>
                           <span className="text-accent font-bold">{pct}%</span>
                         </div>
                         <input type="range" min="0" max="100" value={pct}
                           onChange={e => handleWeightChange(p.id, key, parseInt(e.target.value) / 100)}
-                          className="w-full accent-emerald-500 h-1" />
+                          disabled={locked}
+                          title={locked ? "Bobot profile default terkunci" : undefined}
+                          className="w-full accent-emerald-500 h-1 disabled:opacity-30 disabled:cursor-not-allowed" />
                       </div>
                     );
                   })}
@@ -79,6 +85,7 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
 
                 <div className="mt-2 text-caption text-white/30 text-right">
                   Total: {Math.round(((p.qualityWeight ?? 0) + (p.growthWeight ?? 0) + (p.valueWeight ?? 0) + (p.momentumWeight ?? 0) + (p.dividendWeight ?? 0)) * 100)}%
+                  {isDefault(p.id) && <span className="ml-2 text-white/20">— Bobot terkunci</span>}
                 </div>
               </div>
             );
@@ -95,7 +102,7 @@ export function ManageProfilesModal({ onClose }: { onClose: () => void }) {
               <Plus className="w-3 h-3" /> Tambah
             </button>
           </div>
-          <p className="text-caption text-white/20">Bobot dinormalisasi ke 100% otomatis. Profile default (F/B) tidak bisa dihapus.</p>
+          <p className="text-caption text-white/20">Bobot dinormalisasi ke 100% otomatis. Profile default terkunci dan tidak bisa dihapus.</p>
         </div>
       </div>
     </div>

@@ -94,12 +94,47 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
     }
 
+    // Build historical dividend DPS lookup: { ticker: { year: dps } }
+    // Source: idx80_scans historical dividend_yield × stock_daily close
+    const scanDataRows = await env.DB.prepare(
+      "SELECT ticker, scan_date, dividend_yield FROM idx80_scans WHERE dividend_yield > 0 ORDER BY scan_date"
+    ).all<any>();
+
+    // Get latest close price per ticker per year for DPS calculation
+    const yearlyPriceRows = await env.DB.prepare(
+      "SELECT ticker, substr(date, 1, 4) as year, close FROM stock_daily WHERE date IN (SELECT MAX(date) FROM stock_daily GROUP BY ticker, substr(date, 1, 4)) ORDER BY ticker, year"
+    ).all<any>();
+
+    // Build year→close map per ticker
+    const yearlyPriceMap: Record<string, Record<string, number>> = {};
+    for (const yr of yearlyPriceRows.results) {
+      if (!yearlyPriceMap[yr.ticker]) yearlyPriceMap[yr.ticker] = {};
+      yearlyPriceMap[yr.ticker][yr.year] = yr.close;
+    }
+
+    // For each scan_date, compute DPS = (dividend_yield/100) * close_price
+    // Aggregate by year: use latest scan per year as representative
+    const dividendLookup: Record<string, Record<string, number>> = {};
+    for (const sd of scanDataRows.results) {
+      const year = sd.scan_date.slice(0, 4);
+      const ticker = sd.ticker;
+      const close = yearlyPriceMap[ticker]?.[year] ?? 0;
+      if (close > 0 && sd.dividend_yield > 0) {
+        const dps = (sd.dividend_yield / 100) * close;
+        if (dps > 0) {
+          if (!dividendLookup[ticker]) dividendLookup[ticker] = {};
+          // Use latest scan per year (overwrites earlier scans)
+          dividendLookup[ticker][year] = Math.round(dps * 100) / 100;
+        }
+      }
+    }
+
     const defaultWeights = {
       prod: { quality: 0.45, growth: 0.1, value: 0.05, momentum: 0.40, dividend: 0 },
       res: { quality: 0.40, growth: 0.25, value: 0.05, momentum: 0.30, dividend: 0 },
     };
 
-    return Response.json({ success: true, count: data.length, configType, weights: defaultWeights, data, scoreLookup: { dates: scoreDates, byDate: scoresByDate } });
+    return Response.json({ success: true, count: data.length, configType, weights: defaultWeights, data, scoreLookup: { dates: scoreDates, byDate: scoresByDate }, dividendLookup });
   } catch (e: any) {
     return Response.json({ success: false, error: e.message }, { status: 500 });
   }
